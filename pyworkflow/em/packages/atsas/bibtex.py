@@ -1,3 +1,4 @@
+# coding: latin-1
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
@@ -24,17 +25,26 @@
 # *
 # **************************************************************************
 """
-This sub-package contains data and protocol classes
-wrapping Grigrorieff Lab programs at Brandeis
+Bibtex string file for Xmipp package.
 """
 
-_logo = "brandeis_logo.png"
+_bibtexStr = """
 
-from brandeis import *
 
-from viewer import FrealignViewer
-from protocol_ctffind3 import ProtCTFFind
-from protocol_frealign import ProtFrealign
+@article{Svergun1995,
+title = "Crysol-A program to evaluate X-ray solution scattering of biological macromolecules from atomic coordinates",
+journal = "J. Applied Crystallography",
+volume = "28",
+number = "6",
+pages = "768 - 773",
+year = "1995",
+doi = "http://dx.doi.org/10.1107/S0021889895007047 ",
+url = "http://www.embl-hamburg.de/biosaxs/reprints/crysol_1995.pdf",
+author = "Svergun, D. and Barberato, C. and Koch, M. H. J.",
+keywords = "SAXS simulation, Small Angle X-ray Scattering"
+}
+"""
 
-# Wizards
-from wizard import *
+from pyworkflow.utils import parseBibTex
+
+_bibtex = parseBibTex(_bibtexStr)  

@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     Carlos Oscar Sorzano (coss@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -25,16 +25,13 @@
 # **************************************************************************
 """
 This sub-package contains data and protocol classes
-wrapping Grigrorieff Lab programs at Brandeis
+wrapping ATSAS programs http://www.embl-hamburg.de/biosaxs/software.html
 """
 
-_logo = "brandeis_logo.png"
+_logo = "atsas_logo.gif"
 
-from brandeis import *
+from bibtex import _bibtex # Load bibtex dict with references
+from atsas import *
+from protocol_pdb_to_saxs import AtsasProtConvertPdbToSAXS
+from viewer import AtsasViewer
 
-from viewer import FrealignViewer
-from protocol_ctffind3 import ProtCTFFind
-from protocol_frealign import ProtFrealign
-
-# Wizards
-from wizard import *
