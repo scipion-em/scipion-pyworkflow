@@ -24,17 +24,8 @@
 # *
 # **************************************************************************
 """
-This sub-package contains data and protocol classes
-wrapping Grigrorieff Lab programs at Brandeis
+This modules contains constants related to Xmipp3 protocols
 """
 
-_logo = "brandeis_logo.png"
+#------------------ Constants values --------------------------------------
 
-from brandeis import *
-
-from viewer import FrealignViewer
-from protocol_ctffind3 import ProtCTFFind
-from protocol_frealign import ProtFrealign
-
-# Wizards
-from wizard import *
