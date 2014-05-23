@@ -23,21 +23,33 @@
 # *  e-mail address 'jmdelarosa@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This sub-package will contains Spider protocols
-"""
 
+from protocol_classify_base import SpiderProtClassifyCluster
 
-_logo = "spider_logo.png"
+      
 
-from bibtex import _bibtex # Load bibtex dict with references
-_references = ['Shaikh2008', 'Frank1996b']
+class SpiderProtClassifyDiday(SpiderProtClassifyCluster):
+    """ Diday's method, using 'CL CLA' 
+    """
+    _label = 'classify diday'
+    
+    def __init__(self, **kwargs):
+        SpiderProtClassifyCluster.__init__(self, 'mda/cluster.msa', 'CLA',  **kwargs)
 
-from spider import *
-from protocol import *
-
-from wizard import SpiderProtMaskWizard, SpiderParticlesMaskRadiiWizard, SpiderFilterParticlesWizard
-
-from viewer import SpiderViewer
-from viewer_capca import SpiderViewerCAPCA
-from viewer_classify import SpiderViewerWard, SpiderViewerDiday
+    #--------------------------- INFO functions -------------------------------------------- 
+    
+    def _validate(self):
+        errors = []
+        return errors
+    
+    def _citations(self):
+        cites = []
+        return cites
+    
+    def _summary(self):
+        summary = []
+        return summary
+    
+    def _methods(self):
+        return self._summary()  # summary is quite explicit and serve as methods
+    

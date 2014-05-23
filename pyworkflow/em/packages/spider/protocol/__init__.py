@@ -24,20 +24,18 @@
 # *
 # **************************************************************************
 """
-This sub-package will contains Spider protocols
+Import of all protocols included in spider.
 """
+from protocol_base import SpiderProtocol
+from protocol_classify_base import SpiderProtClassify
+from protocol_filters import SpiderProtFilter
+from protocol_align_apsr import SpiderProtAlignAPSR
+from protocol_custommask import SpiderProtCustomMask
+from protocol_ca_pca import SpiderProtCAPCA
+from protocol_classify_diday import SpiderProtClassifyDiday
+from protocol_classify_ward import SpiderProtClassifyWard
+from protocol_classify_kmeans import SpiderProtClassifyKmeans
+from protocol_mda import SpiderWfMDA
+from protocol_align_pairwise import SpiderProtAlignPairwise
 
 
-_logo = "spider_logo.png"
-
-from bibtex import _bibtex # Load bibtex dict with references
-_references = ['Shaikh2008', 'Frank1996b']
-
-from spider import *
-from protocol import *
-
-from wizard import SpiderProtMaskWizard, SpiderParticlesMaskRadiiWizard, SpiderFilterParticlesWizard
-
-from viewer import SpiderViewer
-from viewer_capca import SpiderViewerCAPCA
-from viewer_classify import SpiderViewerWard, SpiderViewerDiday
