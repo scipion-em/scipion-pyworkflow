@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
@@ -25,33 +24,15 @@
 # *
 # **************************************************************************
 """
-This module is responsible for launching protocol executions.
+This sub-package contains protocol for ResMap
 """
-import sys
-import os
-from mpi4py import MPI
+from bibtex import _bibtex # Load bibtex dict with references
+#_logo = "resmap_logo.png"
+_references = ['lix2013']
 
-from pyworkflow.protocol import runProtocolMainMPI
-from pyworkflow.utils.mpi import runJobMPISlave
+from protocol_dosefgpu import ProtDosefGpu
+from protocol_import import ProtDosefGpuImport
 
-# Add callback for remote debugging if available.
-try:
-    from rpdb2 import start_embedded_debugger
-    from signal import signal, SIGUSR2
-    signal(SIGUSR2, lambda sig, frame: start_embedded_debugger('a'))
-except ImportError:
-    pass
+from convert import getEnviron
 
-
-if __name__ == '__main__':
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    projectPath = sys.argv[1]
-
-    if rank == 0:
-        dbPath = sys.argv[2]
-        protId = int(sys.argv[3])
-        runProtocolMainMPI(projectPath, dbPath, protId, comm)
-    else:
-        os.chdir(projectPath)
-        runJobMPISlave(comm)
+_environ = getEnviron()

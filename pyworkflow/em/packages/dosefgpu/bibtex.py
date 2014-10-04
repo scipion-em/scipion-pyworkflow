@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# coding: latin-1
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
@@ -25,33 +25,28 @@
 # *
 # **************************************************************************
 """
-This module is responsible for launching protocol executions.
+List of related references in Bibtex format for dosefgpu programs
+developed by Xueming Li at Yifan Cheng lab.
 """
-import sys
-import os
-from mpi4py import MPI
 
-from pyworkflow.protocol import runProtocolMainMPI
-from pyworkflow.utils.mpi import runJobMPISlave
+_bibtexStr = """
 
-# Add callback for remote debugging if available.
-try:
-    from rpdb2 import start_embedded_debugger
-    from signal import signal, SIGUSR2
-    signal(SIGUSR2, lambda sig, frame: start_embedded_debugger('a'))
-except ImportError:
-    pass
+@article{lix2013,
+  title={Electron counting and beam-induced motion correction enables near atomic resolution single particle cryoEM.},
+  author={Li, Xueming and Mooney, Paul and Zheng, Shawn and Booth, Chris Michael B. Braunfeld, Sander Gubbens, David A. Agard and Yifan Cheng},
+  journal={Nature Methods},
+  volume={10},
+  number={1},
+  pages={584--590},
+  year={2013},
+  publisher={Nature Publishing Group},
+  doi = {http://dx.doi.org/10.1038/nmeth.2727}
+}
+
+"""
 
 
-if __name__ == '__main__':
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-    projectPath = sys.argv[1]
 
-    if rank == 0:
-        dbPath = sys.argv[2]
-        protId = int(sys.argv[3])
-        runProtocolMainMPI(projectPath, dbPath, protId, comm)
-    else:
-        os.chdir(projectPath)
-        runJobMPISlave(comm)
+from pyworkflow.utils import parseBibTex
+
+_bibtex = parseBibTex(_bibtexStr)  
