@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
@@ -24,29 +25,34 @@
 # *
 # **************************************************************************
 """
-This sub-package contains data and protocol classes
-wrapping Grigrorieff Lab programs at Brandeis
+Launch main project window 
 """
-import os
-from os.path import join, exists
 
-CTFFIND3 = 'ctffind3.exe'
-CTFFIND4 = 'ctffind'
-FREALIGN = 'frealign_v9.exe'
-FREALIGNMP = 'frealign_v9_mp.exe'
-CALC_OCC = 'calc_occ.exe'
-RSAMPLE = 'rsample.exe'
+import sys
+import pyworkflow.utils as pwutils
 
-def _getCtffind4():
-    ctffind4 = join(os.environ['CTFFIND4_HOME'], 'bin', CTFFIND4)
-    if exists(ctffind4):
-        return ctffind4
-    else:
-        return join(os.environ['CTFFIND4_HOME'], CTFFIND4)
 
-CTFFIND_PATH = join(os.environ['CTFFIND_HOME'], CTFFIND3)
-CTFFIND4_PATH = _getCtffind4()
-FREALIGN_PATH = join(os.environ['FREALIGN_HOME'], 'bin', FREALIGN)
-FREALIGNMP_PATH = join(os.environ['FREALIGN_HOME'], 'bin', FREALIGNMP)
-CALC_OCC_PATH = join(os.environ['FREALIGN_HOME'], 'bin', CALC_OCC)
-RSAMPLE_PATH = join(os.environ['FREALIGN_HOME'], 'bin', RSAMPLE)
+
+if __name__ == '__main__':
+
+    program = sys.argv[1]
+    params = ' '.join('"%s"' % x for x in sys.argv[2:])
+    
+    env = None
+    
+    if program.startswith('xmipp'):
+        import pyworkflow.em.packages.xmipp3 as xmipp3
+        env = xmipp3.getEnviron()
+    if program.startswith('relion'):
+        import pyworkflow.em.packages.relion as relion
+        env = relion.getEnviron()        
+    elif (program.startswith('e2') or 
+          program.startswith('sx')):
+        import pyworkflow.em.packages.eman2 as eman2
+        env = eman2.getEnviron()
+    elif program.startswith('b'):
+        import pyworkflow.em.packages.bsoft as bsoft
+        env = bsoft.getEnviron()
+    
+    pwutils.runJob(None, program, params, env=env)
+         

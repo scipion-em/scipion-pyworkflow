@@ -1,3 +1,4 @@
+# coding: latin-1
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
@@ -24,29 +25,27 @@
 # *
 # **************************************************************************
 """
-This sub-package contains data and protocol classes
-wrapping Grigrorieff Lab programs at Brandeis
+Bibtex string file for Xmipp package.
 """
-import os
-from os.path import join, exists
 
-CTFFIND3 = 'ctffind3.exe'
-CTFFIND4 = 'ctffind'
-FREALIGN = 'frealign_v9.exe'
-FREALIGNMP = 'frealign_v9_mp.exe'
-CALC_OCC = 'calc_occ.exe'
-RSAMPLE = 'rsample.exe'
+_bibtexStr = """
+@article{Heymann2007,
+title = "Bsoft: Image processing and molecular modeling for electron microscopy ",
+journal = "Journal of Structural Biology ",
+volume = "157",
+number = "1",
+pages = "3 - 18",
+year = "2007",
+issn = "1047-8477",
+doi = "http://dx.doi.org/10.1016/j.jsb.2006.06.006",
+url = "http://www.sciencedirect.com/science/article/pii/S1047847706001997",
+author = "J. Bernard Heymann and David M. Belnap",
+keywords = "Single particle analysis Tomography",
+}
+"""
 
-def _getCtffind4():
-    ctffind4 = join(os.environ['CTFFIND4_HOME'], 'bin', CTFFIND4)
-    if exists(ctffind4):
-        return ctffind4
-    else:
-        return join(os.environ['CTFFIND4_HOME'], CTFFIND4)
 
-CTFFIND_PATH = join(os.environ['CTFFIND_HOME'], CTFFIND3)
-CTFFIND4_PATH = _getCtffind4()
-FREALIGN_PATH = join(os.environ['FREALIGN_HOME'], 'bin', FREALIGN)
-FREALIGNMP_PATH = join(os.environ['FREALIGN_HOME'], 'bin', FREALIGNMP)
-CALC_OCC_PATH = join(os.environ['FREALIGN_HOME'], 'bin', CALC_OCC)
-RSAMPLE_PATH = join(os.environ['FREALIGN_HOME'], 'bin', RSAMPLE)
+
+from pyworkflow.utils import parseBibTex
+
+_bibtex = parseBibTex(_bibtexStr)  
