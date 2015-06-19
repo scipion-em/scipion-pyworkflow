@@ -25,36 +25,34 @@
 # *
 # **************************************************************************
 """
-List all existing protocols within Scipion
+Launch main project window 
 """
 
 import sys
-from pyworkflow.em import getProtocols
+import pyworkflow.utils as pwutils
+
 
 
 if __name__ == '__main__':
-    count = 0
-    withDoc = '--with-doc' in sys.argv
-    emProtocolsDict = getProtocols()
+
+    program = sys.argv[1]
+    params = ' '.join('"%s"' % x for x in sys.argv[2:])
     
-    protDict = {}
+    env = None
     
-    # Group protocols by package name
-    for k, v in emProtocolsDict.iteritems():
-        packageName = v.getClassPackageName()
-        
-        if packageName not in protDict:
-            protDict[packageName] = []
-        
-        protDict[packageName].append((k, v))
-           
+    if program.startswith('xmipp'):
+        import pyworkflow.em.packages.xmipp3 as xmipp3
+        env = xmipp3.getEnviron()
+    if program.startswith('relion'):
+        import pyworkflow.em.packages.relion as relion
+        env = relion.getEnviron()        
+    elif (program.startswith('e2') or 
+          program.startswith('sx')):
+        import pyworkflow.em.packages.eman2 as eman2
+        env = eman2.getEnviron()
+    elif program.startswith('b'):
+        import pyworkflow.em.packages.bsoft as bsoft
+        env = bsoft.getEnviron()
+    
+    pwutils.runJob(None, program, params, env=env)
          
-    for group, prots in protDict.iteritems():
-        print "-" * 100
-        print "Package: ", group, "(%d protocols)" % len(prots)
-        for k, v in prots:
-            print "   %s ( %s )" % (k, v.getClassLabel())
-            if withDoc:
-                print "      doc: ", v.__doc__
-            #count += 1
-            

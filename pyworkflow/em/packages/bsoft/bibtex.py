@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# coding: latin-1
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
@@ -25,36 +25,27 @@
 # *
 # **************************************************************************
 """
-List all existing protocols within Scipion
+Bibtex string file for Xmipp package.
 """
 
-import sys
-from pyworkflow.em import getProtocols
+_bibtexStr = """
+@article{Heymann2007,
+title = "Bsoft: Image processing and molecular modeling for electron microscopy ",
+journal = "Journal of Structural Biology ",
+volume = "157",
+number = "1",
+pages = "3 - 18",
+year = "2007",
+issn = "1047-8477",
+doi = "http://dx.doi.org/10.1016/j.jsb.2006.06.006",
+url = "http://www.sciencedirect.com/science/article/pii/S1047847706001997",
+author = "J. Bernard Heymann and David M. Belnap",
+keywords = "Single particle analysis Tomography",
+}
+"""
 
 
-if __name__ == '__main__':
-    count = 0
-    withDoc = '--with-doc' in sys.argv
-    emProtocolsDict = getProtocols()
-    
-    protDict = {}
-    
-    # Group protocols by package name
-    for k, v in emProtocolsDict.iteritems():
-        packageName = v.getClassPackageName()
-        
-        if packageName not in protDict:
-            protDict[packageName] = []
-        
-        protDict[packageName].append((k, v))
-           
-         
-    for group, prots in protDict.iteritems():
-        print "-" * 100
-        print "Package: ", group, "(%d protocols)" % len(prots)
-        for k, v in prots:
-            print "   %s ( %s )" % (k, v.getClassLabel())
-            if withDoc:
-                print "      doc: ", v.__doc__
-            #count += 1
-            
+
+from pyworkflow.utils import parseBibTex
+
+_bibtex = parseBibTex(_bibtexStr)  
