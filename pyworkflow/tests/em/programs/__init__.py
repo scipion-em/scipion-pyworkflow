@@ -1,8 +1,6 @@
-# **************************************************************************
-# *
+# ***************************************************************************
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -20,24 +18,7 @@
 # * 02111-1307  USA
 # *
 # *  All comments concerning this program package may be sent to the
-# *  e-mail address 'jmdelarosa@cnb.csic.es'
-# *
-# **************************************************************************
-"""
-This sub-package contains data and protocol classes
-wrapping Grigrorieff Lab programs at Brandeis
-"""
-from bibtex import _bibtex # Load bibtex dict with references
+# *  e-mail address 'xmipp@cnb.csic.es'
+# ***************************************************************************/
 
-_logo = "brandeis_logo.png"
-
-from grigoriefflab import *
-
-from protocol_ctffind import ProtCTFFind
-from protocol_refinement import ProtFrealign
-from protocol_ml_classification import ProtFrealignClassify
-from protocol_unblur import ProtUnblur
-from protocol_summovie import ProtSummovie
-from viewer import ProtCTFFindViewer, FrealignViewer
-# Wizards
-from wizard import *
+from base import ProgramTest
