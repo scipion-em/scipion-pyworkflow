@@ -1,8 +1,6 @@
-# **************************************************************************
+# ***************************************************************************
+# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
 # *
-# * Authors:     Laura del Cano (ldelcano@cnb.csic.es)
-# *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -20,21 +18,7 @@
 # * 02111-1307  USA
 # *
 # *  All comments concerning this program package may be sent to the
-# *  e-mail address 'jmdelarosa@cnb.csic.es'
-# *
-# **************************************************************************
-"""
-This package contains the protocols and data for APPION
-"""
+# *  e-mail address 'xmipp@cnb.csic.es'
+# ***************************************************************************/
 
-_logo = "ncbi_logo.png"
-
-from bibtex import _bibtex
-from convert import getEnviron
-from protocol_picking import DogPickerProtPicking
-from wizard import DogPickerWizard
-
-
-#_references = ['Voss2009']
-
-_environ = getEnviron()
+from base import ProgramTest
