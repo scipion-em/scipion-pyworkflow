@@ -2,6 +2,7 @@
 # *
 # * Authors:    Laura del Cano (ldelcano@cnb.csic.es)
 # *             Josue Gomez Blanco (jgomez@cnb.csic.es)
+# *             Grigory Sharov (sharov@igbmc.fr)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -31,13 +32,12 @@ from pyworkflow.em.packages.grigoriefflab import *
 
 
 # Some utility functions to import movies that are used in several tests.
-class TestMoviesBase(BaseTest):
+class TestMagDistCorrBase(BaseTest):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
         cls.dataset = DataSet.getDataSet('movies')
         cls.movie1 = cls.dataset.getFile('qbeta/qbeta.mrc')
-        cls.movie2 = cls.dataset.getFile('cct/cct_1.em')
         cls.movies = cls.dataset.getFile('ribo/*.mrcs')
     
     @classmethod
@@ -85,14 +85,6 @@ class TestMoviesBase(BaseTest):
                                   scannedPixelSize=None, magnification=50000)
     
     @classmethod
-    def runImportMovie2(cls):
-        """ Run an Import movie protocol. """
-        return cls.runImportMovie(cls.movie2, 'movie - cct.em',
-                                  samplingRate=1.4, voltage=300,
-                                  sphericalAberration=2.7,
-                                  scannedPixelSize=None, magnification=61000)
-
-    @classmethod
     def runImportMovies(cls):
         """ Run an Import movie protocol. """
         return cls.runImportMovie(cls.movies, 'movies - betagal.mrcs',
@@ -101,14 +93,13 @@ class TestMoviesBase(BaseTest):
                                   scannedPixelSize=None, magnification=50000)
 
     def runBasicTests(self, ProtocolClass):
-        # Run some basic tests for both Unblur and Summovie
+        # Run some basic tests for mag. distortion correction
 
         # Expected dimensions
-        dims = [(4096, 4096, 7), (4096, 4096, 7), (1950, 1950, 16)]
+        dims = [(4096, 4096, 7), (1950, 1950, 16)]
 
-        # Launch unblur for 3 different set of movies
+        # Launch protocol for 2 different sets of movies
         for i, protImport in enumerate([self.runImportMovie1(),
-                                        self.runImportMovie2(),
                                         self.runImportMovies()]):
             inputMovies = getattr(protImport, 'outputMovies')
             self.assertIsNotNone(inputMovies)
@@ -116,27 +107,21 @@ class TestMoviesBase(BaseTest):
 
             prot = self.newProtocol(ProtocolClass,
                                     objLabel=ProtocolClass._label + str(i),
-                                    alignFrameRange=-1,
-                                    doApplyDoseFilter=True,
-                                    exposurePerFrame=1.3)
+                                    scaleMaj=1.02,
+                                    scaleMin=0.993,
+                                    angDist=30)
             prot.inputMovies.set(inputMovies)
             self.launchProtocol(prot)
-            outputMics = getattr(prot, 'outputMicrographs', None)
-            self.assertIsNotNone(outputMics)
+            outputMovies = getattr(prot, 'outputMovies', None)
+            self.assertIsNotNone(outputMovies)
             self.assertEqual(protImport.outputMovies.getSize(),
-                             outputMics.getSize())
+                             outputMovies.getSize())
 
-            for mic in outputMics:
-                micFn = mic.getFileName()
-                self.assertTrue(os.path.exists(self.proj.getPath(micFn)))
+            for movie in outputMovies:
+                movieFn = movie.getFileName()
+                self.assertTrue(os.path.exists(self.proj.getPath(movieFn)))
 
 
-class TestUnblur(TestMoviesBase):
+class TestMagDistCorr(TestMagDistCorrBase):
     def test_movies(self):
-        self.runBasicTests(ProtUnblur)
-
-
-class TestSummovie(TestMoviesBase):
-    def test_movies(self):
-        self.runBasicTests(ProtSummovie)
-
+        self.runBasicTests(ProtMagDistCorr)
