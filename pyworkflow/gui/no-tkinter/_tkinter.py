@@ -20,34 +20,21 @@
 # * 02111-1307  USA
 # *
 # *  All comments concerning this program package may be sent to the
-# *  e-mail address 'jmdelarosa@cnb.csic.es'
+# *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
 """
-This sub-package contains Relion protocols and tools.
+ This file is just a minimum mockup to avoid _tkinter.so import problems
+ when there is not access to graphical libraries.
 """
 
-from bibtex import _bibtex # Load bibtex dict with references
-_logo = "relion_logo.png"
-_references = ['Scheres2012a', 'Scheres2012b', 'Chen2012']
+class TclError():
+    pass
 
-from convert import *
-from protocol_classify2d import ProtRelionClassify2D
-from protocol_classify3d import ProtRelionClassify3D
-from protocol_refine3d import ProtRelionRefine3D
-from protocol_reconstruct import ProtRelionReconstruct
-from protocol_postprocess import ProtRelionPostprocess
-from protocol_preprocess import ProtRelionPreprocessParticles
-from protocol_polish import ProtRelionPolish
-from protocol_sort import ProtRelionSortParticles
-from protocol_autopick import ProtRelionAutopickFom, ProtRelionAutopick
-from protocol_subtract import ProtRelionSubtract
+TK_VERSION = 0
+TCL_VERSION = 0
+READABLE = 0
+WRITABLE = 0
 
-from protocol_export_ctf import ProtRelionExportCtf
-
-# Wizards
-from wizard import *
-
-from viewer import *
-
-_environ = getEnviron()
+EXCEPTION = 0
