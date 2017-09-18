@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     Amaya Jimenez (ajimenez@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -24,31 +24,4 @@
 # *
 # **************************************************************************
 
-
-from pyworkflow.protocol import (STATUS_SAVED, STATUS_LAUNCHED, STATUS_RUNNING,
-                                 STATUS_FINISHED, STATUS_FAILED,
-                                 STATUS_INTERACTIVE, STATUS_ABORTED,
-                                 STATUS_SCHEDULED)
-
-STATUS_COLORS = {
-               STATUS_SAVED: '#D9F1FA',
-               STATUS_LAUNCHED: '#D9F1FA',
-               STATUS_RUNNING: '#FCCE62',
-               STATUS_FINISHED: '#D2F5CB',
-               STATUS_FAILED: '#F5CCCB',
-               STATUS_INTERACTIVE: '#F3F5CB',
-               STATUS_ABORTED: '#F5CCCB',
-               STATUS_SCHEDULED: '#F3F5CB'
-               }
-
-# Based on: http://paletton.com/palette.php?uid=75C1d0kleqtbzEKgVuIpcmGtdhZ
-# STATUS_COLORS = {
-#     STATUS_SAVED: '#424093',
-#     STATUS_LAUNCHED: '#424093',
-#     STATUS_RUNNING: '#d3b147',
-#     STATUS_FINISHED: '#3fab3a',
-#     STATUS_FAILED: '#d1464a',
-#     STATUS_INTERACTIVE: '#f5d573',
-#     STATUS_ABORTED: '#d1464a',
-#     # STATUS_SAVED: '#124EB0',
-# }
+from protocol_export_emdb import ProtExportEMDB
