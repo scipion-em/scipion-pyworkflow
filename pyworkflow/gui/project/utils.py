@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     Pablo Conesa (pconesa@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -23,18 +23,40 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from pyworkflow.gui.project.constants import STATUS_COLORS
+from pyworkflow.protocol import STATUS_FAILED
 
-"""
-Sub-packages containing different sub-modules to import different type
-of objects.
-"""
 
-from base import ProtImport, ProtImportFiles
-from coordinates import ProtImportCoordinates
-from ctfs import ProtImportCTF
-from images import ProtImportImages
-from masks import ProtImportMask
-from micrographs import ProtImportMicrographs, ProtImportMovies
-from particles import ProtImportParticles, ProtImportAverages
-from volumes import ProtImportVolumes, ProtImportPdb
-from viewer import viewerProtImportVolumes
+def getStatusColorFromNode(node):
+
+    # If it is a run node (not PROJECT)
+    return getStatusColorFromRun(node.run)
+
+
+def getStatusColorFromRun(prot):
+    """
+    Returns the color associated with the status
+    -------
+
+    """
+
+    if prot:
+        return getStatusColor(prot.status.get(STATUS_FAILED))
+    else:
+        return getStatusColor()
+
+
+def getStatusColor(status=None, default='#ADD8E6'):
+    """
+    Parameters
+    ----------
+    status status of the protocol
+
+    Returns the color associated with he status
+    -------
+
+    """
+    if status:
+        return STATUS_COLORS[status]
+    else:
+        return default
