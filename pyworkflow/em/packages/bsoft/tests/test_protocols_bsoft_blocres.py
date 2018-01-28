@@ -1,6 +1,6 @@
 # **************************************************************************
 # *
-# * Authors:    J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:    Jose Luis Vilas Prieto (jlvilas@cnb.csic.es)
 # *
 # * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
@@ -24,77 +24,67 @@
 # *
 # **************************************************************************
 
-import unittest, sys
-# import numpy as np
-
-from pyworkflow.em import *
 from pyworkflow.tests import BaseTest, DataSet, setupTestProject
-from pyworkflow.em.packages.resmap import ProtResMap
+from pyworkflow.em.packages.bsoft.protocol_blocres import BsoftProtBlocres
 from pyworkflow.em.protocol import ProtImportVolumes, ProtImportMask
-from pyworkflow.em.packages.xmipp3 import XmippProtMultipleFSCs
 
 
 
-class TestMultipleFSCsBase(BaseTest):
+class TestBsoftBlocresBase(BaseTest):
     @classmethod
     def setData(cls, dataProject='resmap'):
         cls.dataset = DataSet.getDataSet(dataProject)
-        cls.map3D = cls.dataset.getFile('betagal')
         cls.half1 = cls.dataset.getFile('betagal_half1')
         cls.half2 = cls.dataset.getFile('betagal_half2')
         cls.mask = cls.dataset.getFile('betagal_mask')
 
     @classmethod
-    def runImportVolumes(cls, pattern, samplingRate, label):
+    def runImportVolumes(cls, pattern, samplingRate):
         """ Run an Import volumes protocol. """
         cls.protImport = cls.newProtocol(ProtImportVolumes,
-                                         objLabel=label,
                                          filesPath=pattern,
                                          samplingRate=samplingRate
-                                        )
+                                         )
         cls.launchProtocol(cls.protImport)
         return cls.protImport
-    
+
     @classmethod
-    def runImportMask(cls, pattern, samplingRate, label):
+    def runImportMask(cls, pattern, samplingRate):
         """ Run an Import volumes protocol. """
         cls.protImport = cls.newProtocol(ProtImportMask,
-                                         objLabel=label,
                                          maskPath=pattern,
                                          samplingRate=samplingRate
-                                        )
+                                         )
         cls.launchProtocol(cls.protImport)
         return cls.protImport
 
 
-class TestMultipleFSCs(TestMultipleFSCsBase):
+class TestBsoftBlocres(TestBsoftBlocresBase):
     @classmethod
     def setUpClass(cls):
         setupTestProject(cls)
-        TestMultipleFSCsBase.setData()
-        cls.protImportVol  = cls.runImportVolumes(cls.map3D, 3.54,
-                                                  'import vol')
-        cls.protImportHalf1  = cls.runImportVolumes(cls.half1, 3.54,
-                                                    'import half1')
-        cls.protImportHalf2  = cls.runImportVolumes(cls.half2, 3.54,
-                                                    'import half2')
-        cls.protImportMask  = cls.runImportMask(cls.mask, 3.54,
-                                                'import mask')
+        TestBsoftBlocresBase.setData()
+        cls.protImportHalf1 = cls.runImportVolumes(cls.half1, 3.54)
+        cls.protImportHalf2 = cls.runImportVolumes(cls.half2, 3.54)
+        cls.protCreateMask = cls.runImportMask(cls.mask, 3.54)
 
-    def _runFSC(self, useMask):
-        prot = self.newProtocol(XmippProtMultipleFSCs,
-                                referenceVolume=self.protImportVol.outputVolume)
-        prot.inputVolumes.append(self.protImportHalf1.outputVolume)
-        prot.inputVolumes.append(self.protImportHalf2.outputVolume)
 
-        if useMask:
-            prot.mask.set(self.protImportMask.outputMask)
-        self.launchProtocol(prot)
-
-    def test_case1(self):
-        """  Compute the FSC without mask       """
-        self._runFSC(useMask=True)
-
-    def test_case2(self):
-        """  Compute the FSC without mask       """
-        self._runFSC(useMask=False)
+    def testBlocres1(self):
+        blocres = self.newProtocol(BsoftProtBlocres,
+                                   objLabel='blocres',
+                                   inputVolume=self.protImportHalf1.outputVolume,
+                                   inputVolume2=self.protImportHalf2.outputVolume,
+                                   mask=self.protCreateMask.outputMask,
+                                   method=True,
+                                   box=20,
+                                   resolutionCriterion=0,
+                                   cutoff=0.5,
+                                   step=1,
+                                   maxresolution=2,
+                                   fill=0,
+                                   pad=1,
+                                   symmetry='',
+                                   smooth=True)
+        self.launchProtocol(blocres)
+        self.assertIsNotNone(blocres.resolution_Volume,
+                        "blocres has failed")
