@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -10,7 +11,7 @@
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
-# * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
 # * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # * GNU General Public License for more details.
 # *
@@ -23,281 +24,18 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This modules serve to define some Configuration classes
-mainly for project GUI
-"""
 
 import sys
 import os
 import json
-from collections import OrderedDict
-from ConfigParser import ConfigParser
 import datetime as dt
+from collections import OrderedDict
+from ConfigParser import ConfigParser  # FIXME Does not work in Python3
 
 import pyworkflow as pw
 import pyworkflow.object as pwobj
-import pyworkflow.hosts as pwhosts
-from pyworkflow import em
 from pyworkflow.mapper import SqliteMapper
-from pyworkflow.utils.properties import Icon
 
-ALL_PROTOCOLS = "All"
-
-PATH = os.path.dirname(__file__)
-PROTOCOL_DISABLED_TAG = 'protocol-disabled'
-PROTOCOL_TAG = 'protocol'
-
-
-def loadSettings(dbPath):
-    """ Load a ProjectSettings from dbPath. """
-    classDict = dict(globals())
-    classDict.update(pwobj.__dict__)
-    mapper = SqliteMapper(dbPath, classDict)
-    settingList = mapper.selectByClass('ProjectSettings')
-    n = len(settingList)
-
-    if n == 0:
-        raise Exception("Can't load ProjectSettings from %s" % dbPath)
-    elif n > 1:
-        raise Exception("Only one ProjectSettings is expected in db, found %d in %s" % (n, dbPath))
-
-    settings = settingList[0]
-    settings.mapper = mapper
-
-    return settings
-
-
-def loadHostsConf(hostsConf):
-    """ Load several hosts from a configuration file. 
-    Return an OrderedDict where the keys are the hostname
-    and the values the configuration for each host.
-    """
-    # Read from users' config file.
-    cp = ConfigParser()
-    cp.optionxform = str  # keep case (stackoverflow.com/questions/1611799)
-    hosts = OrderedDict()
-    
-    try:
-        assert cp.read(hostsConf) != [], 'Missing file %s' % hostsConf
-
-        for hostName in cp.sections():
-            host = pwhosts.HostConfig(label=hostName, hostName=hostName)
-            host.setHostPath(pw.SCIPION_USER_DATA)
-
-            # Helper functions (to write less)
-            def get(var, default=None):
-                if cp.has_option(hostName, var):
-                    return cp.get(hostName, var).replace('%_(', '%(')
-                else:
-                    return default
-                
-            def getDict(var):
-                od = OrderedDict()
-
-                if cp.has_option(hostName, var):
-                    for key, value in json.loads(get(var)).iteritems():
-                        od[key] = value                
-                
-                return od
-
-            host.setScipionHome(get('SCIPION_HOME', pw.SCIPION_HOME))
-            host.setScipionConfig(get('SCIPION_CONFIG'))
-            # Read the address of the remote hosts, 
-            # using 'localhost' as default for backward compatibility
-            host.setAddress(get('ADDRESS', 'localhost'))
-            host.mpiCommand.set(get('PARALLEL_COMMAND'))
-            host.queueSystem = pwhosts.QueueSystemConfig()
-            host.queueSystem.name.set(get('NAME'))
-            
-            # If the NAME is not provided or empty
-            # do no try to parse the rest of Queue parameters
-            if host.queueSystem.hasName(): 
-                host.queueSystem.setMandatory(get('MANDATORY', 0))
-                host.queueSystem.submitPrefix.set(get('SUBMIT_PREFIX', ''))
-                host.queueSystem.submitCommand.set(get('SUBMIT_COMMAND'))
-                host.queueSystem.submitTemplate.set(get('SUBMIT_TEMPLATE'))
-                host.queueSystem.cancelCommand.set(get('CANCEL_COMMAND'))
-                host.queueSystem.checkCommand.set(get('CHECK_COMMAND'))
-    
-                host.queueSystem.queues = getDict('QUEUES')
-                host.queueSystem.queuesDefault = getDict('QUEUES_DEFAULT')
-                
-            hosts[hostName] = host
-
-        return hosts
-    except Exception as e:
-        sys.exit('Failed to read settings. The reported error was:\n  %s\n'
-                 'To solve it, delete %s and run again.' % (e, hostsConf))
-
-
-# Helper function to recursively add items to a menu.
-def addToTree(menu, item, checkFunction=None):
-    """Add item (a dictionary that can contain more dictionaries) to menu
-    If check function is added will use it to check if the value must be added"""
-    children = item.pop('children', [])
-
-    if checkFunction is not None:
-        add = checkFunction(item)
-        if not add:
-            return
-
-    subMenu = menu.addSubMenu(**item)  # we expect item={'text': ...}
-    for child in children:
-        addToTree(subMenu, child, checkFunction)  # add recursively to sub-menu
-
-    return subMenu
-
-
-def loadProtocolsConf(protocolsConf):
-    """ Read the protocol configuration from a .conf
-    file similar to the one in ~/.config/scipion/protocols.conf,
-    which is the default one when no file is passed.
-    """
-    # Read menus from users' config file.
-    cp = ConfigParser()
-    cp.optionxform = str  # keep case (stackoverflow.com/questions/1611799)
-    protocols = OrderedDict()
-    
-    try:
-        assert cp.read(protocolsConf) != [], 'Missing file %s' % protocolsConf
-
-        # Function to check if the protocol has to be added or not
-        # It'll receive an item as in the confg:
-        # {"tag": "protocol", "value": "ProtImportMovies", "text": "import movies"}
-        def addItem(item):
-
-            # If it is a protocol
-            if item["tag"] == "protocol":
-                # Get the class name and then if it is disabled
-                protClassName = item["value"]
-                protClass = em.Domain.getProtocols().get(protClassName)
-                if protClass is None:
-                    return False
-                else:
-                    return not protClass.isDisabled()
-            else:
-                return True
-
-        # Populate the protocols menu from the config file.
-        for menuName in cp.options('PROTOCOLS'):
-            menu = ProtocolConfig(menuName)
-            children = json.loads(cp.get('PROTOCOLS', menuName))
-            for child in children:
-                addToTree(menu, child, addItem)
-            protocols[menuName] = menu
-
-        addAllProtocols(protocols)
-
-        return protocols
-    
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        sys.exit('Failed to read settings. The reported error was:\n  %s\n'
-                 'To solve it, delete %s and run again.' % (e, protocolsConf))
-
-
-def isAFinalProtocol(v, k):
-    from pyworkflow.viewer import ProtocolViewer
-    if issubclass(v, ProtocolViewer):
-        return False
-    elif v.isBase() or v.isDisabled():
-        return False
-
-    # To remove duplicated protocol, ProtMovieAlignment turns into OF:
-    # ProtMovieAlignment = XmippProtOFAlignment
-    elif v.__name__ != k:
-        return False
-    else:
-        return True
-
-
-def addAllProtocols(protocols):
-    # Add all protocols
-    # FIXME: Check why this import is here
-    from pyworkflow.em import Domain
-    allProts = Domain.getProtocols()
-
-    # Sort the dictionary
-    allProtsSorted = OrderedDict(sorted(allProts.items(), key= lambda e: e[1].getClassLabel()))
-
-    allProtMenu = ProtocolConfig(ALL_PROTOCOLS)
-    packages = {}
-    # Group protocols by package name
-    for k, v in allProtsSorted.iteritems():
-
-        if isAFinalProtocol(v, k):
-
-            packageName = v.getClassPackageName()
-
-            # Get the package submenu
-            packageMenu = packages.get(packageName)
-
-            # If no package menu available
-            if packageMenu is None:
-
-                # Add it to the menu ...
-                packageLine = {"tag": "package", "value": packageName,
-                               "text": packageName}
-                packageMenu = addToTree(allProtMenu, packageLine)
-
-                # Store it in the dict
-                packages[packageName] = packageMenu
-
-            # Add the protocol
-            tag = getProtocolTag(v.isInstalled())
-
-            protLine = {"tag": tag, "value": k,
-                        "text": v.getClassLabel(prependPackageName=False)}
-
-            # If it's a new protocol
-            if v.isNew() and v.isInstalled():
-                # add the new icon
-                protLine["icon"] = "newProt.png"
-
-            addToTree(packageMenu, protLine)
-
-    protocols[ALL_PROTOCOLS] = allProtMenu
-
-
-def getProtocolTag(isInstalled):
-    return PROTOCOL_TAG if isInstalled else PROTOCOL_DISABLED_TAG
-
-
-def loadWebConf():
-    """ Load configuration parameters to be used in web.
-    By default read from: scipion.conf
-    """
-    # Read menus from users' config file.
-    cp = ConfigParser()
-    cp.optionxform = str  # keep case (stackoverflow.com/questions/1611799)
-    webConf = OrderedDict()
-
-    confFile = os.environ['SCIPION_CONFIG']
-    
-    assert cp.read(confFile) != [], 'Missing file %s' % confFile
-
-    # Set options from WEB main section
-    def setw(option, default):
-        if cp.has_option('WEB', option):
-            webConf[option] = cp.get('WEB', option)
-        else: 
-            webConf[option] = default
-            
-    setw('SITE_URL', 'scipion.cnb.csic.es')
-    setw('ABSOLUTE_URL', '')
-    
-    # Load some parameters per protocol
-    protocols = OrderedDict()
-    webConf['PROTOCOLS'] = protocols
-    
-    if cp.has_section('WEB_PROTOCOLS'):
-        for protName in cp.options('WEB_PROTOCOLS'):
-            protocols[protName] = json.loads(cp.get('WEB_PROTOCOLS', protName)) 
-    
-    return webConf
-    
 
 class ProjectSettings(pwobj.OrderedObject):
     """ Store settings related to a project. """
@@ -310,8 +48,10 @@ class ProjectSettings(pwobj.OrderedObject):
     def __init__(self, confs={}, **kwargs):
         pwobj.OrderedObject.__init__(self, **kwargs)
         self.config = ProjectConfig()
-        self.currentProtocolsView = pwobj.String()  # Store the current view selected by the user
-        self.colorMode = pwobj.Integer(ProjectSettings.COLOR_MODE_STATUS)  # Store the color mode: 0= Status, 1=Labels, ...
+        # Store the current view selected by the user
+        self.currentProtocolsView = pwobj.String()
+        # Store the color mode: 0= Status, 1=Labels, ...
+        self.colorMode = pwobj.Integer(ProjectSettings.COLOR_MODE_STATUS)
         self.nodeList = NodeConfigList()  # Store graph nodes positions and other info
         self.labelsList = LabelsList()  # Label list
         self.mapper = None  # This should be set when load, or write
@@ -321,7 +61,8 @@ class ProjectSettings(pwobj.OrderedObject):
         self.dataSelection = pwobj.CsvList(int)  # Store selected runs
         # Some extra settings stored, now mainly used
         # from the webtools
-        self.creationTime = pwobj.String(dt.datetime.now()) # Time when the project was created
+        # Time when the project was created
+        self.creationTime = pwobj.String(dt.datetime.now())
         # Number of days that this project is active
         # if None, the project will not expire
         # This is used in webtools where a limited time
@@ -329,7 +70,7 @@ class ProjectSettings(pwobj.OrderedObject):
         self.lifeTime = pwobj.Integer()
         # Set a disk quota for the project (in Gb)
         # if None, quota is unlimited
-        self.diskQuota = pwobj.Integer()          
+        self.diskQuota = pwobj.Integer()
 
     def commit(self):
         """ Commit changes made. """
@@ -337,25 +78,25 @@ class ProjectSettings(pwobj.OrderedObject):
 
     def getRunsView(self):
         return self.runsView.get()
-    
+
     def setRunsView(self, value):
         self.runsView.set(value)
-        
+
     def getReadOnly(self):
         return self.readOnly.get()
-    
+
     def setReadOnly(self, value):
         self.readOnly.set(value)
-        
+
     def getCreationTime(self):
         return self.creationTime.datetime()
 
     def setCreationTime(self, value):
         self.creationTime.set(value)
-        
+
     def getLifeTime(self):
         return self.lifeTime.get()
-    
+
     def setLifeTime(self, value):
         self.lifeTime.set(value)
 
@@ -387,6 +128,7 @@ class ProjectSettings(pwobj.OrderedObject):
 
     def ageColorMode(self):
         return self.getColorMode() == self.COLOR_MODE_AGE
+
     def write(self, dbPath=None):
         self.setName('ProjectSettings')
         if dbPath is not None:
@@ -398,19 +140,38 @@ class ProjectSettings(pwobj.OrderedObject):
         self.mapper.deleteAll()
         self.mapper.insert(self)
         self.mapper.commit()
-        
+
     def getNodes(self):
         return self.nodeList
-    
+
     def getNodeById(self, nodeId):
         return self.nodeList.getNode(nodeId)
-    
+
     def addNode(self, nodeId, **kwargs):
         return self.nodeList.addNode(nodeId, **kwargs)
 
     def getLabels(self):
         return self.labelsList
-    
+
+    @classmethod
+    def load(cls, dbPath):
+        """ Load a ProjectSettings from dbPath. """
+        classDict = dict(globals())
+        classDict.update(pwobj.__dict__)
+        mapper = SqliteMapper(dbPath, classDict)
+        settingList = mapper.selectByClass('ProjectSettings')
+        n = len(settingList)
+
+        if n == 0:
+            raise Exception("Can't load ProjectSettings from %s" % dbPath)
+        elif n > 1:
+            raise Exception("Only one ProjectSettings is expected in db, found %d in %s" % (n, dbPath))
+
+        settings = settingList[0]
+        settings.mapper = mapper
+
+        return settings
+
 
 class ProjectConfig(pwobj.OrderedObject):
     """A simple base class to store ordered parameters"""
@@ -575,20 +336,6 @@ class NodeConfigList(pwobj.List):
         pwobj.List.clear(self)
         self._nodesDict.clear()
         
-        
-class DownloadRecord(pwobj.OrderedObject):
-    """ Store information about Scipion downloads. """
-    def __init__(self, **kwargs):
-        pwobj.OrderedObject.__init__(self, **kwargs)
-        
-        self.fullName = pwobj.String(kwargs.get('fullName', None))
-        self.organization = pwobj.String(kwargs.get('organization', None))
-        self.email = pwobj.String(kwargs.get('email', None))
-        self.subscription = pwobj.String(kwargs.get('subscription', None))
-        self.country = pwobj.String(kwargs.get('country', None))
-        self.version = pwobj.String(kwargs.get('version', None))
-        self.platform = pwobj.String(kwargs.get('platform', None))
-
 
 class Label(pwobj.Scalar):
     """ Store Label information """
@@ -661,3 +408,220 @@ class LabelsList(pwobj.List):
     def clear(self):
         pwobj.List.clear(self)
         self._labelDict.clear()
+
+
+class ProtocolTreeConfig:
+    """ Handler class that groups functions and constants
+    related to the protocols tree configuration.
+    """
+    ALL_PROTOCOLS = "All"
+    TAG_PROTOCOL_DISABLED = 'protocol-disabled'
+    TAG_PROTOCOL = 'protocol'
+    TAG_SECTION = 'section'
+    TAG_PROTOCOL_GROUP = 'protocol_group'
+    PLUGIN_CONFIG_PROTOCOLS = 'protocols.conf'
+
+    @classmethod
+    def getProtocolTag(cls, isInstalled):
+        """ Return the proper tag depending if the protocol is installed or not.
+        """
+        return cls.TAG_PROTOCOL if isInstalled else cls.TAG_PROTOCOL_DISABLED
+
+    @classmethod
+    def isAFinalProtocol(cls, v, k):
+        if (issubclass(v, pw.viewer.ProtocolViewer) or
+            v.isBase() or v.isDisabled()):
+            return False
+
+        # To remove duplicated protocol, ProtMovieAlignment turns into OF:
+        # ProtMovieAlignment = XmippProtOFAlignment
+        return v.__name__ == k
+
+    @classmethod
+    def __addToTree(cls, menu, item, checkFunction=None):
+        """ Helper function to recursively add items to a menu.
+        Add item (a dictionary that can contain more dictionaries) to menu
+        If check function is added will use it to check if the value must be added.
+        """
+        children = item.pop('children', [])
+
+        if checkFunction is not None:
+            add = checkFunction(item)
+            if not add:
+                return
+        subMenu = menu.addSubMenu(**item)  # we expect item={'text': ...}
+        for child in children:
+            cls.__addToTree(subMenu, child, checkFunction)  # add recursively to sub-menu
+
+        return subMenu
+
+    @classmethod
+    def __inSubMenu(cls, child, subMenu):
+        """
+        Return True if child belongs to subMenu
+        """
+        for ch in subMenu:
+            if child['tag'] == cls.TAG_PROTOCOL:
+                if ch.value == child['value']:
+                    return ch
+            elif ch.text == child['text']:
+                return ch
+        return None
+
+    @classmethod
+    def _orderSubMenu(cls, session):
+        """
+        Order all children of a given session:
+        The protocols first, then the sessions(the 'more' session at the end)
+        """
+        lengthSession = len(session.childs)
+        if lengthSession > 1:
+            childs = session.childs
+            lastChildPos = lengthSession - 1
+            if childs[lastChildPos].tag == cls.TAG_PROTOCOL:
+                for i in range(lastChildPos - 1, -1, -1):
+                    if childs[i].tag == cls.TAG_PROTOCOL:
+                        break
+                    else:
+                        tmp = childs[i+1]
+                        childs[i+1] = childs[i]
+                        childs[i] = tmp
+            else:
+                for i in range(lastChildPos - 1, -1, -1):
+                    if childs[i].tag == cls.TAG_PROTOCOL:
+                        break
+                    elif 'more' in str(childs[i].text).lower():
+                        tmp = childs[i+1]
+                        childs[i+1] = childs[i]
+                        childs[i] = tmp
+
+    @classmethod
+    def __findTreeLocation(cls, subMenu, children, parent):
+        """
+        Locate the protocol position in the given view
+        """
+        for child in children:
+            sm = cls.__inSubMenu(child, subMenu)
+            if sm is None:
+                cls.__addToTree(parent, child, cls.__checkItem)
+                cls._orderSubMenu(parent)
+            elif child['tag'] == cls.TAG_PROTOCOL_GROUP or child['tag'] == cls.TAG_SECTION:
+                cls.__findTreeLocation(sm.childs, child['children'], sm)
+
+    @classmethod
+    def __checkItem(cls, item):
+        """ Function to check if the protocol has to be added or not.
+        Params:
+            item: {"tag": "protocol", "value": "ProtImportMovies",
+                   "text": "import movies"}
+        """
+        if item["tag"] != cls.TAG_PROTOCOL:
+            return True
+
+        # It is a protocol as this point, get the class name and
+        # check if it is disabled
+        protClassName = item["value"]
+        protClass = pw.em.Domain.getProtocols().get(protClassName)
+
+        return False if protClass is None else not protClass.isDisabled()
+
+    @classmethod
+    def __addAllProtocols(cls, protocols):
+        # Add all protocols
+        # FIXME: Check why this import is here
+        allProts = pw.em.Domain.getProtocols()
+
+        # Sort the dictionary
+        allProtsSorted = OrderedDict(sorted(allProts.items(),
+                                            key=lambda e: e[1].getClassLabel()))
+        allProtMenu = ProtocolConfig(cls.ALL_PROTOCOLS)
+        packages = {}
+
+        # Group protocols by package name
+        for k, v in allProtsSorted.iteritems():
+            if cls.isAFinalProtocol(v, k):
+                packageName = v.getClassPackageName()
+                # Get the package submenu
+                packageMenu = packages.get(packageName)
+
+                # If no package menu available
+                if packageMenu is None:
+                    # Add it to the menu ...
+                    packageLine = {"tag": "package", "value": packageName,
+                                   "text": packageName}
+                    packageMenu = cls.__addToTree(allProtMenu, packageLine)
+
+                    # Store it in the dict
+                    packages[packageName] = packageMenu
+
+                # Add the protocol
+                tag = cls.getProtocolTag(v.isInstalled())
+
+                protLine = {"tag": tag, "value": k,
+                            "text": v.getClassLabel(prependPackageName=False)}
+
+                # If it's a new protocol
+                if v.isNew() and v.isInstalled():
+                    # add the new icon
+                    protLine["icon"] = "newProt.png"
+
+                cls.__addToTree(packageMenu, protLine)
+
+        protocols[cls.ALL_PROTOCOLS] = allProtMenu
+
+    @classmethod
+    def __addProtocolsFromConf(cls, protocols, protocolsConfPath):
+        """
+        Load the protocols in the tree from a given protocols.conf file,
+        either the global one in Scipion or defined in a plugin.
+        """
+        # Populate the protocols menu from the plugin config file.
+        if os.path.exists(protocolsConfPath):
+            cp = ConfigParser()
+            cp.optionxform = str  # keep case
+            cp.read(protocolsConfPath)
+            #  Ensure that the protocols section exists
+            if cp.has_section('PROTOCOLS'):
+                for menuName in cp.options('PROTOCOLS'):
+                    if menuName not in protocols:  # The view has not been inserted
+                        menu = ProtocolConfig(menuName)
+                        children = json.loads(cp.get('PROTOCOLS', menuName))
+                        for child in children:
+                            cls.__addToTree(menu, child, cls.__checkItem)
+                        protocols[menuName] = menu
+                    else:  # The view has been inserted
+                        menu = protocols.get(menuName)
+                        children = json.loads(cp.get('PROTOCOLS',
+                                                     menuName))
+                        cls.__findTreeLocation(menu.childs, children, menu)
+
+    @classmethod
+    def load(cls, protocolsConf):
+        """ Read the protocol configuration from a .conf file similar to the
+        one in scipion/config/protocols.conf,
+        which is the default one when no file is passed.
+        """
+
+        protocols = OrderedDict()
+        # Read the protocols.conf from Scipion (base) and create an initial
+        # tree view
+        cls.__addProtocolsFromConf(protocols, protocolsConf[0])
+
+        # Read the protocols.conf of any installed plugin
+        pluginDict = pw.em.Domain.getPlugins()
+        pluginList = pluginDict.keys()
+        for pluginName in pluginList:
+            try:
+                # Locate the plugin protocols.conf file
+                protocolsConfPath = os.path.join(pluginDict[pluginName].__path__[0],
+                                                 cls.PLUGIN_CONFIG_PROTOCOLS)
+                cls.__addProtocolsFromConf(protocols, protocolsConfPath)
+            except Exception as e:
+                print('Failed to read settings. The reported error was:\n  %s\n'
+                      'To solve it, fix %s and run again.' % (
+                            e, protocolsConfPath))
+
+            # Add all protocols to All view
+        cls.__addAllProtocols(protocols)
+
+        return protocols

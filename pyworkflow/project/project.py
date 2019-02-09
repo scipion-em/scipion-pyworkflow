@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -23,29 +24,27 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-"""
-This modules handles the Project management
-"""
 
+import datetime as dt
+import json
 import os
 import re
-import json
-import traceback
 import time
+import traceback
 from collections import OrderedDict
-import datetime as dt
 
+import pyworkflow as pw
 import pyworkflow.em as em
-import pyworkflow.config as pwconfig
-import pyworkflow.hosts as pwhosts
-import pyworkflow.protocol as pwprot
 import pyworkflow.object as pwobj
+import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import MODE_RESTART, MODE_CONTINUE
 
-OBJECT_PARENT_ID = 'object_parent_id'
+import config
 
+
+OBJECT_PARENT_ID = pwobj.OBJECT_PARENT_ID
 PROJECT_DBNAME = 'project.sqlite'
 PROJECT_LOGS = 'Logs'
 PROJECT_RUNS = 'Runs'
@@ -53,24 +52,21 @@ PROJECT_TMP = 'Tmp'
 PROJECT_UPLOAD = 'Uploads'
 PROJECT_SETTINGS = 'settings.sqlite'
 PROJECT_CONFIG = '.config'
-PROJECT_CONFIG_PROTOCOLS = 'protocols.conf'
-
 PROJECT_CREATION_TIME = 'CreationTime'
-
-# Allow the name of the host configuration to be changed.
-# This is useful for having the same central installation that
-# could be used from different environments (cluster vs workstations)
-PROJECT_CONFIG_HOSTS = os.environ.get('SCIPION_CONFIG_HOSTS', 'hosts.conf')
-
 
 # Regex to get numbering suffix and automatically propose runName
 REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
-REGEX_NUMBER_ENDING_CP=re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
+REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
 
 
 class Project(object):
     """This class will handle all information 
     related with a Project"""
+
+    @classmethod
+    def getDbName(cls):
+        """ Return the name of the database file of projects. """
+        return PROJECT_DBNAME
 
     def __init__(self, path):
         """Create a project associated with a given path"""
@@ -121,9 +117,11 @@ class Project(object):
             return os.path.join(*paths)
         else:
             return self.path
+
     def isLink(self):
         """Returns if the project path is a link to another folder."""
         return self._isLink
+
     def getDbPath(self):
         """ Return the path to the sqlite db. """
         return self.dbPath
@@ -141,25 +139,17 @@ class Project(object):
     def getSettingsCreationTime(self):
         return self.settings.getCreationTime()
 
-    # def getElapsedTime(self):
-    #     """ Return the time since the project was created. """
-    #     return dt.datetime.now() - self.getCreationTime()
-    #
     def getElapsedTime(self):
-        """ Returns the time elapsed from the creation to the last execution time"""
-
+        """ Returns the time elapsed from the creation to the last
+        execution time. """
         if self._creationTime and self._lastRunTime:
-
             creationTs = self._creationTime
             lastRunTs = self._lastRunTime.datetime()
-
-            return lastRunTs-creationTs
+            return lastRunTs - creationTs
         return None
-
 
     def getLeftTime(self):
         lifeTime = self.settings.getLifeTime()
-
         if lifeTime:
             td = dt.timedelta(hours=lifeTime)
             return td - self.getElapsedTime()
@@ -199,7 +189,7 @@ class Project(object):
             self.settings.write()
 
     def createSettings(self, runsView=1, readOnly=False):
-        self.settings = pwconfig.ProjectSettings()
+        self.settings = config.ProjectSettings()
         self.settings.setRunsView(runsView)
         self.settings.setReadOnly(readOnly)
         self.settings.write(self.settingsPath)
@@ -211,8 +201,7 @@ class Project(object):
         """
         classesDict = pwobj.Dict(default=pwprot.LegacyProtocol)
         classesDict.update(pwobj.__dict__)
-        classesDict.update(pwconfig.__dict__)
-        classesDict.update(pwhosts.__dict__)
+        classesDict.update(config.__dict__)
         classesDict.update(em.Domain.getProtocols())
         classesDict.update(em.Domain.getObjects())
         return SqliteMapper(sqliteFn, classesDict)
@@ -233,22 +222,20 @@ class Project(object):
         """
 
         if not os.path.exists(self.path):
-            raise Exception(
-                "Cannot load project, path doesn't exist: %s" % self.path)
+            raise Exception("Cannot load project, path doesn't exist: %s"
+                            % self.path)
 
         # If folder is read only, flag it and warn about it.
         if not os.access(self.path, os.W_OK):
             self._isInReadOnlyFolder = True
-            print("WARNING on project \"%s\": don't have write permissions for project folder. "
-                  "Loading as READ-ONLY." % self.shortName)
+            print("WARNING on project \"%s\": don't have write permissions "
+                  "for project folder. Loading as READ-ONLY." % self.shortName)
 
         if chdir:
             os.chdir(self.path)  # Before doing nothing go to project dir
 
         try:
-
             self._loadDb(dbPath)
-
             self._loadHosts(hostsConf)
 
             if loadAllConfig:
@@ -260,9 +247,12 @@ class Project(object):
                 # we are loading a project after a Project.setDbName,
                 # used when running protocols
                 settingsPath = os.path.join(self.path, self.settingsPath)
+                print("settingsPath: ", settingsPath)
+
                 if os.path.exists(settingsPath):
-                    self.settings = pwconfig.loadSettings(settingsPath)
+                    self.settings = config.ProjectSettings.load(settingsPath)
                 else:
+                    print("settings is None")
                     self.settings = None
 
             self._loadCreationTime()
@@ -274,10 +264,9 @@ class Project(object):
             raise noDBe
 
         # Catch any less severe exception..to allow at least open the project.
-        except Exception as e:
-            print("ERROR: Project %s load failed.\n"
-                 "       Message: %s\n" % (self.path, e))
-
+        # except Exception as e:
+        #     print("ERROR: Project %s load failed.\n"
+        #           "       Message: %s\n" % (self.path, e))
 
     def _loadCreationTime(self):
         # Load creation time, it should be in project.sqlite or
@@ -301,7 +290,8 @@ class Project(object):
 
         absDbPath = os.path.join(self.path, self.dbPath)
         if not os.path.exists(absDbPath):
-            raise MissingProjectDbException("Project database not found at '%s'" % absDbPath)
+            raise MissingProjectDbException(
+                "Project database not found at '%s'" % absDbPath)
         self.mapper = self.createMapper(absDbPath)
 
     def closeMapper(self):
@@ -312,7 +302,8 @@ class Project(object):
     def _loadHosts(self, hosts):
         """ Loads hosts configuration from hosts file. """
         # If the host file is not passed as argument...
-        projHosts = self.getPath(PROJECT_CONFIG, PROJECT_CONFIG_HOSTS)
+        configHosts = pw.Config.SCIPION_CONFIG_HOSTS
+        projHosts = self.getPath(PROJECT_CONFIG, configHosts)
 
         if hosts is None:
             # Try first to read it from the project file .config./hosts.conf
@@ -321,17 +312,18 @@ class Project(object):
             else:
                 localDir = os.path.dirname(os.environ['SCIPION_LOCAL_CONFIG'])
                 hostsFile = [os.environ['SCIPION_HOSTS'],
-                             os.path.join(localDir, PROJECT_CONFIG_HOSTS)]
+                             os.path.join(localDir, configHosts)]
         else:
             pwutils.copyFile(hosts, projHosts)
             hostsFile = hosts
 
-        self._hosts = pwconfig.loadHostsConf(hostsFile)
+        self._hosts = pwprot.HostConfig.load(hostsFile)
 
     def _loadProtocols(self, protocolsConf):
         """ Load protocol configuration from a .conf file. """
         # If the host file is not passed as argument...
-        projProtConf = self.getPath(PROJECT_CONFIG, PROJECT_CONFIG_PROTOCOLS)
+        configProtocols = pw.Config.SCIPION_CONFIG_PROTOCOLS
+        projProtConf = self.getPath(PROJECT_CONFIG, configProtocols)
 
         if protocolsConf is None:
             # Try first to read it from the project file .config/hosts.conf
@@ -340,12 +332,12 @@ class Project(object):
             else:
                 localDir = os.path.dirname(os.environ['SCIPION_LOCAL_CONFIG'])
                 protConf = [os.environ['SCIPION_PROTOCOLS'],
-                            os.path.join(localDir, 'protocols.conf')]
+                            os.path.join(localDir, configProtocols)]
         else:
             pwutils.copyFile(protocolsConf, projProtConf)
             protConf = protocolsConf
 
-        self._protocolViews = pwconfig.loadProtocolsConf(protConf)
+        self._protocolViews = config.ProtocolTreeConfig.load(protConf)
 
     def getHostNames(self):
         """ Return the list of host name in the project. """
@@ -356,8 +348,8 @@ class Project(object):
             hostKey = hostName
         else:
             hostKey = self._hosts.keys()[0]
-            print "PROJECT: Warning, protocol host '%s' not found." % hostName
-            print "         Using '%s' instead." % hostKey
+            print("PROJECT: Warning, protocol host '%s' not found." % hostName)
+            print("         Using '%s' instead." % hostKey)
 
         return self._hosts[hostKey]
 
@@ -375,8 +367,8 @@ class Project(object):
         else:
             viewKey = self._protocolViews.keys()[0]
             self.settings.setProtocolView(viewKey)
-            print "PROJECT: Warning, protocol view '%s' not found." % currentView
-            print "         Using '%s' instead." % viewKey
+            print("PROJECT: Warning, protocol view '%s' not found." % currentView)
+            print("         Using '%s' instead." % viewKey)
 
         return self._protocolViews[viewKey]
 
@@ -404,7 +396,6 @@ class Project(object):
             pwutils.path.makePath(p)
 
         self._loadHosts(hostsConf)
-
         self._loadProtocols(protocolsConf)
 
     def _storeCreationTime(self, creationTime):
@@ -802,7 +793,7 @@ class Project(object):
             if wd.startswith(PROJECT_RUNS):
                 pwutils.path.cleanPath(wd)
             else:
-                print "Error path: ", wd
+                print("Error path: ", wd)
 
         self.mapper.commit()
 
@@ -1078,7 +1069,7 @@ class Project(object):
             protClass = emProtocols.get(protClassName, None)
 
             if protClass is None:
-                print "ERROR: protocol class name '%s' not found" % protClassName
+                print("ERROR: protocol class name '%s' not found" % protClassName)
             else:
                 protLabel = protDict.get('object.label', None)
                 prot = self.newProtocol(protClass,
@@ -1248,8 +1239,6 @@ class Project(object):
 
                 self._annotateLastRunTime(r.endTime)
 
-            # cursor = self.mapper.db.executeCommand('SELECT * FROM Objects WHERE parent_Id IS NOT NULL ORDER BY parent_id, name')
-
             self.mapper.commit()
 
         return self.runs
@@ -1267,15 +1256,14 @@ class Project(object):
             return
 
     def needRefresh(self):
-        """ True if any run is active and its timestamp is older than its corresponding runs.db
-        NOTE: If an external script changes the DB this will fail. It uses only in memory objects."""
-        # Loop through the runs
+        """ True if any run is active and its timestamp is older than its
+        corresponding runs.db
+        NOTE: If an external script changes the DB this will fail. It uses
+        only in memory objects."""
         for run in self.runs:
-
             if run.isActive():
                 if not pwprot.isProtocolUpToDate(run):
                     return True
-
         return False
 
     def checkPid(self, protocol):
@@ -1313,7 +1301,8 @@ class Project(object):
         """
 
         if refresh or self._runsGraph is None:
-            runs = [r for r in self.getRuns(refresh=refresh, checkPids=checkPids) if not r.isChild()]
+            runs = [r for r in self.getRuns(refresh=refresh, checkPids=checkPids)
+                    if not r.isChild()]
             self._runsGraph = self.getGraphFromRuns(runs)
 
         return self._runsGraph
@@ -1333,7 +1322,8 @@ class Project(object):
             n.setLabel(r.getRunName())
             outputDict[r.getObjId()] = n
             for _, attr in r.iterOutputAttributes(em.EMObject):
-                outputDict[attr.getObjId()] = n # mark this output as produced by r
+                # mark this output as produced by r
+                outputDict[attr.getObjId()] = n
 
         def _checkInputAttr(node, pointed):
             """ Check if an attr is registered as output"""
@@ -1343,7 +1333,8 @@ class Project(object):
                 if pointedId in outputDict:
                     parentNode = outputDict[pointedId]
                     if parentNode is node:
-                        print "WARNING: Found a cyclic dependence from node %s to itself, problably a bug. " % pointedId
+                        print("WARNING: Found a cyclic dependence from node "
+                              "%s to itself, problably a bug. " % pointedId)
                     else:
                         parentNode.addChild(node)
                         return True
@@ -1354,8 +1345,8 @@ class Project(object):
             for _, attr in r.iterInputAttributes():
                 if attr.hasValue():
                     pointed = attr.getObjValue()
-                    # Only checking pointed object and its parent, if more levels
-                    # we need to go up to get the correct dependencies
+                    # Only checking pointed object and its parent, if more
+                    # levels we need to go up to get the correct dependencies
                     if not _checkInputAttr(node, pointed):
                         parent = self.mapper.getParent(pointed)
                         _checkInputAttr(node, parent)
@@ -1366,7 +1357,6 @@ class Project(object):
         for n in g.getNodes():
             if n.isRoot() and not n is rootNode:
                 rootNode.addChild(n)
-
         return g
 
     def _getRelationGraph(self, relation=em.RELATION_SOURCE, refresh=False):
@@ -1392,8 +1382,8 @@ class Project(object):
 
             # Duplicated ...
             if pObj is None:
-                print "WARNING: Relation seems to point to a deleted object. " \
-                      "%s: %s" % (OBJECT_PARENT_ID, rel[OBJECT_PARENT_ID])
+                print("WARNING: Relation seems to point to a deleted object. "
+                      "%s: %s" % (OBJECT_PARENT_ID, rel[OBJECT_PARENT_ID]))
                 continue
 
             pExt = rel['object_parent_extended']
@@ -1495,8 +1485,8 @@ class Project(object):
             pObj = self.getObject(rel[OBJECT_PARENT_ID])
 
             if pObj is None:
-                print "WARNING: Relation seems to point to a deleted object. " \
-                      "%s: %s" % (OBJECT_PARENT_ID, rel[OBJECT_PARENT_ID])
+                print("WARNING: Relation seems to point to a deleted object. "
+                      "%s: %s" % (OBJECT_PARENT_ID, rel[OBJECT_PARENT_ID]))
                 continue
             pExt = rel['object_parent_extended']
             pp = pwobj.Pointer(pObj, extended=pExt)
@@ -1562,14 +1552,17 @@ class Project(object):
                         if not os.path.exists(f):
                             if not broken:
                                 broken = True
-                                print "Found broken links in run: ", pwutils.magenta(prot.getRunName())
-                            print "  Missing: ", pwutils.magenta(f)
+                                print("Found broken links in run: ",
+                                      pwutils.magenta(prot.getRunName()))
+                            print("  Missing: ", pwutils.magenta(f))
                             if os.path.islink(f):
-                                print "    -> ", pwutils.red(os.path.realpath(f))
-                            newFile = pwutils.findFile(os.path.basename(f), searchDir, recursive=True)
+                                print("    -> ", pwutils.red(os.path.realpath(f)))
+                            newFile = pwutils.findFile(os.path.basename(f),
+                                                       searchDir,
+                                                       recursive=True)
                             if newFile:
-                                print "  Found file %s, creating link..." % newFile
-                                print pwutils.green("   %s -> %s" % (f, newFile))
+                                print("  Found file %s, creating link..." % newFile,
+                                      pwutils.green("   %s -> %s" % (f, newFile)))
                                 pwutils.createAbsLink(newFile, f)
 
 
