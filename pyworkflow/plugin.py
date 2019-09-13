@@ -35,8 +35,8 @@ from email import message_from_string
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
+import pyworkflow as pw
 import pyworkflow.utils as pwutils
-from pyworkflow.install import Environment
 
 
 class Domain:
@@ -280,7 +280,7 @@ class Plugin:
         to the default value.
         """
         cls._defineVar(varName,
-                       os.path.join(Environment.getEm(defaultValue)))
+                       os.path.join(pw.Config.SCIPION_EM_ROOT, defaultValue))
 
     @classmethod
     @abstractmethod
