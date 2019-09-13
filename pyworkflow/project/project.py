@@ -34,7 +34,6 @@ import traceback
 from collections import OrderedDict
 
 import pyworkflow as pw
-import pyworkflow.em as em
 import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
@@ -69,9 +68,14 @@ class Project(object):
         """ Return the name of the database file of projects. """
         return PROJECT_DBNAME
 
-    def __init__(self, path):
-        """Create a project associated with a given path"""
-        # To create a Project, a path is required
+    def __init__(self, domain, path):
+        """
+        Create a new Project instance.
+        :param domain: The application domain from where to get objects and
+            protocols.
+        :param path: Path where the project will be created/loaded
+        """
+        self._domain = domain
         self.name = path
         self.shortName = os.path.basename(path)
         self.path = os.path.abspath(path)
@@ -203,8 +207,8 @@ class Project(object):
         classesDict = pwobj.Dict(default=pwprot.LegacyProtocol)
         classesDict.update(pwobj.__dict__)
         classesDict.update(config.__dict__)
-        classesDict.update(em.Domain.getProtocols())
-        classesDict.update(em.Domain.getObjects())
+        classesDict.update(self._domain.getProtocols())
+        classesDict.update(self._domain.getObjects())
         return SqliteMapper(sqliteFn, classesDict)
 
     def load(self, dbPath=None, hostsConf=None, protocolsConf=None, chdir=True,
@@ -1097,7 +1101,7 @@ class Project(object):
         importDir = os.path.dirname(filename)
         protocolsList = json.load(f)
 
-        emProtocols = em.Domain.getProtocols()
+        emProtocols = self._domain.getProtocols()
         newDict = OrderedDict()
 
         # First iteration: create all protocols and setup parameters
@@ -1397,7 +1401,7 @@ class Project(object):
                 rootNode.addChild(n)
         return g
 
-    def _getRelationGraph(self, relation=em.RELATION_SOURCE, refresh=False):
+    def _getRelationGraph(self, relation=pwobj.RELATION_SOURCE, refresh=False):
         """ Retrieve objects produced as outputs and
         make a graph taking into account the SOURCE relation. """
         relations = self.mapper.getRelationsByName(relation)
@@ -1479,17 +1483,17 @@ class Project(object):
         """ Return all the objects have used obj
         as a source.
         """
-        return self.mapper.getRelationChilds(em.RELATION_SOURCE, obj)
+        return self.mapper.getRelationChilds(pwobj.RELATION_SOURCE, obj)
 
     def getSourceParents(self, obj):
         """ Return all the objects that are SOURCE of this object.
         """
-        return self.mapper.getRelationParents(em.RELATION_SOURCE, obj)
+        return self.mapper.getRelationParents(pwobj.RELATION_SOURCE, obj)
 
     def getTransformGraph(self, refresh=False):
         """ Get the graph from the TRASNFORM relation. """
         if refresh or not self._transformGraph:
-            self._transformGraph = self._getRelationGraph(em.RELATION_TRANSFORM,
+            self._transformGraph = self._getRelationGraph(pwobj.RELATION_TRANSFORM,
                                                           refresh)
 
         return self._transformGraph
@@ -1497,19 +1501,19 @@ class Project(object):
     def getSourceGraph(self, refresh=False):
         """ Get the graph from the SOURCE relation. """
         if refresh or not self._sourceGraph:
-            self._sourceGraph = self._getRelationGraph(em.RELATION_SOURCE,
+            self._sourceGraph = self._getRelationGraph(pwobj.RELATION_SOURCE,
                                                        refresh)
 
         return self._sourceGraph
 
-    def getRelatedObjects(self, relation, obj, direction=em.RELATION_CHILDS,
+    def getRelatedObjects(self, relation, obj, direction=pwobj.RELATION_CHILDS,
                           refresh=False):
         """ Get all objects related to obj by a give relation.
         Params:
             relation: the relation name to search for.
             obj: object from which the relation will be search,
                 actually not only this, but all other objects connected
-                to this one by the RELATION_TRANSFORM.
+                to this one by the pwobj.RELATION_TRANSFORM.
             direction: this say if search for childs or parents in the relation.
         """
         graph = self.getTransformGraph(refresh)

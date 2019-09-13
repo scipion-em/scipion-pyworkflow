@@ -40,6 +40,12 @@ import datetime as dt
 RELATION_CHILDS = 0
 RELATION_PARENTS = 1
 
+# There are other relations related to data provenance,
+# which object were used to produce a result (source of it)
+RELATION_SOURCE = 'relation_datasource'
+RELATION_TRANSFORM = 'relation_transform'
+
+
 # Then column name of the parent id relation
 OBJECT_PARENT_ID = 'object_parent_id'
 
