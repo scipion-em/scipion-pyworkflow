@@ -1,4 +1,4 @@
-# **************************************************************************
+    # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
 # *
@@ -25,15 +25,14 @@
 # **************************************************************************
 
 from pyworkflow.object import *
-from pyworkflow.em import *
 from tests import *
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.utils import dateStr
+from pyworkflow.protocol import Protocol
 from pyworkflow.protocol.constants import MODE_RESUME, STATUS_FINISHED
 from pyworkflow.protocol.executor import StepExecutor
 
-    
-#Protocol for tests, runs in resume mode, and sleeps for??
+
 class MyProtocol(Protocol):
     def __init__(self, **args):
         Protocol.__init__(self, **args)

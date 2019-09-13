@@ -27,7 +27,6 @@
 # **************************************************************************
 
 from tests import *
-import model
 
 try:
     from unittest.runner import _WritelnDecorator  # Python 2.7+
