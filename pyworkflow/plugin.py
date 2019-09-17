@@ -72,6 +72,7 @@ class Domain:
         # TODO: Load subclasses (protocols, viewers, wizards)
         # Define variables
         m.Plugin._defineVariables()
+        m.Domain = cls  # Register the domain class for this module
         # Load bibtex
         m._bibtex = {}
         bib = cls.__getSubmodule(name, 'bibtex')
@@ -320,6 +321,7 @@ class Domain:
                             break
         return viewers
 
+    @classmethod
     def findWizards(cls, protocol, environment):
         """ Find available wizards for this class, in this Domain.
         Params:
@@ -329,6 +331,16 @@ class Domain:
             a dict with the paramName and wizards for this class."""
         return cls.__findWizardsFromDict(protocol, environment,
                                          cls.getWizards())
+
+    @classmethod
+    def printInfo(cls):
+        """ Simple function (mainly for debugging) that prints basic
+        information about this Domain. """
+        print("Domain: %s" % cls._name)
+        print("     objects: %s" % len(cls._objects))
+        print("   protocols: %s" % len(cls._protocols))
+        print("     viewers: %s" % len(cls._viewers))
+        print("     wizards: %s" % len(cls._wizards))
 
     # ---------- Private methods of Domain class ------------------------------
     @classmethod
