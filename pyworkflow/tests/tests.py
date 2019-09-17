@@ -214,19 +214,29 @@ def setupTestOutput(cls):
     pw.utils.makePath(cls.outputPath)
        
 
-def setupTestProject(cls):
+def setupTestProject(cls, writeLocalConfig=False):
     """ Create and setup a Project for a give Test class. """
     projName = cls.__name__
+    hostsConfig = None
+
+    if writeLocalConfig:
+        hostsConfig = '/tmp/hosts.conf'
+        print("Writing local config: %s" % hostsConfig)
+        import pyworkflow.protocol as pwprot
+        pwprot.HostConfig.writeBasic(hostsConfig)
+
     if os.environ.get('SCIPION_TEST_CONTINUE', None) == '1':
         proj = Manager().loadProject(projName)
     else:
-        proj = Manager().createProject(projName) # Now it will be loaded if exists
+        proj = Manager().createProject(projName, hostsConf=hostsConfig)
 
     cls.outputPath = proj.path
     # Create project does not change the working directory anymore
     os.chdir(cls.outputPath)
     cls.projName = projName
     cls.proj = proj
+
+
 
 
 class GTestResult(unittest.TestResult):

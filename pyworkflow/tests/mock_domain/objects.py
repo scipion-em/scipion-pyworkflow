@@ -27,16 +27,12 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 """
 
 import os
-import json
 
 import pyworkflow.object as pwobj
 import mock_domain as mod
 
 
 NO_INDEX = 0
-
-
-
 
 
 class MockObject(pwobj.OrderedObject):

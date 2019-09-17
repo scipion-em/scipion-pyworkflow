@@ -23,51 +23,44 @@
 # *
 # **************************************************************************
 
-from pyworkflow.object import *
-from tests import *
-from pyworkflow.mapper import SqliteMapper
-from pyworkflow.utils import dateStr
-from pyworkflow.protocol import Protocol
-from pyworkflow.protocol.constants import MODE_RESUME, STATUS_FINISHED
-from pyworkflow.protocol.executor import StepExecutor
+import pyworkflow.tests as pwtests
+import pyworkflow.mapper as pwmapper
+import pyworkflow.protocol as pwprot
 
 import mock_domain as mod
 import mock_domain.protocols as modprot
 
 
 # TODO: this test seems not to be finished.
-class TestProtocolExecution(BaseTest):
+class TestProtocolExecution(pwtests.BaseTest):
     
     @classmethod
     def setUpClass(cls):
-        setupTestOutput(cls)
+        pwtests.setupTestOutput(cls)
     
     def test_StepExecutor(self):
         """Test the list with several Complex"""
         fn = self.getOutputPath("protocol.sqlite")
         print("Writing to db: %s" % fn)
 
-        mapper = SqliteMapper(fn, globals())
-        prot = modprot.SleepingProtocol(mapper=mapper, n=2,
-                                        workingDir=self.getOutputPath(''))
-
         # Discover objects and protocols
-        mapperDict = globals()
-        mapperDict.update(mod.Domain.getObjects())
-        mapperDict.update(mod.Domain.getProtocols())
+        mapperDict = mod.Domain.getMapperDict()
 
         # Check that the protocol has associated package
-        package = prot.getClassPackage()
-        package.Domain.printInfo()
+        mapper = pwmapper.SqliteMapper(fn, mapperDict)
+        prot = modprot.SleepingProtocol(mapper=mapper, n=2,
+                                        workingDir=self.getOutputPath(''))
+        domain = prot.getClassDomain()
+        domain.printInfo()
 
-        prot.setStepsExecutor(StepExecutor(hostConfig=None))
+        prot.setStepsExecutor(pwprot.StepExecutor(hostConfig=None))
         prot.run()
         mapper.commit()
         mapper.close()
 
-        self.assertEqual(prot._steps[0].getStatus(), STATUS_FINISHED)
+        self.assertEqual(prot._steps[0].getStatus(), pwprot.STATUS_FINISHED)
         
-        mapper2 = SqliteMapper(fn, mapperDict)
+        mapper2 = pwmapper.SqliteMapper(fn, mapperDict)
         prot2 = mapper2.selectById(prot.getObjId())
         
         self.assertEqual(prot.endTime.get(), prot2.endTime.get())

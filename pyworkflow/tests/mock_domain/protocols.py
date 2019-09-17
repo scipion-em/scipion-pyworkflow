@@ -30,6 +30,7 @@ import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 
+
 import mock_domain as mod
 
 
@@ -66,3 +67,54 @@ class ParallelSleepingProtocol(SleepingProtocol):
         deps = [step1]
         for i in range(n):
             self._insertFunctionStep('sleepStep')
+
+
+class ProtOutputTest(pwprot.Protocol):
+    """ Protocol to test scalar output and input linking"""
+    _label = 'test output'
+
+    def __init__(self, **args):
+        pwprot.Protocol.__init__(self, **args)
+        self.name = pwobj.String(args.get('name', None))
+
+    def _defineParams(self, form):
+
+        section = form.addSection("Input")
+        section.addParam('iBoxSize', pwprot.IntParam, allowsPointers=True,
+                         default=10,
+                         label='Input box size as Integer',
+                         validators=[pwprot.Positive])
+
+        section.addParam('nullableInteger', pwprot.IntParam, allowsPointers=True,
+                         label='Nullable Integer', allowsNull=True)
+
+    def _createOutputStep(self):
+        # New Output would be an Integer
+        boxSize = pwobj.Integer(10)
+
+        if self.iBoxSize.hasValue():
+            boxSize.set(2*int(self.iBoxSize.get()))
+
+        self._defineOutputs(oBoxSize=boxSize)
+
+    def _insertAllSteps(self):
+        self._insertFunctionStep('_createOutputStep')
+
+
+class ProtMultiPointerTest(pwprot.Protocol):
+    """ Class to test how multipointer params are exported to json"""
+    def _defineParams(self, form):
+
+        # This should cover Multipointer params that points to attributes...
+        # therefore extended attribute of pointers should be used
+        form.addParam('mpToAttr', pwprot.MultiPointerParam,
+                      label="Multipointer to attribute",
+                      pointerClass='String',
+                      help="Should point to String inside another protocol")
+
+        # This should cover Multipointer params that points to protocols...
+        # therefore extended attribute of pointers should NOT be used
+        form.addParam('mpToProts', pwprot.MultiPointerParam,
+                      label="Multipointer to sets",
+                      pointerClass='Protocol',
+                      help="Should point to another protocol")
