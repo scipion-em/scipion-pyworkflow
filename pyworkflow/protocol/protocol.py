@@ -754,12 +754,10 @@ class Protocol(Step):
     def _iterOutputsOld(self):
         """ This method iterates assuming the old model: any EMObject attribute
         is an output."""
-        from pyworkflow.em import EMObject
-
         # Iterate old Style:
+        domain = self.getClassDomain()
         for key, attr in self.getAttributes():
-
-            if isinstance(attr, EMObject):
+            if isinstance(attr, domain._objectClass):
                 yield key, attr
 
     def isInStreaming(self):
@@ -1453,6 +1451,9 @@ class Protocol(Step):
         if not lastLines:
             lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 20))
 
+        if not all(os.path.exists(p) for p in self.getLogPaths()):
+            return []
+
         self.__openLogsFiles('r')
         iterlen = lambda it: sum(1 for _ in it)
         numLines = iterlen(self.__fOut)
@@ -1584,6 +1585,11 @@ class Protocol(Step):
     def getClassPackageName(cls):
         return cls.getClassPackage().__name__.replace(
             'pyworkflow.protocol.scipion', 'scipion')
+
+    @classmethod
+    def getClassDomain(cls):
+        """ Return the Domain class where this Protocol class is defined. """
+        return cls.getClassPackage().Domain
 
     @classmethod
     def getPluginLogoPath(cls):
@@ -1778,9 +1784,9 @@ class Protocol(Step):
             return validateFunc() if validateFunc is not None else []
         except Exception as e:
             msg = str(e)
-            msg += " %s installation couldn't be validated. Possible cause could" \
-                  " be a configuration issue. Try to run scipion config." \
-                  % cls.__name__
+            msg += (" %s installation couldn't be validated. Possible cause "
+                    "could be a configuration issue. Try to run scipion "
+                    "config." % cls.__name__)
             print(msg)
             return [msg]
 
@@ -2208,7 +2214,7 @@ def getProtocolFromDb(projectPath, protDbPath, protId, chdir=False):
     # all from protocol indirectly, so if move this to the top
     # we get an import error
     from pyworkflow.project import Project
-    project = Project(projectPath)
+    project = Project(pw.Config.getDomain(), projectPath)
     project.load(dbPath=os.path.join(projectPath, protDbPath), chdir=chdir,
                  loadAllConfig=False)
     protocol = project.getProtocol(protId)
