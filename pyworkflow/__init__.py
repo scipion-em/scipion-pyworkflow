@@ -59,7 +59,8 @@ PYTHON = os.environ.get("SCIPION_PYTHON", 'python')
 class Config:
     __get = os.environ.get  # shortcut
     SCIPION_HOME = __get('SCIPION_HOME', '')
-    SCIPION_USER_DATA = __get('SCIPION_USER_DATA', '')
+    SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
+                              os.path.expanduser('~/ScipionUserData'))
     SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
     SCIPION_LOGO = __get('SCIPION_LOGO',
