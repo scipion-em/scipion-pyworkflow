@@ -39,6 +39,7 @@ from abc import ABCMeta, abstractmethod
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
+import pyworkflow.object as pwobj
 
 
 class Domain:
@@ -225,6 +226,21 @@ class Domain:
     def getWizards(cls):
         """ Return all Wizard subclasses from all plugins for this domain."""
         return cls.__getSubclasses('wizards', cls._wizardClass)
+
+    @classmethod
+    def getMapperDict(cls):
+        """ Return a dictionary that can be used with subclasses of Mapper
+        to store/retrieve objects (including protocols) defined in this
+        Domain. """
+        mapperDict = getattr(cls, '__mapperDict', None)
+
+        if mapperDict is None:
+            mapperDict = dict(pwobj.OBJECTS_DICT)
+            mapperDict.update(cls.getObjects())
+            mapperDict.update(cls.getProtocols())
+            cls.__mapperDict = mapperDict
+
+        return mapperDict
 
     @classmethod
     def getName(cls):
