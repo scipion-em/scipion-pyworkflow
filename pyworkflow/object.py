@@ -32,6 +32,7 @@ basic classes.
 from itertools import izip
 from collections import OrderedDict
 import datetime as dt
+from pyworkflow.utils.reflection import getSubclasses
 
 
 # Binary relations always involve two objects, we 
@@ -1324,3 +1325,7 @@ class Dict(dict):
 
     def __contains__(self, item):
         return True
+
+
+# Define a global dict with all basic defined objects
+OBJECTS_DICT = getSubclasses(Object, globals())
