@@ -24,55 +24,55 @@
 # *
 # **************************************************************************
 """ Module to test json exporting options"""
-from pyworkflow.em import Pointer, ProtMultiPointerTest
-from pyworkflow.object import PointerList, String
-from tests import *
+# from pyworkflow.em import Pointer, ProtMultiPointerTest
+# from pyworkflow.object import PointerList, String
+# from tests import *
+#
+# MY_OUTPUT = "myOutput"
 
-MY_OUTPUT = "myOutput"
-
-
-class TestProtocolExport(BaseTest):
-
-    @classmethod
-    def setUpClass(cls):
-        setupTestProject(cls)
-
-    def test_exportMultiPointerToSets(self):
-        """Test how multipointers to are exported and imported"""
-
-        protMpOutput = self.newProtocol(ProtMultiPointerTest,
-                                objLabel='multipointer for output')
-
-        protMpOutput._defineOutputs(**{MY_OUTPUT: String("hola!")})
-        self.saveProtocol(protMpOutput)
-
-        # Add multiPointers with extended
-        plWithExtended = PointerList()
-        plWithExtended.append(Pointer(protMpOutput, extended=MY_OUTPUT))
-
-        protMp = self.newProtocol(ProtMultiPointerTest,
-                                  objLabel='multipointer with extended export to json',
-                                  mpToAttr=plWithExtended)
-
-        self.saveProtocol(protMp)
-        # Trigger the refresh of the runsGraph!!
-        self.proj._runsGraph = None
-
-        protDict = self.proj.getProtocolsDict()
-
-        # Get the multipointer params items for the second prot
-        # Get the second prot
-        # This has the shape of :  (33, OrderedDict([('object.className', 'ProtMultiPointerTest'), ...) ])
-        ndProtAttrs = protDict[protMp.getObjId()]
-
-        # Look for the mpToAttr
-        for key, value in ndProtAttrs.items():
-
-            if key == "mpToAttr":
-                self.assertEqual(1, len(value),
-                                 "multipointer param items exceeds the "
-                                 "expected number of items")
-                self.assertEqual("%s.%s" % (protMpOutput.getObjId(), MY_OUTPUT),
-                                 value[0],
-                                 "Multipointer item value %s seems to be wrong."
-                                 % value[0])
+# TODO: Check if some tests from pwem/protocol/protocol_tests can be moved here
+# class TestProtocolExport(BaseTest):
+#
+#     @classmethod
+#     def setUpClass(cls):
+#         setupTestProject(cls)
+#
+#     def test_exportMultiPointerToSets(self):
+#         """Test how multipointers to are exported and imported"""
+#
+#         protMpOutput = self.newProtocol(ProtMultiPointerTest,
+#                                 objLabel='multipointer for output')
+#
+#         protMpOutput._defineOutputs(**{MY_OUTPUT: String("hola!")})
+#         self.saveProtocol(protMpOutput)
+#
+#         # Add multiPointers with extended
+#         plWithExtended = PointerList()
+#         plWithExtended.append(Pointer(protMpOutput, extended=MY_OUTPUT))
+#
+#         protMp = self.newProtocol(ProtMultiPointerTest,
+#                                   objLabel='multipointer with extended export to json',
+#                                   mpToAttr=plWithExtended)
+#
+#         self.saveProtocol(protMp)
+#         # Trigger the refresh of the runsGraph!!
+#         self.proj._runsGraph = None
+#
+#         protDict = self.proj.getProtocolsDict()
+#
+#         # Get the multipointer params items for the second prot
+#         # Get the second prot
+#         # This has the shape of :  (33, OrderedDict([('object.className', 'ProtMultiPointerTest'), ...) ])
+#         ndProtAttrs = protDict[protMp.getObjId()]
+#
+#         # Look for the mpToAttr
+#         for key, value in ndProtAttrs.items():
+#
+#             if key == "mpToAttr":
+#                 self.assertEqual(1, len(value),
+#                                  "multipointer param items exceeds the "
+#                                  "expected number of items")
+#                 self.assertEqual("%s.%s" % (protMpOutput.getObjId(), MY_OUTPUT),
+#                                  value[0],
+#                                  "Multipointer item value %s seems to be wrong."
+#                                  % value[0])
