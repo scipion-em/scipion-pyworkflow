@@ -35,47 +35,48 @@ from pyworkflow.utils import makeFilePath
 
 def getLogConfiguration():
     # Log configuration
-    config = {  'version': 1,
-                'disable_existing_loggers': False,
-                'formatters': {
-                    'standard': {
-                        'format': '%(asctime)s %(levelname)s:  %(message)s'
-                        # TODO: use formattime to show the time less verbose
-                    },
-                    'fileFormat': {
-                        'format': '%(asctime)s %(levelname)s:  %(message)s'
-                    },
-                },
-                'handlers': {
-                    'fileHandler': {
-                        'level': 'NOTSET',
-                        'class': 'logging.handlers.RotatingFileHandler',
-                        'formatter': 'standard',
-                        'filename': Config.LOG_FILE,
-                        'maxBytes': 100000,
-                    },
-                    'consoleHandler': {
-                        'level': 'NOTSET',
-                        'class': 'logging.StreamHandler',
-                        'formatter': 'standard',
-                    },
-                },
-                'loggers': {
-                    '': {
-                        'handlers': ['consoleHandler', 'fileHandler'],
-                        'level': 'INFO',
-                        'propagate': False,
-                        'qualname': 'pyworkflow',
-                    },
-                }
-            }
+    config = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'standard': {
+                'format': '%(asctime)s %(levelname)s:  %(message)s'
+                # TODO: use formattime to show the time less verbose
+            },
+            'fileFormat': {
+                'format': '%(asctime)s %(levelname)s:  %(message)s'
+            },
+        },
+        'handlers': {
+            'fileHandler': {
+                'level': 'NOTSET',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'formatter': 'standard',
+                'filename': Config.LOG_FILE,
+                'maxBytes': 100000,
+            },
+            'consoleHandler': {
+                'level': 'NOTSET',
+                'class': 'logging.StreamHandler',
+                'formatter': 'standard',
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': ['consoleHandler', 'fileHandler'],
+                'level': 'INFO',
+                'propagate': False,
+                'qualname': 'pyworkflow',
+            },
+        }
+    }
 
     logging.config.dictConfig(config)
 
     return config
 
 
-class ScipionLogger():
+class ScipionLogger:
     def __init__(self, filePath=''):
         """ If filePath is empty string, the general logger is used. """
         self._filePath = filePath
@@ -130,12 +131,3 @@ class ScipionLogger():
         if self._filePath in self.config['loggers']:
             del self.config['handlers'][self._filePath]
             del self.config['loggers'][self._filePath]
-
-#def closeFileLogger(filePath):
-#    """ This method should be called to un-register a previous acquired
-#    file logger with the method getFileLogger, the same filePath should
-#    be used.
-#    """
-#    if filePath in config['loggers']:
-#        del config['handlers'][filePath]
-#        del config['loggers'][filePath]

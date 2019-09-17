@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,25 +16,23 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
-
 from __future__ import print_function
+
 from pyworkflow.utils.path import replaceExt, joinExt
-from mapper import Mapper
-from sqlite_db import SqliteDb
+from .mapper import Mapper
+from .sqlite_db import SqliteDb
 
 ID = 'id'
 PARENT_ID = 'parent_id'
 CLASSNAME = 'classname'
 NAME = 'name'
+
 
 class SqliteMapper(Mapper):
     """Specific Mapper implementation using Sqlite database"""
@@ -44,7 +43,8 @@ class SqliteMapper(Mapper):
         try:
             self.db = SqliteObjectsDb(dbName)
         except Exception as ex:
-            raise Exception('Error creating SqliteMapper, dbName: %s\n error: %s' % (dbName, ex))
+            raise Exception('Error creating SqliteMapper, dbName: %s'
+                            '\n error: %s' % (dbName, ex))
     
     def close(self):
         self.db.close()
@@ -70,11 +70,13 @@ class SqliteMapper(Mapper):
         
     def __insert(self, obj, namePrefix=None):
         if not hasattr(obj, '_objDoStore'):
-            print("MAPPER: object '%s' doesn't seem to be an Object subclass," % obj)
-            print("       it does not have attribute '_objDoStore'. Insert skipped.")
-            return 
+            print("MAPPER: object '%s' doesn't seem to be an Object subclass,"
+                  "       it does not have attribute '_objDoStore'. "
+                  "Insert skipped." % obj)
+            return
         obj._objId = self.db.insertObject(obj._objName, obj.getClassName(),
-                                          self.__getObjectValue(obj), obj._objParentId,
+                                          self.__getObjectValue(obj),
+                                          obj._objParentId,
                                           obj._objLabel, obj._objComment)
         self.updateDict[obj._objId] = obj
         sid = obj.strId()
@@ -90,8 +92,9 @@ class SqliteMapper(Mapper):
         
     def insertChild(self, obj, key, attr, namePrefix=None):
         if not hasattr(attr, '_objDoStore'):
-            print("MAPPER: object '%s' doesn't seem to be an Object subclass," % attr)
-            print("       it does not have attribute '_objDoStore'. Insert skipped.")
+            print("MAPPER: object '%s' doesn't seem to be an Object subclass,"
+                  "       it does not have attribute '_objDoStore'. \n"
+                  "Insert skipped." % attr)
             return 
 
         if namePrefix is None:
@@ -139,9 +142,10 @@ class SqliteMapper(Mapper):
         self.__updateTo(obj, level)
         # Update pending pointers to objects
         for ptr in self.updatePendingPointers:
-            self.db.updateObject(ptr._objId, ptr._objName, Mapper.getObjectPersistingClassName(ptr),
-                             self.__getObjectValue(obj), ptr._objParentId, 
-                             ptr._objLabel, ptr._objComment)
+            self.db.updateObject(ptr._objId, ptr._objName,
+                                 Mapper.getObjectPersistingClassName(ptr),
+                                 self.__getObjectValue(obj), ptr._objParentId,
+                                 ptr._objLabel, ptr._objComment)
 
         # Delete any child objects that have not been found.
         # This could be the case if some elements (such as inside List)
@@ -150,7 +154,8 @@ class SqliteMapper(Mapper):
                                                self.updateDict.keys())
 
     def __updateTo(self, obj, level):
-        self.db.updateObject(obj._objId, obj._objName, Mapper.getObjectPersistingClassName(obj),
+        self.db.updateObject(obj._objId, obj._objName,
+                             Mapper.getObjectPersistingClassName(obj),
                              self.__getObjectValue(obj), obj._objParentId, 
                              obj._objLabel, obj._objComment)
 
@@ -186,8 +191,10 @@ class SqliteMapper(Mapper):
                 if obj is not None:
                     self.fillObject(obj, objRow)
         return obj
+
     def exists(self,objId):
         return self.db.doesRowExist(objId)
+
     def getParent(self, obj):
         """ Retrieve the parent object of another. """
         return self.selectById(obj._objParentId)
@@ -222,7 +229,6 @@ class SqliteMapper(Mapper):
 
         if includeChildren:
             childs = self.db.selectObjectsByAncestor(namePrefix)
-            #childsDict = {obj._objId: obj}
 
             for childRow in childs:
                 childParts = childRow[NAME].split('.')
@@ -232,7 +238,6 @@ class SqliteMapper(Mapper):
                 # been processed first, so it will be in the dictionary
                 parentObj = self.objDict.get(parentId, None)
                 if parentObj is None: # Something went wrong
-                    #print "WARNING: Parent object (id=%d) was not found, object: %s. Ignored." % (parentId, childRow['name'])
                     continue
                 childObj = getattr(parentObj, childName, None)
                 if childObj is None:
@@ -243,23 +248,16 @@ class SqliteMapper(Mapper):
                     setattr(parentObj, childName, childObj)
 
                 self.fillObjectWithRow(childObj, childRow)
-                #childsDict[childObj._objId] = childObj
-
 
     def __buildObject(self, row):
-
-        """
-        Builds and object, either based on the parent attribute, or a new one based on the class
-        """
+        """ Builds and object, either based on the parent attribute, or a new
+        one based on the class. """
         parentId = self._getParentIdFromRow(row)
-
         #  If there is no parent...
         if parentId is None:
             # It must be a Root object, use the class
             return self._buildObjectFromClass(self._getClassFromRow(row))
-
         else:
-
             # Try to get the instance from the parent
             name = self._getNameFromRow(row)
             childParts = name.split('.')
@@ -267,8 +265,9 @@ class SqliteMapper(Mapper):
 
             # Get the parent, we should have it cached
             parentObj = self.objDict.get(parentId, None)
-            if parentObj is None: # Something went wrong
-                print("WARNING: Parent object (id=%d) was not found, object: %s. Ignored." % (parentId, name))
+            if parentObj is None:  # Something went wrong
+                print("WARNING: Parent object (id=%d) was not found, "
+                      "object: %s. Ignored." % (parentId, name))
                 return None
 
             childObj = getattr(parentObj, childName, None)
@@ -283,7 +282,6 @@ class SqliteMapper(Mapper):
                 setattr(parentObj, childName, childObj)
 
             return childObj
-
 
     def __objFromRow(self, objRow, includeChildren = True):
         objClassName = objRow['classname']
@@ -306,12 +304,14 @@ class SqliteMapper(Mapper):
         """Create a set of object from a set of rows
         Params:
             objRows: rows result from a db select.
-            iterate: if True, iterates over all elements, if False the whole list is returned
-            objectFilter: function to filter some of the objects of the results. 
+            iterate: if True, iterates over all elements, if False the whole
+                list is returned
+            objectFilter: function to filter some of the objects of the
+                results.
         """
         if not iterate:
-            #return [self.__objFromRow(objRow) for objRow in objRows]
-            return [obj for obj in self.__iterObjectsFromRows(objRows, objectFilter)]
+            return [obj for obj in self.__iterObjectsFromRows(objRows,
+                                                              objectFilter)]
         else:
             return self.__iterObjectsFromRows(objRows, objectFilter)
                
@@ -331,7 +331,8 @@ class SqliteMapper(Mapper):
         objRows = self.db.selectObjectsBy(**args)
         return self.__objectsFromRows(objRows, iterate, objectFilter)
     
-    def selectByClass(self, className, includeSubclasses=True, iterate=False, objectFilter=None):
+    def selectByClass(self, className, includeSubclasses=True, iterate=False,
+                      objectFilter=None):
         self.__initObjDict()
         
         if includeSubclasses:
@@ -390,7 +391,8 @@ class SqliteMapper(Mapper):
             # Fill object attributes with row values
             self.fillObjectWithRow(obj, row)
 
-            # Add it to the obj cache, we might need it latter to assign attributes
+            # Add it to the obj cache, we might need it latter to assign
+            # attributes
             self.objDict[obj._objId] = obj
 
             return obj
@@ -429,8 +431,10 @@ class SqliteMapper(Mapper):
         """
         for o in [creatorObj, parentObj, childObj]:
             if not o.hasObjId():
-                raise Exception("Before adding a relation, the object should be stored in mapper")
-        self.db.insertRelation(relName, creatorObj.getObjId(), parentObj.getObjId(), childObj.getObjId(), 
+                raise Exception("Before adding a relation, the object should "
+                                "be stored in mapper")
+        self.db.insertRelation(relName, creatorObj.getObjId(),
+                               parentObj.getObjId(), childObj.getObjId(),
                                parentExt, childExt)
     
     def __objectsFromIds(self, objIds):
@@ -488,11 +492,13 @@ class SqliteObjectsDb(SqliteDb):
     # version should be an integer number
     VERSION = 1
     
-    SELECT = "SELECT id, parent_id, name, classname, value, label, comment, datetime(creation, 'localtime') as creation FROM Objects WHERE "
+    SELECT = ("SELECT id, parent_id, name, classname, value, label, comment, "
+              "datetime(creation, 'localtime') as creation FROM Objects WHERE ")
     DELETE = "DELETE FROM Objects WHERE "
     DELETE_SEQUENCE = "DELETE FROM SQLITE_SEQUENCE WHERE name='Objects'"
     
-    SELECT_RELATION = "SELECT object_%s_id AS id FROM Relations WHERE name=? AND object_%s_id=?"
+    SELECT_RELATION = ("SELECT object_%s_id AS id FROM Relations "
+                       "WHERE name=? AND object_%s_id=?")
     SELECT_RELATIONS = "SELECT * FROM Relations WHERE "
     EXISTS = "SELECT EXISTS(SELECT 1 FROM Objects WHERE %s=? LIMIT 1)"
     
@@ -566,8 +572,7 @@ class SqliteObjectsDb(SqliteDb):
                 self.executeCommand("ALTER TABLE Relations "
                                     "ADD COLUMN object_child_extended  TEXT DEFAULT NULL")
             self.setVersion(self.VERSION)
-        
-        
+
     def insertObject(self, name, classname, value, parent_id, label, comment):
         """Execute command to insert a new object. Return the inserted object id"""
         try:
@@ -596,7 +601,8 @@ class SqliteObjectsDb(SqliteDb):
     
     def updateObject(self, objId, name, classname, value, parent_id, label, comment):
         """Update object data """
-        self.executeCommand("UPDATE Objects SET parent_id=?, name=?, classname=?, value=?, label=?, comment=? WHERE id=?",
+        self.executeCommand("UPDATE Objects SET parent_id=?, name=?, "
+                            "classname=?, value=?, label=?, comment=? WHERE id=?",
                             (parent_id, name, classname, value, label, comment, objId))
         
     def selectObjectById(self, objId):
