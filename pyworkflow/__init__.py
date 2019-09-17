@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,9 +15,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -59,7 +57,8 @@ PYTHON = os.environ.get("SCIPION_PYTHON", 'python')
 class Config:
     __get = os.environ.get  # shortcut
     SCIPION_HOME = __get('SCIPION_HOME', '')
-    SCIPION_USER_DATA = __get('SCIPION_USER_DATA', '')
+    SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
+                              os.path.expanduser('~/ScipionUserData'))
     SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
     SCIPION_LOGO = __get('SCIPION_LOGO',
