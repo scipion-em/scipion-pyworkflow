@@ -32,11 +32,10 @@ It is composed by three panels:
 3. Summary/Details
 """
 
-import os, sys
+import os
 import threading
 import shlex
 import subprocess
-import uuid
 import SocketServer
 import tempfile
 
@@ -45,8 +44,10 @@ import pyworkflow.utils as pwutils
 from pyworkflow.project import MenuConfig, ProjectSettings
 from pyworkflow.gui import Message, Icon
 from pyworkflow.gui.browser import FileBrowserWindow
-from pyworkflow.em.viewers import EmPlotter
-from pyworkflow.gui.plugin_manager import PluginManager
+# Usage commented.
+# from pyworkflow.em.viewers import EmPlotter
+# Moved to Scipion-app
+#from pyworkflow.gui.plugin_manager import PluginManager
 from pyworkflow.gui.plotter import Plotter
 from pyworkflow.gui.text import _open_cmd, openTextFileEditor
 from pyworkflow.webservices import ProjectWorkflowNotifier, WorkflowRepository
@@ -276,8 +277,9 @@ class ProjectWindow(ProjectBaseWindow):
         server_thread.daemon = True
         server_thread.start()
 
-    def schedulePlot(self, path, *args):
-        self.enqueue(lambda: EmPlotter.createFromFile(path, *args).show())
+    # Seems it is not used and should be in scipion-em
+    # def schedulePlot(self, path, *args):
+    #     self.enqueue(lambda: EmPlotter.createFromFile(path, *args).show())
 
     @classmethod
     def registerObjectCommand(cls, cmd, func):
@@ -352,7 +354,7 @@ class ProjectManagerWindow(ProjectBaseWindow):
         confMenu.addSubMenu('General', 'general')
         confMenu.addSubMenu('Hosts', 'hosts')
         confMenu.addSubMenu('Protocols', 'protocols')
-        confMenu.addSubMenu('Plugins', 'plugins')
+        # Moved to scipion app: confMenu.addSubMenu('Plugins', 'plugins')
         confMenu.addSubMenu('User', 'user')
 
         helpMenu = menu.addSubMenu('Help')
@@ -404,11 +406,11 @@ class ProjectManagerWindow(ProjectBaseWindow):
 
     def onUser(self):
         self._openConfigFile(pw.Config.SCIPION_LOCAL_CONFIG)
-
-    def onPlugins(self):
-        # Config -> Plugins
-        PluginManager("Plugin Manager", self, pw.Config.SCIPION_USER_DATA,
-                      selectButton=None).show()
+    # Moved to scipion-app
+    # def onPlugins(self):
+    #     # Config -> Plugins
+    #     PluginManager("Plugin Manager", self, pw.Config.SCIPION_USER_DATA,
+    #                   selectButton=None).show()
 
 
 class ProjectTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
