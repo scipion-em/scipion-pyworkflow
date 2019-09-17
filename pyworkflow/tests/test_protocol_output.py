@@ -37,7 +37,7 @@ import mock_domain.objects as modobj
 import mock_domain.protocols as modprot
 
 # Set the application domain
-pw.Config.setDomain(mod.__path__[0])
+pw.Config.setDomain(mod)
 
 
 # Protocol to output of basic scipion objects
@@ -111,6 +111,7 @@ class TestProtocolOutputs(pwtests.BaseTest):
         # Define a negative output for later tests
         prot._defineOutputs(negative=pwobj.Integer(-20))
         self.launchProtocol(prot)
+
         # Default value is 10 so output is 20
         self.assertOutput(prot)
 

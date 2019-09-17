@@ -26,6 +26,8 @@ import ast
 import os
 import sys
 import importlib
+import types
+
 
 # This variable is useful to determinate the plugins compatibility with the
 # current Scipion core release.
@@ -116,9 +118,13 @@ class Config:
         return importlib.import_module(value).Domain
 
     @classmethod
-    def setDomain(cls, nameOrPath):
-        cls.SCIPION_DOMAIN = nameOrPath
-        os.environ['SCIPION_DOMAIN'] = nameOrPath
+    def setDomain(cls, moduleOrNameOrPath):
+        if isinstance(moduleOrNameOrPath, types.ModuleType):
+            value = os.path.abspath(moduleOrNameOrPath.__path__[0])
+        else:
+            value = moduleOrNameOrPath
+        cls.SCIPION_DOMAIN = value
+        os.environ['SCIPION_DOMAIN'] = value
 
 
 def join(*paths):
