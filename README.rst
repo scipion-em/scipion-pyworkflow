@@ -15,11 +15,13 @@ Running tests
 First make sure that **pyworkflow** is available as a Python module in your
 current Python environment. During development, I tend to set the PYTHONPATH:
 
-cd scipion-pyworkflow
-export PYTHONPATH=$PYTHONPATH:$PWD
-cd pyworkflow/tests
+.. code-block:: bash
 
-python -m unittest discover
+    cd scipion-pyworkflow
+    export PYTHONPATH=$PYTHONPATH:$PWD
+    cd pyworkflow/tests
+
+    python -m unittest discover
   
 
 
