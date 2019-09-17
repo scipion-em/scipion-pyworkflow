@@ -47,11 +47,9 @@ import pyworkflow.protocol as pwprot
 import pyworkflow.gui as pwgui
 import pyworkflow.em as em
 from pyworkflow.project import ProtocolTreeConfig
-from pyworkflow.em.wizard import ListTreeProvider
-from pyworkflow.gui.dialog import askColor, ListDialog, FloatingMessage
+from pyworkflow.gui.dialog import askColor, FloatingMessage
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
 from pyworkflow.utils.properties import Message, Icon, Color, KEYSYM
-from constants import STATUS_COLORS
 from pyworkflow.gui.project.utils import getStatusColorFromNode
 from pyworkflow.webservices import WorkflowRepository
 

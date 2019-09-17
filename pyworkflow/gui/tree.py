@@ -580,3 +580,35 @@ class ProjectRunsTreeProvider(TreeProvider):
     
     def getObjectFromId(self, objId):
         return self._objDict[objId]
+
+
+class ListTreeProvider(TreeProvider):
+    """ Simple list tree provider. """
+
+    def __init__(self, objList=None):
+        TreeProvider.__init__(self)
+        self.objList = objList
+        self.getColumns = lambda: [('Object', 150)]
+        self.getObjects = lambda: self.objList
+
+    def getObjectInfo(self, obj):
+        info = {'key': obj.getObjId(), 'text': self.getText(obj), 'values': ()}
+        return info
+
+    def getText(self, obj):
+        """ Get the text to display for an object. """
+        index, fn = obj.getLocation()
+        name = os.path.basename(fn)
+        if index:
+            name = "%03d@%s" % (index, name)
+        return name
+
+    def getObjs(self):
+        """ Get the objects. """
+        return self.objList
+
+
+class ListTreeProviderString(ListTreeProvider):
+    def getText(self, obj):
+        return obj.get()
+
