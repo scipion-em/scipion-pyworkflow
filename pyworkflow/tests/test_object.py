@@ -30,6 +30,7 @@ from collections import OrderedDict
 
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
+import pyworkflow.utils as pwutils
 
 import mock_domain.objects as modobj
 
@@ -41,10 +42,18 @@ class ListContainer(pwobj.Object):
     
     
 class TestObject(pwtests.BaseTest):
-
     @classmethod
     def setUpClass(cls):
         pwtests.setupTestOutput(cls)
+
+    def test_ObjectsDict(self):
+        # Validate that the object dict is populated correctly
+        basicObjNames = [
+            'Object', 'Scalar', 'Integer', 'Float', 'String', 'Pointer',
+            'OrderedObject', 'List', 'CsvList', 'PointerList', 'Set'
+        ]
+        self.assertTrue(all(name in pwobj.OBJECTS_DICT
+                            for name in basicObjNames))
 
     def test_Object(self):
         value = 2
@@ -63,10 +72,10 @@ class TestObject(pwtests.BaseTest):
         
         a = pwobj.Integer()
         self.assertEqual(a.hasValue(), False)
-        c = pwtests.Complex.createComplex()
+        c = modobj.Complex.createComplex()
         # Check values are correct
-        self.assertEqual(c.imag.get(), pwtests.Complex.cGold.imag)
-        self.assertEqual(c.real.get(), pwtests.Complex.cGold.real)
+        self.assertEqual(c.imag.get(), modobj.Complex.cGold.imag)
+        self.assertEqual(c.real.get(), modobj.Complex.cGold.real)
         
         # Test Boolean logic
         b = pwobj.Boolean(False)
@@ -126,7 +135,7 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(now, s.datetime())
 
     def test_Pointer(self):
-        c = pwtests.Complex.createComplex()
+        c = modobj.Complex.createComplex()
         p = pwobj.Pointer()
         p.set(c)
         p.setExtended('Name')
@@ -258,15 +267,15 @@ class TestObject(pwtests.BaseTest):
         """ Check that after copyAttributes, the values
         were properly copied.
         """
-        c1 = pwtests.Complex(imag=10., real=11.)
-        c2 = pwtests.Complex(imag=0., real=1.0001)
+        c1 = modobj.Complex(imag=10., real=11.)
+        c2 = modobj.Complex(imag=0., real=1.0001)
         
         # Float values are different, should not be equal
         self.assertFalse(c1.equalAttributes(c2))
         c2.copyAttributes(c1, 'imag', 'real')
         
         self.assertTrue(c1.equalAttributes(c2), 
-                        'pwtests.Complex c1 and c2 have not equal attributes'
+                        'modobj.Complex c1 and c2 have not equal attributes'
                         '\nc1: %s\nc2: %s\n' % (c1, c2))
 
         c1.score = pwobj.Float(1.)
@@ -280,8 +289,8 @@ class TestObject(pwtests.BaseTest):
         """ Check that equal attributes function behaves well
         to compare floats with a given precision.
         """
-        c1 = pwtests.Complex(imag=0., real=1.)
-        c2 = pwtests.Complex(imag=0., real=1.0001)
+        c1 = modobj.Complex(imag=0., real=1.)
+        c2 = modobj.Complex(imag=0., real=1.0001)
         
         # Since Float precision is 0.001, now c1 and c2
         # should have equal attributes
