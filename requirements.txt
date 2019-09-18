@@ -3,5 +3,6 @@ psutil==2.1.1
 matplotlib
 pillow
 bibtexparser
+requests
 
 

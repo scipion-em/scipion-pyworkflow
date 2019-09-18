@@ -84,3 +84,6 @@ static/
 
 # Ignore version file
 .devel_version
+
+dist
+*egg-info
