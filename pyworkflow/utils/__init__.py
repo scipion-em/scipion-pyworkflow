@@ -27,11 +27,12 @@
 This module contains utilities functions and classes.
 """
 
-from utils import *
-from path import *
-from process import *
-from which import *
-from graph import *
-from reflection import *
-from log import *
-from progressbar import ProgressBar
+from .utils import *
+from .path import *
+from .process import *
+from .which import *
+from .graph import *
+from .reflection import *
+from .log import *
+from .properties import *
+from .progressbar import ProgressBar
