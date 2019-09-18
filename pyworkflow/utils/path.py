@@ -413,7 +413,7 @@ def createUniqueFileName(fn):
 
     make_fn = lambda i: os.path.join(path, '%s_tmp_%d_%s' % (name, i, ext))
 
-    for i in xrange(2, sys.maxint):
+    for i in range(2, sys.maxint):
         uni_fn = make_fn(i)
         if not os.path.exists(uni_fn):
             return uni_fn

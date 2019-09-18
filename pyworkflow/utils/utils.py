@@ -442,7 +442,7 @@ def parseBibTex(bibtexStr):
 
     # For older bibtexparser version 0.5
     from bibtexparser.bparser import BibTexParser
-    from StringIO import StringIO
+    from io import StringIO
 
     f = StringIO()
     f.write(bibtexStr)

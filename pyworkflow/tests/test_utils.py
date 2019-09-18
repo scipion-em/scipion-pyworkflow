@@ -10,7 +10,7 @@ Created on Mar 25, 2014
 from __future__ import print_function
 
 from subprocess import Popen
-from StringIO import StringIO
+from io import StringIO
 
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.process import killWithChilds
@@ -116,7 +116,7 @@ class TestProgressBar(unittest.TestCase):
                          extraArgs={'objectId': 33})
 
         pb.start()
-        for i in xrange(total):
+        for i in range(total):
             if i % step == 0:
                 pb.update(i+1)
         pb.finish()

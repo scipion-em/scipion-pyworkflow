@@ -1384,7 +1384,8 @@ class Protocol(Step):
             # in the "Output Log" section if we put them together.
 
     def getLogPaths(self):
-        return map(self._getLogsPath, ['run.stdout', 'run.stderr', 'run.log'])
+        return list(map(self._getLogsPath,
+                        ['run.stdout', 'run.stderr', 'run.log']))
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
