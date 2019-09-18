@@ -27,7 +27,6 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 """
 
 import os
-import json
 
 import pyworkflow.object as pwobj
 import mock_domain as mod
@@ -47,6 +46,37 @@ class MockObject(pwobj.OrderedObject):
     def getFiles(self):
         """ Get all filePaths """
         return None
+
+
+class Complex(MockObject):
+    """ Simple class used for tests here. """
+
+    cGold = complex(1.0, 1.0)
+
+    def __init__(self, imag=0., real=0., **args):
+        MockObject.__init__(self, **args)
+        self.imag = pwobj.Float(imag)
+        self.real = pwobj.Float(real)
+        # Create reference complex values
+
+    def __str__(self):
+        return '(%s, %s)' % (self.imag, self.real)
+
+    def __eq__(self, other):
+        return (self.imag == other.imag and
+                self.real == other.real)
+
+    def hasValue(self):
+        return True
+
+    @classmethod
+    def createComplex(cls):
+        """Create a Complex object and set
+        values with cls.cGold standard"""
+        c = Complex()  # Create Complex object and set values
+        c.imag.set(cls.cGold.imag)
+        c.real.set(cls.cGold.real)
+        return c
 
 
 class MockAcquisition(MockObject):

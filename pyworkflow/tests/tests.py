@@ -214,13 +214,21 @@ def setupTestOutput(cls):
     pw.utils.makePath(cls.outputPath)
        
 
-def setupTestProject(cls):
+def setupTestProject(cls, writeLocalConfig=False):
     """ Create and setup a Project for a give Test class. """
     projName = cls.__name__
+    hostsConfig = None
+
+    if writeLocalConfig:
+        hostsConfig = '/tmp/hosts.conf'
+        print("Writing local config: %s" % hostsConfig)
+        import pyworkflow.protocol as pwprot
+        pwprot.HostConfig.writeBasic(hostsConfig)
+
     if os.environ.get('SCIPION_TEST_CONTINUE', None) == '1':
         proj = Manager().loadProject(projName)
     else:
-        proj = Manager().createProject(projName) # Now it will be loaded if exists
+        proj = Manager().createProject(projName, hostsConf=hostsConfig)
 
     cls.outputPath = proj.path
     # Create project does not change the working directory anymore
@@ -229,37 +237,8 @@ def setupTestProject(cls):
     cls.proj = proj
 
 
-class Complex(Object):
-    """ Simple class used for tests here. """
-    
-    cGold = complex(1.0, 1.0)
-    
-    def __init__(self, imag=0., real=0., **args):
-        Object.__init__(self, **args)
-        self.imag = Float(imag)
-        self.real = Float(real)
-        # Create reference complex values
-        
-    def __str__(self):
-        return '(%s, %s)' % (self.imag, self.real)
-    
-    def __eq__(self, other):
-        return (self.imag == other.imag and 
-                self.real == other.real)
-            
-    def hasValue(self):
-        return True
-    
-    @classmethod
-    def createComplex(cls):
-        """Create a Complex object and set
-        values with cls.cGold standard"""
-        c = Complex() # Create Complex object and set values
-        c.imag.set(cls.cGold.imag)
-        c.real.set(cls.cGold.real)
-        return c
-       
-    
+
+
 class GTestResult(unittest.TestResult):
     """ Subclass TestResult to output tests results with colors
     (green for success and red for failure)

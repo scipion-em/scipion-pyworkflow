@@ -24,6 +24,10 @@
 
 import ast
 import os
+import sys
+import importlib
+import types
+
 
 # This variable is useful to determinate the plugins compatibility with the
 # current Scipion core release.
@@ -77,15 +81,15 @@ class Config:
     SCIPION_CONFIG = __get('SCIPION_CONFIG', 'scipion.conf')
     SCIPION_LOCAL_CONFIG = __get('SCIPION_LOCAL_CONFIG', 'scipion.conf')
     SCIPION_HOSTS = __get('SCIPION_HOSTS', 'hosts.conf')
-    SCIPION_PROTOCOLS = __get('SCIPION_PROTOCOLS',
-                                     'protocols.conf')
+    SCIPION_PROTOCOLS = __get('SCIPION_PROTOCOLS', 'protocols.conf')
 
     SCIPION_PLUGIN_JSON = __get('SCIPION_PLUGIN_JSON', None)
     SCIPION_PLUGIN_REPO_URL = __get('SCIPION_PLUGIN_REPO_URL',
                                     'http://scipion.i2pc.es/getplugins/')
 
     # Get general log file path
-    LOG_FILE = os.path.join(__get('SCIPION_LOGS', "~/"), 'scipion.log')
+    LOG_FILE = os.path.join(__get('SCIPION_LOGS', SCIPION_USER_DATA),
+                            'scipion.log')
 
     SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE')
 
@@ -95,6 +99,32 @@ class Config:
         VIEWERS = {}
         print("ERROR loading preferred viewers, VIEWERS variable will be ignored")
         print(e)
+
+    SCIPION_DOMAIN = __get('SCIPION_DOMAIN', None)
+
+    @classmethod
+    def getDomain(cls):
+        """ Import domain module from path or name defined in SCIPION_DOMAIN. """
+        value = cls.SCIPION_DOMAIN
+
+        print('SCIPION_DOMAIN=%s' % value)
+        if not value:
+            return None
+
+        if os.path.isdir(value):
+            dirname, value = os.path.split(value)
+            sys.path.append(dirname)
+
+        return importlib.import_module(value).Domain
+
+    @classmethod
+    def setDomain(cls, moduleOrNameOrPath):
+        if isinstance(moduleOrNameOrPath, types.ModuleType):
+            value = os.path.abspath(moduleOrNameOrPath.__path__[0])
+        else:
+            value = moduleOrNameOrPath
+        cls.SCIPION_DOMAIN = value
+        os.environ['SCIPION_DOMAIN'] = value
 
 
 def join(*paths):

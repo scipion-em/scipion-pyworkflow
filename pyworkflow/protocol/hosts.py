@@ -144,6 +144,13 @@ class HostConfig(OrderedObject):
         return self.address.set(newAddress)
 
     @classmethod
+    def writeBasic(cls, configFn):
+        """ Write a very basic Host configuration for testing purposes. """
+        with open(configFn, 'w') as f:
+            f.write('[localhost]\nPARALLEL_COMMAND = '
+                    'mpirun -np %_(JOB_NODES)d --map-by node %_(COMMAND)s\n')
+
+    @classmethod
     def load(cls, hostsConf):
         """ Load several hosts from a configuration file.
         Return an dictionary with hostName -> hostConfig pairs.

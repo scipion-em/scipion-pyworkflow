@@ -39,6 +39,7 @@ from abc import ABCMeta, abstractmethod
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
+import pyworkflow.object as pwobj
 
 
 class Domain:
@@ -72,6 +73,7 @@ class Domain:
         # TODO: Load subclasses (protocols, viewers, wizards)
         # Define variables
         m.Plugin._defineVariables()
+        m.Domain = cls  # Register the domain class for this module
         # Load bibtex
         m._bibtex = {}
         bib = cls.__getSubmodule(name, 'bibtex')
@@ -226,6 +228,21 @@ class Domain:
         return cls.__getSubclasses('wizards', cls._wizardClass)
 
     @classmethod
+    def getMapperDict(cls):
+        """ Return a dictionary that can be used with subclasses of Mapper
+        to store/retrieve objects (including protocols) defined in this
+        Domain. """
+        mapperDict = getattr(cls, '__mapperDict', None)
+
+        if mapperDict is None:
+            mapperDict = dict(pwobj.OBJECTS_DICT)
+            mapperDict.update(cls.getObjects())
+            mapperDict.update(cls.getProtocols())
+            cls.__mapperDict = mapperDict
+
+        return mapperDict
+
+    @classmethod
     def getName(cls):
         """ Return the name of this Domain. """
         return cls._name
@@ -320,6 +337,7 @@ class Domain:
                             break
         return viewers
 
+    @classmethod
     def findWizards(cls, protocol, environment):
         """ Find available wizards for this class, in this Domain.
         Params:
@@ -329,6 +347,16 @@ class Domain:
             a dict with the paramName and wizards for this class."""
         return cls.__findWizardsFromDict(protocol, environment,
                                          cls.getWizards())
+
+    @classmethod
+    def printInfo(cls):
+        """ Simple function (mainly for debugging) that prints basic
+        information about this Domain. """
+        print("Domain: %s" % cls._name)
+        print("     objects: %s" % len(cls._objects))
+        print("   protocols: %s" % len(cls._protocols))
+        print("     viewers: %s" % len(cls._viewers))
+        print("     wizards: %s" % len(cls._wizards))
 
     # ---------- Private methods of Domain class ------------------------------
     @classmethod

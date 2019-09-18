@@ -9,6 +9,19 @@ within the Scipion framework for image processing in Electron Microscopy.
   * Protocols: special type of Objects that have defined input parameters and will produce some output
   * Viewers: Entities that provide graphical analysis of results.
   * Wizards: Small GUIs that can be develop to help users to select given parameter values.
+
+Running tests
+-------------
+First make sure that **pyworkflow** is available as a Python module in your
+current Python environment. During development, I tend to set the PYTHONPATH:
+
+.. code-block:: bash
+
+    cd scipion-pyworkflow
+    export PYTHONPATH=$PYTHONPATH:$PWD
+    cd pyworkflow/tests
+
+    python -m unittest discover
   
 
 

@@ -117,8 +117,8 @@ def _getAppsProgram(prog):
 
 def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
     # Check first if we need to launch with MPI or not
-    command = ('%s %s runprotocol pw_protocol_run.py "%s" "%s" %s'
-               % (pw.PYTHON, pw.getScipionScript(),
+    command = ('%s "%s" "%s" %s'
+               % (pw.join('apps', 'pw_protocol_run.py'),
                   protocol.getProject().path, protocol.getDbPath(),
                   protocol.strId()))
     hostConfig = protocol.getHostConfig()

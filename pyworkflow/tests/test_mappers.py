@@ -1,13 +1,14 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
-# * Authors:    J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -16,9 +17,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -29,94 +28,63 @@ import os
 import os.path
 import unittest
 
-from pyworkflow.mapper import *
-from pyworkflow.object import *
-from pyworkflow.project import *
-from pyworkflow.em.data import Acquisition, SetOfImages, Image
-from pyworkflow.tests import *
 import pyworkflow.utils as pwutils
-from pyworkflow.mapper.sqlite import SqliteFlatMapper
-from pyworkflow.mapper.sqlite_db import SqliteDb
+import pyworkflow.object as pwobj
+import pyworkflow.tests as pwtests
+import pyworkflow.mapper as pwmapper
+
+import mock_domain as mod
+import mock_domain.objects as modobj
 
 
-class TestSqliteMapper(BaseTest):
-    _labels = [SMALL]
-
+class TestSqliteMapper(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
-        setupTestOutput(cls)
-        cls.dataset = DataSet.getDataSet('model')  
-        cls.modelGoldSqlite = cls.dataset.getFile('modelGoldSqlite')
+        pwtests.setupTestOutput(cls)
 
-    def test_SqliteDb(self):
-        """ Test the SqliteDb class that is used by the sqlite mappers. """
-        db = SqliteDb()
-        db._createConnection(self.modelGoldSqlite, timeout=1000)
-        
-        tables = ['Objects', 'Relations']
-        self.assertEqual(tables, db.getTables())
-        
-        # Test getting the version, for the gold file it should be 0
-        self.assertEqual(0, db.getVersion())
-        
-        db.close()
-        
     def test_SqliteMapper(self):
         fn = self.getOutputPath("basic.sqlite")
-        fnGoldCopy = self.getOutputPath('gold.sqlite')
-        fnGold = self.modelGoldSqlite
-        
-        print ">>> Using db: ", fn
-        print "        gold: ", fnGold
-        print "   gold copy: ", fnGoldCopy
-        
-        pwutils.copyFile(fnGold, fnGoldCopy)
 
-        mapper = SqliteMapper(fn)
+        mapper = pwmapper.SqliteMapper(fn)
         # Insert a Complex
-        c = Complex.createComplex() # real = 1, imag = 1
+        c = modobj.Complex.createComplex()  # real = 1, imag = 1
         mapper.insert(c)
-        # Insert an Integer
-        i = Integer(1)
+        # Insert an pwobj.Integer
+        i = pwobj.Integer(1)
         mapper.insert(i)
-        # Insert two Boolean
-        b = Boolean(False)
-        b2 = Boolean(True)
+        # Insert two pwobj.Boolean
+        b = pwobj.Boolean(False)
+        b2 = pwobj.Boolean(True)
         mapper.insert(b)
         mapper.insert(b2)
-        #Test storing pointers
-        p = Pointer()
+        # Test storing pointers
+        p = pwobj.Pointer()
         p.set(c)
         mapper.insert(p)
-        
         # Store csv list
         strList = ['1', '2', '3']
-        csv = CsvList()
+        csv = pwobj.CsvList()
         csv += strList
         mapper.insert(csv)
-        
         # Test normal List
-        iList = List()
-        mapper.insert(iList) # Insert the list when empty        
-        
-        i1 = Integer(4)
-        i2 = Integer(3)
+        iList = pwobj.List()
+        mapper.insert(iList)  # Insert the list when empty
+        i1 = pwobj.Integer(4)
+        i2 = pwobj.Integer(3)
         iList.append(i1)
         iList.append(i2)
+        mapper.update(iList)  # now update with some items inside
         
-        mapper.update(iList) # now update with some items inside
-        
-        pList = PointerList()
-        p1 = Pointer()
+        pList = pwobj.PointerList()
+        p1 = pwobj.Pointer()
         p1.set(b)
-        p2 = Pointer()
+        p2 = pwobj.Pointer()
         p2.set(b2)
         pList.append(p1)
         pList.append(p2)
         
         mapper.store(pList)
         
-
         # Test to add relations
         relName = 'testRelation'
         creator = c
@@ -129,25 +97,30 @@ class TestSqliteMapper(BaseTest):
         # Save changes to file
         mapper.commit()
         self.assertEqual(1, mapper.db.getVersion())
+        mapper.close()
 
-        # Intentionally keep gold.sqlite as version 0 to check
-        # backward compatibility
-        db = SqliteDb()
-        db._createConnection(fnGold, timeout=1000)
-        print "Checking old version is properly read"
-        self.assertEqual(0, db.getVersion())
-        colNamesGold = [u'id', u'parent_id', u'name', u'classname', 
-                        u'value', u'label', u'comment', u'object_parent_id', 
-                        u'object_child_id', u'creation']
-        colNames = [col[1] for col in db.getTableColumns('Relations')]
-        self.assertEqual(colNamesGold, colNames)
-        
+        # TODO: Maybe some mapper test for backward compatibility can be
+        # include in scipion-em, where we already have defined datasets
+        # and reference old sqlite files
+
+        # Test using SqliteDb class
+        db = pwmapper.SqliteDb()
+        db._createConnection(fn, timeout=1000)
+        tables = ['Objects', 'Relations']
+        self.assertEqual(tables, db.getTables())
+        # Test getting the version, for the gold file it should be 0
+        self.assertEqual(1, db.getVersion())
+        db.close()
+
         # Reading test
-        mapper2 = SqliteMapper(fnGoldCopy, globals())
+        mapper2 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
         print "Checking that Relations table is updated and version to 1"
         self.assertEqual(1, mapper2.db.getVersion())
         # Check that the new column is properly added after updated to version 1
-        colNamesGold += [u'object_parent_extended', u'object_child_extended']
+        colNamesGold = [u'id', u'parent_id', u'name', u'classname',
+                        u'value', u'label', u'comment', u'object_parent_id',
+                        u'object_child_id', u'creation',
+                        u'object_parent_extended', u'object_child_extended']
         colNames = [col[1] for col in mapper2.db.getTableColumns('Relations')]
         self.assertEqual(colNamesGold, colNames)
         
@@ -172,7 +145,7 @@ class TestSqliteMapper(BaseTest):
 
         for a1, a2 in zip(allObj, iterAllObj):
             # Note compare the scalar objects, which have a well-defined comparison
-            if isinstance(a1, Scalar):
+            if isinstance(a1, pwobj.Scalar):
                 self.assertEqual(a1, a2)
         # Test select all batch approach
         allBatch = mapper2.selectAllBatch()
@@ -182,7 +155,8 @@ class TestSqliteMapper(BaseTest):
         parents = mapper2.getRelationParents(relName, p)
         # In this case both childs and parent should be the same
         for c, p in zip(childs, parents):
-            self.assertEqual(c, p, "Childs of object i, should be the parents of object p")
+            self.assertEqual(c, p,
+                             "Childs of object i, should be the parents of object p")
 
         relations = mapper2.getRelationsByCreator(creator)
         for row in relations:
@@ -194,12 +168,12 @@ class TestSqliteMapper(BaseTest):
         
         print ">>> Using db: ", fn
 
-        mapper = SqliteMapper(fn)
+        mapper = pwmapper.SqliteMapper(fn)
         # Insert a Complex
-        c = Complex.createComplex() # real = 1, imag = 1
+        c = modobj.Complex.createComplex()  # real = 1, imag = 1
         mapper.insert(c)
-        # Insert an Integer
-        p1 = Pointer()
+        # Insert an pwobj.Integer
+        p1 = pwobj.Pointer()
         p1.set(c)
         p1.setExtended('real')
         
@@ -208,13 +182,13 @@ class TestSqliteMapper(BaseTest):
         
         self.assertAlmostEqual(c.real.get(), p1.get().get())
         
-        p1.set(None) # Reset value and check that is stored properly
+        p1.set(None)  # Reset value and check that is stored properly
         
         self.assertIsNone(p1._extended.get())
         mapper.store(p1)
         mapper.commit()
         
-        mapper2 = SqliteMapper(fn, globals())
+        mapper2 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
         p2 = mapper2.selectByClass('Pointer')[0]
         
         #Check the mapper was properly stored when
@@ -228,10 +202,10 @@ class TestSqliteMapper(BaseTest):
         print ">>> Using db: ", fn
 
         # Let's create a Mapper to store a simple List containing two integers
-        mapper = SqliteMapper(fn, globals())
-        iList = List()
-        i1 = Integer(4)
-        i2 = Integer(3)
+        mapper = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
+        iList = pwobj.List()
+        i1 = pwobj.Integer(4)
+        i2 = pwobj.Integer(3)
         iList.append(i1)
         iList.append(i2)
         # Store the list and commit changes to db, then close db.
@@ -241,80 +215,82 @@ class TestSqliteMapper(BaseTest):
 
         # Now let's open again the db with a different connection
         # and load the previously stored list
-        mapper2 = SqliteMapper(fn, globals())
+        mapper2 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
         iList2 = mapper2.selectByClass('List')[0]
         # Let's do some basic checks
         self.assertEqual(iList2.getSize(), 2)
-        self.assertTrue(Integer(4) in iList2)
-        self.assertTrue(Integer(3) in iList2)
+        self.assertTrue(pwobj.Integer(4) in iList2)
+        self.assertTrue(pwobj.Integer(3) in iList2)
 
         # Now remove one of the integers in the list
         # check consistency in the list elements
-        iList2.remove(Integer(4))
+        iList2.remove(pwobj.Integer(4))
         self.assertEqual(iList2.getSize(), 1)
-        self.assertTrue(Integer(4) not in iList2)
-        self.assertTrue(Integer(3) in iList2)
+        self.assertTrue(pwobj.Integer(4) not in iList2)
+        self.assertTrue(pwobj.Integer(3) in iList2)
         # Store once again the new list with one element
         mapper2.store(iList2)
         mapper2.commit()
         mapper2.close()
 
         # Open the db and load the list once again
-        mapper3 = SqliteMapper(fn, globals())
+        mapper3 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
         iList3 = mapper3.selectByClass('List')[0]
         # Check the same consistency before it was stored
         self.assertEqual(iList3.getSize(), 1)
-        self.assertTrue(Integer(4) not in iList3)
-        self.assertTrue(Integer(3) in iList3)
+        self.assertTrue(pwobj.Integer(4) not in iList3)
+        self.assertTrue(pwobj.Integer(3) in iList3)
 
         
-class TestSqliteFlatMapper(BaseTest):
+class TestSqliteFlatMapper(pwtests.BaseTest):
     """ Some tests for DataSet implementation. """
-    _labels = [SMALL]
+    _labels = [pwtests.SMALL]
 
     @classmethod
     def setUpClass(cls):
-        setupTestOutput(cls)
-        cls.dataset = DataSet.getDataSet('xmipp_tutorial')
-        cls.modelGoldSqlite = cls.dataset.getFile( 'micsGoldSqlite')
-        
-    def test_SqliteFlatDb(self):
-        """ Create a SqliteDataset """
-        from pyworkflow.mapper.sqlite import SqliteFlatDb
-        print ">>> test_SqliteFlatDb: dbName = '%s'" % self.modelGoldSqlite
-        db = SqliteFlatDb(self.modelGoldSqlite)
-        # Old db version 0
-        self.assertEqual(0, db.getVersion())
-        # Test the 'self' class name is correctly retrieved
-        self.assertEqual('Micrograph', db.getSelfClassName())  
-        # Check the count is equal to 3
-        self.assertEqual(3, db.count()) 
+        pwtests.setupTestOutput(cls)
+        # cls.dataset = DataSet.getDataSet('xmipp_tutorial')
+        # cls.modelGoldSqlite = cls.dataset.getFile('micsGoldSqlite')
 
-        # Check select all with limits
-        items = db.selectAll(iterate=False, limit=2)
-        self.assertEqual(2, len(items), "Select all with limits is not working.")
-        firstItem = items[0]
-        self.assertEqual(1, firstItem[0], "First object unexpected")
+    # TODO: Maybe some mapper test for backward compatibility can be
+    # include in scipion-em, where we already have defined datasets
+    # and reference old sqlite files
 
-        # Check select all with limit and skipping rows
-        items = db.selectAll(iterate=False, limit=(1, 1))
-        self.assertEqual(1, len(items))
-        firstItem = items[0]
-        self.assertEqual(2, firstItem[0], "First object using skipRows unexpected")
-
-        db.close()
-
+    # def test_SqliteFlatDb(self):
+    #     """ Create a SqliteDataset """
+    #     print ">>> test_SqliteFlatDb: dbName = '%s'" % self.modelGoldSqlite
+    #     db = pwmapper.SqliteFlatDb(self.modelGoldSqlite)
+    #     # Old db version 0
+    #     self.assertEqual(0, db.getVersion())
+    #     # Test the 'self' class name is correctly retrieved
+    #     self.assertEqual('Micrograph', db.getSelfClassName())
+    #     # Check the count is equal to 3
+    #     self.assertEqual(3, db.count())
+    #
+    #     # Check select all with limits
+    #     items = db.selectAll(iterate=False, limit=2)
+    #     self.assertEqual(2, len(items), "Select all with limits is not working.")
+    #     firstItem = items[0]
+    #     self.assertEqual(1, firstItem[0], "First object unexpected")
+    #
+    #     # Check select all with limit and skipping rows
+    #     items = db.selectAll(iterate=False, limit=(1, 1))
+    #     self.assertEqual(1, len(items))
+    #     firstItem = items[0]
+    #     self.assertEqual(2, firstItem[0], "First object using skipRows unexpected")
+    #
+    #     db.close()
 
     def test_insertObjects(self):
         dbName = self.getOutputPath('images.sqlite')
         print ">>> test_insertObjects: dbName = '%s'" % dbName
-        mapper = SqliteFlatMapper(dbName, globals())
+        mapper = pwmapper.SqliteFlatMapper(dbName, mod.Domain.getMapperDict())
         self.assertEqual(0, mapper.count())
         self.assertEqual(0, mapper.maxId())
         n = 10
         
         for i in range(n):
-            img = Image()
+            img = modobj.MockImage()
             img.setLocation(i+1, 'images.stk')
             mapper.insert(img)
 
@@ -322,7 +298,7 @@ class TestSqliteFlatMapper(BaseTest):
         self.assertEqual(n, mapper.maxId())
 
         # Store one more image with bigger id
-        img = Image()
+        img = modobj.MockImage()
         bigId = 1000
         img.setLocation(bigId, 'images.stk')
         img.setObjId(bigId)
@@ -345,7 +321,7 @@ class TestSqliteFlatMapper(BaseTest):
         mapper.close()
         
         # Test that values where stored properly
-        mapper2 = SqliteFlatMapper(dbName, globals())
+        mapper2 = pwmapper.SqliteFlatMapper(dbName, mod.Domain.getMapperDict())
         
         self.assertTrue(mapper2.hasProperty('samplingRate'))
         self.assertTrue(mapper2.hasProperty('defocusU'))
@@ -361,50 +337,52 @@ class TestSqliteFlatMapper(BaseTest):
         dbName = self.getOutputPath('empty.sqlite')
         print ">>> test empty set: dbName = '%s'" % dbName
         # Check that writing an emtpy set do not fail
-        objSet = Set(filename=dbName)      
+        objSet = pwobj.Set(filename=dbName)
         objSet.write()
         objSet.close()       
         # Now let's try to open an empty set
-        objSet = Set(filename=dbName)
+        objSet = pwobj.Set(filename=dbName)
         self.assertEqual(objSet.getSize(), 0)
         items = [obj.clone() for obj in objSet]
         self.assertEqual(len(items), 0)
 
 
-class TestXmlMapper(BaseTest):
+class TestXmlMapper(pwtests.BaseTest):
     
     @classmethod
     def setUpClass(cls):
-        setupTestOutput(cls)
-        cls.dataset = DataSet.getDataSet('model')  
-        cls.modelGoldXml = cls.dataset.getFile( 'modelGoldXml')
-        
+        pwtests.setupTestOutput(cls)
+
     def test_XMLMapper(self):
         fn = self.getOutputPath("model.xml")
-        c = Complex.createComplex()
-        mapper = XmlMapper(fn)
+        c = modobj.Complex.createComplex()
+        mapper = pwmapper.XmlMapper(fn)
         mapper.insert(c)
         #write file
         mapper.commit()
 
-        fnGold = self.modelGoldXml
-        #self.assertTrue(filecmp.cmp(fnGold, fn))
-        #read file
-        mapper2 = XmlMapper(fnGold, globals())
-        c2 = mapper2.selectFirst()
-        self.assertEquals(c.imag.get(), c2.imag.get())
+        #TODO: Following is the gold Xml
+        # now we can not parse it from StringIO
+        goldXml = """
+<?xml version='1.0' encoding='utf-8'?>
+<ALL>
+  <Complex>
+    <imag>1.0</imag>
+    <real>1.0</real>
+  </Complex>
+</ALL>
+        """
+        # mapper2 = XmlMapper(fnGold, mod.Domain.getMapperDict())
+        # c2 = mapper2.selectFirst()
+        # self.assertEquals(c.imag.get(), c2.imag.get())
         
 
-class TestDataSet(BaseTest):
+class TestDataSet(pwtests.BaseTest):
     """ Some tests for DataSet implementation. """
-    _labels = [SMALL]
-
     @classmethod
     def setUpClass(cls):
-        setupTestOutput(cls)
-        cls.dataset = DataSet.getDataSet('xmipp_tutorial')
-        cls.modelGoldSqlite = cls.dataset.getFile( 'micsGoldSqlite')
-        
+        pwtests.setupTestOutput(cls)
+
     def test_Table(self):
         from pyworkflow.utils.dataset import Table, Column
         table = Table(Column('x', int, 5),

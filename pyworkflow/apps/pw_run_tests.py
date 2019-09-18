@@ -43,7 +43,6 @@ from collections import OrderedDict
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.tests as pwtests
-import pyworkflow.em as pwem
 
 
 from pyworkflow.tests import *
@@ -99,7 +98,7 @@ class Tester():
             # In this other case, we will load the test available
             # from pyworkflow and the other plugins
             self.paths = [('pyworkflow', '.')]
-            for name, plugin in pwem.Domain.getPlugins().iteritems():
+            for name, plugin in pw.Config.getDomain().getPlugins().iteritems():
                 self.paths.append((name, os.path.dirname(plugin.__path__[0])))
             for k, p in self.paths:
                 testsDict[k] = testLoader.discover(os.path.join(p, k),

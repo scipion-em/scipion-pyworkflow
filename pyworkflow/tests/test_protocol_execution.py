@@ -1,12 +1,13 @@
-    # **************************************************************************
+# -*- coding: utf-8 -*-
+# **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,74 +16,51 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
 
-from pyworkflow.object import *
-from tests import *
-from pyworkflow.mapper import SqliteMapper
-from pyworkflow.utils import dateStr
-from pyworkflow.protocol import Protocol
-from pyworkflow.protocol.constants import MODE_RESUME, STATUS_FINISHED
-from pyworkflow.protocol.executor import StepExecutor
+import pyworkflow.tests as pwtests
+import pyworkflow.mapper as pwmapper
+import pyworkflow.protocol as pwprot
+
+import mock_domain as mod
+import mock_domain.protocols as modprot
 
 
-class MyProtocol(Protocol):
-    def __init__(self, **args):
-        Protocol.__init__(self, **args)
-        self.name = String(args.get('name', None))
-        self.numberOfSleeps = Integer(args.get('n', 1))
-        self.runMode = Integer(MODE_RESUME)
-        
-    def sleepStep(self, t, s):
-        log = self._getPath("step_%02d.txt" % t)
-        import time, datetime
-        f = open(log, 'w+')
-        f.write("Going to sleep at %s\n" % dateStr(datetime.datetime.now(), True))
-        time.sleep(t)
-        f.write("  Slept: %d seconds\n" % t)
-        f.write("Awaked at %s\n" % dateStr(datetime.datetime.now(), True))
-        f.close()
-        return [log]
-        
-    def _insertAllSteps(self):
-        for i in range(self.numberOfSleeps.get()):
-            self._insertFunctionStep('sleepStep', i+1, 'sleeping %d'%i)
-            
-            
-class MyParallelProtocol(MyProtocol):
-    def _insertAllSteps(self):
-        step1 = self._insertFunctionStep('sleepStep', 1, '1')
-        n = 2
-        deps = [step1]
-        for i in range(n):
-            self._insertFunctionStep('sleepStep')
-    
-            
 # TODO: this test seems not to be finished.
-class TestProtocolExecution(BaseTest):
+class TestProtocolExecution(pwtests.BaseTest):
     
     @classmethod
     def setUpClass(cls):
-        setupTestOutput(cls)
+        pwtests.setupTestOutput(cls)
     
     def test_StepExecutor(self):
         """Test the list with several Complex"""
-        fn = self.getOutputPath("protocol.sqlite")   
-        mapper = SqliteMapper(fn, globals())
-        prot = MyProtocol(mapper=mapper, n=2, workingDir=self.getOutputPath(''))
-        prot._stepsExecutor = StepExecutor(hostConfig=None)
+        fn = self.getOutputPath("protocol.sqlite")
+        print("Writing to db: %s" % fn)
+
+        # Discover objects and protocols
+        mapperDict = mod.Domain.getMapperDict()
+
+        # Check that the protocol has associated package
+        mapper = pwmapper.SqliteMapper(fn, mapperDict)
+        prot = modprot.SleepingProtocol(mapper=mapper, n=2,
+                                        workingDir=self.getOutputPath(''))
+        domain = prot.getClassDomain()
+        domain.printInfo()
+
+        prot.setStepsExecutor(pwprot.StepExecutor(hostConfig=None))
         prot.run()
+        mapper.commit()
+        mapper.close()
+
+        self.assertEqual(prot._steps[0].getStatus(), pwprot.STATUS_FINISHED)
         
-        self.assertEqual(prot._steps[0].getStatus(), STATUS_FINISHED)
-        
-        mapper2 = SqliteMapper(fn, globals())
+        mapper2 = pwmapper.SqliteMapper(fn, mapperDict)
         prot2 = mapper2.selectById(prot.getObjId())
         
         self.assertEqual(prot.endTime.get(), prot2.endTime.get())

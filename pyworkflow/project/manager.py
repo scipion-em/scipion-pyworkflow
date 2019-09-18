@@ -49,7 +49,7 @@ class ProjectInfo(object):
         
         
 class Manager(object):
-    """ Manage all projects of a given workspace.
+    """ Manage all projects of a given workspace, for a given Domain.
      (i.e, listing projects, creating, deleting or querying info)
     """
     def __init__(self, workspace=None):
@@ -98,7 +98,7 @@ class Manager(object):
         # working dir (cwd) to the project location, let's store the cwd
         # and restored after the creation
         cwd = os.getcwd()
-        project = Project(projectPath)
+        project = Project(pw.Config.getDomain(), projectPath)
         project.create(runsView=runsView, 
                        hostsConf=hostsConf, 
                        protocolsConf=protocolsConf)
@@ -114,7 +114,7 @@ class Manager(object):
         return project
 
     def importProject(self, fromLocation, copyFiles=True, projectName=None, searchLocation=None):
-        """Import a project that is somewhere else in the FS
+        """ Import a project that is somewhere else in the FS
         Folder can be copied (default) or linked
         Optionally a name can be specified, otherwise name will match location folder name
         Project will always be created in the default project folder.
@@ -137,13 +137,14 @@ class Manager(object):
 
         project = self.loadProject(projectName)
 
-        if searchLocation: project.fixLinks(searchLocation)
+        if searchLocation:
+            project.fixLinks(searchLocation)
 
         return project
 
     def loadProject(self, projId, **kwargs):
         """ Retrieve a project object, given its id. """
-        project = Project(self.getProjectPath(projId))
+        project = Project(pw.Config.getDomain(), self.getProjectPath(projId))
         project.load(**kwargs)
         return project
 
