@@ -33,7 +33,6 @@ import os
 import Tkinter as tk
 import ttk
 from collections import OrderedDict
-from itertools import izip
 from datetime import datetime
 
 import pyworkflow as pw
@@ -2557,7 +2556,7 @@ class QueueDialog(Dialog):
         if selected in self.queueDict:
             paramsDict = {}
             params = self.queueDict[selected]
-            for p, v in izip(params, self.vars):
+            for p, v in zip(params, self.vars):
                 if len(p) == 3:
                     name, value, label = p
                 else: 

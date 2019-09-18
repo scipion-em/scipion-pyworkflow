@@ -29,7 +29,6 @@ The Object class is the root in the hierarchy and some other
 basic classes.
 """
 
-from itertools import izip
 from collections import OrderedDict
 import datetime as dt
 from pyworkflow.utils.reflection import getSubclasses
@@ -1023,7 +1022,7 @@ class CsvList(Scalar, list):
         """ Comparison for scalars should be by value
         and for other objects by reference.
         """
-        return all(a == b for a, b in izip(self, other))
+        return all(a == b for a, b in zip(self, other))
 
 
 class Set(OrderedObject):
@@ -1237,7 +1236,7 @@ class Set(OrderedObject):
         """
         return all(x.getObjId() == y.getObjId() and
                    x.equalAttributes(y, ignore=ignore, verbose=verbose)
-                   for x, y in izip(self, other))
+                   for x, y in zip(self, other))
         
     def hasProperty(self, key):
         return self._getMapper().hasProperty(key)
