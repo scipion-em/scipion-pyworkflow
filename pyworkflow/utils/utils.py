@@ -127,7 +127,7 @@ def prettyDelta(timedelta):
 
 
 def prettyLog(msg):
-    print cyan(prettyTime(datetime.now(), secs=True)), msg
+    print(cyan(prettyTime(datetime.now(), secs=True)), msg)
 
 
 class Timer(object):
@@ -139,7 +139,7 @@ class Timer(object):
         return prettyDelta(datetime.now()-self._dt)
         
     def toc(self, message='Elapsed:'):
-        print message, self.getToc()
+        print(message, self.getToc())
         
 
 def timeit(func):
@@ -274,7 +274,7 @@ def executeLongRemote (command, hostName, userName, password):
             break
         rl, wl, xl = select.select([channel], [], [], 0.0)
         if len(rl) > 0:
-            print channel.recv(1024)
+            print(channel.recv(1024))
 
 
 def getLocalUserName():
@@ -565,8 +565,8 @@ class Environ(dict):
                 return self.get(k)
 
         if mandatory:
-            print ("None of the variables: %s found in the Environment. "
-                   "Please check scipion.conf files." % (str(keys)))
+            print("None of the variables: %s found in the Environment. "
+                  "Please check scipion.conf files." % (str(keys)))
 
         return None
 

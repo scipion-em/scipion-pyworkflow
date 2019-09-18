@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
 
 import datetime as dt
 import json
@@ -884,7 +885,7 @@ class Project(object):
                 try:
                     maxSuffix = max(int(stringSuffix),maxSuffix)
                 except:
-                    print "stringSuffix", stringSuffix
+                    print("stringSuffix", stringSuffix)
             elif otherProtLabel == defaultLabel: # When only we have the prefix,
                 maxSuffix = max(1,maxSuffix)     # this REGEX don't match.
 

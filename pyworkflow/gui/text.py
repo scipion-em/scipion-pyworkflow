@@ -26,6 +26,8 @@
 """
 Text based widgets.
 """
+from __future__ import print_function
+
 import os
 import sys
 import time
@@ -94,7 +96,7 @@ elif os.name == 'posix':  # linux systems and so on
             time.sleep(1)
             if proc.poll() in [None, 0]:
                 return  # hope we found your fav editor :)
-        print 'WARNING: Cannot open %s' % path  # nothing worked! :(
+        print('WARNING: Cannot open %s' % path)  # nothing worked! :(
 else:
     def _open_cmd(path, tkParent=None):
         try:
@@ -272,7 +274,7 @@ class Text(tk.Text, Scrollable):
             if tag in self.handlers:
                 self.handlers[tag](path.split(':', 1)[-1])
             else:
-                print "Can't find %s" % path
+                print("Can't find %s" % path)
 
     def updateMenu(self, e=None):
         state = 'normal'
@@ -316,7 +318,7 @@ def configureColorTags(text):
             text.tag_config(color, foreground=color)
         return True
     except Exception as e:
-        print "Colors still not available (%s)" % e
+        print("Colors still not available (%s)" % e)
         return False
 
        

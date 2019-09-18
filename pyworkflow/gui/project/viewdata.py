@@ -25,6 +25,7 @@
 """
 Data-oriented view of the project objects.
 """
+from __future__ import print_function
 
 import Tkinter as tk
 import ttk
@@ -384,7 +385,7 @@ class ProjectDataView(tk.Frame):
                 if dataId in selection: selection.remove(dataId)
                 if protocolId in runSelection: runSelection.remove(protocolId)
             except ValueError:
-                print "id not in selection"
+                print("id not in selection")
         else:
             selection.append(dataId)
             runSelection.append(protocolId)

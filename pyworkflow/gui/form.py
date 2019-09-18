@@ -1787,7 +1787,7 @@ class FormWindow(Window):
                 self.useGpuVar.trace('w', self._setGpu)
                 self.gpuListVar.trace('w', self._setGpu)
         except Exception as e:
-            print "Parallel section couldn't be created. %s" % e.message
+            print("Parallel section couldn't be created. %s" % e.message)
 
     def _createCommon(self, parent):
         """ Create the second section with some common parameters. """

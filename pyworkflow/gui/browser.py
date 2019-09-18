@@ -30,6 +30,7 @@ This class can be subclasses to extend its functionality.
 A concrete use of ObjectBrowser is FileBrowser, where the
 elements to inspect and preview are files.
 """
+from __future__ import print_function
 
 import os.path
 import stat
@@ -453,7 +454,7 @@ class FileTreeProvider(TreeProvider):
                 # All ok...add item.
                 fileInfoList.append(FileInfo(self._currentDir, f))
         except Exception as e:
-            print "Can't list files at " + self._currentDir, e.message
+            print("Can't list files at " + self._currentDir, e.message)
 
         # Sort objects
         fileInfoList.sort(key=self.fileKey, reverse=not self.isSortingAscending())
@@ -526,7 +527,7 @@ class FileBrowser(ObjectBrowser):
     def _showInfo(self, msg):
         """ Default way (print to console) to show a message with a given info.
         """
-        print msg
+        print(msg)
 
     def _fillLeftPanel(self, frame):
         """ Redefine this method to include a buttons toolbar and
@@ -699,7 +700,6 @@ class FileBrowser(ObjectBrowser):
             self.tree.search(char)
         except Exception as e:
             # seems to raise an exception but selects things right.
-            #print "Can't search item in browser. Using char " + char, e.message
             pass
 
     def _onEnterPath(self, e=None):
@@ -715,7 +715,7 @@ class FileBrowser(ObjectBrowser):
         pass
     
     def onSelect(self, obj):
-        print obj, "type: ", type(obj)
+        print(obj, "type: ", type(obj))
     
     def _close(self, e=None):
         self.onClose()

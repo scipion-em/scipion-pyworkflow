@@ -27,6 +27,8 @@
 """
 This module is responsible for launching protocol executions.
 """
+from __future__ import print_function
+
 import sys
 
 # Add callback for remote debugging if available.
@@ -48,4 +50,4 @@ if __name__ == '__main__':
         
     else:
         from os.path import basename
-        print "usage: %s dbPath protocolID" % basename(sys.argv[0])
+        print("usage: %s dbPath protocolID" % basename(sys.argv[0]))

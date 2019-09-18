@@ -32,7 +32,7 @@ from pyworkflow.project import Manager
 
 
 def usage(error):
-    print ("""
+    print("""
     ERROR: %s
     
     Usage: scipion python scripts/clean_projects.py [SCIPION_USER_DATA] [--delete]

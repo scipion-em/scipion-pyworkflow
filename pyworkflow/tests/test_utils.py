@@ -123,7 +123,7 @@ class TestProgressBar(unittest.TestCase):
         self.assertEqual(resultGold.strip(), result.getvalue().strip())
         result.close()
         tf = time.time()
-        print ("%d iterations in %f sec" % (total, tf - ti))
+        print("%d iterations in %f sec" % (total, tf - ti))
 
     def test_dot(self):
         total = 1000000

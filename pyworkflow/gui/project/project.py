@@ -29,6 +29,7 @@ It is composed by three panels:
 2. Right upper: VIEWS (Data/Protocols)
 3. Summary/Details
 """
+from __future__ import print_function
 
 import os
 import threading
@@ -247,9 +248,9 @@ class ProjectWindow(ProjectBaseWindow):
             openTextFileEditor(dotFile.name)
 
         if useId:
-            print "\nexport SCIPION_TREE_NAME=1 # to use names instead of ids"
+            print("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
         else:
-            print "\nexport SCIPION_TREE_NAME=0 # to use ids instead of names"
+            print("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
 
     def onManageProjectLabels(self):
         self.manageLabels()
@@ -303,7 +304,7 @@ class ProjectWindow(ProjectBaseWindow):
             func = self._OBJECT_COMMANDS.get(cmd, None)
 
             if func is None:
-                print "Error, command '%s' not found. " % cmd
+                print("Error, command '%s' not found. " % cmd)
             else:
                 def myfunc():
                     func(inputObj, objId)
@@ -311,8 +312,8 @@ class ProjectWindow(ProjectBaseWindow):
                 self.enqueue(myfunc)
 
         except Exception, ex:
-            print "There was an error executing object command !!!:"
-            print  ex
+            print("There was an error executing object command !!!:")
+            print(ex)
     
     def recalculateCTF(self, inputObjId, sqliteFile):
         """ Load the project and launch the protocol to
@@ -457,7 +458,7 @@ class ProjectTCPRequestHandler(SocketServer.BaseRequestHandler):
                 answer = 'no answer available'
                 self.request.sendall(answer + '\n')
         except Exception as e:
-            print e
+            print(e)
             import traceback
             traceback.print_stack()
 

@@ -223,7 +223,8 @@ class Tester():
                         resultStr = '<font color="green">[SUCCEED]</font>'
                     logStr = '<a href="file://%s">%s</a>' % (logFile, basename(logFile))
 
-                    print >> f, rowStr % (self.testCount, cmd, runTime, resultStr, logStr)
+                    f.write(rowStr % (self.testCount, cmd, runTime, resultStr, logStr))
+                    f.write('\n')
                 if self.headerPrefix  in l:
                     f.write(self.headerPrefix + self.testTimer.getToc() + '</h3>\n')
                 else:

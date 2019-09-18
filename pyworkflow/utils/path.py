@@ -27,6 +27,7 @@
 This module contains the PATH related utilities 
 inside the utils module
 """
+from __future__ import print_function
 
 import os
 import shutil
@@ -75,14 +76,11 @@ def findRootFrom(referenceFile, searchFile):
     and 'searchFile' is an image to be found from the metadata.
     Return None if the path is not found.
     """
-    print "referenceFile:", referenceFile
     absPath = os.path.dirname(os.path.abspath(referenceFile))
     
     while absPath is not None and absPath != '/':
-        print "checking: ", os.path.join(absPath, searchFile)
         if os.path.exists(os.path.join(absPath, searchFile)):
-            print " >>>> found!!!"
-            return absPath #os.path.relpath(absPath)
+            return absPath  # os.path.relpath(absPath)
         absPath = os.path.dirname(absPath)
         
     return None   
@@ -93,6 +91,7 @@ def getParentFolder(path):
     folders that ens with "/" which dirname can't"""
     # return os.path.abspath(os.path.join(path, os.pardir))
     return os.path.dirname(os.path.abspath(path))
+
 
 def replaceExt(filename, newExt):
     """ Replace the current path extension(from last .)
@@ -428,12 +427,13 @@ def getFileSize(fn):
 
 
 def getFileLastModificationDate(fn):
-    """ Returns the last modification date of a file or None if it doesn't exist"""
+    """ Returns the last modification date of a file or None
+    if it doesn't exist. """
     if os.path.exists(fn):
         ts = os.path.getmtime(fn)
         return datetime.datetime.fromtimestamp(ts)
     else:
-        print (fn + " does not exist!!. Can't check last modification date.")
+        print(fn + " does not exist!!. Can't check last modification date.")
         return None
 
 

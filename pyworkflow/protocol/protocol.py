@@ -678,7 +678,7 @@ class Protocol(Step):
                         # This case implies Direct Pointers to Sets
                         # (without extended): hopefully this will only be
                         # created from tests
-                        print ("Can't get protocol info from input attribute."
+                        print("Can't get protocol info from input attribute."
                                " This could render unexpected results when "
                                "scheduling protocols.")
                         continue

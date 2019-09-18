@@ -23,6 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
 
 import os
 import os.path
@@ -114,7 +115,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         # Reading test
         mapper2 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
-        print "Checking that Relations table is updated and version to 1"
+        print("Checking that Relations table is updated and version to 1")
         self.assertEqual(1, mapper2.db.getVersion())
         # Check that the new column is properly added after updated to version 1
         colNamesGold = [u'id', u'parent_id', u'name', u'classname',
@@ -160,13 +161,13 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         relations = mapper2.getRelationsByCreator(creator)
         for row in relations:
-            print row
+            print(row)
             
     def test_StorePointers(self):
         """ Check that pointers are correctly stored. """
         fn = self.getOutputPath("pointers.sqlite")
         
-        print ">>> Using db: ", fn
+        print(">>> Using db: ", fn
 
         mapper = pwmapper.SqliteMapper(fn)
         # Insert a Complex
@@ -199,7 +200,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         """ Check that lists are properly stored after removing some elements. """
         fn = self.getOutputPath("lists.sqlite")
 
-        print ">>> Using db: ", fn
+        print(">>> Using db: ", fn)
 
         # Let's create a Mapper to store a simple List containing two integers
         mapper = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
@@ -283,7 +284,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
 
     def test_insertObjects(self):
         dbName = self.getOutputPath('images.sqlite')
-        print ">>> test_insertObjects: dbName = '%s'" % dbName
+        print(">>> test_insertObjects: dbName = '%s'" % dbName)
         mapper = pwmapper.SqliteFlatMapper(dbName, mod.Domain.getMapperDict())
         self.assertEqual(0, mapper.count())
         self.assertEqual(0, mapper.maxId())
@@ -335,7 +336,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         
     def test_emtpySet(self):
         dbName = self.getOutputPath('empty.sqlite')
-        print ">>> test empty set: dbName = '%s'" % dbName
+        print(">>> test empty set: dbName = '%s'" % dbName)
         # Check that writing an emtpy set do not fail
         objSet = pwobj.Set(filename=dbName)
         objSet.write()

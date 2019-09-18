@@ -28,6 +28,7 @@ This module trace through printing
 module and class functions...
 Code from: http://wordaligned.org/articles/echo
 """
+from __future__ import print_function
 
 import inspect
 import sys
@@ -57,10 +58,10 @@ def method_name(method):
     return mname
     
 def format_args(args):
-    print args
+    print(args)
     
 def echo(fn, write=sys.stdout.write):
-    print fn
+    print(fn)
     
 def echo_instancemethod(klass, method, write=sys.stdout.write):
     """ Change an instancemethod so that calls to it are echoed.

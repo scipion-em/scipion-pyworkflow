@@ -23,6 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
 
 import os
 import Tkinter as tk
@@ -131,8 +132,8 @@ class ProjectsView(tk.Frame):
                 frame.grid(row=r, column=0, padx=10, pady=5, sticky='new')
                 r += 1
             except Exception, ex:
-                print "ERROR loading project: %s" % p.getName()
-                print ex
+                print("ERROR loading project: %s" % p.getName())
+                print(ex)
         text.window_create(tk.INSERT, window=parent)
         text.bindWidget(parent)
         text.setReadOnly(True)

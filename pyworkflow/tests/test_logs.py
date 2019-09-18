@@ -59,21 +59,21 @@ class TestLogs(BaseTest):
         
         genLoggerChecked = True
         if lineGenInfoTest is None:
-            print ('General info log failed!!!')
+            print('General info log failed!!!')
             genLoggerChecked = False
         if lineGenWarningTest is None:
-            print ('General warning log failed!!!')
+            print('General warning log failed!!!')
             genLoggerChecked = False
         if lineGenErrorTest is None:
-            print ('General error log failed!!!')
+            print('General error log failed!!!')
             genLoggerChecked = False
         
         if not((lineGenInfoTest<lineGenWarningTest) & (lineGenWarningTest<lineGenErrorTest)):
-            print ('General logs have an incorrect order!!!')
+            print('General logs have an incorrect order!!!')
             genLoggerChecked = False
         
         if (isFileInfoTest | isFileWarningTest | isFileErrorTest):
-            print ('File logs in general log!!!')
+            print('File logs in general log!!!')
             genLoggerChecked = False
         
         # Check file logs
@@ -87,21 +87,21 @@ class TestLogs(BaseTest):
         
         fileLoggerChecked = True
         if lineFileInfoTest is None:
-            print ('File info log failed!!!')
+            print('File info log failed!!!')
             fileLoggerChecked = False
         if lineFileWarningTest is None:
-            print ('File warning log failed!!!')
+            print('File warning log failed!!!')
             fileLoggerChecked = False
         if lineFileErrorTest is None:
-            print ('File error log failed!!!')
+            print('File error log failed!!!')
             fileLoggerChecked = False
         
         if not((lineFileInfoTest<lineFileWarningTest) & (lineFileWarningTest<lineFileErrorTest)):
-            print ('File logs have an incorrect order!!!')
+            print('File logs have an incorrect order!!!')
             fileLoggerChecked = False
         
         if (isGenInfoTest | isGenWarningTest | isGenErrorTest):
-            print ('General logs in file log!!!')
+            print('General logs in file log!!!')
             fileLoggerChecked = False 
 
         self.assertTrue(genLoggerChecked & fileLoggerChecked)

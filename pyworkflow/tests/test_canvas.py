@@ -39,17 +39,17 @@ class TestCanvas(BaseTest):
             connectorsCoords=tb1.getConnectorsCoordinates()
             self.assertTrue(self.allDifferent(connectorsCoords))
 
-            print connectorsCoords
+            print(connectorsCoords)
 
             distances={}
             for i in range(len(connectorsCoords)-1):
                 distances[i]=self.distance(connectorsCoords[i],connectorsCoords[i+1])
 
-                print distances
+                print(distances)
                 self.assertTrue(self.allEqual(distances.values()))
                 self.assertNotEqual(distances[0],0)
         except Tkinter.TclError as ex:
-            print ex
+            print(ex)
 
     def test_closestConnectors(self):
         try:
@@ -70,6 +70,6 @@ class TestCanvas(BaseTest):
             self.assertEqual(c3[0],c4[0])
 
         except Tkinter.TclError as ex:
-            print ex
+            print(ex)
 
 

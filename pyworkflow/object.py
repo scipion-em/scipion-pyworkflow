@@ -28,6 +28,7 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
+from __future__ import print_function
 
 from collections import OrderedDict
 import datetime as dt
@@ -140,9 +141,9 @@ class Object(object):
         subclasses of Object and will be stored"""
         for key, attr in self.getAttributes():
             if not hasattr(attr, '_objDoStore'):
-                print ("Object.getAttributesToStore: attribute '%s' seems to "
+                print("Object.getAttributesToStore: attribute '%s' seems to "
                       "be overwritten," % key)
-                print ("   since '_objDoStore' was not found. "
+                print("   since '_objDoStore' was not found. "
                        "Ignoring attribute. ")
             else:
                 if attr is not None and attr._objDoStore:
@@ -171,7 +172,7 @@ class Object(object):
     def trace(self, callback):
         """ Add an observer when the set method is called. """
         if self.set == self.__setTrace:
-            pass #print "trace already set"
+            pass
         else:
             self.__set = self.set 
             self.set = self.__setTrace
@@ -316,9 +317,9 @@ class Object(object):
                 comp = v1 == v2
             if not comp:
                 if verbose:
-                    print "Different attributes: "
-                    print "self.%s = %s" % (k, v1)
-                    print "other.%s = %s" % (k, v2)
+                    print("Different attributes: ")
+                    print("self.%s = %s" % (k, v1))
+                    print("other.%s = %s" % (k, v2))
                 return False
         return True
             
@@ -516,14 +517,14 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = '' #' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            print tab, self.getClassName(), idStr
+            print(tab, self.getClassName(), idStr)
         else:
             if name == 'submitTemplate': # Skip this because very large value
                 value = '...'
             else:
                 value = self.getObjValue()
                 
-            print tab, '%s = %s' % (name, value), idStr
+            print(tab, '%s = %s' % (name, value), idStr)
         for k, v in self.getAttributes():
             v.printAll(k, level + 1)
             

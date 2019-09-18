@@ -39,6 +39,8 @@ B. Remote execution:
 3- Run a local process (for local execution, see case A) in the remote host
 4- Get the result back after launching remotely
 """
+from __future__ import print_function
+
 import os
 import re
 from subprocess import Popen, PIPE
@@ -163,7 +165,7 @@ def _runRemote(protocol, mode):
             'protId': protocol.getObjId()
             }
     cmd = tpl % args
-    print "** Running remote: %s" % greenStr(cmd)
+    print("** Running remote: %s" % greenStr(cmd))
     p = Popen(cmd, shell=True, stdout=PIPE)
 
     return p
@@ -239,7 +241,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
 def _run(command, wait, stdin=None, stdout=None, stderr=None):
     """ Execute a command in a subprocess and return the pid. """
     gcmd = greenStr(command)
-    print "** Running command: '%s'" % gcmd
+    print("** Running command: '%s'" % gcmd)
     p = Popen(command, shell=True, stdout=stdout, stderr=stderr)
     jobId = p.pid
     if wait:
@@ -264,4 +266,4 @@ def _stopLocal(protocol):
 
 def _stopRemote(protocol):
     _runRemote(protocol, 'stop')
-    
+

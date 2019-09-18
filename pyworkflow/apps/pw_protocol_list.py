@@ -29,6 +29,8 @@
 List all existing protocols within Scipion
 """
 
+from __future__ import print_function
+
 import sys
 from pyworkflow.viewer import Viewer
 from pyworkflow.protocol.protocol import Protocol
@@ -103,45 +105,45 @@ if __name__ == '__main__':
 
         for k, v, l in protList:
             doc = getFirstLine(v.__doc__) if withDoc else ''
-            print "* link:%s[%s]: %s" % (k, l, doc)
+            print("* link:%s[%s]: %s" % (k, l, doc))
 
 
     if asciidoc:
-        print ":toc:\n:toc-placement!:\n\ntoc::[]\n"
+        print(":toc:\n:toc-placement!:\n\ntoc::[]\n")
 
-        print "\n== By Categories\n"
+        print("\n== By Categories\n")
         for c in emCategories:
-            print "\n=== %s\n" % c[0]
+            print("\n=== %s\n" % c[0])
             printProtocols(c[2])
 
-        print "\n== By Packages\n"
+        print("\n== By Packages\n")
         for group, prots in iterGroups(protDict):
-            print "\n=== ", group, "(%d protocols)\n" % len(prots)
+            print("\n=== ", group, "(%d protocols)\n" % len(prots))
             printProtocols(prots)
 
     elif withDoc:
         for group, prots in iterGroups(protDict):
-            print "Package: ", group, "(%d protocols)" % len(prots)
+            print("Package: ", group, "(%d protocols)" % len(prots))
             for p in prots:
-                print "   %s ( %s )" % (p[0], p[1].getClassLabel())
-                print "      doc: ", p[1].__doc__
-            print "-" * 100
+                print("   %s ( %s )" % (p[0], p[1].getClassLabel()))
+                print("      doc: ", p[1].__doc__)
+            print("-" * 100)
 
     else:
         if extended:
             formatStr = "{:<15}\t{:<35}\t{:<35}" + "\t{:<20}" * 6
-            print formatStr.format("PACKAGE", "PROTOCOL",
+            print(formatStr.format("PACKAGE", "PROTOCOL",
                                    "LABEL", "DOUBLE_INHERITANCE",
                                    "ALLOWS_MPI", "NUM_MPI",
                                    "ALLOWS_THREADS", "NUM_THREADS",
-                                   "STEPS_EXEC_MODE")
+                                   "STEPS_EXEC_MODE"))
             for group, prots in iterGroups(protDict):
                 for p in prots:
-                    print formatStr.format(group, p[0],
-                                           p[1].getClassLabel(), *p[2:])
+                    print(formatStr.format(group, p[0],
+                                           p[1].getClassLabel(), *p[2:]))
         else:
             formatStr = "{:<15}\t{:<35}\t{:<35}"
-            print formatStr.format("PACKAGE", "PROTOCOL","LABEL")
+            print(formatStr.format("PACKAGE", "PROTOCOL","LABEL"))
             for group, prots in iterGroups(protDict):
                 for k, v in prots:
-                    print formatStr.format(group, k, v.getClassLabel())
+                    print(formatStr.format(group, k, v.getClassLabel()))

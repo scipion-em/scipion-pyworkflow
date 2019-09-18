@@ -25,14 +25,15 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
+
 import os
 import sys
 
 from pyworkflow.em.viewers import DataView
 from pyworkflow.gui.tree import DbTreeProvider
 from pyworkflow.gui.browser import FileBrowserWindow
-            
-   
+
     
 def showDir(path):
     window = FileBrowserWindow("Browsing: " + path, path=path) 
@@ -46,7 +47,7 @@ def showFile(path, viewParams):
 if __name__ == '__main__':    
     
     if '-h' in sys.argv or '--help' in sys.argv:
-        print "usage: scipion view [file1 file2 file3 ... fileN]"
+        print("usage: scipion view [file1 file2 file3 ... fileN]")
         
     else:
         if len(sys.argv) == 1: # no extra arguments, show current directory

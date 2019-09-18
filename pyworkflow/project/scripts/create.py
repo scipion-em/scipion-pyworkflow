@@ -34,7 +34,7 @@ import pyworkflow.utils as pwutils
 
 
 def usage(error):
-    print ("""
+    print("""
     ERROR: %s
 
     Usage: scipion python scripts/create_project.py

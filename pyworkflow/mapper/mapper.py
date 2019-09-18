@@ -24,11 +24,12 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
+
 import pyworkflow.object as obj
 
 
-
-class Mapper():
+class Mapper:
     """This class will serves as a Data Mapper pattern.
     It will store/retrieve objects from some storage environment.
     (like SQL, XML or others)
@@ -59,7 +60,7 @@ class Mapper():
             
     def warning(self, msg):
         if not msg in self.__warnings:
-            print "WARNING: %s" % msg
+            print("WARNING: %s" % msg)
             self.__warnings.add(msg)
     
     def _buildObjectFromClass(self, className, **kwargs):
@@ -68,13 +69,15 @@ class Mapper():
         the classes dictionary.
         """
         if className not in self.dictClasses:
-            self.warning("Class '%s' not found in mapper dict. Ignored. " % className)
+            self.warning("Class '%s' not found in mapper dict. Ignored. "
+                         % className)
             return None
         
         objClass = self.dictClasses[className]
         
         if not issubclass(objClass, obj.Object):
-            print "WARNING: Class '%s' is not a subclass of Object. Ignored. " % className
+            print("WARNING: Class '%s' is not a subclass of Object. Ignored. "
+                  % className)
             return None
 
         instance = self.dictClasses[className](**kwargs)

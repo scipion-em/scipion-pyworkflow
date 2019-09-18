@@ -24,6 +24,8 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
+
 
 class GraphLayout(object):
     """ Base class for all algorithm that implement
@@ -61,7 +63,7 @@ class BasicLayout(GraphLayout):
         try:
             parents = node.getParents()
             if not parents:
-                print "EMPTY NODE ask JM"
+                print("EMPTY NODE ask JM")
                 return
             maxParent = parents[0]
 
@@ -84,7 +86,7 @@ class BasicLayout(GraphLayout):
         except Exception as e:
             from pyworkflow.utils import envVarOn
             if envVarOn('SCIPION_DEBUG'):
-                print "Can't draw node: %s" % node, e
+                print("Can't draw node: %s" % node, e)
                 import traceback
                 traceback.print_stack()
             else:

@@ -27,6 +27,7 @@
 """
 This module handles process execution
 """
+from __future__ import print_function
 
 import sys
 import os.path
@@ -45,7 +46,7 @@ def runJob(log, programname, params,
                               env, gpuList=gpuList)
     
     if log is None:
-        print "** Running command: %s" % greenStr(command)
+        print("** Running command: %s" % greenStr(command))
     else:
         log.info(greenStr(command), True)
 
@@ -105,11 +106,11 @@ def killWithChilds(pid):
     proc = psutil.Process(pid)
     for c in proc.get_children(recursive=True):
         if c.pid is not None:
-            print "Terminating child pid: %d" % c.pid
+            print("Terminating child pid: %d" % c.pid)
             c.kill()
-    print "Terminating process pid: %s" % pid
+    print("Terminating process pid: %s" % pid)
     if pid is None:
-        print "WARNING! Got None PID!!!"
+        print("WARNING! Got None PID!!!")
     else:
         proc.kill()
 

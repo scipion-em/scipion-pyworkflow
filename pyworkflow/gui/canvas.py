@@ -242,7 +242,6 @@ class Canvas(tk.Canvas, Scrollable):
             else:
                 if self.firstPos is None:
                     self.firstPos = (event.x, event.y)
-                    # print "onDrag position captured."
                 (x, y) = self.getCoordinates(event)
                 self.scan_dragto(event.x, event.y, gain=1)
 

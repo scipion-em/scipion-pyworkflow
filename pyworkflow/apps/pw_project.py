@@ -28,6 +28,8 @@
 Launch main project window 
 """
 
+from __future__ import print_function
+
 import sys
 import os
 
@@ -56,17 +58,18 @@ if __name__ == '__main__':
         # from the current directory
         if projName == 'here':
             cwd = os.environ['SCIPION_CWD']
-            print "\nYou are trying to create a project here:", pwutils.cyan(cwd)
+            print("\nYou are trying to create a project here:",
+                  pwutils.cyan(cwd))
 
             if os.listdir(cwd):
-                print pwutils.red('\nWARNING: this folder is not empty!!!')
+                print(pwutils.red('\nWARNING: this folder is not empty!!!'))
             key = raw_input("\nDo you want to create a project here? [y/N]?")
 
             if key.lower().strip() != 'y':
-                print "\nAborting..."
+                print("\nAborting...")
                 sys.exit(0)
             else:
-                print "\nCreating project...."
+                print("\nCreating project....")
                 projName = os.path.basename(cwd)
                 projDir = os.path.dirname(cwd)
                 proj = manager.createProject(projName, location=projDir)
@@ -92,4 +95,4 @@ if __name__ == '__main__':
 
         projWindow.show()
     else:
-        print "usage: pw_project.py PROJECT_NAME"
+        print("usage: pw_project.py PROJECT_NAME")

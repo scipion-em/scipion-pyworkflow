@@ -30,6 +30,8 @@ So, it will just do the same job of launch._launchLocal and print
 the jobId to be tracked from the machine that was invoked.
 """
 
+from __future__ import print_function
+
 import os
 import sys
 import subprocess
@@ -40,7 +42,8 @@ from pyworkflow.protocol.launch import launch, stop
 
 
 def usage(msg=''):
-    print "Usage: pw_protocol_remote.py [run|stop] project protDbPath protID\n%s" % msg
+    print("Usage: pw_protocol_remote.py [run|stop] project protDbPath protID\n"
+          "%s" % msg)
     sys.exit(1)
     
     
@@ -54,8 +57,9 @@ if __name__ == '__main__':
     if mode not in ['run', 'stop']:
         usage("Mode should be 'run' or 'stop'. Received: '%s'" % mode)
 
-    projectPath = os.path.join(pw.Config.SCIPION_USER_DATA, 'projects', sys.argv[2])
-    print "projectPath: ", projectPath
+    projectPath = os.path.join(pw.Config.SCIPION_USER_DATA, 'projects',
+                               sys.argv[2])
+    print("projectPath: ", projectPath)
     protDbPath = sys.argv[3]
     protId = int(sys.argv[4])
 
@@ -66,8 +70,9 @@ if __name__ == '__main__':
     
     if mode == 'run':        
         FNULL = open(os.devnull, 'w')
-        jobId = launch(protocol, stdin=None, stdout=FNULL, stderr=subprocess.STDOUT)        
-        print "Scipion remote jobid: %d" % jobId
+        jobId = launch(protocol, stdin=None, stdout=FNULL,
+                       stderr=subprocess.STDOUT)
+        print("Scipion remote jobid: %d" % jobId)
     elif mode == 'stop':
         stop(protocol)
     else:

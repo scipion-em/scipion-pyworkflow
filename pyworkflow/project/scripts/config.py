@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
 
 import sys
 import os
@@ -34,14 +35,14 @@ from pyworkflow.object import Boolean
 
 
 def usage(error):
-    print """
+    print("""
     ERROR: %s
     
     Usage: scipion python scripts/config_projects.py ProjectName [readOnly=True|False] [lifeTime=X|None]
         This script show (or edit) some of the configuration of the project.
         Use readOnly=True (or False) to set/unset read only property
         Use lifeTime=X for setting X hours or None to unset life time of the project.
-    """ % error
+    """ % error)
     sys.exit(1)    
 
 n = len(sys.argv)
@@ -82,10 +83,9 @@ if setReadOnly or setLifeTime:
     # Truly write settings
     project.settings.write()
 
-print "Projects: ", projectsDir
-print "Project name: ", projName
-print " Settings: "
-print "   readOnly = %s" % project.isReadOnly()
-print "   lifeTime = %s (hours)" % project.settings.getLifeTime()
-   
+print("Projects: ", projectsDir)
+print("Project name: ", projName)
+print(" Settings: ")
+print("   readOnly = %s" % project.isReadOnly())
+print("   lifeTime = %s (hours)" % project.settings.getLifeTime())
 

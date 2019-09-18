@@ -1095,7 +1095,7 @@ class SqliteFlatDb(SqliteDb):
         """
         self.setVersion(self.VERSION)
         for pragma in self._pragmas.iteritems():
-            print ("executing pragma", pragma)
+            print("executing pragma", pragma)
             self.executeCommand("PRAGMA %s = %s;" % pragma)
         # Create a general Properties table to store some needed values
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Properties
