@@ -1,7 +1,7 @@
 # **************************************************************************
 # *
 # * Authors:     Yaiza Rancel (cyrancel@cnb.csic.es) [1]
-# *              Pablo Conesa (pconse@cnb.csic.es) [1]
+# *              Pablo Conesa (pconesa@cnb.csic.es) [1]
 # *              J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [2]
 # *
 # * [1] Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC

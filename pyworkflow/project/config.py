@@ -524,7 +524,7 @@ class ProtocolTreeConfig:
         # It is a protocol as this point, get the class name and
         # check if it is disabled
         protClassName = item["value"]
-        protClass = pw.em.Domain.getProtocols().get(protClassName)
+        protClass = pw.Config.getDomain().getProtocols().get(protClassName)
 
         return False if protClass is None else not protClass.isDisabled()
 

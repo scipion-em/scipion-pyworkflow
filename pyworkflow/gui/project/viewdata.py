@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -16,9 +16,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -32,11 +30,9 @@ import Tkinter as tk
 import ttk
 import tkFont
 
-import pyworkflow.protocol.protocol as prot
-from pyworkflow.em import findViewers, Domain
-from pyworkflow.viewer import DESKTOP_TKINTER
-from pyworkflow.utils.graph import Graph
-from pyworkflow.utils.properties import Message, Icon, Color
+import pyworkflow.utils as pwutils
+import pyworkflow.protocol as pwprot
+import pyworkflow.viewer as pwviewer
 
 import pyworkflow.gui as gui
 from pyworkflow.gui.tree import Tree
@@ -48,44 +44,45 @@ from pyworkflow.gui.form import getObjectLabel
 
 DATA_TAG = 'data'
 
-ACTION_EDIT = Message.LABEL_EDIT
-ACTION_COPY = Message.LABEL_COPY
-ACTION_DELETE = Message.LABEL_DELETE
-ACTION_REFRESH = Message.LABEL_REFRESH
-ACTION_STEPS = Message.LABEL_BROWSE
-ACTION_TREE = Message.LABEL_TREE
-ACTION_LIST = Message.LABEL_LIST
-ACTION_STOP = Message.LABEL_STOP
-ACTION_DEFAULT = Message.LABEL_DEFAULT
-ACTION_CONTINUE = Message.LABEL_CONTINUE
-ACTION_RESULTS = Message.LABEL_ANALYZE
+ACTION_EDIT = pwutils.Message.LABEL_EDIT
+ACTION_COPY = pwutils.Message.LABEL_COPY
+ACTION_DELETE = pwutils.Message.LABEL_DELETE
+ACTION_REFRESH = pwutils.Message.LABEL_REFRESH
+ACTION_STEPS = pwutils.Message.LABEL_BROWSE
+ACTION_TREE = pwutils.Message.LABEL_TREE
+ACTION_LIST = pwutils.Message.LABEL_LIST
+ACTION_STOP = pwutils.Message.LABEL_STOP
+ACTION_DEFAULT = pwutils.Message.LABEL_DEFAULT
+ACTION_CONTINUE = pwutils.Message.LABEL_CONTINUE
+ACTION_RESULTS = pwutils.Message.LABEL_ANALYZE
 
-RUNS_TREE = Icon.RUNS_TREE
-RUNS_LIST = Icon.RUNS_LIST
+RUNS_TREE = pwutils.Icon.RUNS_TREE
+RUNS_LIST = pwutils.Icon.RUNS_LIST
  
 ActionIcons = {
-    ACTION_EDIT: Icon.ACTION_EDIT , 
-    ACTION_COPY: Icon.ACTION_COPY ,
-    ACTION_DELETE:  Icon.ACTION_DELETE,
-    ACTION_REFRESH:  Icon.ACTION_REFRESH,
-    ACTION_STEPS:  Icon.ACTION_STEPS,
-    ACTION_TREE:  None, # should be set
-    ACTION_LIST:  Icon.ACTION_LIST,
-    ACTION_STOP: Icon.ACTION_STOP,
-    ACTION_CONTINUE: Icon.ACTION_CONTINUE,
-    ACTION_RESULTS: Icon.ACTION_RESULTS,
-               }
+    ACTION_EDIT: pwutils.Icon.ACTION_EDIT , 
+    ACTION_COPY: pwutils.Icon.ACTION_COPY ,
+    ACTION_DELETE:  pwutils.Icon.ACTION_DELETE,
+    ACTION_REFRESH:  pwutils.Icon.ACTION_REFRESH,
+    ACTION_STEPS:  pwutils.Icon.ACTION_STEPS,
+    ACTION_TREE:  None,  # should be set
+    ACTION_LIST:  pwutils.Icon.ACTION_LIST,
+    ACTION_STOP: pwutils.Icon.ACTION_STOP,
+    ACTION_CONTINUE: pwutils.Icon.ACTION_CONTINUE,
+    ACTION_RESULTS: pwutils.Icon.ACTION_RESULTS,
+}
 
 STATUS_COLORS = {
-               prot.STATUS_SAVED: '#D9F1FA',
-               prot.STATUS_LAUNCHED: '#D9F1FA',
-               prot.STATUS_RUNNING: '#FCCE62',
-               prot.STATUS_FINISHED: '#D2F5CB',
-               prot.STATUS_FAILED: '#F5CCCB',
-               prot.STATUS_INTERACTIVE: '#F3F5CB',
-               prot.STATUS_ABORTED: '#F5CCCB',
-               #prot.STATUS_SAVED: '#124EB0',
-               }
+    pwprot.STATUS_SAVED: '#D9F1FA',
+    pwprot.STATUS_LAUNCHED: '#D9F1FA',
+    pwprot.STATUS_RUNNING: '#FCCE62',
+    pwprot.STATUS_FINISHED: '#D2F5CB',
+    pwprot.STATUS_FAILED: '#F5CCCB',
+    pwprot.STATUS_INTERACTIVE: '#F3F5CB',
+    pwprot.STATUS_ABORTED: '#F5CCCB',
+    #pwprot.STATUS_SAVED: '#124EB0',
+}
+
 
 def populateTree(tree, elements, parentId=''):
     for node in elements:
@@ -93,7 +90,8 @@ def populateTree(tree, elements, parentId=''):
             t = node.getName()
             if node.count:
                 t += ' (%d)' % node.count
-            node.nodeId = tree.insert(parentId, 'end', node.getName(), text=t, tags=DATA_TAG)
+            node.nodeId = tree.insert(parentId, 'end', node.getName(),
+                                      text=t, tags=DATA_TAG)
             populateTree(tree, node.getChilds(), node.nodeId)
             if node.count:
                 tree.see(node.nodeId)
@@ -157,11 +155,15 @@ class ProjectDataView(tk.Frame):
         """Create a tree on the left panel to store how 
         many object are from each type and the hierarchy.
         """
-        self.style.configure("W.Treeview", background=Color.LIGHT_GREY_COLOR, borderwidth=0)
+        self.style.configure("W.Treeview",
+                             background=pwutils.Color.LIGHT_GREY_COLOR,
+                             borderwidth=0)
         self.dataTree = Tree(parent, show='tree', style='W.Treeview')
         self.dataTree.column('#0', minwidth=300)
-        self.dataTree.tag_configure('protocol', image=self.getImage('python_file.gif'))
-        self.dataTree.tag_configure('protocol_base', image=self.getImage('class_obj.gif'))
+        self.dataTree.tag_configure('protocol',
+                                    image=self.getImage('python_file.gif'))
+        self.dataTree.tag_configure('protocol_base',
+                                    image=self.getImage('class_obj.gif'))
         f = tkFont.Font(family='helvetica', size='10', weight='bold')
         self.dataTree.tag_configure('non-empty', font=f)
         self.dataTree.grid(row=0, column=0, sticky='news')
@@ -199,7 +201,7 @@ class ProjectDataView(tk.Frame):
                 
             return classNode
             
-        classesGraph = Graph()
+        classesGraph = pwutils.Graph()
         
         self.dataTree.clear()
         for node in self._dataGraph.getNodes():
@@ -243,7 +245,8 @@ class ProjectDataView(tk.Frame):
         # Create the Selected Run Info
         infoFrame = tk.Frame(v)
         gui.configureWeigths(infoFrame)
-        self._infoText = TaggedText(infoFrame, bg='white', handlers={'sci-open': self._openProtocolFormFromId})
+        self._infoText = TaggedText(infoFrame, bg='white',
+                                    handlers={'sci-open': self._openProtocolFormFromId})
         self._infoText.grid(row=0, column=0, sticky='news')
         
         v.add(runsFrame, weight=3)
@@ -267,7 +270,8 @@ class ProjectDataView(tk.Frame):
                 
         textColor = 'black'
         color = '#ADD8E6' #Lightblue
-        item = self._dataCanvas.createTextbox(nodeText, 100, y, bgColor=color, textColor=textColor)
+        item = self._dataCanvas.createTextbox(nodeText, 100, y, bgColor=color,
+                                              textColor=textColor)
 
         # Get the dataId
         if not node.isRoot():
@@ -306,28 +310,28 @@ class ProjectDataView(tk.Frame):
         if dataClassName is not None:
             self._loopData(lambda item: self._selectItemByClass(item, dataClassName))
 
-
     def _selectObject(self, pobj):
         obj = pobj.get()
+        objValue = pobj.getObjValue()
         self._selected = obj
         self._infoText.setReadOnly(False)
         self._infoText.setText('*Label:* ' + getObjectLabel(pobj, self.project.mapper))
         self._infoText.addText('*Info:* ' + str(obj))
         self._infoText.addText('*Created by:*')
-        self._infoText.addText(' - ' + pobj.getObjValue().getObjectTag(pobj.getObjValue()) + ' (' + obj.getObjCreation() + ')')
+        self._infoText.addText(' - %s (%s)'
+                               % (objValue.getObjectTag(objValue),
+                                  obj.getObjCreation()))
 
         # Get the consumers (this will get the data!!)
-        derivedData = self.project.getSourceChilds(pobj.getObjValue())
+        derivedData = self.project.getSourceChilds(objValue)
 
         if derivedData is not None and len(derivedData) > 0:
-
             self._infoText.addText('*Consumed by:*')
-            for data in derivedData:
 
+            for data in derivedData:
                 # Get the protocol
                 protocol = self.project.getObject(data.getObjParentId())
                 self._infoText.addText(' - ' + protocol.getObjectTag(protocol))
-
 
         if obj.getObjComment():
             self._infoText.addText('*Comments:* ' + obj.getObjComment())
@@ -361,7 +365,7 @@ class ProjectDataView(tk.Frame):
 
             data = item.node.pointer.get()
             self.toggleItemSelection(
-                item, isinstance(data, Domain.getObjects()[className]))
+                item, isinstance(data, self.domain.getObjects()[className]))
 
     def _invertAction(self, item):
         self.toggleItemSelection(item, not item.getSelected())
@@ -370,21 +374,19 @@ class ProjectDataView(tk.Frame):
         self.toggleItemSelection(item, False)
 
     def toggleItemSelection(self, item, select):
-
-        if item.node.isRoot(): return
-
+        if item.node.isRoot():
+            return
         selection = self.settings.dataSelection
         runSelection = self.settings.runSelection
-
         dataId = item.node.pointer.get().getObjId()
         protocolId = item.node.pointer.getObjValue().getObjId()
+
         if not select:
             try:
                 if dataId in selection: selection.remove(dataId)
                 if protocolId in runSelection: runSelection.remove(protocolId)
             except ValueError:
                 print "id not in selection"
-
         else:
             selection.append(dataId)
             runSelection.append(protocolId)
@@ -392,14 +394,10 @@ class ProjectDataView(tk.Frame):
         item.setSelected(select)
 
     def _loopData(self, action):
-
         results = []
-
         # Loop through all the items
         for key, item in self._dataCanvas.items.items():
-
             result = action(item)
-
             if result is not None:
                 results.append(result)
 
@@ -407,10 +405,8 @@ class ProjectDataView(tk.Frame):
 
     def _onDoubleClick(self, e=None):
         if e.node.pointer:
-
             self._selectObject(e.node.pointer)
             self._viewObject(e.node.pointer.get().getObjId())
-
             return
             # self._selectObject(e.node.pointer)
             # # Graph the first viewer available for this type of object
@@ -421,7 +417,8 @@ class ProjectDataView(tk.Frame):
     def _viewObject(self, objId):
         """ Call appropriate viewer for objId. """
         obj = self.project.getObject(int(objId))
-        viewerClasses = findViewers(obj.getClassName(), DESKTOP_TKINTER)
+        viewerClasses = self.domain.findViewers(obj.getClassName(),
+                                                pwviewer.DESKTOP_TKINTER)
         if not viewerClasses:
             return  # TODO: protest nicely
         viewer = viewerClasses[0](project=self.project, parent=self.windows)
@@ -438,17 +435,17 @@ class ProjectDataView(tk.Frame):
 
     def _openProtocolForm(self, prot):
         """Open the Protocol GUI Form given a Protocol instance"""
-
-        w = gui.form.FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(), prot,
-                                  self._executeSaveProtocol, self.windows,
-                                  hostList=self.project.getHostNames())
+        title = pwutils.Message.TITLE_NAME_RUN + prot.getClassName()
+        w = gui.form.FormWindow(title, prot, self._executeSaveProtocol,
+                                self.windows,
+                                hostList=self.project.getHostNames())
         w.adjustSize()
         w.show(center=True)
 
     def _executeSaveProtocol(self, prot, onlySave=False):
         if onlySave:
             self.project.saveProtocol(prot)
-            msg = Message.LABEL_SAVED_FORM
+            msg = pwutils.Message.LABEL_SAVED_FORM
             #            msg = "Protocol successfully saved."
         else:
             self.project.launchProtocol(prot)
@@ -456,24 +453,27 @@ class ProjectDataView(tk.Frame):
             # self._selection.clear()
             # self._selection.append(prot.getObjId())
             # self._updateSelection()
-            # self._lastStatus = None  # clear lastStatus to force re-load the logs
+            # clear lastStatus to force re-load the logs
+            # self._lastStatus = None
             msg = ""
 
         return msg
 
     def _onRightClick(self, e=None):
         return [
-            (Message.LABEL_EDIT, self._editObject, Icon.ACTION_EDIT),
-            ('Go to protocol', self._goToProtocol, Icon.ACTION_SEARCH)
+            (pwutils.Message.LABEL_EDIT, self._editObject,
+             pwutils.Icon.ACTION_EDIT),
+            ('Go to protocol', self._goToProtocol,
+             pwutils.Icon.ACTION_SEARCH)
         ]
     
     def _editObject(self):
         """Open the Edit GUI Form given an instance"""
-        EditObjectDialog(self, Message.TITLE_EDIT_OBJECT, self._selected, self.project.mapper)
+        EditObjectDialog(self, pwutils.Message.TITLE_EDIT_OBJECT,
+                         self._selected, self.project.mapper)
 
     def _goToProtocol(self):
         """Switch to protocols view selecting the correspondent protocol"""
-
 
     def refreshData(self, e=None, initRefreshCounter=True):
         """ Refresh the status of displayed data.
@@ -491,15 +491,18 @@ class ProjectDataView(tk.Frame):
             self.__autoRefreshCounter = 3 # start by 3 secs
             if self.__autoRefresh:
                 self.dataTree.after_cancel(self.__autoRefresh)
-                self.__autoRefresh = self.dataTree.after(self.__autoRefreshCounter*1000, self._automaticRefreshData)
+                self.__autoRefresh = self.dataTree.after(
+                    self.__autoRefreshCounter*1000, self._automaticRefreshData)
          
     def _automaticRefreshData(self, e=None):
-        """ Schedule automatic refresh increasing the time between refreshes. """
+        """ Schedule automatic refresh increasing the time between refreshes.
+        """
         self.refreshData(initRefreshCounter=False)
         secs = self.__autoRefreshCounter
         # double the number of seconds up to 30 min
         self.__autoRefreshCounter = min(2*secs, 1800)
-        self.__autoRefresh = self.dataTree.after(secs*1000, self._automaticRefreshData)
+        self.__autoRefresh = self.dataTree.after(secs*1000,
+                                                 self._automaticRefreshData)
                 
                 
 class DataTextBox(RoundedTextBox):

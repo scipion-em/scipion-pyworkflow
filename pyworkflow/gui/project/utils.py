@@ -23,23 +23,18 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+
 from pyworkflow.gui.project.constants import STATUS_COLORS, WARNING_COLOR
 from pyworkflow.protocol import STATUS_FAILED
 
 
 def getStatusColorFromNode(node):
-
     # If it is a run node (not PROJECT)
     return getStatusColorFromRun(node.run)
 
 
 def getStatusColorFromRun(prot):
-    """
-    Returns the color associated with the status
-    -------
-
-    """
-
+    """ Returns the color associated with the status. """
     if prot:
         if prot.hasSummaryWarnings():
             return WARNING_COLOR
@@ -59,7 +54,4 @@ def getStatusColor(status=None, default='#ADD8E6'):
     -------
 
     """
-    if status:
-        return STATUS_COLORS[status]
-    else:
-        return default
+    return STATUS_COLORS[status] if status else default
