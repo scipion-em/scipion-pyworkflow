@@ -28,10 +28,13 @@ Some basic GUI widgets are implemented in this module.
 The widgets here are suppose to be used to build more complex 
 elements.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import Tkinter as tk
 import ttk
-import gui
+
+from . import gui
 
 
 class Button(tk.Button):

@@ -72,7 +72,7 @@ if __name__ == '__main__':
     protDict = {}
 
     # Group protocols by package name
-    for k, v in emProtocolsDict.iteritems():
+    for k, v in emProtocolsDict.items():
         packageName = v.getClassPackageName()
 
         if packageName not in protDict:

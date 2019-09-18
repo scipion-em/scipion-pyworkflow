@@ -282,7 +282,7 @@ class ProtocolViewer(pwprot.Protocol, Viewer):
     
     def _viewAll(self, *args):
         """ Visualize all data give the parameters. """
-        for k, v in self._getVisualizeDict().iteritems():
+        for k, v in self._getVisualizeDict().items():
             if self.getAttributeValue(k, False):
                 v(k)
                 

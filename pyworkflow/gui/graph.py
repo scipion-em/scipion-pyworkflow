@@ -27,12 +27,15 @@
 This module implements a simple algorithm to display a graph(mainly a tree)
 level by level, using only Tkinter.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+
 import Tkinter as tk
 
 #TODO: all LevelTree code is DEPRECATED...remove it after cleanning
 # and include all code from graph_layout
 
-from graph_layout import *
+from .graph_layout import *
 
 
 class LevelTree(object):

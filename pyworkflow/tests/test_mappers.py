@@ -161,13 +161,13 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         relations = mapper2.getRelationsByCreator(creator)
         for row in relations:
-            print(row)
+            print(dict(row))
             
     def test_StorePointers(self):
         """ Check that pointers are correctly stored. """
         fn = self.getOutputPath("pointers.sqlite")
         
-        print(">>> Using db: ", fn
+        print(">>> Using db: ", fn)
 
         mapper = pwmapper.SqliteMapper(fn)
         # Insert a Complex
@@ -197,7 +197,8 @@ class TestSqliteMapper(pwtests.BaseTest):
         self.assertIsNone(p2.get())
 
     def test_removeFromLists(self):
-        """ Check that lists are properly stored after removing some elements. """
+        """ Check that lists are properly stored after removing some elements.
+        """
         fn = self.getOutputPath("lists.sqlite")
 
         print(">>> Using db: ", fn)
@@ -289,10 +290,11 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         self.assertEqual(0, mapper.count())
         self.assertEqual(0, mapper.maxId())
         n = 10
-        
-        for i in range(n):
+
+        indexes = list(range(1, n+1))
+        for i in indexes:
             img = modobj.MockImage()
-            img.setLocation(i+1, 'images.stk')
+            img.setLocation(i, 'images.stk')
             mapper.insert(img)
 
         self.assertEqual(n, mapper.count())
@@ -301,13 +303,13 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         # Store one more image with bigger id
         img = modobj.MockImage()
         bigId = 1000
-        img.setLocation(bigId, 'images.stk')
+        img.setLocation(i+1, 'images.stk')
         img.setObjId(bigId)
         mapper.insert(img)
         self.assertEqual(bigId, mapper.maxId())
 
         # Insert another image with None as id, it should take bigId + 1
-        img.setLocation(bigId+1, 'images.stk')
+        img.setLocation(i+2, 'images.stk')
         img.setObjId(None)
         mapper.insert(img)
         self.assertEqual(bigId+1, mapper.maxId())
@@ -315,15 +317,19 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         mapper.setProperty('samplingRate', '3.0')
         mapper.setProperty('defocusU', 1000)
         mapper.setProperty('defocusV', 1000)
-        mapper.setProperty('defocusU', 2000) # Test update a property value
-        mapper.deleteProperty('defocusV') # Test delete a property
+        mapper.setProperty('defocusU', 2000)  # Test update a property value
+        mapper.deleteProperty('defocusV')  # Test delete a property
         mapper.commit()
         self.assertEqual(1, mapper.db.getVersion())
         mapper.close()
-        
+
         # Test that values where stored properly
         mapper2 = pwmapper.SqliteFlatMapper(dbName, mod.Domain.getMapperDict())
-        
+        indexes.extend([bigId, bigId+1])
+        for i, obj in enumerate(mapper2.selectAll(iterate=True)):
+            self.assertEqual(obj.getIndex(), i+1)
+            self.assertEqual(obj.getObjId(), indexes[i])
+
         self.assertTrue(mapper2.hasProperty('samplingRate'))
         self.assertTrue(mapper2.hasProperty('defocusU'))
         self.assertFalse(mapper2.hasProperty('defocusV'))

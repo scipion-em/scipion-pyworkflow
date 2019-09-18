@@ -184,7 +184,7 @@ def trace(nlevels, separator=' --> ', stream=sys.stdout):
     
 def prettyDict(d):
     print("{")
-    for k, v in d.iteritems():
+    for k, v in d.items():
         print("    %s: %s" % (k, v))
     print("}")
 
@@ -591,7 +591,7 @@ class Environ(dict):
             
     def update(self, valuesDict, position=REPLACE):
         """ Use set for each key, value pair in valuesDict. """
-        for k, v in valuesDict.iteritems():
+        for k, v in valuesDict.items():
             self.set(k, v, position)
 
     def addLibrary(self, libraryPath, position=BEGIN):

@@ -23,16 +23,18 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import Tkinter as tk
 import tkFont
 import Queue
+
 from pyworkflow.object import OrderedObject
 from pyworkflow import findResource
-from pyworkflow.utils.properties import Message, Color, Icon
-from widgets import Button
+from pyworkflow.utils import Message, Color, Icon
+from .widgets import Button
 
 
 # --------------- GUI CONFIGURATION parameters -----------------------
@@ -77,7 +79,7 @@ def saveConfig(filename):
     
     mapper = SqliteMapper(filename)
     o = Config()
-    for k, v in globals().iteritems():
+    for k, v in globals().items():
         if k.startswith('cfg'):
             if type(v) is str:
                 value = String(v)

@@ -29,7 +29,7 @@ import os
 import json
 import datetime as dt
 from collections import OrderedDict
-from ConfigParser import ConfigParser  # FIXME Does not work in Python3
+from configparser import ConfigParser  # FIXME Does not work in Python3
 
 import pyworkflow as pw
 import pyworkflow.object as pwobj
@@ -541,7 +541,7 @@ class ProtocolTreeConfig:
         packages = {}
 
         # Group protocols by package name
-        for k, v in allProtsSorted.iteritems():
+        for k, v in allProtsSorted.items():
             if cls.isAFinalProtocol(v, k):
                 packageName = v.getClassPackageName()
                 # Get the package submenu

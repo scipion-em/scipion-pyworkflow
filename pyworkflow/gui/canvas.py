@@ -28,13 +28,16 @@ This module extends the functionalities of a normal Tkinter Canvas.
 The new Canvas class allows to easily display Texboxes and Edges
 that can be interactively dragged and clicked.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+
 import math
 import Tkinter as tk
 import tkFont
-
-import gui
 import operator
-from widgets import Scrollable
+
+from . import gui
+from .widgets import Scrollable
 
 DEFAULT_ZOOM = 100
 
@@ -153,7 +156,7 @@ class Canvas(tk.Canvas, Scrollable):
         class and update when selection changes
         """
         selectedItemCounts = 0
-        for k, v in self.items.iteritems():
+        for k, v in self.items.items():
             if v.getSelected():
                 selectedItemCounts += 1
             if selectedItemCounts > 1:

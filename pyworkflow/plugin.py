@@ -166,7 +166,7 @@ class Domain:
                         if inspect.isclass(attr) and issubclass(attr, BaseClass):
                             cls._baseClasses[name] = attr
 
-            for pluginName, plugin in cls.getPlugins().iteritems():
+            for pluginName, plugin in cls.getPlugins().items():
                 sub = cls.__getSubmodule(pluginName, submoduleName)
                 if sub is not None:
                     for name in cls.getModuleClasses(sub):
@@ -284,7 +284,7 @@ class Domain:
         clsObj = classDict[className]
         subclasses = {}
 
-        for k, v in classDict.iteritems():
+        for k, v in classDict.items():
             if issubclass(v, clsObj):
                 subclasses[k] = v
         return subclasses

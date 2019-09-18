@@ -24,11 +24,14 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
+from __future__ import absolute_import
+
 import re
 import collections
 
 from pyworkflow.object import *
-from constants import *
+from .constants import *
 
 
 class FormElement(OrderedObject):
@@ -301,16 +304,16 @@ class Form(object):
     
     def iterAllParams(self):
         """ Iter all parameters, including ElementGroups. """
-        return self._paramsDict.iteritems()
+        return self._paramsDict.items()
     
     def iterParams(self):
         """ Iter parameters disregarding the ElementGroups. """
-        for k, v in self._paramsDict.iteritems():
+        for k, v in self._paramsDict.items():
             if not isinstance(v, ElementGroup):
                 yield k, v
         
     def iterPointerParams(self):
-        for paramName, param in self._paramsDict.iteritems():
+        for paramName, param in self._paramsDict.items():
             if isinstance(param, PointerParam):
                 yield paramName, param
 

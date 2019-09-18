@@ -229,8 +229,11 @@ class TestObject(pwtests.BaseTest):
     def test_Sets(self):
         stackFn = "images.stk"
         fn = self.getOutputPath('test_images2.sqlite')
+        print("Writing to sqlite: %s" % fn)
+
         imgSet = modobj.MockSetOfImages(filename=fn)
         imgSet.setSamplingRate(1.0)
+
         for i in range(10):
             img = modobj.MockImage()
             img.setLocation(i + 1, stackFn)
@@ -249,7 +252,6 @@ class TestObject(pwtests.BaseTest):
             expectedId = 1 if skipRows is None else skipRows+1
             index = 0
             for item in imgSet.iterItems(limit=(limit, skipRows)):
-
                 self.assertEqual(item.getIndex(), expectedId+index,
                                  "Wrong item in set when using limits.")
                 index += 1
@@ -324,7 +326,7 @@ class TestObject(pwtests.BaseTest):
         m1.setAcquisition(acq1)
         m1Dict = m1.getObjDict(includeBasic=True)
         for k, v in m1Dict.items():
-            if isinstance(v, basestring):
+            if isinstance(v, str):
                 v = "'%s'" % v
             print("('%s', %s)," % (k, v))
 

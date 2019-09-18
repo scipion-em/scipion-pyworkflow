@@ -359,7 +359,7 @@ class SearchProtocolWindow(pwgui.Window):
 
             return line2Search + (weight,)
 
-        for key, prot in emProtocolsDict.iteritems():
+        for key, prot in emProtocolsDict.items():
             if ProtocolTreeConfig.isAFinalProtocol(prot, key):
                 label = prot.getClassLabel().lower()
                 line = (key, label,
@@ -1039,7 +1039,7 @@ class ProtocolsView(tk.Frame):
                 if prot is not None:
                     tree.item(item, image=self.getImage('class_obj.gif'))
 
-                    for k, v in emProtocolsDict.iteritems():
+                    for k, v in emProtocolsDict.items():
                         if (k not in subclassedDict and v is not prot and
                            issubclass(v, prot)):
                             key = '%s.%s' % (item, k)
@@ -1062,8 +1062,8 @@ class ProtocolsView(tk.Frame):
         self.protTreeItems = {}
         subclassedDict = {}  # Check which classes serve as base to not show them
         emProtocolsDict = self.domain.getProtocols()
-        for _, v1 in emProtocolsDict.iteritems():
-            for k2, v2 in emProtocolsDict.iteritems():
+        for _, v1 in emProtocolsDict.items():
+            for k2, v2 in emProtocolsDict.items():
                 if v1 is not v2 and issubclass(v1, v2):
                     subclassedDict[k2] = True
         self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg,
@@ -2039,7 +2039,7 @@ class ProtocolsView(tk.Frame):
 
             if bibTexCites:
                 with tempfile.NamedTemporaryFile(suffix='.bib') as bibFile:
-                    for refId, refDict in bibTexCites.iteritems():
+                    for refId, refDict in bibTexCites.items():
                         refType = refDict['ENTRYTYPE']
                         # remove 'type' and 'id' keys
                         refDict = {k: v for k, v in refDict.items()

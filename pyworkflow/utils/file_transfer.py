@@ -62,7 +62,7 @@ class FileTransfer():
         """
         classifiedFiles = self.__classifyFilePaths(filePaths)
         
-        for userAndHostPairs, cursorFilePaths in classifiedFiles.iteritems():
+        for userAndHostPairs, cursorFilePaths in classifiedFiles.items():
             gatewayHostsCredentials = None
             if (gatewayHosts is not None and userAndHostPairs in gatewayHosts):
                 gatewayHostsCredentials = gatewayHosts[userAndHostPairs]
@@ -85,7 +85,7 @@ class FileTransfer():
         forceOperation -- Flag to indicate if, when an error happens and number of trials is exceeded, the operation must continue with the rest of files.        
         operationId -- Operation identifier.
         """
-        for sourceFilePath, targetFilePath in filePaths.iteritems(): 
+        for sourceFilePath, targetFilePath in filePaths.items():
             self.__copyLocalFile(sourceFilePath, targetFilePath)
     
     def transferFilesTo(self,
@@ -111,7 +111,7 @@ class FileTransfer():
         log.info("Connecting to: " + userName + "@" + hostName)
         self.ssh.connect(hostName, SSH_PORT, userName, hostPassword)
         self.sftp = self.ssh.open_sftp()
-        for sourceFilePath, targetFilePath in filePaths.iteritems():
+        for sourceFilePath, targetFilePath in filePaths.items():
             self.__sendLocalFile(sourceFilePath, targetFilePath, gatewayHosts, self.sftp)
         self.ssh.close()
         self.sftp.close()  
@@ -139,7 +139,7 @@ class FileTransfer():
         log.info("Connecting to: " + userName + "@" + hostName)
         self.ssh.connect(hostName, SSH_PORT, userName, hostPassword)
         self.sftp = self.ssh.open_sftp()
-        for sourceFilePath, targetFilePath in filePaths.iteritems():
+        for sourceFilePath, targetFilePath in filePaths.items():
             self.__getRemoteFile(sourceFilePath, targetFilePath, gatewayHosts, self.sftp)
         self.ssh.close()
         self.sftp.close()  
@@ -327,7 +327,7 @@ class FileTransfer():
         """
         result = {}
         
-        for sourcePath, targetPaths in filePaths.iteritems():
+        for sourcePath, targetPaths in filePaths.items():
             for targetPath in targetPaths:
                 sourceParts = self.__getLocationAndFilePath(sourcePath)
                 targetParts = self.__getLocationAndFilePath(targetPath) 

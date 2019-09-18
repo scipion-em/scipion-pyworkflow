@@ -28,13 +28,14 @@
 This module handles process execution
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import os.path
 import resource
 from subprocess import check_call
 
-from utils import greenStr, envVarOn
+from .utils import greenStr, envVarOn
 
 
 # The job should be launched from the working directory!
@@ -75,7 +76,7 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
     # Convert our list of params to a string, with each element escaped
     # with "" in case there are spaces.
-    if not isinstance(params, basestring):
+    if not isinstance(params, str):
         params = ' '.join('"%s"' % p for p in params)
 
     if gpuList:

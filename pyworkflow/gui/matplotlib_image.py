@@ -43,10 +43,8 @@ from matplotlib.figure import Figure
 import matplotlib.cm as cm
 from matplotlib.patches import Wedge
 
-
 import xmippLib
 import pyworkflow.gui as pwgui
-
 
 
 class FigureFrame(tk.Frame):

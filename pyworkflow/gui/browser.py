@@ -31,21 +31,20 @@ A concrete use of ObjectBrowser is FileBrowser, where the
 elements to inspect and preview are files.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os.path
 import stat
-
 import Tkinter as tk
-
 import time
 
 from pyworkflow.utils import ROOT, getParentFolder
 from pyworkflow.utils.properties import Icon, KEYSYM
-import gui
+from . import gui
 from pyworkflow.utils import dirname, getHomePath, prettySize, getExt, dateStr
-from tree import BoundTree, TreeProvider
-from text import TaggedText, openTextFileEditor
-from widgets import Button, HotButton
+from .tree import BoundTree, TreeProvider
+from .text import TaggedText, openTextFileEditor
+from .widgets import Button, HotButton
 
 PARENT_FOLDER = ".."
 

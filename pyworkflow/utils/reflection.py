@@ -94,7 +94,7 @@ def getSubclasses(BaseClass, inputDict):
     of BaseClass, that will be set in outputDict.
     """
     outputDict = {}
-    for k, v in inputDict.iteritems():
+    for k, v in inputDict.items():
         if isclass(v) and issubclass(v, BaseClass):
             outputDict[k] = v
     return outputDict

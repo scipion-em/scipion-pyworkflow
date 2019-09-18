@@ -132,7 +132,7 @@ class Object(object):
     def getAttributes(self):
         """Return the list of attributes than are
         subclasses of Object"""
-        for key, attr in self.__dict__.iteritems():
+        for key, attr in self.__dict__.items():
             if issubclass(attr.__class__, Object):
                 yield (key, attr)        
                 
@@ -300,7 +300,7 @@ class Object(object):
         """Comparison for scalars should be by value
         and for other objects by reference"""
         if self._objValue is None:
-            return object.__eq__(other)
+            return object.__eq__(self, other)
         return self._objValue == other._objValue
     
     def equalAttributes(self, other, ignore=[], verbose=False):
@@ -392,7 +392,7 @@ class Object(object):
             self.setObjLabel(attrDict.get('object.label', ''))
             self.setObjComment(attrDict.get('object.comment', ''))
 
-        for attrName, value in attrDict.iteritems():
+        for attrName, value in attrDict.items():
             if not attrName.startswith('object.'):
                 self.setAttributeValue(attrName, value, ignoreMissing)
             
@@ -672,7 +672,7 @@ class Integer(Scalar):
         return self.get()
     
     def __long__(self):
-        return long(self.get())
+        return int(self.get())
     
         
 class String(Scalar):
@@ -756,7 +756,7 @@ class Boolean(Scalar):
         t = type(value)
         if t is bool:
             return value
-        if t is str or t is unicode:
+        if t is str:
             v = value.strip().lower()
             return v == 'true' or v == '1'
         return bool(value) 
@@ -994,14 +994,15 @@ class CsvList(Scalar, list):
         """
         self.clear()
         if value:
-            if isinstance(value, str) or isinstance(value, unicode):
+            if isinstance(value, str):
                 for s in value.split(','):
                     self.append(self._pType(s))
             elif isinstance(value, list) or isinstance(value, tuple):
                 for s in value:
                     self.append(self._pType(s))
             else:
-                raise Exception("CsvList.set: Invalid value type: ", type(value))
+                raise Exception("CsvList.set: Invalid value type: ",
+                                type(value))
             
     def getObjValue(self):
         self._objValue = ','.join(map(str, self))
@@ -1142,7 +1143,7 @@ class Set(OrderedObject):
         if properties:
             self._getMapper().setProperty('self', self.getClassName())
             objDict = self.getObjDict()
-            for key, value in objDict.iteritems():
+            for key, value in objDict.items():
                 self._getMapper().setProperty(key, value)
         self._getMapper().commit()
     
@@ -1297,7 +1298,7 @@ def ObjectWrap(value):
     t = type(value)
     if issubclass(t, Object):
         return value
-    if t is int or t is long:
+    if t is int:
         return Integer(value)
     if t is bool:
         return Boolean(value)

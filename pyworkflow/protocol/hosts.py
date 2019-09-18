@@ -27,10 +27,12 @@
 This modules contains classes to store information about
 execution hosts.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import json
-from ConfigParser import ConfigParser
+from configparser import ConfigParser
 from collections import OrderedDict
 
 import pyworkflow as pw
@@ -178,7 +180,7 @@ class HostConfig(OrderedObject):
                     od = OrderedDict()
 
                     if cp.has_option(hostName, var):
-                        for key, value in json.loads(get(var)).iteritems():
+                        for key, value in json.loads(get(var)).items():
                             od[key] = value
 
                     return od

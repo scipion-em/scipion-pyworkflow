@@ -23,12 +23,14 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
 """
 This modules implements the automatic
 creation of protocol form GUI from its
 params definition.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+
 import os
 import Tkinter as tk
 import ttk
@@ -42,16 +44,16 @@ import pyworkflow.protocol as pwprot
 from pyworkflow.mapper import Mapper
 from pyworkflow.viewer import DESKTOP_TKINTER
 
-import gui
+from . import gui
 from pyworkflow.gui.project.utils import getStatusColorFromRun
-from gui import configureWeigths, Window
-from browser import FileBrowserWindow
-from widgets import Button, HotButton, IconButton
-from dialog import (showInfo, showError, showWarning, EditObjectDialog,
+from .gui import configureWeigths, Window
+from .browser import FileBrowserWindow
+from .widgets import Button, HotButton, IconButton
+from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
                     ListDialog, askYesNo, Dialog)
-from canvas import Canvas
-from tree import TreeProvider, BoundTree
-from text import Text
+from .canvas import Canvas
+from .tree import TreeProvider, BoundTree
+from .text import Text
 
 
 THREADS = 'Threads'

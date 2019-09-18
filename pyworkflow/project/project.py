@@ -25,6 +25,7 @@
 # *
 # **************************************************************************
 from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime as dt
 import json
@@ -42,7 +43,7 @@ from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS)
 
-import config
+from . import config
 
 
 OBJECT_PARENT_ID = pwobj.OBJECT_PARENT_ID

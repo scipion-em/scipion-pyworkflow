@@ -34,8 +34,8 @@ import ttk
 from pyworkflow.object import Scalar
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.utils import prettyDelta, prettySize, dateStr, getExt
-import gui
-from widgets import Scrollable
+from . import gui
+from .widgets import Scrollable
 
 FIRST_TREE_COLUMN = '#0'
 

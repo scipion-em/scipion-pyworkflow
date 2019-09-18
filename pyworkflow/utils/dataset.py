@@ -106,7 +106,7 @@ class Table(object):
             
         colNames = [col.getName() for col in self.iterColumns()]
         # This imply that columns can only be added in __init__
-        self.Row = namedtuple('Row', colNames, verbose=False)
+        self.Row = namedtuple('Row', colNames)
     
     def setLabelToRender(self, labelToRender):
         self._labelToRender = labelToRender
@@ -121,7 +121,7 @@ class Table(object):
             return [None] * self.getSize()
         
     def iterColumns(self):
-        return self._columns.itervalues()
+        return self._columns.values()
     
     def hasColumn(self, columnName):
         """ Return true if column exists """
@@ -177,7 +177,7 @@ class Table(object):
         expected type of each column. 
         """
         cValues = {}
-        for k, v in values.iteritems():
+        for k, v in values.items():
             col = self.getColumn(k)
             cValues[k] = col.convert(v)
         
@@ -206,7 +206,7 @@ class Table(object):
     
     def iterRows(self):
         """ Iterate over the rows. """
-        return self._rowDict.itervalues()
+        return self._rowDict.values()
     
     def getValueFromIndex(self, index, label):
         """ Return the value of the property 'label'
@@ -369,7 +369,7 @@ class SqliteDataSet(DataSet):
         db.executeCommand("SELECT * FROM %sObjects;" % tableName)
         for row in db._iterResults():
             rowDict = dict(row)
-            for k, v in rowDict.iteritems():
+            for k, v in rowDict.items():
                 if v is None:
                     rowDict[k] = ''
                 # Set the index@filename for images columns values

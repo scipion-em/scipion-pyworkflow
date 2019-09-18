@@ -67,7 +67,7 @@ if __name__ == '__main__':
             inputFiles = args['-i']
             del args['-i']
             viewParams = {}
-            for k, v in args.iteritems():
+            for k, v in args.items():
                 viewParams[k.replace('-', '')] = ' '.join(v)
             
             for fn in inputFiles:

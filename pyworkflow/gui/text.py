@@ -33,17 +33,17 @@ import sys
 import time
 import webbrowser
 import subprocess
-import Tkinter as tk
 import ttk
+import Tkinter as tk
+import tkMessageBox
 
-import gui
-from widgets import Scrollable, IconButton
 import pyworkflow as pw
 from pyworkflow.utils import (HYPER_BOLD, HYPER_ITALIC, HYPER_LINK1, HYPER_LINK2,
                               parseHyperText, renderLine, renderTextFile, colorName,
                               which, envVarOn, expandPattern)
 from pyworkflow.utils.properties import Message, Color, Icon
-import tkMessageBox
+from . import gui
+from .widgets import Scrollable, IconButton
 
 
 # Define a function to open files cleanly in a system-dependent way
