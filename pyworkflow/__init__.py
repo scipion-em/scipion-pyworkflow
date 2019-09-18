@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,9 +15,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -26,6 +24,10 @@
 
 import ast
 import os
+import sys
+import importlib
+import types
+
 
 # This variable is useful to determinate the plugins compatibility with the
 # current Scipion core release.
@@ -59,7 +61,8 @@ PYTHON = os.environ.get("SCIPION_PYTHON", 'python')
 class Config:
     __get = os.environ.get  # shortcut
     SCIPION_HOME = __get('SCIPION_HOME', '')
-    SCIPION_USER_DATA = __get('SCIPION_USER_DATA', '')
+    SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
+                              os.path.expanduser('~/ScipionUserData'))
     SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
     SCIPION_LOGO = __get('SCIPION_LOGO',
@@ -78,15 +81,15 @@ class Config:
     SCIPION_CONFIG = __get('SCIPION_CONFIG', 'scipion.conf')
     SCIPION_LOCAL_CONFIG = __get('SCIPION_LOCAL_CONFIG', 'scipion.conf')
     SCIPION_HOSTS = __get('SCIPION_HOSTS', 'hosts.conf')
-    SCIPION_PROTOCOLS = __get('SCIPION_PROTOCOLS',
-                                     'protocols.conf')
+    SCIPION_PROTOCOLS = __get('SCIPION_PROTOCOLS', 'protocols.conf')
 
     SCIPION_PLUGIN_JSON = __get('SCIPION_PLUGIN_JSON', None)
     SCIPION_PLUGIN_REPO_URL = __get('SCIPION_PLUGIN_REPO_URL',
                                     'http://scipion.i2pc.es/getplugins/')
 
     # Get general log file path
-    LOG_FILE = os.path.join(__get('SCIPION_LOGS', "~/"), 'scipion.log')
+    LOG_FILE = os.path.join(__get('SCIPION_LOGS', SCIPION_USER_DATA),
+                            'scipion.log')
 
     SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE')
 
@@ -96,6 +99,32 @@ class Config:
         VIEWERS = {}
         print("ERROR loading preferred viewers, VIEWERS variable will be ignored")
         print(e)
+
+    SCIPION_DOMAIN = __get('SCIPION_DOMAIN', None)
+
+    @classmethod
+    def getDomain(cls):
+        """ Import domain module from path or name defined in SCIPION_DOMAIN. """
+        value = cls.SCIPION_DOMAIN
+
+        print('SCIPION_DOMAIN=%s' % value)
+        if not value:
+            return None
+
+        if os.path.isdir(value):
+            dirname, value = os.path.split(value)
+            sys.path.append(dirname)
+
+        return importlib.import_module(value).Domain
+
+    @classmethod
+    def setDomain(cls, moduleOrNameOrPath):
+        if isinstance(moduleOrNameOrPath, types.ModuleType):
+            value = os.path.abspath(moduleOrNameOrPath.__path__[0])
+        else:
+            value = moduleOrNameOrPath
+        cls.SCIPION_DOMAIN = value
+        os.environ['SCIPION_DOMAIN'] = value
 
 
 def join(*paths):

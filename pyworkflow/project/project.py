@@ -174,6 +174,9 @@ class Project(object):
     def getName(self):
         return self.name
 
+    def getDomain(self):
+        return self._domain
+
     # TODO: maybe it has more sense to use this behaviour
     # for just getName function...
     def getShortName(self):
@@ -205,10 +208,8 @@ class Project(object):
         all globals and update with data and protocols from em.
         """
         classesDict = pwobj.Dict(default=pwprot.LegacyProtocol)
-        classesDict.update(pwobj.__dict__)
+        classesDict.update(self._domain.getMapperDict())
         classesDict.update(config.__dict__)
-        classesDict.update(self._domain.getProtocols())
-        classesDict.update(self._domain.getObjects())
         return SqliteMapper(sqliteFn, classesDict)
 
     def load(self, dbPath=None, hostsConf=None, protocolsConf=None, chdir=True,
@@ -305,20 +306,24 @@ class Project(object):
             self.mapper.close()
             self.mapper = None
 
+    def getLocalConfigHosts(self):
+        """ Return the local file where the project will try to
+        read the hosts configuration. """
+        return self.getPath(PROJECT_CONFIG, pw.Config.SCIPION_HOSTS)
+
     def _loadHosts(self, hosts):
         """ Loads hosts configuration from hosts file. """
         # If the host file is not passed as argument...
         configHosts = pw.Config.SCIPION_HOSTS
-        projHosts = self.getPath(PROJECT_CONFIG, configHosts)
+        projHosts = self.getLocalConfigHosts()
 
         if hosts is None:
             # Try first to read it from the project file .config./hosts.conf
             if os.path.exists(projHosts):
                 hostsFile = projHosts
             else:
-                localDir = os.path.dirname(os.environ['SCIPION_LOCAL_CONFIG'])
-                hostsFile = [os.environ['SCIPION_HOSTS'],
-                             os.path.join(localDir, configHosts)]
+                localDir = os.path.dirname(pw.Config.SCIPION_LOCAL_CONFIG)
+                hostsFile = os.path.join(localDir, configHosts)
         else:
             pwutils.copyFile(hosts, projHosts)
             hostsFile = hosts
@@ -336,14 +341,14 @@ class Project(object):
             if os.path.exists(projProtConf):
                 protConf = projProtConf
             else:
-                localDir = os.path.dirname(os.environ['SCIPION_LOCAL_CONFIG'])
-                protConf = [pw.Config.SCIPION_PROTOCOLS,
-                            os.path.join(localDir, configProtocols)]
+                localDir = pw.Config.SCIPION_LOCAL_CONFIG
+                protConf = os.path.join(localDir, configProtocols)
         else:
             pwutils.copyFile(protocolsConf, projProtConf)
             protConf = protocolsConf
 
-        self._protocolViews = config.ProtocolTreeConfig.load(protConf)
+        self._protocolViews = config.ProtocolTreeConfig.load(self.getDomain(),
+                                                             protConf)
 
     def getHostNames(self):
         """ Return the list of host name in the project. """
@@ -1579,7 +1584,6 @@ class Project(object):
         self.settings.setReadOnly(value)
 
     def fixLinks(self, searchDir):
-
         runs = self.getRuns()
 
         for prot in runs:

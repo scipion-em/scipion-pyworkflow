@@ -32,9 +32,7 @@ pw.utils and not imported by default
 import os
 from collections import OrderedDict, namedtuple
 
-from pyworkflow.em.convert import ImageHandler
-from pyworkflow.mapper.sqlite import SqliteDb, SqliteFlatDb
-from pyworkflow.mapper.sqlite_db import SqliteDb
+from pyworkflow.mapper import SqliteDb, SqliteFlatDb, SqliteDb
 
 
 class DataSet(object):
@@ -363,6 +361,8 @@ class SqliteDataSet(DataSet):
         table = Table(*columns)
         
         checkedImgCols = {} # Check if the image columns are volumes
+        # FIXME: Move this to scipion-em? Maybe remove the whole module that is not used?
+        from pyworkflow.em.convert import ImageHandler
         ih = ImageHandler() 
         
         # Populate the table in the DataSet

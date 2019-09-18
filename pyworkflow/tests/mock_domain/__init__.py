@@ -22,10 +22,29 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from mapper import Mapper
-from sqlite import SqliteMapper, SqliteDb, SqliteFlatMapper, SqliteFlatDb
-from xmlmapper import XmlMapper
+"""
+Mock Domain definition that will be used by basic tests.
+"""
+
+from pyworkflow.protocol import Protocol
+from pyworkflow.wizard import Wizard
+from pyworkflow.viewer import Viewer
+import pyworkflow.plugin as pwplugin
+
+from .objects import MockObject
 
 
+class Domain(pwplugin.Domain):
+    _name = __name__
+    _objectClass = MockObject
+    _protocolClass = Protocol
+    _viewerClass = Viewer
+    _wizardClass = Wizard
+    _baseClasses = globals()
 
 
+class Plugin(pwplugin.Plugin):
+    pass
+
+
+Domain.registerPlugin(__name__)

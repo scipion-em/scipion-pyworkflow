@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -22,10 +22,25 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from mapper import Mapper
-from sqlite import SqliteMapper, SqliteDb, SqliteFlatMapper, SqliteFlatDb
-from xmlmapper import XmlMapper
+
+import pyworkflow.tests as pwtests
+
+import mock_domain as mod
+import mock_domain.objects as modobj
 
 
+class TestDomain(pwtests.BaseTest):
 
+    def test_objects(self):
+        """ Test that all objects are properly discovered. """
+        objects = mod.Domain.getObjects()
+        for k in dir(modobj):
+            v = getattr(modobj, k)
+            if isinstance(v, modobj.MockObject):
+                self.assertEqual(objects[k], v)
 
+    def test_viewers(self):
+        pass
+
+    def test_wizards(self):
+        pass

@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,9 +16,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -40,7 +39,8 @@ import pyworkflow as pw
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import ScipionLogger
-from executor import StepExecutor, ThreadStepExecutor, MPIStepExecutor, QueueStepExecutor
+from executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
+                      QueueStepExecutor)
 from constants import *
 from params import Form
 import scipion
@@ -754,12 +754,10 @@ class Protocol(Step):
     def _iterOutputsOld(self):
         """ This method iterates assuming the old model: any EMObject attribute
         is an output."""
-        from pyworkflow.em import EMObject
-
         # Iterate old Style:
+        domain = self.getClassDomain()
         for key, attr in self.getAttributes():
-
-            if isinstance(attr, EMObject):
+            if isinstance(attr, domain._objectClass):
                 yield key, attr
 
     def isInStreaming(self):
@@ -1326,7 +1324,7 @@ class Protocol(Step):
 
         self.info('     HostName: %s' % self.getHostFullName())
         self.info('          PID: %s' % self.getPid())
-        self.info('      Scipion: %s' % os.environ['SCIPION_VERSION'])
+        self.info('   pyworkflow: %s' % pw.__version__)
         self.info('   currentDir: %s' % os.getcwd())
         self.info('   workingDir: %s' % self.workingDir)
         self.info('      runMode: %s' % MODE_CHOICES[self.runMode.get()])
@@ -1453,6 +1451,9 @@ class Protocol(Step):
         if not lastLines:
             lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 20))
 
+        if not all(os.path.exists(p) for p in self.getLogPaths()):
+            return []
+
         self.__openLogsFiles('r')
         iterlen = lambda it: sum(1 for _ in it)
         numLines = iterlen(self.__fOut)
@@ -1563,10 +1564,16 @@ class Protocol(Step):
 
     @classmethod
     def getClassPackage(cls):
-        """ Return the package module to which this protocol belongs
+        """ Return the package module to which this protocol belongs.
+        This function will only work, if for the given Domain, the
+        method Domain.getProtocols() has been called once. After calling
+        this method the protocol classes are registered with it Plugin
+        and Domain info.
         """
-        import pyworkflow.em as em
-        em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
+        #import pyworkflow.em as em
+        #em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
+        # TODO: Check if we need to return scipion by default anymore
+        # Now the basic EM protocols are defined by scipion-em (pwem)
         return getattr(cls, '_package', scipion)
 
     @classmethod
@@ -1578,6 +1585,11 @@ class Protocol(Step):
     def getClassPackageName(cls):
         return cls.getClassPackage().__name__.replace(
             'pyworkflow.protocol.scipion', 'scipion')
+
+    @classmethod
+    def getClassDomain(cls):
+        """ Return the Domain class where this Protocol class is defined. """
+        return cls.getClassPackage().Domain
 
     @classmethod
     def getPluginLogoPath(cls):
@@ -1766,15 +1778,15 @@ class Protocol(Step):
         the error messages will be returned.
         """
         try:
-
             validateFunc = getattr(cls.getClassPackage().Plugin,
-                               'validateInstallation', None)
+                                   'validateInstallation', None)
 
             return validateFunc() if validateFunc is not None else []
         except Exception as e:
-            msg = "%s installation couldn't be validated. Possible cause could" \
-                  " be a configuration issue. Try to run scipion config." \
-                  % cls.__name__
+            msg = str(e)
+            msg += (" %s installation couldn't be validated. Possible cause "
+                    "could be a configuration issue. Try to run scipion "
+                    "config." % cls.__name__)
             print(msg)
             return [msg]
 
@@ -2109,8 +2121,8 @@ class LegacyProtocol(Protocol):
     def __str__(self):
         return self.getObjLabel()
 
-# ---------- Helper functions related to Protocols --------------------
 
+# ---------- Helper functions related to Protocols --------------------
 def runProtocolMain(projectPath, protDbPath, protId):
     """ Main entry point when a protocol will be executed.
     This function should be called when:
@@ -2129,8 +2141,6 @@ def runProtocolMain(projectPath, protDbPath, protId):
     executor = None
     nThreads = max(protocol.numberOfThreads.get(), 1)
 
-    #time.sleep(20)
-
     if protocol.stepsExecutionMode == STEPS_PARALLEL:
         if protocol.numberOfMpi > 1:
             # Handle special case to execute in parallel
@@ -2146,12 +2156,17 @@ def runProtocolMain(projectPath, protDbPath, protId):
 
         elif nThreads > 1:
             if protocol.useQueueForSteps():
-                executor = QueueStepExecutor(hostConfig, protocol.getSubmitDict(), nThreads-1, gpuList = protocol.getGpuList())
+                executor = QueueStepExecutor(hostConfig,
+                                             protocol.getSubmitDict(),
+                                             nThreads-1,
+                                             gpuList=protocol.getGpuList())
             else:
-                executor = ThreadStepExecutor(hostConfig, nThreads-1, gpuList = protocol.getGpuList())
+                executor = ThreadStepExecutor(hostConfig, nThreads-1,
+                                              gpuList=protocol.getGpuList())
 
     if executor is None and protocol.useQueueForSteps():
-        executor = QueueStepExecutor(hostConfig, protocol.getSubmitDict(), 1, gpuList = protocol.getGpuList())
+        executor = QueueStepExecutor(hostConfig, protocol.getSubmitDict(), 1,
+                                     gpuList=protocol.getGpuList())
 
     if executor is None:
         executor = StepExecutor(hostConfig,
@@ -2199,7 +2214,7 @@ def getProtocolFromDb(projectPath, protDbPath, protId, chdir=False):
     # all from protocol indirectly, so if move this to the top
     # we get an import error
     from pyworkflow.project import Project
-    project = Project(projectPath)
+    project = Project(pw.Config.getDomain(), projectPath)
     project.load(dbPath=os.path.join(projectPath, protDbPath), chdir=chdir,
                  loadAllConfig=False)
     protocol = project.getProtocol(protId)

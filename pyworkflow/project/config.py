@@ -1,13 +1,14 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
 # * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -16,9 +17,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -52,7 +51,8 @@ class ProjectSettings(pwobj.OrderedObject):
         self.currentProtocolsView = pwobj.String()
         # Store the color mode: 0= Status, 1=Labels, ...
         self.colorMode = pwobj.Integer(ProjectSettings.COLOR_MODE_STATUS)
-        self.nodeList = NodeConfigList()  # Store graph nodes positions and other info
+        # Store graph nodes positions and other info
+        self.nodeList = NodeConfigList()
         self.labelsList = LabelsList()  # Label list
         self.mapper = None  # This should be set when load, or write
         self.runsView = pwobj.Integer(1) # by default the graph view
@@ -135,7 +135,8 @@ class ProjectSettings(pwobj.OrderedObject):
             self.mapper = SqliteMapper(dbPath, globals())
         else:
             if self.mapper is None:
-                raise Exception("Can't write ProjectSettings without mapper or dbPath")
+                raise Exception("Can't write ProjectSettings without "
+                                "mapper or dbPath")
 
         self.mapper.deleteAll()
         self.mapper.insert(self)
@@ -165,7 +166,8 @@ class ProjectSettings(pwobj.OrderedObject):
         if n == 0:
             raise Exception("Can't load ProjectSettings from %s" % dbPath)
         elif n > 1:
-            raise Exception("Only one ProjectSettings is expected in db, found %d in %s" % (n, dbPath))
+            raise Exception("Only one ProjectSettings is expected in db, "
+                            "found %d in %s" % (n, dbPath))
 
         settings = settingList[0]
         settings.mapper = mapper
@@ -181,6 +183,7 @@ class ProjectConfig(pwobj.OrderedObject):
         # Do not store this object, unless we implement some kind of
         # icon customization
         self._objDoStore = False
+
 
 class MenuConfig(object):
     """Menu configuration in a tree fashion.
@@ -526,10 +529,10 @@ class ProtocolTreeConfig:
         return False if protClass is None else not protClass.isDisabled()
 
     @classmethod
-    def __addAllProtocols(cls, protocols):
+    def __addAllProtocols(cls, Domain, protocols):
         # Add all protocols
         # FIXME: Check why this import is here
-        allProts = pw.em.Domain.getProtocols()
+        allProts = Domain.getProtocols()
 
         # Sort the dictionary
         allProtsSorted = OrderedDict(sorted(allProts.items(),
@@ -596,19 +599,18 @@ class ProtocolTreeConfig:
                         cls.__findTreeLocation(menu.childs, children, menu)
 
     @classmethod
-    def load(cls, protocolsConf):
+    def load(cls, Domain, protocolsConf):
         """ Read the protocol configuration from a .conf file similar to the
         one in scipion/config/protocols.conf,
         which is the default one when no file is passed.
         """
-
         protocols = OrderedDict()
         # Read the protocols.conf from Scipion (base) and create an initial
         # tree view
         cls.__addProtocolsFromConf(protocols, protocolsConf)
 
         # Read the protocols.conf of any installed plugin
-        pluginDict = pw.em.Domain.getPlugins()
+        pluginDict = Domain.getPlugins()
         pluginList = pluginDict.keys()
         for pluginName in pluginList:
             try:
@@ -622,6 +624,6 @@ class ProtocolTreeConfig:
                             e, protocolsConfPath))
 
             # Add all protocols to All view
-        cls.__addAllProtocols(protocols)
+        cls.__addAllProtocols(Domain, protocols)
 
         return protocols

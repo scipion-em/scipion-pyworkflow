@@ -30,6 +30,8 @@ import os
 import importlib
 import pkgutil
 import inspect
+import traceback
+import types
 import pkg_resources
 from email import message_from_string
 from collections import OrderedDict
@@ -37,11 +39,11 @@ from abc import ABCMeta, abstractmethod
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
+import pyworkflow.object as pwobj
 
 
 class Domain:
-    """
-    Class to represent the application domain.
+    """ Class to represent the application domain.
     It will allow to specify new objects, protocols, viewers and wizards
     through the registration of new plugins.
     """
@@ -62,30 +64,16 @@ class Domain:
     _wizards = {}
 
     @classmethod
-    def __getSubmodule(cls, name, subname):
-        try:
-            return importlib.import_module('%s.%s' % (name, subname))
-        except Exception as e:
-            msg = str(e)
-            # FIXME: The following is a quick and dirty way to filter
-            # when the submodule is not present
-            if msg != 'No module named %s' % subname:
-                pwutils.pluginNotFound("%s.%s" % (name, subname), msg)
-            return None
-
-    @classmethod
     def registerPlugin(cls, name):
-        """ Register a new plugin. This function should only be called
-        when creating a class with __metaclass__=PluginMeta that will
-        trigger this.
+        """ Register a new plugin. This function should only be called when
+        creating a class with __metaclass__=PluginMeta that will trigger this.
         """
         m = importlib.import_module(name)
         cls._plugins[name] = m  # Register the name to as a plugin
         # TODO: Load subclasses (protocols, viewers, wizards)
-
         # Define variables
         m.Plugin._defineVariables()
-
+        m.Domain = cls  # Register the domain class for this module
         # Load bibtex
         m._bibtex = {}
         bib = cls.__getSubmodule(name, 'bibtex')
@@ -94,13 +82,7 @@ class Domain:
                 m._bibtex = pwutils.parseBibTex(bib.__doc__)
             except Exception:
                 pass
-
         return m
-
-    @classmethod
-    def __isPlugin(cls, m):
-        """ Return True if the module is a Scipion plugin. """
-        return m.__name__ in cls._plugins
 
     @classmethod
     def getPlugins(cls):
@@ -133,8 +115,6 @@ class Domain:
     @classmethod
     def refreshPlugin(cls, name):
         """ Refresh a given plugin name. """
-        import types
-
         plugin = cls.getPlugin(name)
         if plugin is not None:
             fn = plugin.__file__
@@ -143,10 +123,8 @@ class Domain:
             module_visit_path = {fn}
             del fn
 
-            def get_recursive_molules(module):
-                """
-                Get all plugin modules recursively
-                """
+            def get_recursive_modules(module):
+                """ Get all plugin modules recursively """
                 for module_child in vars(module).values():
                     if isinstance(module_child, types.ModuleType):
                         fn_child = getattr(module_child, "__file__", None)
@@ -155,9 +133,9 @@ class Domain:
                             if fn_child not in module_visit_path:
                                 module_visit.add(module_child)
                                 module_visit_path.add(fn_child)
-                                get_recursive_molules(module_child)
+                                get_recursive_modules(module_child)
 
-            get_recursive_molules(plugin)
+            get_recursive_modules(plugin)
             # reload all plugin modules
 
             while module_visit:
@@ -216,7 +194,6 @@ class Domain:
 
     @classmethod
     def getModuleClasses(cls, module):
-
         # Dir was used before but dir returns all imported elements
         # included those imported to be BaseClasses.
         # return dir(module)
@@ -229,36 +206,230 @@ class Domain:
             if moduleName in declaredClass.__module__:
                 yield name
 
-
     @classmethod
     def getProtocols(cls):
-        """ Return all Protocol subclasses from all plugins for this domain.
-        """
+        """ Return all Protocol subclasses from all plugins for this domain."""
         return cls.__getSubclasses('protocols', cls._protocolClass)
 
     @classmethod
     def getObjects(cls):
-        """ Return all EMObject subclasses from all plugins for this domain.
-        """
+        """ Return all EMObject subclasses from all plugins for this domain."""
         return cls.__getSubclasses('objects', cls._objectClass)
 
     @classmethod
     def getViewers(cls):
-        """ Return all Viewer subclasses from all plugins for this domain.
-        """
+        """ Return all Viewer subclasses from all plugins for this domain."""
         return cls.__getSubclasses('viewers', cls._viewerClass,
                                    updateBaseClasses=True)
 
     @classmethod
     def getWizards(cls):
-        """ Return all Wizard subclasses from all plugins for this domain.
-        """
+        """ Return all Wizard subclasses from all plugins for this domain."""
         return cls.__getSubclasses('wizards', cls._wizardClass)
 
     @classmethod
+    def getMapperDict(cls):
+        """ Return a dictionary that can be used with subclasses of Mapper
+        to store/retrieve objects (including protocols) defined in this
+        Domain. """
+        mapperDict = getattr(cls, '__mapperDict', None)
+
+        if mapperDict is None:
+            mapperDict = dict(pwobj.OBJECTS_DICT)
+            mapperDict.update(cls.getObjects())
+            mapperDict.update(cls.getProtocols())
+            cls.__mapperDict = mapperDict
+
+        return mapperDict
+
+    @classmethod
     def getName(cls):
+        """ Return the name of this Domain. """
         return cls._name
 
+    @classmethod
+    def importFromPlugin(cls, module, method='', errorMsg='', doRaise=False):
+        """ This method try to import either the method from the module/plugin
+            or the whole module/plugin and returns what is imported if not fails.
+            When the importation fails (due to the plugin or the method is not found),
+            it prints a common message + optional errorMsg or
+            it raise with the same message if doRaise is True.
+            """
+        try:
+            if method == '':
+                output = importlib.import_module(module)
+            else:
+                output = getattr(importlib.import_module(module), method)
+            return output
+        except Exception as e:
+            plugName = module.split('.')[0]
+            errMsg = str(e) if errorMsg == '' else "%s. %s" % (str(e), errorMsg)
+            cls.__pluginNotFound(plugName, errMsg, doRaise)
+
+    @classmethod
+    def findClass(cls, className):
+        """ Find a class object given its name.
+        The search will start with protocols and then with protocols.
+        """
+        # FIXME: Why not also Viewers, Wizards?
+        c = cls.getProtocols().get(className,
+                                   cls.getObjects().get(className, None))
+        if c is None:
+            raise Exception("findClass: class '%s' not found." % className)
+        return c
+
+    @classmethod
+    def findSubClasses(cls, classDict, className):
+        """ Find all subclasses of a give className. """
+        clsObj = classDict[className]
+        subclasses = {}
+
+        for k, v in classDict.iteritems():
+            if issubclass(v, clsObj):
+                subclasses[k] = v
+        return subclasses
+
+    @classmethod
+    def getPreferredViewers(cls, className):
+        """ Find and import the preferred viewers for this class. """
+        viewerNames = pw.Config.VIEWERS.get(className, [])
+        if not isinstance(viewerNames, list):
+            viewerNames = [viewerNames]
+        viewers = []  # we will try to import them and store here
+        for prefViewerStr in viewerNames:
+            try:
+                viewerModule, viewerClassName = prefViewerStr.rsplit('.', 1)
+                prefViewer = cls.importFromPlugin(viewerModule,
+                                                  viewerClassName,
+                                                  doRaise=True)
+                viewers.append(prefViewer)
+            except Exception as e:
+                print("Couldn't load \"%s\" as preferred viewer.\n"
+                      "There might be a typo in your VIEWERS variable "
+                      "or an error in the viewer's plugin installation"
+                      % prefViewerStr)
+                print(e)
+        return viewers
+
+    @classmethod
+    def findViewers(cls, className, environment):
+        """ Find the available viewers in this Domain for this class. """
+        viewers = []
+        cls = cls.findClass(className)
+        baseClasses = cls.mro()
+        preferredViewers = cls.getPreferredViewers(className)
+        preferedFlag = 0
+
+        for viewer in Domain.getViewers().values():
+            if environment in viewer._environments:
+                for t in viewer._targets:
+                    if t in baseClasses:
+                        for prefViewer in preferredViewers:
+                            if viewer is prefViewer:
+                                viewers.insert(0, viewer)
+                                preferedFlag = 1
+                                break
+                        else:
+                            if t == cls:
+                                viewers.insert(preferedFlag, viewer)
+                            else:
+                                viewers.append(viewer)
+                            break
+        return viewers
+
+    @classmethod
+    def findWizards(cls, protocol, environment):
+        """ Find available wizards for this class, in this Domain.
+        Params:
+            protocols: Protocol instance for which wizards will be search.
+            environment: The environment name for wizards (e.g TKINTER)
+        Returns:
+            a dict with the paramName and wizards for this class."""
+        return cls.__findWizardsFromDict(protocol, environment,
+                                         cls.getWizards())
+
+    @classmethod
+    def printInfo(cls):
+        """ Simple function (mainly for debugging) that prints basic
+        information about this Domain. """
+        print("Domain: %s" % cls._name)
+        print("     objects: %s" % len(cls._objects))
+        print("   protocols: %s" % len(cls._protocols))
+        print("     viewers: %s" % len(cls._viewers))
+        print("     wizards: %s" % len(cls._wizards))
+
+    # ---------- Private methods of Domain class ------------------------------
+    @classmethod
+    def __pluginNotFound(cls, plugName, errorMsg='', doRaise=False):
+        """ Prints or raise (depending on the doRaise) telling why it is failing
+        """
+        hint = ("   Check the plugin manager (Configuration->Plugins in "
+                "Scipion manager window) \n")
+        # the str casting is to work with Exceptions as errorMsg
+        if 'No module named %s' % plugName in str(errorMsg):
+            msgStr = " > %s plugin not found. %s" % (plugName, errorMsg)
+            hint += "   or use 'scipion installp --help' in the command line "
+            hint += "to install it."
+        else:
+            msgStr = " > error when importing from %s: %s" % (plugName, errorMsg)
+            if errorMsg != '':  # if empty we know nothing...
+                hint += ("   or use 'scipion installp --help --checkUpdates' "
+                         "in the command line to check for upgrades,\n   "
+                         "it could be a versions compatibility issue.")
+
+        stackList = traceback.extract_stack()
+        if len(stackList) > 3:
+            callIdx = -3  # We use the most probable index as default
+            for idx, stackLine in enumerate(stackList):
+                if stackLine[0].endswith('/unittest/loader.py'):
+                    callIdx = idx + 1
+        else:
+            callIdx = 0
+
+        callBy = stackList[callIdx][0]
+        if callBy.endswith('pyworkflow/plugin.py'):
+            # This special case is to know why is failing and not where is called
+            # because we know that we call all plugins.protocols at the beginning
+            calling = traceback.format_exc().split('\n')[-4]
+        else:
+            line = stackList[callIdx][1]
+            calling = "  Called by %s, line %s" % (callBy, line)
+
+        raiseMsg = "%s\n %s\n%s\n" % (msgStr, calling, hint)
+        if doRaise:
+            raise Exception("\n\n" + raiseMsg)
+        else:
+            print(raiseMsg)
+
+    @classmethod
+    def __getSubmodule(cls, name, subname):
+        try:
+            return importlib.import_module('%s.%s' % (name, subname))
+        except Exception as e:
+            msg = str(e)
+            # FIXME: The following is a quick and dirty way to filter
+            # when the submodule is not present
+            if msg != 'No module named %s' % subname:
+                cls.__pluginNotFound("%s.%s" % (name, subname), msg)
+            return None
+
+    @classmethod
+    def __isPlugin(cls, m):
+        """ Return True if the module is a Scipion plugin. """
+        return m.__name__ in cls._plugins
+
+    @classmethod
+    def __findWizardsFromDict(cls, protocol, environment, wizDict):
+        wizards = {}
+        baseClasses = [c.__name__ for c in protocol.getClass().mro()]
+
+        for wiz in wizDict.values():
+            if environment in wiz._environments:
+                for c, params in wiz._targets:
+                    if c.__name__ in baseClasses:
+                        for p in params:
+                            wizards[p] = wiz
+        return wizards
 
 
 class Plugin:
