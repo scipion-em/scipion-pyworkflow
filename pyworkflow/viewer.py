@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,9 +15,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -25,11 +23,8 @@
 # **************************************************************************
 
 import os
-from os.path import join
 
-from protocol import Protocol
-from object import Object
-from pyworkflow.utils.path import cleanPath
+import pyworkflow.protocol as pwprot
 
 
 DESKTOP_TKINTER = 'tkinter'
@@ -48,7 +43,7 @@ class View(object):
     
     def toUrl(self):
         """ If the view have web implementation, this method
-        should be implented to build the url with parameters
+        should be implemented to build the url with parameters
         that will be used to respond.
         """
         pass
@@ -115,7 +110,6 @@ class TextView(View):
 
 
 # ---------------- Viewers ----------------------------------------
-    
 class Viewer(object):
     """ A Viewer will provide several Views to visualize
     the data associated to data objects or protocol.
@@ -140,7 +134,7 @@ class Viewer(object):
         return self._tkRoot
 
     def _getTmpPath(self, *paths):
-        return join(self._tmpPath, *paths)
+        return os.path.join(self._tmpPath, *paths)
     
     def visualize(self, obj, **kwargs):
         """ Display each of the views, by default
@@ -198,57 +192,13 @@ class Viewer(object):
         kwargs['masterWindow'] = self.formWindow
         return windowClass(**kwargs)  
 
-    def objectView(self, filenameOrObject, **kwargs):
-        """ This is a wrapper around the ObjectView constructor, just to
-        avoid passing the project and protocol, since both are know
-        here in the ProtocolViewer.
-        Params:
-            filenameOrObject: This parameter can be either a filename or an
-                object that has 'getFileName' method.
-            **kwargs: Can receive extra keyword-arguments that will be passed
-                to the ObjectView constructor
-        """
-        # We can not import em globally
-        from pyworkflow.em.viewers.views import ObjectView
-        fn = None
-
-        if isinstance(filenameOrObject, basestring):
-            # If the input is a string filename, we should take the object id
-            # from the protocol. This assumes that self.protocol have been
-            # previously set
-            fn = filenameOrObject
-            strId = self.getProtocolId()
-
-        elif isinstance(filenameOrObject, Object):
-
-            if filenameOrObject.getObjId() is None:
-                strId = self.getProtocolId()
-            else:
-                strId = filenameOrObject.strId()
-
-            if hasattr(filenameOrObject, 'getLocation'):
-                # In this case fn will be a location tuple that will be
-                # correctly handled by the showj DataView
-                fn = filenameOrObject.getLocation()
-            elif hasattr(filenameOrObject, 'getFileName'):
-                # If the input is an object, we can take the id from it
-                fn = filenameOrObject.getFileName()
-
-        if fn is None:
-            raise Exception("Incorrect input object, it should be 'string' or "
-                            "'Object' (with 'getLocation' or 'getFileName' "
-                            "methods).")
-
-        return ObjectView(self._project, strId, fn, **kwargs)
-
     def getProtocolId(self):
-
         if not hasattr(self, 'protocol'):
             raise Exception("self.protocol is not defined for this Viewer.")
         return self.protocol.strId()
 
 
-class ProtocolViewer(Protocol, Viewer):
+class ProtocolViewer(pwprot.Protocol, Viewer):
     """ Special kind of viewer that have a Form to organize better
     complex visualization associated with protocol results.
     If should provide a mapping between form params and the corresponding
@@ -262,7 +212,7 @@ class ProtocolViewer(Protocol, Viewer):
         object.__setattr__(self, '_defineParamsBackup', self._defineParams)
         object.__setattr__(self, '_defineParams', self._defineParamsEmpty)
     
-        Protocol.__init__(self, **kwargs)
+        pwprot.Protocol.__init__(self, **kwargs)
         Viewer.__init__(self, **kwargs)
         self.allowHeader.set(False)
         # This flag will be used to display a plot or return the plotter
@@ -359,56 +309,3 @@ class ProtocolViewer(Protocol, Viewer):
                 values += map(int, e.split())
         return values
 
-    def createVolumesSqlite(self, files, path, samplingRate,
-                            updateItemCallback=None):
-        from em import SetOfVolumes, Volume
-        cleanPath(path)
-        volSet = SetOfVolumes(filename=path)
-        volSet.setSamplingRate(samplingRate)
-
-        for volFn in files:
-            vol = Volume()
-            vol.setFileName(volFn)
-            if updateItemCallback:
-                updateItemCallback(vol)
-            volSet.append(vol)
-        volSet.write()
-        volSet.close()
-        
-        return volSet
-    
-    def createAngDistributionSqlite(self, sqliteFn, numberOfParticles,
-                                    itemDataIterator):
-        import pyworkflow.em.metadata as md
-        if not os.path.exists(sqliteFn):
-            # List of list of 3 elements containing angleTilt, anglePsi, weight
-            projectionList = []
-            
-            def getCloseProjection(angleRot, angleTilt):
-                """ Get an existing projection close to angleRot, angleTilt.
-                Return None if not found close enough.
-                """
-                for projection in projectionList:
-                    if (abs(projection[0] - angleRot) <= 0.5 and
-                        abs(projection[1] - angleTilt) <= 0.5):
-                        return projection
-                return None            
-            
-            weight = 1./numberOfParticles
-            
-            for angleRot, angleTilt in itemDataIterator:
-                projection = getCloseProjection(angleRot, angleTilt)
-                if projection is None:
-                    projectionList.append([angleRot, angleTilt, weight])
-                else:
-                    projection[2] = projection[2] + weight
-            
-            mdProj = md.MetaData()
-            
-            for projection in projectionList:
-                mdRow = md.Row()
-                mdRow.setValue(md.MDL_ANGLE_ROT, projection[0])
-                mdRow.setValue(md.MDL_ANGLE_TILT, projection[1])
-                mdRow.setValue(md.MDL_WEIGHT, projection[2])
-                mdRow.writeToMd(mdProj, mdProj.addObject())
-            mdProj.write(sqliteFn)

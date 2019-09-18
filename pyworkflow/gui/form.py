@@ -437,13 +437,13 @@ class SubclassesTreeProvider(TreeProvider):
         self.maxNum = 200
 
     def getObjects(self):
-        import pyworkflow.em as em 
         # Retrieve all objects of type className
         project = self.protocol.getProject()
         className = self.param.pointerClass.get()
         condition = self.param.pointerCondition.get()
-        # Get the classes that are valid as input object
-        classes = [em.findClass(c.strip()) for c in className.split(",")]
+        # Get the classes that are valid as input object in this Domain
+        domain = pw.Config.getDomain()
+        classes = [domain.findClass(c.strip()) for c in className.split(",")]
         objects = []
 
         # Do no refresh again and take the runs that are loaded
@@ -481,8 +481,8 @@ class SubclassesTreeProvider(TreeProvider):
                             # If the ITEM type match any of the desired classes
                             # we will add some elements from the set
                             if (attr.ITEM_TYPE is not None and
-                                any(issubclass(attr.ITEM_TYPE, c) for c in classes)):
-                                if p is None: # This means the set have not be added
+                               any(issubclass(attr.ITEM_TYPE, c) for c in classes)):
+                                if p is None:  # This means the set have not be added
                                     p = pwobj.Pointer(prot, extended=paramName)
                                     p._allowsSelection = False
                                     objects.append(p)
