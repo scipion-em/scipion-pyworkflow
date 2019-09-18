@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -16,9 +16,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -70,9 +68,9 @@ class ProjectWindow(ProjectBaseWindow):
                                            pwutils.getLocalHostName())
         except Exception:
             projTitle = self.projName 
-            
+
         self.projPath = path
-        self.loadProject()
+        self.project = self.loadProject()
 
         # TODO: put the menu part more nicely. From here:
         menu = MenuConfig()
@@ -146,23 +144,26 @@ class ProjectWindow(ProjectBaseWindow):
             if not self.project.openedAsReadOnly():
                 self.saveSettings()
         except Exception as ex:
-            print("%s %s" %(Message.NO_SAVE_SETTINGS, str(ex)) )
+            print("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
         ProjectBaseWindow._onClosing(self)
      
     def loadProject(self):
-        self.project = pw.project.Project(self.projPath)
-        self.project.load()
+        proj = pw.project.Project(pw.Config.getDomain(), self.projPath)
+        proj.load()
 
         # Check if we have settings.sqlite, generate if not
-        settingsPath = os.path.join(self.project.path, self.project.settingsPath)
+        settingsPath = os.path.join(proj.path, proj.settingsPath)
         if os.path.exists(settingsPath):
-            self.settings = self.project.getSettings()
+            self.settings = proj.getSettings()
         else:
-            print('Warning: settings.sqlite not found! Creating default settings..')
-            self.settings = self.project.createSettings()
+            print('Warning: settings.sqlite not found! '
+                  'Creating default settings..')
+            self.settings = proj.createSettings()
 
         self.generalCfg = self.settings.getConfig()
-        self.protCfg = self.project.getCurrentProtocolView()
+        self.protCfg = proj.getCurrentProtocolView()
+
+        return proj
 
     # The next functions are callbacks from the menu options.
     # See how it is done in pyworkflow/gui/gui.py:Window._addMenuChilds()
