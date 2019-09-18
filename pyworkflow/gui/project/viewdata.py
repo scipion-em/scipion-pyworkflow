@@ -246,7 +246,8 @@ class ProjectDataView(tk.Frame):
         # Create the Selected Run Info
         infoFrame = tk.Frame(v)
         gui.configureWeigths(infoFrame)
-        self._infoText = TaggedText(infoFrame, bg='white', handlers={'sci-open': self._openProtocolFormFromId})
+        self._infoText = TaggedText(infoFrame, bg='white',
+                                    handlers={'sci-open': self._openProtocolFormFromId})
         self._infoText.grid(row=0, column=0, sticky='news')
         
         v.add(runsFrame, weight=3)
@@ -270,7 +271,8 @@ class ProjectDataView(tk.Frame):
                 
         textColor = 'black'
         color = '#ADD8E6' #Lightblue
-        item = self._dataCanvas.createTextbox(nodeText, 100, y, bgColor=color, textColor=textColor)
+        item = self._dataCanvas.createTextbox(nodeText, 100, y, bgColor=color,
+                                              textColor=textColor)
 
         # Get the dataId
         if not node.isRoot():
@@ -434,10 +436,10 @@ class ProjectDataView(tk.Frame):
 
     def _openProtocolForm(self, prot):
         """Open the Protocol GUI Form given a Protocol instance"""
-
-        w = gui.form.FormWindow(pwutils.Message.TITLE_NAME_RUN + pwprot.getClassName(), prot,
-                                  self._executeSaveProtocol, self.windows,
-                                  hostList=self.project.getHostNames())
+        title = pwutils.Message.TITLE_NAME_RUN + prot.getClassName()
+        w = gui.form.FormWindow(title, prot, self._executeSaveProtocol,
+                                self.windows,
+                                hostList=self.project.getHostNames())
         w.adjustSize()
         w.show(center=True)
 
@@ -450,26 +452,29 @@ class ProjectDataView(tk.Frame):
             self.project.launchProtocol(prot)
             # Select the launched protocol to display its summary, methods..etc
             # self._selection.clear()
-            # self._selection.append(pwprot.getObjId())
+            # self._selection.append(prot.getObjId())
             # self._updateSelection()
-            # self._lastStatus = None  # clear lastStatus to force re-load the logs
+            # clear lastStatus to force re-load the logs
+            # self._lastStatus = None
             msg = ""
 
         return msg
 
     def _onRightClick(self, e=None):
         return [
-            (pwutils.Message.LABEL_EDIT, self._editObject, pwutils.Icon.ACTION_EDIT),
-            ('Go to protocol', self._goToProtocol, pwutils.Icon.ACTION_SEARCH)
+            (pwutils.Message.LABEL_EDIT, self._editObject,
+             pwutils.Icon.ACTION_EDIT),
+            ('Go to protocol', self._goToProtocol,
+             pwutils.Icon.ACTION_SEARCH)
         ]
     
     def _editObject(self):
         """Open the Edit GUI Form given an instance"""
-        EditObjectDialog(self, pwutils.Message.TITLE_EDIT_OBJECT, self._selected, self.project.mapper)
+        EditObjectDialog(self, pwutils.Message.TITLE_EDIT_OBJECT,
+                         self._selected, self.project.mapper)
 
     def _goToProtocol(self):
         """Switch to protocols view selecting the correspondent protocol"""
-
 
     def refreshData(self, e=None, initRefreshCounter=True):
         """ Refresh the status of displayed data.
@@ -487,15 +492,18 @@ class ProjectDataView(tk.Frame):
             self.__autoRefreshCounter = 3 # start by 3 secs
             if self.__autoRefresh:
                 self.dataTree.after_cancel(self.__autoRefresh)
-                self.__autoRefresh = self.dataTree.after(self.__autoRefreshCounter*1000, self._automaticRefreshData)
+                self.__autoRefresh = self.dataTree.after(
+                    self.__autoRefreshCounter*1000, self._automaticRefreshData)
          
     def _automaticRefreshData(self, e=None):
-        """ Schedule automatic refresh increasing the time between refreshes. """
+        """ Schedule automatic refresh increasing the time between refreshes.
+        """
         self.refreshData(initRefreshCounter=False)
         secs = self.__autoRefreshCounter
         # double the number of seconds up to 30 min
         self.__autoRefreshCounter = min(2*secs, 1800)
-        self.__autoRefresh = self.dataTree.after(secs*1000, self._automaticRefreshData)
+        self.__autoRefresh = self.dataTree.after(secs*1000,
+                                                 self._automaticRefreshData)
                 
                 
 class DataTextBox(RoundedTextBox):
