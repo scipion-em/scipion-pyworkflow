@@ -127,7 +127,7 @@ def prettyDelta(timedelta):
 
 
 def prettyLog(msg):
-    print cyan(prettyTime(datetime.now(), secs=True)), msg
+    print(cyan(prettyTime(datetime.now(), secs=True)), msg)
 
 
 class Timer(object):
@@ -139,7 +139,7 @@ class Timer(object):
         return prettyDelta(datetime.now()-self._dt)
         
     def toc(self, message='Elapsed:'):
-        print message, self.getToc()
+        print(message, self.getToc())
         
 
 def timeit(func):
@@ -184,7 +184,7 @@ def trace(nlevels, separator=' --> ', stream=sys.stdout):
     
 def prettyDict(d):
     print("{")
-    for k, v in d.iteritems():
+    for k, v in d.items():
         print("    %s: %s" % (k, v))
     print("}")
 
@@ -274,7 +274,7 @@ def executeLongRemote (command, hostName, userName, password):
             break
         rl, wl, xl = select.select([channel], [], [], 0.0)
         if len(rl) > 0:
-            print channel.recv(1024)
+            print(channel.recv(1024))
 
 
 def getLocalUserName():
@@ -442,7 +442,7 @@ def parseBibTex(bibtexStr):
 
     # For older bibtexparser version 0.5
     from bibtexparser.bparser import BibTexParser
-    from StringIO import StringIO
+    from io import StringIO
 
     f = StringIO()
     f.write(bibtexStr)
@@ -565,8 +565,8 @@ class Environ(dict):
                 return self.get(k)
 
         if mandatory:
-            print ("None of the variables: %s found in the Environment. "
-                   "Please check scipion.conf files." % (str(keys)))
+            print("None of the variables: %s found in the Environment. "
+                  "Please check scipion.conf files." % (str(keys)))
 
         return None
 
@@ -591,7 +591,7 @@ class Environ(dict):
             
     def update(self, valuesDict, position=REPLACE):
         """ Use set for each key, value pair in valuesDict. """
-        for k, v in valuesDict.iteritems():
+        for k, v in valuesDict.items():
             self.set(k, v, position)
 
     def addLibrary(self, libraryPath, position=BEGIN):

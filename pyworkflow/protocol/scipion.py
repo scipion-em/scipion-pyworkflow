@@ -23,14 +23,21 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
+
 from pyworkflow.plugin import Plugin
-from bibtex import _bibtex
+from .bibtex import _bibtex
+
+
 _logo = 'scipion_logo.png'
 _references = ['delaRosaTrevin201693']
+
 
 class Plugin(Plugin):
 
     @classmethod
     def validateInstallation(cls):
-        """ This function will be used to check if package is properly installed. """
+        """ This function will be used to check if package is properly
+        installed. """
         return []  # No errors

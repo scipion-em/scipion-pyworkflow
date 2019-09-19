@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,9 +15,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -28,10 +26,15 @@ Some basic GUI widgets are implemented in this module.
 The widgets here are suppose to be used to build more complex 
 elements.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
-import Tkinter as tk
-import ttk
-import gui
+import tkinter as tk
+import tkinter.ttk as ttk
+
+from . import gui
+from .tooltip import ToolTip
 
 
 class Button(tk.Button):
@@ -60,7 +63,6 @@ class Button(tk.Button):
             tk.Button.__init__(self, master, text=text, **defaults)
             
         if tooltip:
-            from tooltip import ToolTip
             ToolTip(self, tooltip, 500)
             
     def setImage(self, imagePath):
@@ -228,22 +230,22 @@ class GradientFrame(tk.Canvas):
         self.bind("<Configure>", self._draw_gradient)
 
     def _draw_gradient(self, event=None):
-        '''Draw the gradient'''
         self.delete("gradient")
         width = self.winfo_width()
         height = self.winfo_height()
-        limit = width / 2        
-        (r1,g1,b1) = self.winfo_rgb(self._color1)
-        (r2,g2,b2) = self.winfo_rgb(self._color2)
-        r_ratio = float(r2-r1) / limit
-        g_ratio = float(g2-g1) / limit
-        b_ratio = float(b2-b1) / limit
+        limit = width // 2
+        r1, g1, b1 = self.winfo_rgb(self._color1)
+        r2, g2, b2 = self.winfo_rgb(self._color2)
+        r_ratio = (r2 - r1) / limit
+        g_ratio = (g2 - g1) / limit
+        b_ratio = (b2 - b1) / limit
 
         for i in range(limit+1):
             nr = int(r1 + (r_ratio * i))
             ng = int(g1 + (g_ratio * i))
             nb = int(b1 + (b_ratio * i))
-            color = "#%4.4x%4.4x%4.4x" % (nr,ng,nb)
-            self.create_line(i,0,i,height, tags=("gradient",), fill=color)
-            self.create_line(width-i,0,width-i,height, tags=("gradient",), fill=color)
+            color = "#%4.4x%4.4x%4.4x" % (nr, ng, nb)
+            self.create_line(i, 0, i, height, tags=("gradient",), fill=color)
+            self.create_line(width-i, 0, width-i, height,
+                             tags=("gradient",), fill=color)
         self.lower("gradient")

@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,28 +15,28 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import webbrowser
-import Tkinter as tk
-import tkFont
+import tkinter as tk
+import tkinter.font as tkFont
 
 import pyworkflow as pw
 from pyworkflow.gui import Window, Message, Color
 from pyworkflow.gui.widgets import GradientFrame
 from pyworkflow.utils.properties import Icon
 
-from viewprojects import ProjectsView
-from viewprotocols import ProtocolsView
-from viewdata import ProjectDataView
+from .viewprojects import ProjectsView
+from .viewprotocols import ProtocolsView
+from .viewdata import ProjectDataView
 
 
 VIEW_PROJECTS = Message.VIEW_PROJECTS
@@ -45,13 +45,12 @@ VIEW_DATA = Message.VIEW_DATA
 VIEW_LIST = [VIEW_PROTOCOLS, VIEW_DATA]
 
 
-     
 class ProjectBaseWindow(Window):
     """ Base windows for Project and Manager GUIs.
     It extends from Window and add some layout functions (header and footer)
     """
-    def __init__(self, title, masterWindow=None, weight=True, minsize=(900, 500),
-                 icon=Icon.SCIPION_ICON, **kwargs):
+    def __init__(self, title, masterWindow=None, weight=True,
+                 minsize=(900, 500), icon=Icon.SCIPION_ICON, **kwargs):
         Window.__init__(self, title, masterWindow, weight=weight, 
                         icon=icon, minsize=minsize, enableQueue=True, **kwargs)
         
@@ -104,31 +103,28 @@ class ProjectBaseWindow(Window):
                              borderwidth=0, anchor='nw', bg='white',
                              fg=Color.DARK_GREY_COLOR)
         projLabel.grid(row=0, column=2, sticky='sw', padx=(20, 5), pady=10)
-        
         # Create gradient
         GradientFrame(header, height=8, borderwidth=0).grid(row=1, column=0,
                                                             columnspan=3,
                                                             sticky='new')
-
         return header
 
     def addViewList(self, header):
-        """Create the view selection frame (Protocols|Data) in the header."""
-
+        """Create the view selection frame (Protocols|Data) in the header.
+        """
         # This function is called from createHeaderFrame() in ProjectWindow
-
         viewFrame = tk.Frame(header, bg='white')
         viewFrame.grid(row=0, column=2, sticky='se', padx=5, pady=10)
 
         def addLink(elementText):
-            btn = tk.Label(viewFrame, text=elementText, cursor='hand2', fg="#6F3232", bg="white")
-            btn.bind('<Button-1>', lambda e:self._viewComboSelected(elementText))
+            btn = tk.Label(viewFrame, text=elementText, cursor='hand2',
+                           fg="#6F3232", bg="white")
+            btn.bind('<Button-1>', lambda e: self._viewComboSelected(elementText))
             return btn
         
         def addTube():        
-            tube = tk.Label(viewFrame, text="|", fg="#6F3232", bg="white", padx=5)
-            return tube
-        
+            return tk.Label(viewFrame, text="|", fg="#6F3232", bg="white", padx=5)
+
         for i, elementText in enumerate(VIEW_LIST):
             btn = addLink(elementText)
             btn.grid(row=0, column=i*2)
@@ -152,12 +148,10 @@ class ProjectBaseWindow(Window):
         self.viewWidget.grid(row=0, column=0, columnspan=10, sticky='news')
         self.footer.rowconfigure(0, weight=1)
         self.footer.columnconfigure(0, weight=1)
-        #header.columnconfigure(2, weight=1)
         self.view = newView
         
     def getViewWidget(self):
         return self.viewWidget
-        
     #
     # The next functions are callbacks from the menu options.
     # See how it is done in pyworkflow/gui/gui.py:Window._addMenuChilds()
@@ -187,7 +181,6 @@ class ProjectBaseWindow(Window):
             "[[https://www2.mrc-lmb.cam.ac.uk/][MRC]] and "
             "[[https://www.mcgill.ca/][McGill university]],"
             "but with many contributions accross the globe.")
-
 
     def onContactSupport(self):
         # Help -> Contact support

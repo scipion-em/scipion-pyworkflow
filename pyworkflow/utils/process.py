@@ -27,13 +27,15 @@
 """
 This module handles process execution
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import os.path
 import resource
 from subprocess import check_call
 
-from utils import greenStr, envVarOn
+from .utils import greenStr, envVarOn
 
 
 # The job should be launched from the working directory!
@@ -45,7 +47,7 @@ def runJob(log, programname, params,
                               env, gpuList=gpuList)
     
     if log is None:
-        print "** Running command: %s" % greenStr(command)
+        print("** Running command: %s" % greenStr(command))
     else:
         log.info(greenStr(command), True)
 
@@ -74,7 +76,7 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
     # Convert our list of params to a string, with each element escaped
     # with "" in case there are spaces.
-    if not isinstance(params, basestring):
+    if not isinstance(params, str):
         params = ' '.join('"%s"' % p for p in params)
 
     if gpuList:
@@ -105,11 +107,11 @@ def killWithChilds(pid):
     proc = psutil.Process(pid)
     for c in proc.get_children(recursive=True):
         if c.pid is not None:
-            print "Terminating child pid: %d" % c.pid
+            print("Terminating child pid: %d" % c.pid)
             c.kill()
-    print "Terminating process pid: %s" % pid
+    print("Terminating process pid: %s" % pid)
     if pid is None:
-        print "WARNING! Got None PID!!!"
+        print("WARNING! Got None PID!!!")
     else:
         proc.kill()
 

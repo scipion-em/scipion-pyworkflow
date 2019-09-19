@@ -28,8 +28,8 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
+from __future__ import print_function
 
-from itertools import izip
 from collections import OrderedDict
 import datetime as dt
 from pyworkflow.utils.reflection import getSubclasses
@@ -132,7 +132,7 @@ class Object(object):
     def getAttributes(self):
         """Return the list of attributes than are
         subclasses of Object"""
-        for key, attr in self.__dict__.iteritems():
+        for key, attr in self.__dict__.items():
             if issubclass(attr.__class__, Object):
                 yield (key, attr)        
                 
@@ -141,9 +141,9 @@ class Object(object):
         subclasses of Object and will be stored"""
         for key, attr in self.getAttributes():
             if not hasattr(attr, '_objDoStore'):
-                print ("Object.getAttributesToStore: attribute '%s' seems to "
+                print("Object.getAttributesToStore: attribute '%s' seems to "
                       "be overwritten," % key)
-                print ("   since '_objDoStore' was not found. "
+                print("   since '_objDoStore' was not found. "
                        "Ignoring attribute. ")
             else:
                 if attr is not None and attr._objDoStore:
@@ -172,7 +172,7 @@ class Object(object):
     def trace(self, callback):
         """ Add an observer when the set method is called. """
         if self.set == self.__setTrace:
-            pass #print "trace already set"
+            pass
         else:
             self.__set = self.set 
             self.set = self.__setTrace
@@ -300,7 +300,7 @@ class Object(object):
         """Comparison for scalars should be by value
         and for other objects by reference"""
         if self._objValue is None:
-            return object.__eq__(other)
+            return object.__eq__(self, other)
         return self._objValue == other._objValue
     
     def equalAttributes(self, other, ignore=[], verbose=False):
@@ -317,9 +317,9 @@ class Object(object):
                 comp = v1 == v2
             if not comp:
                 if verbose:
-                    print "Different attributes: "
-                    print "self.%s = %s" % (k, v1)
-                    print "other.%s = %s" % (k, v2)
+                    print("Different attributes: ")
+                    print("self.%s = %s" % (k, v1))
+                    print("other.%s = %s" % (k, v2))
                 return False
         return True
             
@@ -392,7 +392,7 @@ class Object(object):
             self.setObjLabel(attrDict.get('object.label', ''))
             self.setObjComment(attrDict.get('object.comment', ''))
 
-        for attrName, value in attrDict.iteritems():
+        for attrName, value in attrDict.items():
             if not attrName.startswith('object.'):
                 self.setAttributeValue(attrName, value, ignoreMissing)
             
@@ -517,14 +517,14 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = '' #' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            print tab, self.getClassName(), idStr
+            print(tab, self.getClassName(), idStr)
         else:
             if name == 'submitTemplate': # Skip this because very large value
                 value = '...'
             else:
                 value = self.getObjValue()
                 
-            print tab, '%s = %s' % (name, value), idStr
+            print(tab, '%s = %s' % (name, value), idStr)
         for k, v in self.getAttributes():
             v.printAll(k, level + 1)
             
@@ -590,23 +590,36 @@ class Scalar(Object):
     def __str__(self):
         """String representation of the scalar value"""
         return str(self.get())
-    
-    def __eq__(self, value):
-        """Comparison for scalars should be by value
-        and for other objects by reference. """
-        if isinstance(value, Object):
-            value = value.get()
-        return self.get() == value
+
+    def __cmp(self, other):
+        """ Comparison implementation for scalars. """
+        a = self.get()
+        b = other.get() if isinstance(other, Object) else other
+        # cmp does not longer exist in Python3, so we will follow
+        # the recommend replacement: (a > b) - (a < b)
+        # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+        return (a > b) - (a < b)
+
+    def __eq__(self, other):
+        """ Comparison for scalars should be by value while
+         for other objects by reference. """
+        return self.__cmp(other) == 0
 
     def __ne__(self, other):
-        return not self.__eq__(other)
-    
-    def __cmp__(self, value):
-        """ Comparison implementation for scalars. """
-        if isinstance(value, Object):
-            value = value.get()
-        return cmp(self.get(), value)
-       
+        return self.__cmp(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp(other) < 0
+
+    def __le__(self, other):
+        return self.__cmp(other) <= 0
+
+    def __gt__(self, other):
+        return self.__cmp(other) > 0
+
+    def __ge__(self, other):
+        return self.__cmp(other) >= 0
+
     def get(self, default=None):
         """Get the value, if internal value is None
         the default argument passed is returned. """
@@ -672,7 +685,7 @@ class Integer(Scalar):
         return self.get()
     
     def __long__(self):
-        return long(self.get())
+        return int(self.get())
     
         
 class String(Scalar):
@@ -756,7 +769,7 @@ class Boolean(Scalar):
         t = type(value)
         if t is bool:
             return value
-        if t is str or t is unicode:
+        if t is str:
             v = value.strip().lower()
             return v == 'true' or v == '1'
         return bool(value) 
@@ -994,14 +1007,15 @@ class CsvList(Scalar, list):
         """
         self.clear()
         if value:
-            if isinstance(value, str) or isinstance(value, unicode):
+            if isinstance(value, str):
                 for s in value.split(','):
                     self.append(self._pType(s))
             elif isinstance(value, list) or isinstance(value, tuple):
                 for s in value:
                     self.append(self._pType(s))
             else:
-                raise Exception("CsvList.set: Invalid value type: ", type(value))
+                raise Exception("CsvList.set: Invalid value type: ",
+                                type(value))
             
     def getObjValue(self):
         self._objValue = ','.join(map(str, self))
@@ -1023,7 +1037,7 @@ class CsvList(Scalar, list):
         """ Comparison for scalars should be by value
         and for other objects by reference.
         """
-        return all(a == b for a, b in izip(self, other))
+        return all(a == b for a, b in zip(self, other))
 
 
 class Set(OrderedObject):
@@ -1142,7 +1156,7 @@ class Set(OrderedObject):
         if properties:
             self._getMapper().setProperty('self', self.getClassName())
             objDict = self.getObjDict()
-            for key, value in objDict.iteritems():
+            for key, value in objDict.items():
                 self._getMapper().setProperty(key, value)
         self._getMapper().commit()
     
@@ -1237,7 +1251,7 @@ class Set(OrderedObject):
         """
         return all(x.getObjId() == y.getObjId() and
                    x.equalAttributes(y, ignore=ignore, verbose=verbose)
-                   for x, y in izip(self, other))
+                   for x, y in zip(self, other))
         
     def hasProperty(self, key):
         return self._getMapper().hasProperty(key)
@@ -1297,7 +1311,7 @@ def ObjectWrap(value):
     t = type(value)
     if issubclass(t, Object):
         return value
-    if t is int or t is long:
+    if t is int:
         return Integer(value)
     if t is bool:
         return Boolean(value)

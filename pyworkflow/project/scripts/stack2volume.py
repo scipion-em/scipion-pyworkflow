@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys, os
 from glob import glob
 
@@ -10,14 +12,14 @@ import pyworkflow.em as em
 
 
 def usage(error):
-    print """
+    print("""
     ERROR: %s
     
     stack2Volume will swap the dimension in the header of stack to make them 
     volumes. Something like 10 x 1 x 10 x 10 will be change to 1 x 10 x 10 x 10
     Usage: stack2volume.py PATH
         PATH: path to look for stack files    
-    """ % error
+    """ % error)
     sys.exit(1)    
 
 if len(sys.argv) != 2:
@@ -25,12 +27,12 @@ if len(sys.argv) != 2:
 
 path = sys.argv[1]
 
-print ("Looking for files like: %s" % path)
+print("Looking for files like: %s" % path)
 
 
 for file in glob(path):
 
-    print ("Changing header of %s" % file)
+    print("Changing header of %s" % file)
     try:
         header = Ccp4Header(file, readHeader=True)
         # Flag it as volume.

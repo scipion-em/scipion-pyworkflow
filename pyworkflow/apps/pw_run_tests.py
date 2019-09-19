@@ -98,7 +98,7 @@ class Tester():
             # In this other case, we will load the test available
             # from pyworkflow and the other plugins
             self.paths = [('pyworkflow', '.')]
-            for name, plugin in pw.Config.getDomain().getPlugins().iteritems():
+            for name, plugin in pw.Config.getDomain().getPlugins().items():
                 self.paths.append((name, os.path.dirname(plugin.__path__[0])))
             for k, p in self.paths:
                 testsDict[k] = testLoader.discover(os.path.join(p, k),
@@ -114,17 +114,17 @@ class Tester():
             self.runSingleTest(testsDict['tests'])
 
         elif args.run:
-            for moduleName, tests in testsDict.iteritems():
+            for moduleName, tests in testsDict.items():
                 print(">>>> %s" % moduleName)
                 self.runTests(moduleName, tests)
 
         elif args.grep:
             pattern = args.grep[0]
-            for moduleName, tests in testsDict.iteritems():
+            for moduleName, tests in testsDict.items():
                 self.printTests(pattern, tests)
 
         else:
-            for moduleName, tests in testsDict.iteritems():
+            for moduleName, tests in testsDict.items():
                 if self._match(moduleName):
                     print(">>>> %s" % moduleName)
                     self.printTests(moduleName, tests)
@@ -223,7 +223,8 @@ class Tester():
                         resultStr = '<font color="green">[SUCCEED]</font>'
                     logStr = '<a href="file://%s">%s</a>' % (logFile, basename(logFile))
 
-                    print >> f, rowStr % (self.testCount, cmd, runTime, resultStr, logStr)
+                    f.write(rowStr % (self.testCount, cmd, runTime, resultStr, logStr))
+                    f.write('\n')
                 if self.headerPrefix  in l:
                     f.write(self.headerPrefix + self.testTimer.getToc() + '</h3>\n')
                 else:

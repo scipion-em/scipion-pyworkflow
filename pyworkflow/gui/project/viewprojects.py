@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,18 +15,18 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
-import Tkinter as tk
-import tkFont
+import tkinter as tk
+import tkinter.font as tkFont
 
 import pyworkflow as pw
 from pyworkflow.project import Project
@@ -130,9 +130,9 @@ class ProjectsView(tk.Frame):
                 frame = self.createProjectLabel(parent, p, color=colors[i%2])
                 frame.grid(row=r, column=0, padx=10, pady=5, sticky='new')
                 r += 1
-            except Exception, ex:
-                print "ERROR loading project: %s" % p.getName()
-                print ex
+            except Exception as ex:
+                print("ERROR loading project: %s" % p.getName())
+                print(ex)
         text.window_create(tk.INSERT, window=parent)
         text.bindWidget(parent)
         text.setReadOnly(True)

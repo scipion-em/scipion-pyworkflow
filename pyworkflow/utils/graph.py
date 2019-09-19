@@ -26,6 +26,8 @@
 """
 This module define a Graph class and some utilities 
 """
+from __future__ import print_function
+
 
 class Node(object):
     """ A node inside the graph. """
@@ -150,8 +152,9 @@ class Graph(object):
     
     def printNodes(self):
         for node in self.getNodes():
-            print "Node: ", node
-            print " Childs: ", ','.join([c.getLabel() for c in node.getChilds()])
+            print("Node: ", node)
+            print(" Childs: ", ','.join([c.getLabel()
+                                         for c in node.getChilds()]))
             
     def _escape(self, label):
         return label.replace('.', '_').replace(' ', '_').replace('-', '_').replace('___', '_')
@@ -173,5 +176,5 @@ class Graph(object):
                 childLabel = self._escape(getLabel(child))
                 dotStr += "   %s -> %s;\n" % (nodeLabel, childLabel)
         dotStr += "}"
-        print dotStr
+        print(dotStr)
         return dotStr

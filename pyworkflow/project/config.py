@@ -23,13 +23,15 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import os
 import json
 import datetime as dt
 from collections import OrderedDict
-from ConfigParser import ConfigParser  # FIXME Does not work in Python3
+from configparser import ConfigParser  # FIXME Does not work in Python3
 
 import pyworkflow as pw
 import pyworkflow.object as pwobj
@@ -541,7 +543,7 @@ class ProtocolTreeConfig:
         packages = {}
 
         # Group protocols by package name
-        for k, v in allProtsSorted.iteritems():
+        for k, v in allProtsSorted.items():
             if cls.isAFinalProtocol(v, k):
                 packageName = v.getClassPackageName()
                 # Get the package submenu
@@ -621,7 +623,7 @@ class ProtocolTreeConfig:
             except Exception as e:
                 print('Failed to read settings. The reported error was:\n  %s\n'
                       'To solve it, fix %s and run again.' % (
-                            e, protocolsConfPath))
+                            e, os.path.abspath(protocolsConfPath)))
 
             # Add all protocols to All view
         cls.__addAllProtocols(Domain, protocols)

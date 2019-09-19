@@ -29,12 +29,14 @@ It is composed by three panels:
 2. Right upper: VIEWS (Data/Protocols)
 3. Summary/Details
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import threading
 import shlex
 import subprocess
-import SocketServer
+import socketserver
 import tempfile
 
 import pyworkflow as pw
@@ -50,9 +52,9 @@ from pyworkflow.gui.plotter import Plotter
 from pyworkflow.gui.text import _open_cmd, openTextFileEditor
 from pyworkflow.webservices import ProjectWorkflowNotifier, WorkflowRepository
 
-from labels import LabelsDialog
+from .labels import LabelsDialog
 # Import possible Object commands to be handled
-from base import ProjectBaseWindow, VIEW_PROTOCOLS, VIEW_PROJECTS
+from .base import ProjectBaseWindow, VIEW_PROTOCOLS, VIEW_PROJECTS
 
 
 class ProjectWindow(ProjectBaseWindow):
@@ -224,7 +226,7 @@ class ProjectWindow(ProjectBaseWindow):
         try:
             self.project.loadProtocols(obj.getPath())
             self.getViewWidget().updateRunsGraph(True, reorganize=True)
-        except Exception, ex:
+        except Exception as ex:
             self.showError(str(ex))
             
     def onImportWorkflow(self):
@@ -247,9 +249,9 @@ class ProjectWindow(ProjectBaseWindow):
             openTextFileEditor(dotFile.name)
 
         if useId:
-            print "\nexport SCIPION_TREE_NAME=1 # to use names instead of ids"
+            print("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
         else:
-            print "\nexport SCIPION_TREE_NAME=0 # to use ids instead of names"
+            print("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
 
     def onManageProjectLabels(self):
         self.manageLabels()
@@ -303,16 +305,16 @@ class ProjectWindow(ProjectBaseWindow):
             func = self._OBJECT_COMMANDS.get(cmd, None)
 
             if func is None:
-                print "Error, command '%s' not found. " % cmd
+                print("Error, command '%s' not found. " % cmd)
             else:
                 def myfunc():
                     func(inputObj, objId)
                     inputObj.close()
                 self.enqueue(myfunc)
 
-        except Exception, ex:
-            print "There was an error executing object command !!!:"
-            print  ex
+        except Exception as ex:
+            print("There was an error executing object command !!!:")
+            print(ex)
     
     def recalculateCTF(self, inputObjId, sqliteFile):
         """ Load the project and launch the protocol to
@@ -414,11 +416,11 @@ class ProjectManagerWindow(ProjectBaseWindow):
     #                   selectButton=None).show()
 
 
-class ProjectTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class ProjectTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
 
-class ProjectTCPRequestHandler(SocketServer.BaseRequestHandler):
+class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         try:
@@ -457,7 +459,7 @@ class ProjectTCPRequestHandler(SocketServer.BaseRequestHandler):
                 answer = 'no answer available'
                 self.request.sendall(answer + '\n')
         except Exception as e:
-            print e
+            print(e)
             import traceback
             traceback.print_stack()
 

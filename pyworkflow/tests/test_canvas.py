@@ -5,7 +5,7 @@
 
 import unittest
 import pyworkflow.gui.canvas
-import Tkinter
+import tkinter
 import math
 from pyworkflow.tests import *
 
@@ -21,39 +21,40 @@ class TestCanvas(BaseTest):
     def setUpClass(cls):
         setupTestOutput(cls)
 
-    def distance(self,c1,c2):
-        return round(math.hypot(c2[0] - c1[0], c2[1] - c1[1]),2)
+    def distance(self, c1, c2):
+        return round(math.hypot(c2[0] - c1[0], c2[1] - c1[1]), 2)
 
-    def allEqual(self,list):
-        return not list or list.count(list[0]) == len(list)
+    def allEqual(self, values):
+        return not values or values.count(values[0]) == len(values)
 
-    def allDifferent(self,list):
-        return not list or len(list) == len(set(list))
+    def allDifferent(self, values):
+        return not values or len(values) == len(set(values))
 
     def test_connectorsCoords(self):
         try:
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             canvas = pyworkflow.gui.canvas.Canvas(root, width=800, height=600)
             tb1 = canvas.createTextbox("First", 100, 100, "blue")
 
             connectorsCoords=tb1.getConnectorsCoordinates()
             self.assertTrue(self.allDifferent(connectorsCoords))
 
-            print connectorsCoords
+            print(connectorsCoords)
 
-            distances={}
+            distances = {}
             for i in range(len(connectorsCoords)-1):
-                distances[i]=self.distance(connectorsCoords[i],connectorsCoords[i+1])
+                distances[i] = self.distance(connectorsCoords[i],
+                                             connectorsCoords[i+1])
 
-                print distances
-                self.assertTrue(self.allEqual(distances.values()))
-                self.assertNotEqual(distances[0],0)
-        except Tkinter.TclError as ex:
-            print ex
+                print(distances)
+                self.assertTrue(self.allEqual(list(distances.values())))
+                self.assertNotEqual(distances[0], 0)
+        except tkinter.TclError as ex:
+            print(ex)
 
     def test_closestConnectors(self):
         try:
-            root = Tkinter.Tk()
+            root = tkinter.Tk()
             canvas = pyworkflow.gui.canvas.Canvas(root, width=800, height=600)
             tb1 = canvas.createTextbox("Textbox1", 100, 100, "blue")
             tb2 = canvas.createTextbox("Textbox2", 300, 100, "blue")
@@ -69,7 +70,7 @@ class TestCanvas(BaseTest):
             self.assertEqual(c1[1],c2[1])
             self.assertEqual(c3[0],c4[0])
 
-        except Tkinter.TclError as ex:
-            print ex
+        except tkinter.TclError as ex:
+            print(ex)
 
 

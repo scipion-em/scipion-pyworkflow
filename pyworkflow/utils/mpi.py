@@ -27,6 +27,7 @@
 MPI utilities. runJobMPI and runJobMPISlave send and receive the commands
 to execute, in the given directory and with the given environment.
 """
+from __future__ import print_function
 
 import os
 from time import time, sleep
@@ -48,9 +49,9 @@ def send(command, comm, dest, tag):
     # Also, if we cannot send after TIMEOUT seconds, raise exception.
 
     if command.startswith('env='):
-        print "Sending environment to %d" % dest
+        print("Sending environment to %d" % dest)
     else:
-        print "Sending command to %d: %s" % (dest, command)
+        print("Sending command to %d: %s" % (dest, command))
 
     # Send command with isend()
     req_send = comm.isend(command, dest=dest, tag=tag)
@@ -94,7 +95,7 @@ def runJobMPISlave(mpiComm):
     """
     rank = mpiComm.Get_rank()
     hostname = getLocalHostName()
-    print "Running runJobMPISlave: ", rank
+    print("Running runJobMPISlave: ", rank)
 
     exitResult = 0
     msg = "Timeout in process %d, cannot send result to master."
@@ -112,28 +113,27 @@ def runJobMPISlave(mpiComm):
                 break
             sleep(1)
 
-        print "Slave %s(rank %d) received command." % (hostname, rank)
+        print("Slave %s(rank %d) received command." % (hostname, rank))
         if command == 'None':
-            print "  Stopping..."
+            print("  Stopping...")
             return
 
         # Run the command and get the result (exit code or exception)
         try:
             if command.startswith("cwd="):
                 cwd = command.split("=", 1)[-1]
-                print "  Changing to dir %s ..." % cwd
+                print("  Changing to dir %s ..." % cwd)
             elif command.startswith("env="):
                 env = loads(command.split("=", 1)[-1])
-                print "  Setting the environment..."
+                print("  Setting the environment...")
                 if envVarOn('SCIPION_DEBUG'):
-                    print env
+                    print(env)
             else:
-                print "  %s" % command
+                print("  %s" % command)
                 runCommand(command, cwd=cwd, env=env)
                 cwd = None  # unset directory
                 env = None  # unset environment
         except Exception as e:
-
             msg = "Timeout in process %d, cannot send error message to master."
             exitResult = str(e)
 
@@ -143,5 +143,5 @@ def runJobMPISlave(mpiComm):
         while not req_send.test()[0]:
             sleep(1)
             if time() - t0 > TIMEOUT:
-                print (msg % os.getpid())
+                print(msg % os.getpid())
                 break

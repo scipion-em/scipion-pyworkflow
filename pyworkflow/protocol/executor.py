@@ -29,6 +29,8 @@ The basic one will run steps, one by one, after completion.
 There is one based on threads to execute steps in parallel
 using different threads and the last one with MPI processes.
 """
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
 import datetime
@@ -43,12 +45,12 @@ from multiprocessing.pool import ThreadPool, TimeoutError
 import pyworkflow.utils.process as process
 from pyworkflow.utils.path import getParentFolder, removeExt
 from pyworkflow.utils import greenStr
-import constants as cts
+from . import constants as cts
 
-from launch import _submit, UNKNOWN_JOBID
-#from retrying import retry
+from .launch import _submit, UNKNOWN_JOBID
 
-class StepExecutor():
+
+class StepExecutor:
     """ Run a list of Protocol steps. """
     def __init__(self, hostConfig, **kwargs):
         self.hostConfig = hostConfig
@@ -214,7 +216,7 @@ class ThreadStepExecutor(StepExecutor):
             # See which of the runningSteps are not really running anymore.
             # Update them and freeNodes, and call final callback for step.
             with sharedLock:
-                nodesFinished = [node for node, step in runningSteps.iteritems()
+                nodesFinished = [node for node, step in runningSteps.items()
                                  if not step.isRunning()]
             doContinue = True
             for node in nodesFinished:

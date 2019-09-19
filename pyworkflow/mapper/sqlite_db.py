@@ -104,7 +104,9 @@ class SqliteDb():
         If  tablePattern is not None, only tables matching 
         the pattern will be returned.
         """
-        self.executeCommand("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+        self.executeCommand("SELECT name FROM sqlite_master "
+                            "WHERE type='table' "
+                            "AND name NOT LIKE 'sqlite_%';")
         return [str(row['name']) for row in self._iterResults()]
     
     def hasTable(self, tableName):

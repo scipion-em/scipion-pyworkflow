@@ -21,6 +21,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import ast
 import os
@@ -42,15 +44,16 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
+VERSION_3_0 = '3.0.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
-LAST_VERSION = VERSION_2_0
-OLD_VERSIONS = (VERSION_1, VERSION_1_1, VERSION_1_2)
+LAST_VERSION = VERSION_3_0
+OLD_VERSIONS = (VERSION_1, VERSION_1_1, VERSION_1_2, VERSION_2_0)
 
 # Define pyworkflow version in a standard way, as proposed by:
 # https://www.python.org/dev/peps/pep-0396/
-__version__ = LAST_VERSION
+__version__ = LAST_VERSION + 'a1'
 
 
 HOME = os.path.abspath(os.path.dirname(__file__))
@@ -136,7 +139,7 @@ __resourcesPath = [join('resources')]
 
 
 def findResource(filename):
-    from utils.path import findFile
+    from .utils.path import findFile
 
     return findFile(filename, *__resourcesPath)
 

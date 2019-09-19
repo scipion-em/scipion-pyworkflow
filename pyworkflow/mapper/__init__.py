@@ -22,9 +22,9 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from mapper import Mapper
-from sqlite import SqliteMapper, SqliteDb, SqliteFlatMapper, SqliteFlatDb
-from xmlmapper import XmlMapper
+from .mapper import Mapper
+from .sqlite import SqliteMapper, SqliteDb, SqliteFlatMapper, SqliteFlatDb
+from .xmlmapper import XmlMapper
 
 
 

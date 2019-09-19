@@ -24,17 +24,19 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
-import sys
+import time
 import threading
 import uuid
-import urllib, urllib2
-import time
 from datetime import timedelta, datetime
+from urllib.parse import urlencode
+from urllib.request import build_opener, HTTPHandler
 
 import pyworkflow.utils as pwutils
-import config
+from . import config
 
 
 class ProjectWorkflowNotifier(object):
@@ -81,13 +83,13 @@ class ProjectWorkflowNotifier(object):
         try:
             # then connect to webserver a send json
             # set debuglevel=0 for no messages
-            opener = urllib2.build_opener(urllib2.HTTPHandler(debuglevel=0))
-            data = urllib.urlencode(dataDict)
+            opener = build_opener(HTTPHandler(debuglevel=0))
+            data = urlencode(dataDict)
             content = opener.open(url, data=data).read()
             now = time.time()
             os.utime(self._getUuidFileName(), (now, now))
         except Exception:
-            print "Could not notify, maybe there is not internet connection."
+            print("Could not notify, maybe there is not internet connection.")
 
     def _dataModified(self, projectWorfklow):
         try:
@@ -110,7 +112,6 @@ class ProjectWorkflowNotifier(object):
             seconds = int(os.environ.get('SCIPION_NOTIFY_SECONDS', '86400'))
 
             if self._modifiedBefore(seconds): # notify not more than once a day
-                #print "sec, no notification", seconds
                 return
 
             # INFO: now we are only sending the protocols names in the project.
@@ -119,7 +120,6 @@ class ProjectWorkflowNotifier(object):
 
             #if list with workflow has not been altered do not sent it
             if not self._dataModified(projectWorfklow):
-                #print "No change: Do not send new data"
                 return
             else:
                 # For compatibility with version 1.0 check
@@ -131,7 +131,6 @@ class ProjectWorkflowNotifier(object):
                 pwutils.makeFilePath(dataFile)
                 with open(dataFile,'w') as f:
                     f.write(projectWorfklow)
-                #print "change send new data"
             dataDict = {'project_uuid': self._getUuid(),
                         'project_workflow': projectWorfklow}
 
@@ -141,7 +140,7 @@ class ProjectWorkflowNotifier(object):
             t = threading.Thread(name="notifier", target=lambda: self._sendData(urlName, dataDict))
             t.start()  # will execute function in a separate thread
         except Exception as e:
-            print "Can't report usage: ", e
+            print("Can't report usage: ", e)
             
     def getEntryFromWebservice(self,uuid):
         if not pwutils.envVarOn('SCIPION_NOTIFY'):

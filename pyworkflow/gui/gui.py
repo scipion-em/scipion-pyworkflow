@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,28 +15,28 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+from __future__ import print_function
+from __future__ import absolute_import
 
 import os
-import Tkinter as tk
-import tkFont
-import Queue
+import tkinter as tk
+import tkinter.font as tkFont
+import queue
+
 from pyworkflow.object import OrderedObject
 from pyworkflow import findResource
-from pyworkflow.utils.properties import Message, Color, Icon
-from widgets import Button
+from pyworkflow.utils import Message, Color, Icon
+
+from .widgets import Button
 
 
 # --------------- GUI CONFIGURATION parameters -----------------------
-
 #TODO: read font size and name from config file
 cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
 cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))  
@@ -71,13 +71,14 @@ cfgWrapLenght = cfgMaxWidth - 50
 class Config(OrderedObject):
     pass
 
+
 def saveConfig(filename):
     from pyworkflow.mapper import SqliteMapper
     from pyworkflow.object import String, Integer
     
     mapper = SqliteMapper(filename)
     o = Config()
-    for k, v in globals().iteritems():
+    for k, v in globals().items():
         if k.startswith('cfg'):
             if type(v) is str:
                 value = String(v)
@@ -89,7 +90,6 @@ def saveConfig(filename):
             
    
 # --------------- FONT related variables and functions  -----------------------
-
 def setFont(fontKey, update=False, **opts):
     """Register a tkFont and store it in a globals of this module
     this method should be called only after a tk.Tk() windows has been
@@ -98,15 +98,18 @@ def setFont(fontKey, update=False, **opts):
         globals()[fontKey] = tkFont.Font(**opts)
         
     return globals()[fontKey] 
-    
+
+
 def hasFont(fontKey):
     return fontKey in globals()
+
 
 def aliasFont(fontAlias, fontKey):
     """Set a fontAlias as another alias name of fontKey"""
     g = globals()
     g[fontAlias] = g[fontKey] 
-    
+
+
 def setCommonFonts(windows=None):
     """Set some predifined common fonts.
     Same conditions of setFont applies here."""
@@ -124,12 +127,14 @@ def setCommonFonts(windows=None):
         windows.fontBold = fb
         windows.fontItalic = fi 
 
+
 def changeFontSizeByDeltha(font, deltha, minSize=-999, maxSize=999):
     size = font['size']
     new_size = size + deltha
     if new_size >= minSize and new_size <= maxSize:
         font.configure(size=new_size)
-            
+
+
 def changeFontSize(font, event, minSize=-999, maxSize=999):
     deltha = 2
     if event.char == '-':
@@ -138,7 +143,6 @@ def changeFontSize(font, event, minSize=-999, maxSize=999):
 
 
 # --------------- IMAGE related variables and functions -----------------------
-
 def getImage(imageName, imgDict=None, tkImage=True, percent=100,
              maxheight=None):
     """ Search for the image in the RESOURCES path list. """
@@ -170,6 +174,7 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
             imgDict[imageName] = image
     return image
 
+
 def getPILImage(imageXmipp, dim=None, normalize=True):
     """ Given an image read by Xmipp, convert it to PIL. """
     from PIL import Image
@@ -185,10 +190,12 @@ def getPILImage(imageXmipp, dim=None, normalize=True):
         image.thumbnail(size, Image.ANTIALIAS)
     return image
 
+
 def getTkImage(imageXmipp, filename, dim):
     from PIL import ImageTk
     imageXmipp.readPreview(filename, dim)
     return ImageTk.PhotoImage(getPILImage(imageXmipp))
+
 
 def getImageFromPath(imagePath):
     """ Read an image using Xmipp, convert to PIL
@@ -202,15 +209,15 @@ def getImageFromPath(imagePath):
     
     return imgTk
 
-"""
-Windows geometry utilities
-"""
+
+# ---------------- Windows geometry utilities -----------------------
 def getGeometry(win):
-    ''' Return the geometry information of the windows
+    """ Return the geometry information of the windows
     It will be a tuple (width, height, x, y)
-    '''
+    """
     return (win.winfo_reqwidth(), win.winfo_reqheight(),
             win.winfo_x(), win.winfo_y())
+
 
 def centerWindows(root, dim=None, refWindows=None):
     """Center a windows in the middle of the screen 
@@ -231,7 +238,8 @@ def centerWindows(root, dim=None, refWindows=None):
         y = (h - gh) / 2
         
     root.geometry("%dx%d+%d+%d" % (gw, gh, x, y))
-    
+
+
 def configureWeigths(widget, row=0, column=0):
     """This function is a shortcut to a common
     used pair of calls: rowconfigure and columnconfigure
@@ -280,7 +288,7 @@ class Window():
         setCommonFonts(self)
         
         if kwargs.get('enableQueue', False):
-            self.queue = Queue.Queue(maxsize=0)
+            self.queue = queue.Queue(maxsize=0)
         else:
             self.queue = None
 
@@ -418,19 +426,19 @@ class Window():
                                  command=callback(name=sub.text.get()))
 
     def showError(self, msg, header="Error"):
-        from dialog import showError
+        from .dialog import showError
         showError(header, msg, self.root)
         
     def showInfo(self, msg, header="Info"):
-        from dialog import showInfo
+        from .dialog import showInfo
         showInfo(header, msg, self.root)
         
     def showWarning(self, msg, header='Warning'):
-        from dialog import showWarning
+        from .dialog import showWarning
         showWarning(header, msg, self.root)
         
     def askYesNo(self, title, msg):
-        from dialog import askYesNo
+        from .dialog import askYesNo
         return askYesNo(title, msg, self.root)
         
     def createCloseButton(self, parent):

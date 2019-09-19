@@ -24,6 +24,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import datetime as dt
 import json
@@ -41,7 +43,7 @@ from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS)
 
-import config
+from . import config
 
 
 OBJECT_PARENT_ID = pwobj.OBJECT_PARENT_ID
@@ -352,20 +354,20 @@ class Project(object):
 
     def getHostNames(self):
         """ Return the list of host name in the project. """
-        return self._hosts.keys()
+        return list(self._hosts.keys())
 
     def getHostConfig(self, hostName):
         if hostName in self._hosts:
             hostKey = hostName
         else:
-            hostKey = self._hosts.keys()[0]
+            hostKey = self.getHostNames()[0]
             print("PROJECT: Warning, protocol host '%s' not found." % hostName)
             print("         Using '%s' instead." % hostKey)
 
         return self._hosts[hostKey]
 
     def getProtocolViews(self):
-        return self._protocolViews.keys()
+        return list(self._protocolViews.keys())
 
     def getCurrentProtocolView(self):
         """ Select the view that is currently selected.
@@ -376,7 +378,7 @@ class Project(object):
         if currentView in self._protocolViews:
             viewKey = currentView
         else:
-            viewKey = self._protocolViews.keys()[0]
+            viewKey = self.getProtocolViews()[0]
             self.settings.setProtocolView(viewKey)
             print("PROJECT: Warning, protocol view '%s' not found." % currentView)
             print("         Using '%s' instead." % viewKey)
@@ -884,7 +886,7 @@ class Project(object):
                 try:
                     maxSuffix = max(int(stringSuffix),maxSuffix)
                 except:
-                    print "stringSuffix", stringSuffix
+                    print("stringSuffix", stringSuffix)
             elif otherProtLabel == defaultLabel: # When only we have the prefix,
                 maxSuffix = max(1,maxSuffix)     # this REGEX don't match.
 

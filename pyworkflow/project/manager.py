@@ -31,7 +31,7 @@ import os
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
-from project import Project
+from .project import Project
 
 
 class ProjectInfo(object):

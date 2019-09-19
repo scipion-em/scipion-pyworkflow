@@ -111,19 +111,19 @@ class ScipionLogger:
         
     def info(self, message, redirectStandard=False, *args, **kwargs):
         if redirectStandard:
-            print message
+            print(message)
             sys.stdout.flush()
         self._log.info(message, *args, **kwargs)
 
     def warning(self, message, redirectStandard=False, *args, **kwargs):
         if redirectStandard:
-            print message
+            print(message)
             sys.stdout.flush()
         self._log.warning(message, *args, **kwargs)
         
     def error(self, message, redirectStandard=False, *args, **kwargs):
         if redirectStandard:
-            print >> sys.stderr, message
+            sys.stderr.write(message + '\n')
             sys.stderr.flush()
         self._log.error(message, *args, **kwargs)    
         

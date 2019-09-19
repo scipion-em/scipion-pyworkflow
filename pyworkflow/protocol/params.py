@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,20 +15,20 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import re
 import collections
 
 from pyworkflow.object import *
-from constants import *
+from .constants import *
 
 
 class FormElement(OrderedObject):
@@ -301,16 +301,16 @@ class Form(object):
     
     def iterAllParams(self):
         """ Iter all parameters, including ElementGroups. """
-        return self._paramsDict.iteritems()
+        return self._paramsDict.items()
     
     def iterParams(self):
         """ Iter parameters disregarding the ElementGroups. """
-        for k, v in self._paramsDict.iteritems():
+        for k, v in self._paramsDict.items():
             if not isinstance(v, ElementGroup):
                 yield k, v
         
     def iterPointerParams(self):
-        for paramName, param in self._paramsDict.iteritems():
+        for paramName, param in self._paramsDict.items():
             if isinstance(param, PointerParam):
                 yield paramName, param
 

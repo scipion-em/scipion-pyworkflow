@@ -23,9 +23,11 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
-from gui import *
-from canvas import *
-from widgets import *
+from .gui import *
+from .canvas import *
+from .widgets import *
 
-import tooltip
+from . import tooltip

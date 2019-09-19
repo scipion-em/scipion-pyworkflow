@@ -31,7 +31,8 @@ try:
     import xml.etree.cElementTree as ET
 except ImportError:
     import xml.etree.ElementTree as ET
-from mapper import Mapper
+
+from .mapper import Mapper
 
 
 class XmlMapper(Mapper):
@@ -149,7 +150,7 @@ class XmlMapper(Mapper):
     def fillObject(self, obj, objElem):
         # Set attributes first
         if not obj.isPointer():
-            for k, v in objElem.attrib.iteritems():
+            for k, v in objElem.attrib.items():
                 if k not in ['id', 'classname', 'attrname']:
                     childObj = self.setChildObject(obj, k)
                     childObj.set(v)
@@ -198,7 +199,7 @@ class XmlMapper(Mapper):
         # Set attributes of this object element
         if objId:
             if type(objId) is dict:
-                for k, v in objId.iteritems():
+                for k, v in objId.items():
                     if v:
                         objElem.set(k, str(v))
             else:        

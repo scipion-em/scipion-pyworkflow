@@ -27,12 +27,15 @@
 This module implements a simple algorithm to display a graph(mainly a tree)
 level by level, using only Tkinter.
 """
-import Tkinter as tk
+from __future__ import print_function
+from __future__ import absolute_import
+
+import tkinter as tk
 
 #TODO: all LevelTree code is DEPRECATED...remove it after cleanning
 # and include all code from graph_layout
 
-from graph_layout import *
+from .graph_layout import *
 
 
 class LevelTree(object):
@@ -163,47 +166,42 @@ class LevelTree(object):
         return item
     
     def _printHLimits(self, node, msg):
-        print "\n=====%s========" % msg
-        print " dd: %s" % node.t.text.replace('\n', '_')
-        print "  offset: %d, width: %d" % (node.offset, node.width)
-        print "  hlimits:"
+        print("\n=====%s========" % msg)
+        print(" dd: %s" % node.t.text.replace('\n', '_'))
+        print("  offset: %d, width: %d" % (node.offset, node.width))
+        print("  hlimits:")
         for l, r in node.hLimits:
-            print "   [%d, %d]" % (l, r)
+            print("   [%d, %d]" % (l, r))
             
     def _getHLimits(self, node):
-        '''This function will traverse the tree
+        """
+        This function will traverse the tree
         from node to build the left and right profiles(hLimits)
-        for each level of the tree'''
+        for each level of the tree
+        """
         node.hLimits = [[-node.half, node.half]]
-        #print "getHLimits, parent: ", node.t.text
         childs = [c for c in node.getChilds() if c.parent is node]
         for child in childs:
             count = 1
-            #printHLimits(c, " child")
             if not hasattr(child, 'hLimits'):
-                print "node %s has no hLimits" % child.label
+                print("node %s has no hLimits" % child.label)
                 raise Exception()
             
             for l, r in child.hLimits:
                 l += child.offset
                 r += child.offset
-                #print "  level ", count
-                #print "   l, r", l, r
                 if count < len(node.hLimits):
-                    #print "   node.hLimits(A)", node.hLimits[count]
                     if l < node.hLimits[count][0]:
                         node.hLimits[count][0] = l
                     if r > node.hLimits[count][1]:
                         node.hLimits[count][1] = r
                 else:
                     node.hLimits.append([l, r])
-                    #print "   node.hLimits(A)", node.hLimits[count]
-                #print "   node.hLimits(B)", node.hLimits[count]
                 count += 1
                 
     def _getChildsSeparation(self, child1, child2):
-        '''Calcualte separation between siblings
-        at each height level'''
+        """ Calcualte separation between siblings
+        at each height level. """
         sep = 0 
         hL1 = child1.hLimits
         hL2 = child2.hLimits

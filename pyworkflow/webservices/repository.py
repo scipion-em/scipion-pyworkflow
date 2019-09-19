@@ -1,9 +1,9 @@
 import os
-import urllib2
+from urllib.request import Request
 import webbrowser
 import json
 
-import config
+from . import config
 
 
 class WorkflowRepository(object):
@@ -46,8 +46,7 @@ class WorkflowRepository(object):
         opener = poster.streaminghttp.register_openers()
 
         # create request and connect to server
-        response = opener.open(urllib2.Request(self._uploadFileUrl, datagen,
-                                               headers))
+        response = opener.open(Request(self._uploadFileUrl, datagen, headers))
         # server returns dictionary as json with remote name of the saved file
         _dict = json.loads(response.read())
 

@@ -23,17 +23,18 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
 """
 This modules implements the automatic
 creation of protocol form GUI from its
 params definition.
 """
+from __future__ import print_function
+from __future__ import absolute_import
+
 import os
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 from collections import OrderedDict
-from itertools import izip
 from datetime import datetime
 
 import pyworkflow as pw
@@ -43,16 +44,16 @@ import pyworkflow.protocol as pwprot
 from pyworkflow.mapper import Mapper
 from pyworkflow.viewer import DESKTOP_TKINTER
 
-import gui
+from . import gui
 from pyworkflow.gui.project.utils import getStatusColorFromRun
-from gui import configureWeigths, Window
-from browser import FileBrowserWindow
-from widgets import Button, HotButton, IconButton
-from dialog import (showInfo, showError, showWarning, EditObjectDialog,
+from .gui import configureWeigths, Window
+from .browser import FileBrowserWindow
+from .widgets import Button, HotButton, IconButton
+from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
                     ListDialog, askYesNo, Dialog)
-from canvas import Canvas
-from tree import TreeProvider, BoundTree
-from text import Text
+from .canvas import Canvas
+from .tree import TreeProvider, BoundTree
+from .text import Text
 
 
 THREADS = 'Threads'
@@ -1788,7 +1789,7 @@ class FormWindow(Window):
                 self.useGpuVar.trace('w', self._setGpu)
                 self.gpuListVar.trace('w', self._setGpu)
         except Exception as e:
-            print "Parallel section couldn't be created. %s" % e.message
+            print("Parallel section couldn't be created. %s" % e.message)
 
     def _createCommon(self, parent):
         """ Create the second section with some common parameters. """
@@ -2557,7 +2558,7 @@ class QueueDialog(Dialog):
         if selected in self.queueDict:
             paramsDict = {}
             params = self.queueDict[selected]
-            for p, v in izip(params, self.vars):
+            for p, v in zip(params, self.vars):
                 if len(p) == 3:
                     name, value, label = p
                 else: 

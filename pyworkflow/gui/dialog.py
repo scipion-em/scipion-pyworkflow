@@ -28,15 +28,17 @@
 Module to handling Dialogs
 some code was taken from tkSimpleDialog
 """
+from __future__ import print_function
+from __future__ import absolute_import
         
-import Tkinter as tk
+import tkinter as tk
+from tkinter.colorchooser import askcolor as _askColor
 
-import gui
+from pyworkflow.utils import Message, Icon
 import pyworkflow.gui as pwgui
-from tree import BoundTree
-from text import Text, TaggedText
-from pyworkflow.utils.properties import Message, Icon
-from tkColorChooser import askcolor as _askColor
+from . import gui
+from .tree import BoundTree
+from .text import Text, TaggedText
 
 # Possible result values for a Dialog
 RESULT_YES = 0

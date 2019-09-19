@@ -23,8 +23,9 @@
 # *
 # **************************************************************************
 from __future__ import print_function
+from __future__ import absolute_import
 
-from pyworkflow.utils.path import replaceExt, joinExt
+from pyworkflow.utils import replaceExt, joinExt
 from .mapper import Mapper
 from .sqlite_db import SqliteDb
 
@@ -340,7 +341,7 @@ class SqliteMapper(Mapper):
             whereStr = "classname='%s'" % className
             base = self.dictClasses.get(className)
             subDict = getSubclasses(base, self.dictClasses)
-            for k, v in subDict.iteritems():
+            for k, v in subDict.items():
                 if issubclass(v, base):
                     whereStr += " OR classname='%s'" % k
             objRows = self.db.selectObjectsWhere(whereStr)
@@ -526,7 +527,7 @@ class SqliteObjectsDb(SqliteDb):
         # Enable foreings keys
         self.setVersion(self.VERSION)
         self._pragmas['foreing_keys'] = "ON"
-        for pragma in self._pragmas.iteritems():
+        for pragma in self._pragmas.items():
             self.executeCommand("PRAGMA %s=%s" % pragma)
         # Create the Objects table
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Objects
@@ -843,7 +844,7 @@ class SqliteFlatMapper(Mapper):
                     attrJoin += '.'
         basicRows = 5
         n = len(rows) + basicRows - 1
-        self._objColumns = zip(range(basicRows, n), columnList)
+        self._objColumns = list(zip(range(basicRows, n), columnList))
          
     def __buildAndFillObj(self):
         obj = self._buildObjectFromClass(self._objClassName)
@@ -875,7 +876,7 @@ class SqliteFlatMapper(Mapper):
             print("WARNING: 'creation' column not found in object: %s" % obj.getObjId())
             print("         db: %s" % self.db.getDbName())
             print("         objRow: ", dict(objRow))
-        
+
         for c, attrName in self._objColumns:
             obj.setAttributeValue(attrName, objRow[c])
 
@@ -884,18 +885,20 @@ class SqliteFlatMapper(Mapper):
     def __iterObjectsFromRows(self, objRows, objectFilter=None):
         for objRow in objRows:
             obj = self.__objFromRow(objRow)
-            if objectFilter is None or objectFilter(obj): 
+            if objectFilter is None or objectFilter(obj):
                 yield obj
         
     def __objectsFromRows(self, objRows, iterate=False, objectFilter=None):
         """Create a set of object from a set of rows
         Params:
             objRows: rows result from a db select.
-            iterate: if True, iterates over all elements, if False the whole list is returned
+            iterate: if True, iterates over all elements, if False the whole
+                list is returned
             objectFilter: function to filter some of the objects of the results. 
         """
         if not iterate:
-            return [obj.clone() for obj in self.__iterObjectsFromRows(objRows, objectFilter)]
+            return [obj.clone()
+                    for obj in self.__iterObjectsFromRows(objRows, objectFilter)]
         else:
             return self.__iterObjectsFromRows(objRows, objectFilter)
          
@@ -904,13 +907,10 @@ class SqliteFlatMapper(Mapper):
         objRows = self.db.selectObjectsBy(**args)
         return self.__objectsFromRows(objRows, iterate, objectFilter)
     
-    def selectAll(self, iterate=True
-                      , objectFilter=None
-                      , orderBy=ID
-                      , direction='ASC'
-                      , where='1'
-                      , limit=None):
-        # Just a sanity check for emtpy sets, that doesn't contains 'Properties' table
+    def selectAll(self, iterate=True, objectFilter=None, orderBy=ID,
+                  direction='ASC', where='1', limit=None):
+        # Just a sanity check for emtpy sets, that doesn't contains
+        # 'Properties' table
         if not self.db.hasTable('Properties'):
             return iter([]) if iterate else []
             
@@ -990,25 +990,26 @@ class SqliteFlatDb(SqliteDb):
         self._pragmas = pragmas or {}
         self._indexes = indexes or []
         tablePrefix = tablePrefix.strip()
-        if tablePrefix and not tablePrefix.endswith('_'): # Avoid having _ for empty prefix
+        # Avoid having _ for empty prefix
+        if tablePrefix and not tablePrefix.endswith('_'):
             tablePrefix += '_'
-        #NOTE (Jose Miguel, 2014/01/02
+        # NOTE (Jose Miguel, 2014/01/02
         # Reusing connections is a bit dangerous, since it have lead to
         # unexpected and hard to trace errors due to using an out-of-date
         # reused connection. That's why we are changing now the default to False
-        # and only setting to True when the tablePrefix is non-empty, which is the
-        # case for classes that are different tables in the same db and it logical
-        # to reuse the connection.
-        if tablePrefix:
-            self._reuseConnections = True
-        else:
-            self._reuseConnections = False#True
-        
-        self.CHECK_TABLES = "SELECT name FROM sqlite_master WHERE type='table' AND name='%sObjects';" % tablePrefix
+        # and only setting to True when the tablePrefix is non-empty, which is
+        # the case for classes that are different tables in the same db and it
+        # logical to reuse the connection.
+        self._reuseConnections = bool(tablePrefix)
+
+        self.CHECK_TABLES = ("SELECT name FROM sqlite_master WHERE type='table'"
+                             " AND name='%sObjects';" % tablePrefix)
         self.SELECT = "SELECT * FROM %sObjects WHERE " % tablePrefix
-        self.FROM   = "FROM %sObjects" % tablePrefix
+        self.FROM = "FROM %sObjects" % tablePrefix
         self.DELETE = "DELETE FROM %sObjects WHERE " % tablePrefix
-        self.INSERT_CLASS = "INSERT INTO %sClasses (label_property, column_name, class_name) VALUES (?, ?, ?)" % tablePrefix
+        self.INSERT_CLASS = ("INSERT INTO %sClasses (label_property, "
+                             "column_name, class_name) VALUES (?, ?, ?)"
+                             % tablePrefix)
         self.SELECT_CLASS = "SELECT * FROM %sClasses;" % tablePrefix
         self.EXISTS = "SELECT EXISTS(SELECT 1 FROM Objects WHERE %s=? LIMIT 1)"
         self.tablePrefix = tablePrefix
@@ -1077,7 +1078,8 @@ class SqliteFlatDb(SqliteDb):
         return self.SELECT + whereStr + orderByStr
 
     def missingTables(self):
-        """ Return True is the needed Objects and Classes table are not created yet. """
+        """ Return True is the needed Objects and Classes table are not
+        created yet. """
         self.executeCommand(self.CHECK_TABLES)
         result = self.cursor.fetchone()
 
@@ -1085,8 +1087,10 @@ class SqliteFlatDb(SqliteDb):
 
     def clear(self):
         self.executeCommand("DROP TABLE IF EXISTS Properties;")
-        self.executeCommand("DROP TABLE IF EXISTS %sClasses;" % self.tablePrefix)
-        self.executeCommand("DROP TABLE IF EXISTS %sObjects;" % self.tablePrefix)
+        self.executeCommand("DROP TABLE IF EXISTS %sClasses;"
+                            % self.tablePrefix)
+        self.executeCommand("DROP TABLE IF EXISTS %sObjects;"
+                            % self.tablePrefix)
 
     def createTables(self, objDict):
         """Create the Classes and Object table to store items of a Set.
@@ -1094,8 +1098,8 @@ class SqliteFlatDb(SqliteDb):
         Each nested property of the object will be stored as a column value.
         """
         self.setVersion(self.VERSION)
-        for pragma in self._pragmas.iteritems():
-            print ("executing pragma", pragma)
+        for pragma in self._pragmas.items():
+            print("executing pragma", pragma)
             self.executeCommand("PRAGMA %s = %s;" % pragma)
         # Create a general Properties table to store some needed values
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Properties
@@ -1119,7 +1123,7 @@ class SqliteFlatDb(SqliteDb):
 
         c = 0
         colMap = {}
-        for k, v in objDict.iteritems():
+        for k, v in objDict.items():
             colName = 'c%02d' % c
             className = v[0]
             colMap[k] = colName
@@ -1213,7 +1217,7 @@ class SqliteFlatDb(SqliteDb):
             else:
                 return self._columnsMapping[colName]
 
-        if isinstance(orderBy, basestring):
+        if isinstance(orderBy, str):
             orderByCol = _getRealCol(orderBy)
         elif isinstance(orderBy, list):
             orderByCol = ','.join([_getRealCol(c) for c in orderBy])
@@ -1232,7 +1236,8 @@ class SqliteFlatDb(SqliteDb):
             whereStr = where
 
         cmd = self.selectCmd(whereStr,
-                             orderByStr=' ORDER BY %s %s' % (orderByCol, direction))
+                             orderByStr=' ORDER BY %s %s'
+                                        % (orderByCol, direction))
         # If there is a limit
         if limit:
             # if it is a tuple

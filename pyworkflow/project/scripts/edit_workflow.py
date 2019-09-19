@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
 
 import sys
 import os
@@ -36,7 +37,7 @@ from pyworkflow.gui.project import ProjectWindow
 
 
 def usage(error):
-    print """
+    print("""
     ERROR: %s
     
     Usage: scipion python scripts/edit_workflow.py workflow.json
@@ -44,7 +45,7 @@ def usage(error):
         It will create a project, import the workflow and save
         the workflow back before closing the project.
         After that, the project will be deleted.
-    """ % error
+    """ % error)
     sys.exit(1)    
 
 n = len(sys.argv)
@@ -60,7 +61,7 @@ customUserData = os.path.join(pw.Config.SCIPION_USER_DATA, 'tmp', tempSpace)
 
 pwutils.makePath(os.path.join(customUserData, 'projects'))
 
-print "Loading projects from:\n", customUserData 
+print("Loading projects from:\n", customUserData)
  
 # Create a new project
 manager = Manager(workspace=customUserData)
@@ -74,13 +75,13 @@ proj.loadProtocols(jsonFn)
 class EditorProjectWindow(ProjectWindow):
     def close(self, e=None):
         try:
-            print "Writing protocols to: ", jsonFn
+            print("Writing protocols to: ", jsonFn)
             proj.getRunsGraph() # Build project runs graph
             proj.exportProtocols(proj.getRuns(), jsonFn)
-            print "Deleting temporary folder: ", customUserData
+            print("Deleting temporary folder: ", customUserData)
             pwutils.cleanPath(customUserData)
         except Exception, ex:
-            print "Error saving the workflow: ", ex
+            print("Error saving the workflow: ", ex)
         ProjectWindow.close(self, e)
 
 projWindow = EditorProjectWindow(projPath)

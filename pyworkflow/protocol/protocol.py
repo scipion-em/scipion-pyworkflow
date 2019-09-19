@@ -23,6 +23,7 @@
 # *
 # **************************************************************************
 from __future__ import print_function
+from __future__ import absolute_import
 
 """
 This modules contains classes required for the workflow
@@ -39,11 +40,11 @@ import pyworkflow as pw
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import ScipionLogger
-from executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
-                      QueueStepExecutor)
-from constants import *
-from params import Form
-import scipion
+from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
+                       QueueStepExecutor)
+from .constants import *
+from .params import Form
+from . import scipion
 
 
 class Step(OrderedObject):
@@ -235,7 +236,7 @@ class FunctionStep(Step):
     def _run(self):
         """ Run the function and check the result files if any. """
         resultFiles = self._runFunc()
-        if isinstance(resultFiles, basestring):
+        if isinstance(resultFiles, str):
             resultFiles = [resultFiles]
         if resultFiles and len(resultFiles):
             missingFiles = pwutils.missingPaths(*resultFiles)
@@ -409,7 +410,7 @@ class Protocol(Step):
         """ Store all attributes in attrDict as
         attributes of self, also store the key in attrList.
         """
-        for key, value in attrDict.iteritems():
+        for key, value in attrDict.items():
             if key not in attrList:
                 attrList.append(key)
             setattr(self, key, value)
@@ -424,7 +425,7 @@ class Protocol(Step):
         """ This function should be used to specify
         expected outputs.
         """
-        for k, v in kwargs.iteritems():
+        for k, v in kwargs.items():
             if hasattr(self, k):
                 self._deleteChild(k, v)
             self._insertChild(k, v)
@@ -678,7 +679,7 @@ class Protocol(Step):
                         # This case implies Direct Pointers to Sets
                         # (without extended): hopefully this will only be
                         # created from tests
-                        print ("Can't get protocol info from input attribute."
+                        print("Can't get protocol info from input attribute."
                                " This could render unexpected results when "
                                "scheduling protocols.")
                         continue
@@ -1383,7 +1384,8 @@ class Protocol(Step):
             # in the "Output Log" section if we put them together.
 
     def getLogPaths(self):
-        return map(self._getLogsPath, ['run.stdout', 'run.stderr', 'run.log'])
+        return list(map(self._getLogsPath,
+                        ['run.stdout', 'run.stderr', 'run.log']))
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
@@ -1893,7 +1895,7 @@ class Protocol(Step):
         return "[[%s]]" % fn
 
     def getObjectTag(self, objName):
-        if isinstance(objName, basestring):
+        if isinstance(objName, str):
             obj = getattr(self, objName, None)
         else:
             obj = objName
@@ -2019,7 +2021,7 @@ class Protocol(Step):
             bibtex = self.__getPluginBibTex()
             parsedMethods = []
             for m in baseMethods:
-                for bibId, cite in bibtex.iteritems():
+                for bibId, cite in bibtex.items():
                     k = '[%s]' % bibId
                     link = self._getCiteText(cite, useKeyLabel=True)
                     m = m.replace(k, link)

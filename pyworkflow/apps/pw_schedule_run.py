@@ -93,7 +93,7 @@ class RunScheduler():
         prerequisites = map(int, protocol.getPrerequisites())
 
         def _log(msg):
-            print >> log, "%s: %s" % (pwutils.prettyTimestamp(), msg)
+            log.write("%s: %s\n" % (pwutils.prettyTimestamp(), msg))
             log.flush()
 
         _log("Scheduling protocol %s, pid: %s, prerequisites: %s"

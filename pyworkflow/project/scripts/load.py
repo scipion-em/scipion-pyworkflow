@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
 
 import sys
 import os
@@ -36,13 +37,13 @@ from pyworkflow.gui.project import ProjectWindow
 
 
 def usage(error):
-    print """
+    print("""
     ERROR: %s
     
     Usage: scipion python scripts/load_project.py /path/to/project
         This script allows to quickly load a project folder without
         importing that in the general user data folder
-    """ % error
+    """ % error)
     sys.exit(1)    
 
 n = len(sys.argv)
@@ -59,7 +60,7 @@ customUserData = os.path.join(pw.Config.SCIPION_USER_DATA, 'tmp', tempSpace)
 projectsDir = os.path.join(customUserData, 'projects')
 pwutils.makePath(projectsDir)
 
-print "Loading projects from:\n", projectsDir
+print("Loading projects from:\n", projectsDir)
 
 projName = os.path.basename(pathToProj)
 pwutils.createAbsLink(pathToProj, os.path.join(projectsDir, projName))
@@ -74,10 +75,10 @@ projPath = manager.getProjectPath(projName)
 class EditorProjectWindow(ProjectWindow):
     def close(self, e=None):
         try:
-            print "Deleting temporary folder: ", customUserData
+            print("Deleting temporary folder: ", customUserData)
             pwutils.cleanPath(customUserData)
         except Exception, ex:
-            print "Error: ", ex
+            print("Error: ", ex)
         ProjectWindow.close(self, e)
 
 projWindow = EditorProjectWindow(projPath)

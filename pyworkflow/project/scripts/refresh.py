@@ -36,7 +36,7 @@ import pyworkflow.utils as pwutils
 
 
 def usage(error):
-    print """
+    print("""
     ERROR: %s
 
     Usage: scipion python scripts/refresh_project.py project_name [refresh_period]
@@ -44,7 +44,7 @@ def usage(error):
         We can specify how often it will refresh in seconds (defaults 60).
         e.g.
         scipion python scripts/refresh_project.py TestExtractParticles 15
-    """ % error
+    """ % error)
     sys.exit(1)
 
 

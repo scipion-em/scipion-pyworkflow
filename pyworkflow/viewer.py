@@ -22,6 +22,8 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
+
 import os
 
 import pyworkflow.protocol as pwprot
@@ -280,10 +282,8 @@ class ProtocolViewer(pwprot.Protocol, Viewer):
     
     def _viewAll(self, *args):
         """ Visualize all data give the parameters. """
-        for k, v in self._getVisualizeDict().iteritems():
-            print "k: %s, v: %s" % (k, v)
+        for k, v in self._getVisualizeDict().items():
             if self.getAttributeValue(k, False):
-                print "   calling v..."
                 v(k)
                 
     def _citations(self):

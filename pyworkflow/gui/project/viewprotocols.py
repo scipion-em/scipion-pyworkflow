@@ -23,6 +23,8 @@
 # *
 # **************************************************************************
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 INIT_REFRESH_SECONDS = 3
 
@@ -35,8 +37,8 @@ import json
 import re
 import tempfile
 from collections import OrderedDict
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 import datetime as dt
 
 import pyworkflow.object as pwobj
@@ -359,7 +361,7 @@ class SearchProtocolWindow(pwgui.Window):
 
             return line2Search + (weight,)
 
-        for key, prot in emProtocolsDict.iteritems():
+        for key, prot in emProtocolsDict.items():
             if ProtocolTreeConfig.isAFinalProtocol(prot, key):
                 label = prot.getClassLabel().lower()
                 line = (key, label,
@@ -847,7 +849,7 @@ class ProtocolsView(tk.Frame):
             self.refreshRuns(initRefreshCounter=False)
             secs = self.__autoRefreshCounter
         else:
-            secs = INIT_REFRESH_SECONDS / 2
+            secs = INIT_REFRESH_SECONDS // 2
 
         # double the number of seconds up to 30 min
         self.__autoRefreshCounter = min(2 * secs, 1800)
@@ -927,18 +929,13 @@ class ProtocolsView(tk.Frame):
 
             # If action present (set color is not in the toolbar but in the
             # context menu)
-            if self.actionButtons.has_key(actionToDisplay):
+            action = self.actionButtons.get(actionToDisplay, None)
+            if action is not None:
                 if condition:
-                    self.actionButtons[actionToDisplay].grid(row=0,
-                                                             column=column,
-                                                             sticky='sw',
-                                                             padx=(0, 5),
-                                                             ipadx=0)
+                    action.grid(row=0, column=column, sticky='sw',
+                                padx=(0, 5), ipadx=0)
                 else:
-                    self.actionButtons[actionToDisplay].grid_remove()
-            else:
-                # print action + " not in toolbar."
-                pass
+                    action.grid_remove()
 
         for i, actionTuple in enumerate(self.provider.getActionsFromSelection()):
             action, cond = actionTuple
@@ -1039,7 +1036,7 @@ class ProtocolsView(tk.Frame):
                 if prot is not None:
                     tree.item(item, image=self.getImage('class_obj.gif'))
 
-                    for k, v in emProtocolsDict.iteritems():
+                    for k, v in emProtocolsDict.items():
                         if (k not in subclassedDict and v is not prot and
                            issubclass(v, prot)):
                             key = '%s.%s' % (item, k)
@@ -1062,8 +1059,8 @@ class ProtocolsView(tk.Frame):
         self.protTreeItems = {}
         subclassedDict = {}  # Check which classes serve as base to not show them
         emProtocolsDict = self.domain.getProtocols()
-        for _, v1 in emProtocolsDict.iteritems():
-            for k2, v2 in emProtocolsDict.iteritems():
+        for _, v1 in emProtocolsDict.items():
+            for k2, v2 in emProtocolsDict.items():
                 if v1 is not v2 and issubclass(v1, v2):
                     subclassedDict[k2] = True
         self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg,
@@ -2039,7 +2036,7 @@ class ProtocolsView(tk.Frame):
 
             if bibTexCites:
                 with tempfile.NamedTemporaryFile(suffix='.bib') as bibFile:
-                    for refId, refDict in bibTexCites.iteritems():
+                    for refId, refDict in bibTexCites.items():
                         refType = refDict['ENTRYTYPE']
                         # remove 'type' and 'id' keys
                         refDict = {k: v for k, v in refDict.items()

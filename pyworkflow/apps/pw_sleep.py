@@ -27,10 +27,12 @@
 """
 This module is responsible for launching protocol executions.
 """
+from __future__ import print_function
+
 import os, sys
 
 if __name__ == '__main__':
     seconds = sys.argv[1]
-    print "Sleeper, pid: ", os.getpid()
-    print "Sleeping %s seconds...." % seconds
+    print("Sleeper, pid: ", os.getpid())
+    print("Sleeping %s seconds...." % seconds)
     os.system("sleep %s" % seconds)

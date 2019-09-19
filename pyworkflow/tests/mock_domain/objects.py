@@ -253,9 +253,9 @@ class MockImage(MockObject):
         t = type(first)
         if t == tuple:
             index, filename = first
-        elif t == int or t == long:
+        elif t == int:
             index, filename = first, args[1]
-        elif t == str or t == unicode:
+        elif t == str:
             index, filename = NO_INDEX, first
         else:
             raise Exception('setLocation: unsupported type %s as input.' % t)

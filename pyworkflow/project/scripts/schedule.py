@@ -25,6 +25,8 @@
 # *
 # **************************************************************************
 
+from __future__ import print_function
+
 import sys
 import os
 
@@ -35,13 +37,13 @@ import pyworkflow.utils as pwutils
 
 
 def usage(error):
-    print """
+    print("""
     ERROR: %s
 
     Usage: scipion python scripts/schedule_project.py
         name="project name"
         This script will schedule all the protocols in a linear project
-    """ % error
+    """ % error)
     sys.exit(1)
 
 

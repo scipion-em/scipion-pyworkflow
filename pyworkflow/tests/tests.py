@@ -5,7 +5,6 @@ import time
 from traceback import format_exception
 import unittest
 from os.path import join, relpath
-from itertools import izip
 
 import pyworkflow as pw
 from pyworkflow.project import Manager
@@ -114,14 +113,14 @@ class BaseTest(unittest.TestCase):
         
         if prot.isFailed():
             print("\n>>> ERROR running protocol %s" % prot.getRunName())
-            print ("    FAILED with error: %s\n" % prot.getErrorMessage())
+            print("    FAILED with error: %s\n" % prot.getErrorMessage())
             logLines = prot.getLogsLastLines()
             for i in range(0, len(logLines)):
                 print(logLines[i])
             raise Exception("ERROR launching protocol.")
 
         if not prot.isFinished() and not prot.useQueue():  # when queued is not finished yet
-            print ("\n>>> ERROR running protocol %s" % prot.getRunName())
+            print("\n>>> ERROR running protocol %s" % prot.getRunName())
             logLines = prot.getLogsLastLines()
             for i in range(0, len(logLines)):
                 print(logLines[i])
@@ -182,7 +181,7 @@ class BaseTest(unittest.TestCase):
     def compareSets(cls, test, set1, set2):
         """ Iterate the elements of boths sets and check
         that all elements have equal attributes. """
-        for item1, item2 in izip(set1, set2):
+        for item1, item2 in zip(set1, set2):
             areEqual = item1.equalAttributes(item2)
             if not areEqual:
                 print("item 1 and item2 are different: ")

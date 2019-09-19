@@ -22,7 +22,7 @@ def printInstances():
 
 
 def waitForDebugger(seconds=20):
-    print ("Waiting for debugger %d seconds." % seconds)
+    print("Waiting for debugger %d seconds." % seconds)
     from pyworkflow.utils import printTraceBack
     printTraceBack()
 

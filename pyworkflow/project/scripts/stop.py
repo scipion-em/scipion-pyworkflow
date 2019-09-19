@@ -24,6 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
 
 import sys
 import os
@@ -35,14 +36,14 @@ from pyworkflow.project import Manager, Project
 
 
 def usage(error):
-    print """
+    print("""
     ERROR: %s
 
     Usage: scipion python scripts/stop.py project_name
         This script will stop all running protocols of the specified project.
         e.g.
         scipion python scripts/stop.py MyProject
-    """ % error
+    """ % error)
     sys.exit(1)
 
 
@@ -80,5 +81,5 @@ for prot in runs:
         try:
             project.stopProtocol(prot)
         except:
-            print "Couldn't stop protocol %s" % prot
+            print("Couldn't stop protocol %s" % prot)
 
