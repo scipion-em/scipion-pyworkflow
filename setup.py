@@ -117,7 +117,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 4 - Alpha',
+        'Development Status :: 2 - Pre-Alpha',
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
         # Pick your license as you wish
