@@ -32,8 +32,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import math
-import Tkinter as tk
-import tkFont
+import tkinter as tk
+import tkinter.font as tkFont
 import operator
 
 from . import gui

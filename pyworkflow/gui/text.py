@@ -1,12 +1,12 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -15,9 +15,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -27,15 +25,16 @@
 Text based widgets.
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
 import time
 import webbrowser
 import subprocess
-import ttk
-import Tkinter as tk
-import tkMessageBox
+import tkinter.ttk as ttk
+import tkinter as tk
+import tkinter.messagebox as tkMessageBox
 
 import pyworkflow as pw
 from pyworkflow.utils import (HYPER_BOLD, HYPER_ITALIC, HYPER_LINK1, HYPER_LINK2,
@@ -44,6 +43,7 @@ from pyworkflow.utils import (HYPER_BOLD, HYPER_ITALIC, HYPER_LINK1, HYPER_LINK2
 from pyworkflow.utils.properties import Message, Color, Icon
 from . import gui
 from .widgets import Scrollable, IconButton
+from .tooltip import ToolTip
 
 
 # Define a function to open files cleanly in a system-dependent way
@@ -228,7 +228,7 @@ class Text(tk.Text, Scrollable):
         try:
             self.selection = self.selection_get().strip()
             self.menu.post(e.x_root, e.y_root)    
-        except tk.TclError, e:
+        except tk.TclError as e:
             pass
     
     def copyToClipboard(self, e=None):
@@ -616,7 +616,6 @@ class TextFileViewer(tk.Frame):
                 tooltip += key
 
         # Add a tooltip
-        from tooltip import ToolTip
         ToolTip(self.searchEntry, tooltip, 800)
 
     def getIndex(self):

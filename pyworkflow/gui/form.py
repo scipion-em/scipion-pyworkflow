@@ -32,8 +32,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 from collections import OrderedDict
 from datetime import datetime
 

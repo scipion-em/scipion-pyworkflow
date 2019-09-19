@@ -21,6 +21,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import ast
 import os
@@ -136,7 +138,7 @@ __resourcesPath = [join('resources')]
 
 
 def findResource(filename):
-    from utils.path import findFile
+    from .utils.path import findFile
 
     return findFile(filename, *__resourcesPath)
 

@@ -27,7 +27,7 @@
 Several Image tools using Matplotlib.
 """
 
-import Tkinter as tk
+import tkinter as tk
 import matplotlib
 import numpy as np
 

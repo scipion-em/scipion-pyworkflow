@@ -590,23 +590,36 @@ class Scalar(Object):
     def __str__(self):
         """String representation of the scalar value"""
         return str(self.get())
-    
-    def __eq__(self, value):
-        """Comparison for scalars should be by value
-        and for other objects by reference. """
-        if isinstance(value, Object):
-            value = value.get()
-        return self.get() == value
+
+    def __cmp(self, other):
+        """ Comparison implementation for scalars. """
+        a = self.get()
+        b = other.get() if isinstance(other, Object) else other
+        # cmp does not longer exist in Python3, so we will follow
+        # the recommend replacement: (a > b) - (a < b)
+        # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
+        return (a > b) - (a < b)
+
+    def __eq__(self, other):
+        """ Comparison for scalars should be by value while
+         for other objects by reference. """
+        return self.__cmp(other) == 0
 
     def __ne__(self, other):
-        return not self.__eq__(other)
-    
-    def __cmp__(self, value):
-        """ Comparison implementation for scalars. """
-        if isinstance(value, Object):
-            value = value.get()
-        return cmp(self.get(), value)
-       
+        return self.__cmp(other) != 0
+
+    def __lt__(self, other):
+        return self.__cmp(other) < 0
+
+    def __le__(self, other):
+        return self.__cmp(other) <= 0
+
+    def __gt__(self, other):
+        return self.__cmp(other) > 0
+
+    def __ge__(self, other):
+        return self.__cmp(other) >= 0
+
     def get(self, default=None):
         """Get the value, if internal value is None
         the default argument passed is returned. """

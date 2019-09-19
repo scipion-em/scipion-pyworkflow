@@ -30,12 +30,13 @@ It is composed by three panels:
 3. Summary/Details
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import threading
 import shlex
 import subprocess
-import SocketServer
+import socketserver
 import tempfile
 
 import pyworkflow as pw
@@ -51,9 +52,9 @@ from pyworkflow.gui.plotter import Plotter
 from pyworkflow.gui.text import _open_cmd, openTextFileEditor
 from pyworkflow.webservices import ProjectWorkflowNotifier, WorkflowRepository
 
-from labels import LabelsDialog
+from .labels import LabelsDialog
 # Import possible Object commands to be handled
-from base import ProjectBaseWindow, VIEW_PROTOCOLS, VIEW_PROJECTS
+from .base import ProjectBaseWindow, VIEW_PROTOCOLS, VIEW_PROJECTS
 
 
 class ProjectWindow(ProjectBaseWindow):
@@ -225,7 +226,7 @@ class ProjectWindow(ProjectBaseWindow):
         try:
             self.project.loadProtocols(obj.getPath())
             self.getViewWidget().updateRunsGraph(True, reorganize=True)
-        except Exception, ex:
+        except Exception as ex:
             self.showError(str(ex))
             
     def onImportWorkflow(self):
@@ -311,7 +312,7 @@ class ProjectWindow(ProjectBaseWindow):
                     inputObj.close()
                 self.enqueue(myfunc)
 
-        except Exception, ex:
+        except Exception as ex:
             print("There was an error executing object command !!!:")
             print(ex)
     
@@ -415,11 +416,11 @@ class ProjectManagerWindow(ProjectBaseWindow):
     #                   selectButton=None).show()
 
 
-class ProjectTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class ProjectTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
 
-class ProjectTCPRequestHandler(SocketServer.BaseRequestHandler):
+class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
         try:

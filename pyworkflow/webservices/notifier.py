@@ -25,17 +25,18 @@
 # *
 # **************************************************************************
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
-import sys
+import time
 import threading
 import uuid
-import urllib, urllib2
-import time
 from datetime import timedelta, datetime
+from urllib.parse import urlencode
+from urllib.request import build_opener, HTTPHandler
 
 import pyworkflow.utils as pwutils
-import config
+from . import config
 
 
 class ProjectWorkflowNotifier(object):
@@ -82,8 +83,8 @@ class ProjectWorkflowNotifier(object):
         try:
             # then connect to webserver a send json
             # set debuglevel=0 for no messages
-            opener = urllib2.build_opener(urllib2.HTTPHandler(debuglevel=0))
-            data = urllib.urlencode(dataDict)
+            opener = build_opener(HTTPHandler(debuglevel=0))
+            data = urlencode(dataDict)
             content = opener.open(url, data=data).read()
             now = time.time()
             os.utime(self._getUuidFileName(), (now, now))

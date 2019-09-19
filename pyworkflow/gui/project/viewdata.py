@@ -27,9 +27,9 @@ Data-oriented view of the project objects.
 """
 from __future__ import print_function
 
-import Tkinter as tk
-import ttk
-import tkFont
+import tkinter as tk
+import tkinter.ttk as ttk
+import tkinter.font as tkFont
 
 import pyworkflow.utils as pwutils
 import pyworkflow.protocol as pwprot

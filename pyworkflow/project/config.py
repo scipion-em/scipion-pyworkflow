@@ -23,6 +23,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from __future__ import print_function
+from __future__ import absolute_import
 
 import sys
 import os
@@ -621,7 +623,7 @@ class ProtocolTreeConfig:
             except Exception as e:
                 print('Failed to read settings. The reported error was:\n  %s\n'
                       'To solve it, fix %s and run again.' % (
-                            e, protocolsConfPath))
+                            e, os.path.abspath(protocolsConfPath)))
 
             # Add all protocols to All view
         cls.__addAllProtocols(Domain, protocols)

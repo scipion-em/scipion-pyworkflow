@@ -23,6 +23,8 @@
 # *
 # **************************************************************************
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
 
 INIT_REFRESH_SECONDS = 3
 
@@ -35,8 +37,8 @@ import json
 import re
 import tempfile
 from collections import OrderedDict
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 import datetime as dt
 
 import pyworkflow.object as pwobj
@@ -847,7 +849,7 @@ class ProtocolsView(tk.Frame):
             self.refreshRuns(initRefreshCounter=False)
             secs = self.__autoRefreshCounter
         else:
-            secs = INIT_REFRESH_SECONDS / 2
+            secs = INIT_REFRESH_SECONDS // 2
 
         # double the number of seconds up to 30 min
         self.__autoRefreshCounter = min(2 * secs, 1800)
@@ -927,18 +929,13 @@ class ProtocolsView(tk.Frame):
 
             # If action present (set color is not in the toolbar but in the
             # context menu)
-            if self.actionButtons.has_key(actionToDisplay):
+            action = self.actionButtons.get(actionToDisplay, None)
+            if action is not None:
                 if condition:
-                    self.actionButtons[actionToDisplay].grid(row=0,
-                                                             column=column,
-                                                             sticky='sw',
-                                                             padx=(0, 5),
-                                                             ipadx=0)
+                    action.grid(row=0, column=column, sticky='sw',
+                                padx=(0, 5), ipadx=0)
                 else:
-                    self.actionButtons[actionToDisplay].grid_remove()
-            else:
-                # print action + " not in toolbar."
-                pass
+                    action.grid_remove()
 
         for i, actionTuple in enumerate(self.provider.getActionsFromSelection()):
             action, cond = actionTuple

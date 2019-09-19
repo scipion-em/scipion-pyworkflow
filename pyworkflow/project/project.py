@@ -354,20 +354,20 @@ class Project(object):
 
     def getHostNames(self):
         """ Return the list of host name in the project. """
-        return self._hosts.keys()
+        return list(self._hosts.keys())
 
     def getHostConfig(self, hostName):
         if hostName in self._hosts:
             hostKey = hostName
         else:
-            hostKey = self._hosts.keys()[0]
+            hostKey = self.getHostNames()[0]
             print("PROJECT: Warning, protocol host '%s' not found." % hostName)
             print("         Using '%s' instead." % hostKey)
 
         return self._hosts[hostKey]
 
     def getProtocolViews(self):
-        return self._protocolViews.keys()
+        return list(self._protocolViews.keys())
 
     def getCurrentProtocolView(self):
         """ Select the view that is currently selected.
@@ -378,7 +378,7 @@ class Project(object):
         if currentView in self._protocolViews:
             viewKey = currentView
         else:
-            viewKey = self._protocolViews.keys()[0]
+            viewKey = self.getProtocolViews()[0]
             self.settings.setProtocolView(viewKey)
             print("PROJECT: Warning, protocol view '%s' not found." % currentView)
             print("         Using '%s' instead." % viewKey)

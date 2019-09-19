@@ -30,6 +30,7 @@ execution hosts.
 from __future__ import print_function
 from __future__ import absolute_import
 
+import os
 import sys
 import json
 from configparser import ConfigParser
@@ -150,7 +151,7 @@ class HostConfig(OrderedObject):
         """ Write a very basic Host configuration for testing purposes. """
         with open(configFn, 'w') as f:
             f.write('[localhost]\nPARALLEL_COMMAND = '
-                    'mpirun -np %_(JOB_NODES)d --map-by node %_(COMMAND)s\n')
+                    'mpirun -np %%(JOB_NODES)d --map-by node %%(COMMAND)s\n')
 
     @classmethod
     def load(cls, hostsConf):
@@ -172,7 +173,7 @@ class HostConfig(OrderedObject):
                 # Helper functions (to write less)
                 def get(var, default=None):
                     if cp.has_option(hostName, var):
-                        return cp.get(hostName, var).replace('%_(', '%(')
+                        return cp.get(hostName, var)  #.replace('%_(', '%(')
                     else:
                         return default
 
@@ -213,7 +214,8 @@ class HostConfig(OrderedObject):
             return hosts
         except Exception as e:
             sys.exit('Failed to read settings. The reported error was:\n  %s\n'
-                     'To solve it, delete %s and run again.' % (e, hostsConf))
+                     'To solve it, delete %s and run again.'
+                     % (e, os.path.abspath(hostsConf)))
 
 
 class QueueSystemConfig(OrderedObject):

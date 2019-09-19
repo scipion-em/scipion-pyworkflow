@@ -28,8 +28,8 @@
 from __future__ import print_function
 
 import os
-import Tkinter as tk
-import ttk
+import tkinter as tk
+import tkinter.ttk as ttk
 
 from pyworkflow.object import Scalar
 from pyworkflow.mapper import SqliteMapper

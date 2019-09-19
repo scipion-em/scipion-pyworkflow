@@ -1,13 +1,14 @@
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
-# *              Jose Gutierrez (jose.gutierrez@cnb.csic.es)
+# * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es) [1]
+# *              Jose Gutierrez (jose.gutierrez@cnb.csic.es) [2]
 # *
-# * Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
+# * [2] Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
-# * This program is free software; you can redistribute it and/or modify
+# * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -16,9 +17,7 @@
 # * GNU General Public License for more details.
 # *
 # * You should have received a copy of the GNU General Public License
-# * along with this program; if not, write to the Free Software
-# * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# * 02111-1307  USA
+# * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # *
 # *  All comments concerning this program package may be sent to the
 # *  e-mail address 'scipion@cnb.csic.es'
@@ -35,16 +34,15 @@ from __future__ import absolute_import
 
 import os.path
 import stat
-import Tkinter as tk
+import tkinter as tk
 import time
 
-from pyworkflow.utils import ROOT, getParentFolder
-from pyworkflow.utils.properties import Icon, KEYSYM
+import pyworkflow.utils as pwutils
 from . import gui
-from pyworkflow.utils import dirname, getHomePath, prettySize, getExt, dateStr
 from .tree import BoundTree, TreeProvider
 from .text import TaggedText, openTextFileEditor
 from .widgets import Button, HotButton
+
 
 PARENT_FOLDER = ".."
 
@@ -173,10 +171,10 @@ class FileInfo(object):
     
     def getSizeStr(self):
         """ Return a human readable string of the file size."""
-        return prettySize(self.getSize()) if self._stat else '0'
+        return pwutils.prettySize(self.getSize()) if self._stat else '0'
 
     def getDateStr(self):
-        return dateStr(self.getDate()) if self._stat else '0'
+        return pwutils.dateStr(self.getDate()) if self._stat else '0'
 
     def getDate(self):
         return self._stat.st_mtime if self._stat else 0
@@ -267,7 +265,7 @@ class SqlFileHandler(FileHandler):
 #         from pyworkflow.em.viewers import DataView
 #         fn = objFile.getPath()
 #         return [('Open with Xmipp viewer', lambda: DataView(fn).show(),
-#                  Icon.ACTION_VISUALIZE)]
+#                  pwutils.Icon.ACTION_VISUALIZE)]
 #
 #
 # class ParticleFileHandler(ImageFileHandler):
@@ -293,7 +291,7 @@ class SqlFileHandler(FileHandler):
 #         from pyworkflow.em.viewers import ChimeraView
 #         fn = objFile.getPath()
 #         return [('Open with Chimera', lambda: ChimeraView(fn).show(),
-#                  Icon.ACTION_VISUALIZE)]
+#                  pwutils.Icon.ACTION_VISUALIZE)]
 #
 #     def getFileIcon(self, objFile):
 #         return 'file_text.gif'
@@ -345,7 +343,7 @@ class SqlFileHandler(FileHandler):
 #         self._imgPreview = None
 #         self._imgInfo = None
 #         filename = objFile.getPath()
-#         ext = getExt(filename)
+#         ext = pwutils.getExt(filename)
 #
 #         if ext == '.xmd' or ext == '.ctfparam' or ext == '.pos' or ext == '.doc':
 #             msg = "*Metadata File* "
@@ -400,7 +398,7 @@ class FileTreeProvider(TreeProvider):
     
     def getFileHandler(self, obj):
         filename = obj.getFileName()
-        fileExt = getExt(filename)
+        fileExt = pwutils.getExt(filename)
         return self._FILE_HANDLERS.get(fileExt, self._DEFAULT_HANDLER)
         
     def getObjectInfo(self, obj):
@@ -425,14 +423,14 @@ class FileTreeProvider(TreeProvider):
         # specially useful for unknown formats
         fn = obj.getPath()
         actions.append(("Open external Editor", 
-                        lambda: openTextFileEditor(fn), Icon.ACTION_REFERENCES))
+                        lambda: openTextFileEditor(fn), pwutils.Icon.ACTION_REFERENCES))
         
         return actions
     
     def getObjects(self):
 
         fileInfoList = []
-        if not self._currentDir == ROOT:
+        if not self._currentDir == pwutils.ROOT:
             fileInfoList.append(FileInfo(self._currentDir, PARENT_FOLDER))
 
         try:
@@ -585,14 +583,14 @@ class FileBrowser(ObjectBrowser):
         """ Fill the toolbar frame with some buttons. """
         self._col = 0
 
-        self._addButton(frame, 'Refresh', Icon.ACTION_REFRESH,
+        self._addButton(frame, 'Refresh', pwutils.Icon.ACTION_REFRESH,
                         self._actionRefresh)
-        self._addButton(frame, 'Home', Icon.HOME, self._actionHome)
-        self._addButton(frame, 'Launch folder', Icon.ROCKET,
+        self._addButton(frame, 'Home', pwutils.Icon.HOME, self._actionHome)
+        self._addButton(frame, 'Launch folder', pwutils.Icon.ROCKET,
                         self._actionLaunchFolder)
-        self._addButton(frame, 'Working dir', Icon.ACTION_BROWSE,
+        self._addButton(frame, 'Working dir', pwutils.Icon.ACTION_BROWSE,
                         self._actionWorkingDir)
-        self._addButton(frame, 'Up', Icon.ARROW_UP, self._actionUp)
+        self._addButton(frame, 'Up', pwutils.Icon.ARROW_UP, self._actionUp)
 
         # Add shortcuts
         self._addShortCuts(frame)
@@ -610,10 +608,10 @@ class FileBrowser(ObjectBrowser):
         """ Add button to the bottom frame if the selectMode
         is distinct from SELECT_NONE.
         """
-        Button(frame, "Close", Icon.BUTTON_CLOSE, 
+        Button(frame, "Close", pwutils.Icon.BUTTON_CLOSE, 
                command=self._close).grid(row=0, column=0, padx=(0,5))   
         if self.selectButton:                     
-            HotButton(frame, self.selectButton, Icon.BUTTON_SELECT,
+            HotButton(frame, self.selectButton, pwutils.Icon.BUTTON_SELECT,
                       command=self._select).grid(row=0, column=1)
                 
     def _actionRefresh(self, e=None):
@@ -644,11 +642,11 @@ class FileBrowser(ObjectBrowser):
         self.tree.focus(itemKeyToFocus)
         
     def _actionUp(self, e=None):
-        parentFolder = getParentFolder(self.treeProvider.getDir())
+        parentFolder = pwutils.getParentFolder(self.treeProvider.getDir())
         self._goDir(parentFolder)
         
     def _actionHome(self, e=None):
-        self._goDir(getHomePath())
+        self._goDir(pwutils.getHomePath())
 
     def _actionRoot(self, e=None):
         self._goDir("/")
@@ -671,7 +669,7 @@ class FileBrowser(ObjectBrowser):
 
     def _itemKeyPressed(self, obj, e=None):
 
-        if e.keysym in [KEYSYM.RETURN]:
+        if e.keysym in [pwutils.KEYSYM.RETURN]:
             self._itemDoubleClick(obj)
             return
 
