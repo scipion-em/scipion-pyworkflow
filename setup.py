@@ -115,17 +115,17 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 4 - Beta',
-
+        'Development Status :: 4 - Alpha',
         # Indicate who your project is intended for
-        #   'Intended Audience :: Users',
-
+        'Intended Audience :: Science/Research',
         # Pick your license as you wish
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2.7'
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Topic :: Scientific/Engineering'
     ],
 
     # This field adds keywords for your project which will appear on the
@@ -133,7 +133,7 @@ setup(
     #
     # Note that this is a string of words separated by whitespace, not a list.
     keywords='workflows science scipion electron-microscopy cryo-em '
-             'structural-biology image-processing scipion-2.0',  # Optional
+             'structural-biology image-processing scipion',  # Optional
 
     # You can just specify package directories manually here if your project is
     # simple. Or you can use find_packages().

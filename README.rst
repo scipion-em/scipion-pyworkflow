@@ -14,12 +14,14 @@ within the Scipion framework for image processing in Electron Microscopy.
 
 Development
 -------------
+We are now fully going toward Python 3!
+
 To install **pyworkflow** for development purposes, one can do:
 
 .. code-block:: bash
 
     # Create a clean virtual environment
-    python -m virtualenv ~/myenv
+    python -m venv ~/myenv
     source ~/myenv/bin/activate
     git clone git@github.com:scipion-em/scipion-pyworkflow.git
     cd scipion-pyworkflow
@@ -33,10 +35,23 @@ current Python environment. During development, I tend to set the PYTHONPATH:
 .. code-block:: bash
 
     cd scipion-pyworkflow
+    # Either you have installed as mentioned above, or modify the PYTHONPATH
     export PYTHONPATH=$PYTHONPATH:$PWD
+    # After pyworkflow is accesible as a module, then:
     cd pyworkflow/tests
 
     python -m unittest discover
+
+    # Simple project GUI can be shown after running tests:
+    cd scipion-pyworkflow
+
+    # At the moment you need to specify SCIPION_DOMAIN and SCIPION_VERSION
+    export SCIPION_DOMAIN=scipion-pyworkflow/pyworkflow/tests/mock_domain
+    export SCIPION_VERSION=3.0.0
+
+    python pyworkflow/apps/pw_project.py TestProtocolOutputs
+
+
   
 
 

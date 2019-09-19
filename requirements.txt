@@ -4,5 +4,5 @@ matplotlib
 pillow
 bibtexparser
 requests
-
+configparser
 
