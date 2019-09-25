@@ -97,7 +97,7 @@ class Tester():
         else:
             # In this other case, we will load the test available
             # from pyworkflow and the other plugins
-            self.paths = [('pyworkflow', '.')]
+            self.paths = [('pyworkflow', os.path.dirname(os.path.dirname(pw.__file__)))]
             for name, plugin in pw.Config.getDomain().getPlugins().items():
                 self.paths.append((name, os.path.dirname(plugin.__path__[0])))
             for k, p in self.paths:

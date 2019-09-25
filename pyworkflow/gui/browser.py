@@ -798,13 +798,13 @@ class FileBrowserWindow(BrowserWindow):
                  '.json', '.xml', '.pam')
         register(TextFileHandler('file_python.gif'), '.py')
         register(TextFileHandler('file_java.gif'), '.java')
-        register(MdFileHandler(), '.xmd', '.star', '.pos', '.ctfparam', '.doc')
         register(SqlFileHandler(), '.sqlite', '.db')
-        register(ParticleFileHandler(),
-                 '.xmp', '.tif', '.tiff', '.spi', '.mrc', '.map', '.raw',
-                 '.inf', '.dm3', '.em', '.pif', '.psd', '.spe', '.ser', '.img',
-                 '.hed', *STANDARD_IMAGE_EXTENSIONS)
-        register(VolFileHandler(), '.vol')
-        register(StackHandler(), '.stk', '.mrcs', '.st', '.pif', '.dm4')
-        register(ChimeraHandler(), '.bild')
+        # register(MdFileHandler(), '.xmd', '.star', '.pos', '.ctfparam', '.doc')
+        # register(ParticleFileHandler(),
+        #          '.xmp', '.tif', '.tiff', '.spi', '.mrc', '.map', '.raw',
+        #          '.inf', '.dm3', '.em', '.pif', '.psd', '.spe', '.ser', '.img',
+        #          '.hed', *STANDARD_IMAGE_EXTENSIONS)
+        # register(VolFileHandler(), '.vol')
+        # register(StackHandler(), '.stk', '.mrcs', '.st', '.pif', '.dm4')
+        # register(ChimeraHandler(), '.bild')
     
