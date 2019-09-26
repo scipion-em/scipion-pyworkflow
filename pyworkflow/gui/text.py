@@ -100,7 +100,7 @@ elif os.name == 'posix':  # linux systems and so on
 else:
     def _open_cmd(path, tkParent=None):
         try:
-            tkMessageBox.showerror("Unknown sSstem",#bar title
+            tkMessageBox.showerror("Unknown System",#bar title
                                    'Unknown system, so cannot open %s' % path,#message
                                    parent=tkParent)
             return
