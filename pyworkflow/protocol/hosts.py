@@ -173,7 +173,7 @@ class HostConfig(OrderedObject):
                 # Helper functions (to write less)
                 def get(var, default=None):
                     if cp.has_option(hostName, var):
-                        return cp.get(hostName, var)  #.replace('%_(', '%(')
+                        return cp.get(hostName, var)  # .replace('%_(', '%(')
                     else:
                         return default
 
