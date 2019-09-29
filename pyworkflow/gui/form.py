@@ -1571,7 +1571,7 @@ class FormWindow(Window):
         self.updateProtocolCallback = kwargs.get('updateProtocolCallback', None)
         domain = pw.Config.getDomain()
         self.wizards = domain.findWizards(protocol, DESKTOP_TKINTER)
-        
+
         # Call legacy for compatibility on protocol
         protocol.legacyCheck()
         self._createGUI()
@@ -1991,7 +1991,7 @@ class FormWindow(Window):
         r = 0
         sectionsFrame = tk.Frame(parent) 
         configureWeigths(sectionsFrame)
-        tab = ttk.Notebook(sectionsFrame) 
+        tab = ttk.Notebook(sectionsFrame)
         tab.grid(row=0, column=0, sticky='news',
                  padx=5, pady=5)
         self._sections = []

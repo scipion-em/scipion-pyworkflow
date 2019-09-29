@@ -39,7 +39,7 @@ from .widgets import Button
 # --------------- GUI CONFIGURATION parameters -----------------------
 #TODO: read font size and name from config file
 cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
-cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))  
+cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))
 
 #TextColor
 cfgCitationTextColor = "dark olive green"
@@ -115,6 +115,11 @@ def setCommonFonts(windows=None):
     Same conditions of setFont applies here."""
     f = setFont('fontNormal', family=cfgFontName, size=cfgFontSize)
     aliasFont('fontButton', 'fontNormal')
+
+    # Set default font size
+    default_font = tk.font.nametofont("TkDefaultFont")
+    default_font.configure(size=cfgFontSize, family=cfgFontName)
+
     fb = setFont('fontBold', family=cfgFontName, size=cfgFontSize,
                  weight='bold')
     fi = setFont('fontItalic', family=cfgFontName, size=cfgFontSize,
@@ -127,6 +132,10 @@ def setCommonFonts(windows=None):
         windows.fontBold = fb
         windows.fontItalic = fi 
 
+        # This adds the default value for the listbox inside a combo box
+        # Which seems to not react to default font!!
+        windows.root.option_add("*TCombobox*Listbox*Font", default_font)
+        windows.root.option_add("*TCombobox*Font", default_font)
 
 def changeFontSizeByDeltha(font, deltha, minSize=-999, maxSize=999):
     size = font['size']
@@ -393,7 +402,7 @@ class Window():
     
     def createMainMenu(self, menuConfig):
         """Create Main menu from the given MenuConfig object."""
-        menu = tk.Menu(self.root)
+        menu = tk.Menu(self.root, font=self.font)
         self._addMenuChilds(menu, menuConfig)
         self.root.config(menu=menu)
         return menu
@@ -407,7 +416,7 @@ class Window():
             if not menuLabel: # empty or None label means a separator
                 menu.add_separator()
             elif len(sub) > 0:  # sub-menu
-                submenu = tk.Menu(self.root, tearoff=0)
+                submenu = tk.Menu(self.root, tearoff=0, font=self.font)
                 menu.add_cascade(label=menuLabel, menu=submenu)
                 self._addMenuChilds(submenu, sub)  # recursive filling
             else:  # menu option
