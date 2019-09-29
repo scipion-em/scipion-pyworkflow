@@ -560,8 +560,17 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
                 objKey = str(obj.getObjId())
                 labelObj = obj
 
+            # To tolerate str(labelObj) in case xmippLib is missing, but
+            # still being able to open a project.
+            try:
+
+                value = str(labelObj)
+            except Exception as e:
+                print("Can not convert object %s - %s to string." % (objKey , name))
+                value = str(e)
+
             info = {'key': objKey, 'parent': parent, 'image': image,
-                    'text': name, 'values': (str(labelObj),)}
+                    'text': name, 'values': (value,)}
         return info
 
 
