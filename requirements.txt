@@ -5,5 +5,9 @@ pillow
 bibtexparser
 requests
 configparser
-pyvnml
+py3nvml
+
+# For virtual env in ubuntu:
+# sudo apt-get install python3-dev
+# sudo apt-get install python3-tk
 
