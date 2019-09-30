@@ -631,7 +631,7 @@ class ProtocolsView(tk.Frame):
 
     def keyPressed(self, event):
 
-        if self.keybinds.has_key(event.keysym):
+        if event.keysym in self.keybinds:
             method = self.keybinds[event.keysym]
 
             method()
