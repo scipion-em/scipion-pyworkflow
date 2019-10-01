@@ -721,8 +721,11 @@ class ProtocolsView(tk.Frame):
         pwgui.configureWeigths(dframe, row=2)
         provider = RunIOTreeProvider(self, self.getSelectedProtocol(),
                                      self.project.mapper)
+
+        rowheight = pwgui.getDefaultFont().metrics()['linespace']
         self.style.configure("NoBorder.Treeview", background='white',
-                             borderwidth=0, font=self.windows.font)
+                             borderwidth=0, font=self.windows.font,
+                             rowheight=rowheight)
         self.infoTree = pwgui.browser.BoundTree(dframe, provider, height=6,
                                                 show='tree',
                                                 style="NoBorder.Treeview")
@@ -952,9 +955,12 @@ class ProtocolsView(tk.Frame):
 
     def _createProtocolsTree(self, parent, background=Color.LIGHT_GREY_COLOR,
                              show='tree', columns=None):
+        defaultFont = pwgui.getDefaultFont()
         self.style.configure("W.Treeview", background=background, borderwidth=0,
-                             fieldbackground=background)
-        t = pwgui.tree.Tree(parent, show=show, style='W.Treeview', columns=columns)
+                             fieldbackground=background,
+                             rowheight=defaultFont.metrics()['linespace'])
+        t = pwgui.tree.Tree(parent, show=show, style='W.Treeview',
+                            columns=columns)
         t.column('#0', minwidth=300)
         # Protocol nodes
         t.tag_configure(ProtocolTreeConfig.TAG_PROTOCOL,
@@ -1090,7 +1096,14 @@ class ProtocolsView(tk.Frame):
         # This line triggers the getRuns for the first time.
         # Ne need to force the check pids here, temporary
         self.provider._checkPids = True
-        t = pwgui.tree.BoundTree(parent, self.provider)
+
+        # To specify the height of the rows based on the font size.
+        # Should be centralized somewhere.
+        style = ttk.Style()
+        rowheight = pwgui.getDefaultFont().metrics()['linespace']
+        style.configure('List.Treeview', rowheight=rowheight)
+
+        t = pwgui.tree.BoundTree(parent, self.provider, style='List.Treeview')
         self.provider._checkPids = False
 
         t.itemDoubleClick = self._runItemDoubleClick

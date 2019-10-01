@@ -38,9 +38,13 @@ from .widgets import Button
 
 # --------------- GUI CONFIGURATION parameters -----------------------
 #TODO: read font size and name from config file
+FONT_ITALIC = 'fontItalic'
+FONT_NORMAL = 'fontNormal'
+FONT_BOLD = 'fontBold'
+FONT_BIG = 'fontBig'
 cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
 cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))
-
+cfgFontBigSize = cfgFontSize + 2
 #TextColor
 cfgCitationTextColor = "dark olive green"
 cfgLabelTextColor = "black"
@@ -110,21 +114,38 @@ def aliasFont(fontAlias, fontKey):
     g[fontAlias] = g[fontKey] 
 
 
+def getDefaultFont():
+    return tk.font.nametofont("TkDefaultFont")
+
+
+def getNamedFont(fontName):
+    return globals()[fontName]
+
+
+def getBigFont():
+    return getNamedFont(FONT_BIG)
+
+
 def setCommonFonts(windows=None):
     """Set some predifined common fonts.
     Same conditions of setFont applies here."""
-    f = setFont('fontNormal', family=cfgFontName, size=cfgFontSize)
-    aliasFont('fontButton', 'fontNormal')
+    f = setFont(FONT_NORMAL, family=cfgFontName, size=cfgFontSize)
+    aliasFont('fontButton', FONT_NORMAL)
 
     # Set default font size
-    default_font = tk.font.nametofont("TkDefaultFont")
+    default_font = getDefaultFont()
     default_font.configure(size=cfgFontSize, family=cfgFontName)
 
-    fb = setFont('fontBold', family=cfgFontName, size=cfgFontSize,
+    fb = setFont(FONT_BOLD, family=cfgFontName, size=cfgFontSize,
                  weight='bold')
-    fi = setFont('fontItalic', family=cfgFontName, size=cfgFontSize,
+    fi = setFont(FONT_ITALIC, family=cfgFontName, size=cfgFontSize,
                  slant='italic')
-    setFont('fontLabel', family=cfgFontName, size=cfgFontSize+1, weight='bold')
+
+    setFont(FONT_BIG, family=cfgFontName, size=cfgFontBigSize)
+
+    # not used?
+    # setFont('fontLabel', family=cfgFontName, size=cfgFontSize+1, weight='bold')
+
     if windows:
         windows.fontBig = tkFont.Font(size=cfgFontSize+2, family=cfgFontName,
                                       weight='bold')

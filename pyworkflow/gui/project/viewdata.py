@@ -156,9 +156,11 @@ class ProjectDataView(tk.Frame):
         """Create a tree on the left panel to store how 
         many object are from each type and the hierarchy.
         """
+        defaultFont = gui.getDefaultFont()
         self.style.configure("W.Treeview",
                              background=pwutils.Color.LIGHT_GREY_COLOR,
-                             borderwidth=0)
+                             borderwidth=0,
+                             rowheight=defaultFont.metrics()['linespace'])
         self.dataTree = Tree(parent, show='tree', style='W.Treeview')
         self.dataTree.column('#0', minwidth=300)
         self.dataTree.tag_configure('protocol',
