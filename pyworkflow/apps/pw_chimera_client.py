@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from pyworkflow.em.viewers import ChimeraClient, ChimeraProjectionClient
+from pwem.viewers import ChimeraClient, ChimeraProjectionClient
 import argparse
 import xmippLib
 

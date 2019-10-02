@@ -70,7 +70,7 @@ def getSubclassesFromModules(BaseClass, modules, debug=False):
         
         for subclass in subDict.values():
             # some protocols have pyworkflow.em.packages. in the __module__ and other no
-            moduleName = subclass.__module__.replace('pyworkflow.em.packages.', '')
+            moduleName = subclass.__module__.replace('pwem.packages.', '')
             if moduleName.startswith(m.__name__):
                 subclass._package = m
                 if debug:

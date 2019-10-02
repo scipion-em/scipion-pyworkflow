@@ -4,7 +4,6 @@ import sys, os
 
 from pyworkflow.project import Manager
 import pyworkflow.utils as pwutils
-import pyworkflow.em as em
 
 
 def usage(error):

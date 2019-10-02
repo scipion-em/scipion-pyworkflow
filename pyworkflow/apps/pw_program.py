@@ -29,7 +29,7 @@ Launch main project window
 """
 
 import sys
-from pyworkflow.em import runProgram
+from pwem.utils import runProgram
 
 
 

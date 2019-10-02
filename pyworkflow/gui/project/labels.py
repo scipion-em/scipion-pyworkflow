@@ -29,7 +29,6 @@ Tree widget implementation.
         
 import os
 import tkinter as tk
-import tkinter.ttk as ttk
 
 from pyworkflow.project import Label
 from pyworkflow.gui import Icon, configureWeigths

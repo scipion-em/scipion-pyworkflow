@@ -33,8 +33,6 @@ from __future__ import print_function
 import sys
 import os
 
-import time
-
 from pyworkflow.project import Manager
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
@@ -63,7 +61,7 @@ if __name__ == '__main__':
 
             if os.listdir(cwd):
                 print(pwutils.red('\nWARNING: this folder is not empty!!!'))
-            key = raw_input("\nDo you want to create a project here? [y/N]?")
+            key = input("\nDo you want to create a project here? [y/N]?")
 
             if key.lower().strip() != 'y':
                 print("\nAborting...")
