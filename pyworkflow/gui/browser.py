@@ -632,7 +632,7 @@ class FileBrowser(ObjectBrowser):
         self.tree.focus_set()
 
         itemKeyToFocus = PARENT_FOLDER
-        if not self.tree._objDict.has_key(PARENT_FOLDER):
+        if not PARENT_FOLDER in self.tree._objDict:
             itemKeyToFocus = self.tree.get_children()[0]
 
         # Focusing on a item, but nothing is selected 

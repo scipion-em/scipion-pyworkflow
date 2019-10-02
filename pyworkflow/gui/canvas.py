@@ -36,12 +36,12 @@ import tkinter as tk
 import tkinter.font as tkFont
 import operator
 
-from . import gui
+from . import gui, getDefaultFont, cfgFontSize
 from .widgets import Scrollable
 
 DEFAULT_ZOOM = 100
 
-DEFAULT_FONT_SIZE = -12
+DEFAULT_FONT_SIZE = cfgFontSize
 
 DEFAULT_CONNECTOR_FILL = "blue"
 DEFAULT_CONNECTOR_OUTLINE = "black"
@@ -90,7 +90,7 @@ class Canvas(tk.Canvas, Scrollable):
         self._tooltipCallback = tooltipCallback
         self._tooltipDelay = tooltipDelay
 
-        self._runsFont = tkFont.Font(family='sans-serif', size=DEFAULT_FONT_SIZE)
+        self._runsFont = getDefaultFont().copy()
         self._zoomFactor = DEFAULT_ZOOM
         
         if tooltipCallback:
@@ -351,7 +351,7 @@ class Canvas(tk.Canvas, Scrollable):
 
         for factor, sizeDecrement in zoomPairs:
             if self._zoomFactor <= factor:
-                newFontSize = DEFAULT_FONT_SIZE + sizeDecrement
+                newFontSize = DEFAULT_FONT_SIZE - sizeDecrement
                 break
 
         if currentFontSize != newFontSize:

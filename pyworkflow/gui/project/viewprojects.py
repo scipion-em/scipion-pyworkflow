@@ -355,8 +355,8 @@ class ProjectImportWindow(Window):
         # Path explorer
         labelProjectLocation = tk.Label(content, text="Project location", bg='white', bd=0)
         labelProjectLocation.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
-
-        self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40, textvariable=self.projLocation)
+        # it seems tk.Entry does not uses default font...grrrr!!
+        self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40, textvariable=self.projLocation, font=self.font)
         self.entryBrowse.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
         self.btnBrowse = IconButton(content, 'Browse', Icon.ACTION_BROWSE, highlightthickness=0,
                                     command=self._browseProjectLocation)
@@ -378,14 +378,14 @@ class ProjectImportWindow(Window):
         # Project name
         labelName = tk.Label(content, text='Project name (Optional)', bg='white', bd=0)
         labelName.grid(row=2, column=0, sticky='nw', padx=5, pady=5)
-        entryName = tk.Entry(content, bg='white', width=20, textvariable=self.projName)
+        entryName = tk.Entry(content, bg='white', width=20, textvariable=self.projName,font=self.font)
         entryName.grid(row=2, column=1, sticky='nw', padx=5, pady=5)
 
         # Path to search for raw data and restore broken links.
         labelSearchLocation = tk.Label(content, text="Raw files location (Optional)", bg='white', bd=0)
         labelSearchLocation.grid(row=3, column=0, sticky='nw', padx=5, pady=5)
 
-        self.entrySearchLocation = tk.Entry(content, bg='white', width=40, textvariable=self.searchLocation)
+        self.entrySearchLocation = tk.Entry(content, bg='white', width=40, textvariable=self.searchLocation,font=self.font)
         self.entrySearchLocation.grid(row=3, column=1, sticky='nw', padx=5, pady=5)
         self.btnSearch = IconButton(content, 'Browse', Icon.ACTION_BROWSE, highlightthickness=0, command=self._browseSearchLocation)
         self.btnSearch.grid(row=3, column=2, sticky='e', padx=5, pady=5)

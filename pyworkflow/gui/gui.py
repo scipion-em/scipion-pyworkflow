@@ -38,9 +38,13 @@ from .widgets import Button
 
 # --------------- GUI CONFIGURATION parameters -----------------------
 #TODO: read font size and name from config file
+FONT_ITALIC = 'fontItalic'
+FONT_NORMAL = 'fontNormal'
+FONT_BOLD = 'fontBold'
+FONT_BIG = 'fontBig'
 cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
-cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))  
-
+cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))
+cfgFontBigSize = cfgFontSize + 2
 #TextColor
 cfgCitationTextColor = "dark olive green"
 cfgLabelTextColor = "black"
@@ -110,16 +114,38 @@ def aliasFont(fontAlias, fontKey):
     g[fontAlias] = g[fontKey] 
 
 
+def getDefaultFont():
+    return tk.font.nametofont("TkDefaultFont")
+
+
+def getNamedFont(fontName):
+    return globals()[fontName]
+
+
+def getBigFont():
+    return getNamedFont(FONT_BIG)
+
+
 def setCommonFonts(windows=None):
     """Set some predifined common fonts.
     Same conditions of setFont applies here."""
-    f = setFont('fontNormal', family=cfgFontName, size=cfgFontSize)
-    aliasFont('fontButton', 'fontNormal')
-    fb = setFont('fontBold', family=cfgFontName, size=cfgFontSize,
+    f = setFont(FONT_NORMAL, family=cfgFontName, size=cfgFontSize)
+    aliasFont('fontButton', FONT_NORMAL)
+
+    # Set default font size
+    default_font = getDefaultFont()
+    default_font.configure(size=cfgFontSize, family=cfgFontName)
+
+    fb = setFont(FONT_BOLD, family=cfgFontName, size=cfgFontSize,
                  weight='bold')
-    fi = setFont('fontItalic', family=cfgFontName, size=cfgFontSize,
+    fi = setFont(FONT_ITALIC, family=cfgFontName, size=cfgFontSize,
                  slant='italic')
-    setFont('fontLabel', family=cfgFontName, size=cfgFontSize+1, weight='bold')
+
+    setFont(FONT_BIG, family=cfgFontName, size=cfgFontBigSize)
+
+    # not used?
+    # setFont('fontLabel', family=cfgFontName, size=cfgFontSize+1, weight='bold')
+
     if windows:
         windows.fontBig = tkFont.Font(size=cfgFontSize+2, family=cfgFontName,
                                       weight='bold')
@@ -127,6 +153,10 @@ def setCommonFonts(windows=None):
         windows.fontBold = fb
         windows.fontItalic = fi 
 
+        # This adds the default value for the listbox inside a combo box
+        # Which seems to not react to default font!!
+        windows.root.option_add("*TCombobox*Listbox*Font", default_font)
+        windows.root.option_add("*TCombobox*Font", default_font)
 
 def changeFontSizeByDeltha(font, deltha, minSize=-999, maxSize=999):
     size = font['size']
@@ -393,7 +423,7 @@ class Window():
     
     def createMainMenu(self, menuConfig):
         """Create Main menu from the given MenuConfig object."""
-        menu = tk.Menu(self.root)
+        menu = tk.Menu(self.root, font=self.font)
         self._addMenuChilds(menu, menuConfig)
         self.root.config(menu=menu)
         return menu
@@ -407,7 +437,7 @@ class Window():
             if not menuLabel: # empty or None label means a separator
                 menu.add_separator()
             elif len(sub) > 0:  # sub-menu
-                submenu = tk.Menu(self.root, tearoff=0)
+                submenu = tk.Menu(self.root, tearoff=0, font=self.font)
                 menu.add_cascade(label=menuLabel, menu=submenu)
                 self._addMenuChilds(submenu, sub)  # recursive filling
             else:  # menu option

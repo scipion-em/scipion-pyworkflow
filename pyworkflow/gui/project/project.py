@@ -393,22 +393,27 @@ class ProjectManagerWindow(ProjectBaseWindow):
         # Config -> General
         self._openConfigFile(pw.Config.SCIPION_CONFIG)
 
-    def _openConfigFile(self, configFile):
+    @staticmethod
+    def _openConfigFile(configFile):
         """ Open an Scipion configuration file, if the user have one defined,
         also open that one with the defined text editor.
         """
         _open_cmd(pw.getConfigPath(configFile))
 
 
-    def onHosts(self):
+    @staticmethod
+    def onHosts():
         # Config -> Hosts
-        self._openConfigFile(pw.Config.SCIPION_HOSTS)
+        ProjectManagerWindow._openConfigFile(pw.Config.SCIPION_HOSTS)
 
-    def onProtocols(self):
-        self._openConfigFile(pw.Config.SCIPION_PROTOCOLS)
+    @staticmethod
+    def onProtocols():
+        ProjectManagerWindow._openConfigFile(pw.Config.SCIPION_PROTOCOLS)
 
-    def onUser(self):
-        self._openConfigFile(pw.Config.SCIPION_LOCAL_CONFIG)
+    @staticmethod
+    def onUser():
+        ProjectManagerWindow._openConfigFile(pw.Config.SCIPION_LOCAL_CONFIG)
+
     # Moved to scipion-app
     # def onPlugins(self):
     #     # Config -> Plugins

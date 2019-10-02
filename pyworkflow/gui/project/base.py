@@ -30,7 +30,7 @@ import tkinter as tk
 import tkinter.font as tkFont
 
 import pyworkflow as pw
-from pyworkflow.gui import Window, Message, Color
+from pyworkflow.gui import Window, Message, Color, getBigFont
 from pyworkflow.gui.widgets import GradientFrame
 from pyworkflow.utils.properties import Icon
 
@@ -97,9 +97,8 @@ class ProjectBaseWindow(Window):
         versionLabel.grid(row=0, column=1, sticky='sw', pady=20)
         
         # Create the Project Name label
-        self.projNameFont = tkFont.Font(size=-28, family='helvetica')
         projName = getattr(self, 'projName', '')
-        projLabel = tk.Label(header, text=projName, font=self.projNameFont,
+        projLabel = tk.Label(header, text=projName, font=getBigFont(),
                              borderwidth=0, anchor='nw', bg='white',
                              fg=Color.DARK_GREY_COLOR)
         projLabel.grid(row=0, column=2, sticky='sw', padx=(20, 5), pady=10)

@@ -100,7 +100,7 @@ elif os.name == 'posix':  # linux systems and so on
 else:
     def _open_cmd(path, tkParent=None):
         try:
-            tkMessageBox.showerror("Unknown sSstem",#bar title
+            tkMessageBox.showerror("Unknown System",#bar title
                                    'Unknown system, so cannot open %s' % path,#message
                                    parent=tkParent)
             return
@@ -500,7 +500,7 @@ class TextFileViewer(tk.Frame):
         self._allowSearch = allowSearch
         self._allowRefresh = allowRefresh
         self._allowOpen = allowOpen
-        self._font = font # allow a font to be passed as argument to be used
+        self._font = font  # allow a font to be passed as argument to be used
         self.maxSize = maxSize
 
         self.createWidgets(fileList)
@@ -550,7 +550,8 @@ class TextFileViewer(tk.Frame):
         self.searchVar = tk.StringVar()
         if self._allowSearch:
             tk.Label(right, text='Search:').grid(row=0, column=3, padx=5)
-            self.searchEntry = tk.Entry(right, textvariable=self.searchVar)
+            self.searchEntry = tk.Entry(right, textvariable=self.searchVar,
+                                        font=self._font)
             self.searchEntry.grid(row=0, column=4, sticky='ew', padx=5)
             self.searchEntry.bind('<Return>', self.findText)
             self.searchEntry.bind('<KP_Enter>', self.findText)
@@ -735,7 +736,7 @@ def openTextFileEditor(filename, tkParent=None):
     
 def showTextFileViewer(title, filelist, parent=None, main=False):
     w = gui.Window(title, parent, minsize=(600, 400))
-    viewer = TextFileViewer(w.root, filelist, maxSize=-1)
+    viewer = TextFileViewer(w.root, filelist, maxSize=-1, font=w.font)
     viewer.grid(row=0, column=0, sticky='news')
     gui.configureWeigths(w.root)
     w.show()
