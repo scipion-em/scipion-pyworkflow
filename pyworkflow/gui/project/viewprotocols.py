@@ -353,11 +353,20 @@ class SearchProtocolWindow(pwgui.Window):
             weight = 0
 
             # prioritize findings in label
-            if keyword in line2Search[1]:
-                weight += 3
+            if searchtext in line2Search[1]:
+                weight += 10
 
             for value in line2Search[2:]:
-                weight += 1 if searchtext in value else 0
+                weight += 5 if searchtext in value else 0
+
+            if " " in searchtext:
+                for word in searchtext.split():
+                    if word in line2Search[1]:
+                        weight += 3
+
+                    for value in line2Search[2:]:
+                        weight += 1 if word in value else 0
+
 
             return line2Search + (weight,)
 
