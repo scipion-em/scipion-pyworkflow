@@ -26,6 +26,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from pyworkflow import Config
+
 INIT_REFRESH_SECONDS = 3
 
 """
@@ -341,8 +343,8 @@ class SearchProtocolWindow(pwgui.Window):
 
     def _onSearchClick(self, e=None):
         self._resultsTree.clear()
-        keyword = self._searchVar.get().lower()
-        emProtocolsDict = self.domain.getProtocols()
+        keyword = self._searchVar.get().lower().strip()
+        emProtocolsDict = Config.getDomain().getProtocols()
         protList = []
 
         def addSearchWeight(line2Search, searchtext):
@@ -372,7 +374,7 @@ class SearchProtocolWindow(pwgui.Window):
                 label = prot.getClassLabel().lower()
                 line = (key, label,
                         "installed" if prot.isInstalled() else "missing installation",
-                        prot.getHelpText().strip().replace('\r', '').replace('\n', ''),
+                        prot.getHelpText().strip().replace('\r', '').replace('\n', '').lower(),
                         "streamified" if prot.worksInStreaming() else "static")
 
                 line = addSearchWeight(line, keyword)
