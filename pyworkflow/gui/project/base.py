@@ -27,7 +27,6 @@ from __future__ import absolute_import
 import os
 import webbrowser
 import tkinter as tk
-import tkinter.font as tkFont
 
 import pyworkflow as pw
 from pyworkflow.gui import Window, Message, Color, getBigFont

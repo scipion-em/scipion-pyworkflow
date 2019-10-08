@@ -29,7 +29,8 @@
  when there is not access to graphical libraries.
 """
 
-class TclError():
+
+class TclError:
     pass
 
 TK_VERSION = 0

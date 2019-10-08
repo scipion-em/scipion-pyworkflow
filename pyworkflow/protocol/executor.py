@@ -37,14 +37,11 @@ import datetime
 import traceback
 import threading
 import os
-import signal
 import re
 from subprocess import Popen, PIPE
-from multiprocessing.pool import ThreadPool, TimeoutError
 
 import pyworkflow.utils.process as process
 from pyworkflow.utils.path import getParentFolder, removeExt
-from pyworkflow.utils import greenStr
 from . import constants as cts
 
 from .launch import _submit, UNKNOWN_JOBID

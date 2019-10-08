@@ -33,14 +33,10 @@ searching them.
 
 from __future__ import print_function
 
-import os
-import sys
 from os.path import basename
 import argparse
-import unittest
 from collections import OrderedDict
 
-import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.tests as pwtests
 

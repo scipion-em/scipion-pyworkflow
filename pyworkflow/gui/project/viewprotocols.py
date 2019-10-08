@@ -112,9 +112,6 @@ ActionIcons = {
 }
 
 
-
-
-
 class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
     """Provide runs info to populate tree"""
 
@@ -260,7 +257,7 @@ class StepsWindow(pwgui.browser.BrowserWindow):
         canvas = pwgui.Canvas(root, width=600, height=500,
                               tooltipCallback=self._stepTooltip,)
         canvas.grid(row=0, column=0, sticky='nsew')
-        canvas.drawGraph(g, pwgui.graph.LevelTreeLayout())
+        canvas.drawGraph(g, pwgui.LevelTreeLayout())
         w.show()
 
     def _stepTooltip(self, tw, item):
@@ -1166,9 +1163,9 @@ class ProtocolsView(tk.Frame):
         # Check if there are positions stored
         if reorganize or len(self.settings.getNodes()) == 0:
             # Create layout to arrange nodes as a level tree
-            layout = pwgui.graph.LevelTreeLayout()
+            layout = pwgui.LevelTreeLayout()
         else:
-            layout = pwgui.graph.BasicLayout()
+            layout = pwgui.BasicLayout()
 
         # Create empty nodeInfo for new runs
         for node in self.runsGraph.getNodes():

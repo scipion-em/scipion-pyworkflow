@@ -33,7 +33,7 @@ import tkinter.ttk as ttk
 
 from pyworkflow.object import Scalar
 from pyworkflow.mapper import SqliteMapper
-from pyworkflow.utils import prettyDelta, prettySize, dateStr, getExt
+from pyworkflow.utils import prettyDelta
 from . import gui
 from .widgets import Scrollable
 

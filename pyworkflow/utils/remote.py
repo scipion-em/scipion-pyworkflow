@@ -72,7 +72,7 @@ def testHostConfig(host):
         rpath.listdir('.')
         rpath.close()
         return True
-    except Exception, ex:
+    except Exception as ex:
         return False
 
 
@@ -121,7 +121,7 @@ class RemotePath(object):
         """ Check if a remote path exists(like os.path.exists remotely). """
         try:
             self.sftp.stat(path)
-        except IOError, e:
+        except IOError as e:
             if e.errno == errno.ENOENT:
                 return False
         else:

@@ -2,7 +2,7 @@
 
 
 import argparse
-from pyworkflow.em.viewers import EmPlotter
+from pwem.viewers import EmPlotter
 from pyworkflow.gui.plotter import Plotter
 
 

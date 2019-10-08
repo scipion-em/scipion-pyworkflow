@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from pyworkflow.em.viewers import ChimeraVirusClient
+from pwem.viewers import ChimeraVirusClient
 import os#, sys
 import argparse
 #import xmippLib

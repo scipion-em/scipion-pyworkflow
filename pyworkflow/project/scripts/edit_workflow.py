@@ -80,7 +80,7 @@ class EditorProjectWindow(ProjectWindow):
             proj.exportProtocols(proj.getRuns(), jsonFn)
             print("Deleting temporary folder: ", customUserData)
             pwutils.cleanPath(customUserData)
-        except Exception, ex:
+        except Exception as ex:
             print("Error saving the workflow: ", ex)
         ProjectWindow.close(self, e)
 

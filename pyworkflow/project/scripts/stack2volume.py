@@ -2,13 +2,11 @@
 
 from __future__ import print_function
 
-import sys, os
+import sys
 from glob import glob
 
-from pyworkflow.em import Ccp4Header
-from pyworkflow.project import Manager
+from pwem.convert import Ccp4Header
 import pyworkflow.utils as pwutils
-import pyworkflow.em as em
 
 
 def usage(error):

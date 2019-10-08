@@ -32,9 +32,12 @@ List all existing protocols within Scipion
 from __future__ import print_function
 
 import sys
+
+from pwem.protocols import (ProtImport, ProtMicrographs, ProtParticles, Prot2D,
+                            Prot3D)
+from pyworkflow.plugin import Domain
 from pyworkflow.viewer import Viewer
 from pyworkflow.protocol.protocol import Protocol
-import pyworkflow.em as em
 
 
 def getFirstLine(doc):
@@ -63,12 +66,12 @@ if __name__ == '__main__':
     asciidoc = '--asciidoc' in sys.argv
     extended = '--extended' in sys.argv
 
-    emProtocolsDict = em.Domain.getProtocols()
-    emCategories = [('Imports', em.ProtImport, []),
-                    ('Micrographs', em.ProtMicrographs, []),
-                    ('Particles', em.ProtParticles, []),
-                    ('2D', em.Prot2D, []),
-                    ('3D', em.Prot3D, [])]
+    emProtocolsDict = Domain.getProtocols()
+    emCategories = [('Imports', ProtImport, []),
+                    ('Micrographs', ProtMicrographs, []),
+                    ('Particles', ProtParticles, []),
+                    ('2D', Prot2D, []),
+                    ('3D', Prot3D, [])]
     protDict = {}
 
     # Group protocols by package name

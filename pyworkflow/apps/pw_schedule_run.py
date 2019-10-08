@@ -27,14 +27,15 @@
 
 import os
 import time
-import json
 import argparse
 
-from pyworkflow.em import *
 from pyworkflow.protocol import (getProtocolFromDb,
-                                 STATUS_FINISHED, STATUS_ABORTED, STATUS_FAILED)
+                                 STATUS_FINISHED, STATUS_ABORTED, STATUS_FAILED,
+                                 Set, Protocol)
 
 # Add callback for remote debugging if available.
+from pyworkflow.utils import prettyTimestamp, getFileLastModificationDate
+
 try:
     from rpdb2 import start_embedded_debugger
     from signal import signal, SIGUSR2
@@ -93,7 +94,7 @@ class RunScheduler():
         prerequisites = map(int, protocol.getPrerequisites())
 
         def _log(msg):
-            log.write("%s: %s\n" % (pwutils.prettyTimestamp(), msg))
+            log.write("%s: %s\n" % (prettyTimestamp(), msg))
             log.flush()
 
         _log("Scheduling protocol %s, pid: %s, prerequisites: %s"
@@ -113,7 +114,7 @@ class RunScheduler():
             if os.path.exists(protDb):
                 protId = protocol.getObjId()
                 lastChecked = lastCheckedDict.get(protId, None)
-                lastModified = pwutils.getFileLastModificationDate(protDb)
+                lastModified = getFileLastModificationDate(protDb)
 
                 if lastChecked is None or (lastModified > lastChecked):
                     project._updateProtocol(protocol,

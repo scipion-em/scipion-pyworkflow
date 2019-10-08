@@ -77,7 +77,7 @@ class EditorProjectWindow(ProjectWindow):
         try:
             print("Deleting temporary folder: ", customUserData)
             pwutils.cleanPath(customUserData)
-        except Exception, ex:
+        except Exception as ex:
             print("Error: ", ex)
         ProjectWindow.close(self, e)
 
