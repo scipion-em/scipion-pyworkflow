@@ -26,6 +26,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from pyworkflow import Config
+
 INIT_REFRESH_SECONDS = 3
 
 """
@@ -110,9 +112,6 @@ ActionIcons = {
     ACTION_CONTINUE_WORKFLOW: Icon.ACTION_CONTINUE,
     ACTION_STOP_WORKFLOW: Icon.ACTION_STOP_WORKFLOW
 }
-
-
-
 
 
 class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
@@ -260,7 +259,7 @@ class StepsWindow(pwgui.browser.BrowserWindow):
         canvas = pwgui.Canvas(root, width=600, height=500,
                               tooltipCallback=self._stepTooltip,)
         canvas.grid(row=0, column=0, sticky='nsew')
-        canvas.drawGraph(g, pwgui.graph.LevelTreeLayout())
+        canvas.drawGraph(g, pwgui.LevelTreeLayout())
         w.show()
 
     def _stepTooltip(self, tw, item):
@@ -344,8 +343,8 @@ class SearchProtocolWindow(pwgui.Window):
 
     def _onSearchClick(self, e=None):
         self._resultsTree.clear()
-        keyword = self._searchVar.get().lower()
-        emProtocolsDict = self.domain.getProtocols()
+        keyword = self._searchVar.get().lower().strip()
+        emProtocolsDict = Config.getDomain().getProtocols()
         protList = []
 
         def addSearchWeight(line2Search, searchtext):
@@ -353,11 +352,20 @@ class SearchProtocolWindow(pwgui.Window):
             weight = 0
 
             # prioritize findings in label
-            if keyword in line2Search[1]:
-                weight += 3
+            if searchtext in line2Search[1]:
+                weight += 10
 
             for value in line2Search[2:]:
-                weight += 1 if searchtext in value else 0
+                weight += 5 if searchtext in value else 0
+
+            if " " in searchtext:
+                for word in searchtext.split():
+                    if word in line2Search[1]:
+                        weight += 3
+
+                    for value in line2Search[2:]:
+                        weight += 1 if word in value else 0
+
 
             return line2Search + (weight,)
 
@@ -366,7 +374,7 @@ class SearchProtocolWindow(pwgui.Window):
                 label = prot.getClassLabel().lower()
                 line = (key, label,
                         "installed" if prot.isInstalled() else "missing installation",
-                        prot.getHelpText().strip().replace('\r', '').replace('\n', ''),
+                        prot.getHelpText().strip().replace('\r', '').replace('\n', '').lower(),
                         "streamified" if prot.worksInStreaming() else "static")
 
                 line = addSearchWeight(line, keyword)
@@ -1157,9 +1165,9 @@ class ProtocolsView(tk.Frame):
         # Check if there are positions stored
         if reorganize or len(self.settings.getNodes()) == 0:
             # Create layout to arrange nodes as a level tree
-            layout = pwgui.graph.LevelTreeLayout()
+            layout = pwgui.LevelTreeLayout()
         else:
-            layout = pwgui.graph.BasicLayout()
+            layout = pwgui.BasicLayout()
 
         # Create empty nodeInfo for new runs
         for node in self.runsGraph.getNodes():

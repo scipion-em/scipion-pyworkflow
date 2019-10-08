@@ -30,8 +30,7 @@ from __future__ import print_function
 import os
 import sys
 
-from pyworkflow.em.viewers import DataView
-from pyworkflow.gui.tree import DbTreeProvider
+from pwem.viewers import DataView
 from pyworkflow.gui.browser import FileBrowserWindow
 
     

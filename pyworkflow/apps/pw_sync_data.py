@@ -42,8 +42,8 @@ from subprocess import call
 import time
 import argparse
 import hashlib
-from urllib2 import urlopen
 import getpass
+from urllib.request import urlopen
 
 import pyworkflow as pw
 from pyworkflow.utils import redB, red, green, yellow
@@ -294,7 +294,7 @@ def download(dataset, destination=None, url=None, verbose=False):
 
             done += inc
             if verbose:
-                print redB("%3d%% " % (100 * done)), fname
+                print(redB("%3d%% " % (100 * done)), fname)
             else:
                 sys.stdout.write(redB("#") * (int(50*done)-int(50*(done-inc))))
                 sys.stdout.flush()
@@ -304,7 +304,6 @@ def download(dataset, destination=None, url=None, verbose=False):
             print("Destination: %s" % fpath)
             if ask("Continue downloading? (y/[n]): ", ['y', 'n', '']) != 'y':
                 return
-    print
 
 
 def update(dataset, workingCopy=None, url=None, verbose=False):
@@ -436,10 +435,9 @@ def ask(question="Continue? (y/n): ", allowed=None):
     """ Ask the question until it returns one of the allowed responses """
 
     while True:
-        ans = raw_input(question)
+        ans = input(question)
         if ans.lower() in (allowed if allowed else ['y', 'n']):
             return ans
-
 
 
 if __name__ == "__main__":

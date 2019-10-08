@@ -35,8 +35,6 @@ import tkinter as tk
 #TODO: all LevelTree code is DEPRECATED...remove it after cleanning
 # and include all code from graph_layout
 
-from .graph_layout import *
-
 
 class LevelTree(object):
     """ Class to render the Graph in a Canvas. """
