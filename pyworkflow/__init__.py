@@ -69,7 +69,7 @@ class Config:
     SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
     SCIPION_LOGO = __get('SCIPION_LOGO',
-                         'scipion_logo.png')
+                         'scipion_logo.gif')
     # Where is the input data for tests...also where it will be downloaded
     SCIPION_TESTS = __get('SCIPION_TESTS',
                           os.path.join(SCIPION_HOME, 'data', 'tests'))

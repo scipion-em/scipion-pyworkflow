@@ -757,7 +757,7 @@ class ImageBox(Item):
         from pyworkflow.gui import getImage, getImageFromPath
         
         if imgPath is None:
-            self.image = getImage('no-image.png')
+            self.image = getImage('no-image.gif')
         else:
             self.image = getImageFromPath(imgPath)
 

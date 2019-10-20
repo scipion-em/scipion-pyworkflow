@@ -181,7 +181,7 @@ class ProjectConfig(pwobj.OrderedObject):
     """A simple base class to store ordered parameters"""
     def __init__(self, **args):
         pwobj.OrderedObject.__init__(self, **args)
-        self.logo = pwobj.String('scipion_logo_small.png')
+        self.logo = pwobj.String('scipion_logo_small.gif')
         # Do not store this object, unless we implement some kind of
         # icon customization
         self._objDoStore = False
@@ -568,7 +568,7 @@ class ProtocolTreeConfig:
                 # If it's a new protocol
                 if v.isNew() and v.isInstalled():
                     # add the new icon
-                    protLine["icon"] = "newProt.png"
+                    protLine["icon"] = "newProt.gif"
 
                 cls.__addToTree(packageMenu, protLine)
 
