@@ -74,6 +74,7 @@ class Canvas(tk.Canvas, Scrollable):
         self.bind("<Button-1>", self.onClick)
         self.bind("<ButtonRelease-1>", self.onButton1Release)
         self.bind("<Button-3>", self.onRightClick)
+        self.bind("<Button-2>", self.onRightClick)
         self.bind("<Double-Button-1>", self.onDoubleClick)
         self.bind("<B1-Motion>", self.onDrag)
         # Hide the right-click menu

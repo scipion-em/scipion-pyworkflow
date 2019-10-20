@@ -121,7 +121,7 @@ class ProjectWindow(ProjectBaseWindow):
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
                                    minsize=(90,50), icon=Icon.SCIPION_ICON_PROJ)
-        self.root.attributes("-zoomed", True)
+        self.root.state("zoomed")
 
         self.switchView(VIEW_PROTOCOLS)
 
