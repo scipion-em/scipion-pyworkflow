@@ -33,7 +33,6 @@ from __future__ import absolute_import
 
 import math
 import tkinter as tk
-import tkinter.font as tkFont
 import operator
 
 from . import gui, getDefaultFont, cfgFontSize

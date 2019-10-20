@@ -296,7 +296,7 @@ class ProjectWindow(ProjectBaseWindow):
             project = self.project
 
             if os.path.isfile(inputStrId) and os.path.exists(inputStrId):
-                from pyworkflow.em import loadSetFromDb
+                from pwem.utils import loadSetFromDb
                 inputObj = loadSetFromDb(inputStrId)
             else:
                 inputId = int(inputStrId)
@@ -435,7 +435,7 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
             tokens = shlex.split(msg)
             if msg.startswith('run protocol'):
                 protocolName = tokens[2]
-                from pyworkflow.em import Domain
+                from pyworkflow.plugin import Domain
                 protocolClass = Domain.getProtocols()[protocolName]
                 # Create the new protocol instance and set the input values
                 protocol = project.newProtocol(protocolClass)

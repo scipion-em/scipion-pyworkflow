@@ -52,6 +52,10 @@ current Python environment. During development, I tend to set the PYTHONPATH:
     python pyworkflow/apps/pw_project.py TestProtocolOutputs
 
 
-  
+Installation
+............
 
-
+Using a python virtual environment you might need:
+# For virtual env in ubuntu:
+# sudo apt-get install python3-dev
+# sudo apt-get install python3-tk

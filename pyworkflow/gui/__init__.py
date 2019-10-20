@@ -29,5 +29,10 @@ from __future__ import absolute_import
 from .gui import *
 from .canvas import *
 from .widgets import *
+from .graph import *
+from .graph_layout import *
+from .tree import *
+from .browser import *
+from .text import *
 
 from . import tooltip

@@ -28,7 +28,6 @@ from __future__ import print_function
 
 import sys
 import os
-from time import sleep
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils

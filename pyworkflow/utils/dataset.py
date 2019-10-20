@@ -362,7 +362,7 @@ class SqliteDataSet(DataSet):
         
         checkedImgCols = {} # Check if the image columns are volumes
         # FIXME: Move this to scipion-em? Maybe remove the whole module that is not used?
-        from pyworkflow.em.convert import ImageHandler
+        from pwem.convert import ImageHandler
         ih = ImageHandler() 
         
         # Populate the table in the DataSet
