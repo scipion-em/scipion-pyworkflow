@@ -254,7 +254,7 @@ def download(dataset, destination=None, url=None, verbose=False):
     destination = destination or os.environ['SCIPION_TESTS']
 
     # First make sure that we ask for a known dataset.
-    if dataset not in [x.strip('./\n') for x in urlopen('%s/MANIFEST' % url)]:
+    if dataset not in [x.decode('utf-8').strip('./\n') for x in urlopen('%s/MANIFEST' % url)]:
         print("Unknown dataset: %s" % red(dataset))
         print("Use --list to see the available datasets.")
         return
@@ -319,7 +319,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     # Read contents of *remote* MANIFEST file, and create a dict {fname: md5}
     manifest = urlopen('%s/%s/MANIFEST' % (url, dataset)).readlines()
-    md5sRemote = dict(x.strip().split() for x in manifest)
+    md5sRemote = dict(x.decode("utf-8").strip().split() for x in manifest)
 
     # Update and read contents of *local* MANIFEST file, and create a dict
     datasetFolder = join(workingCopy, dataset)
@@ -425,8 +425,8 @@ def md5sum(fname):
     """ Return the md5 hash of file fname """
 
     mhash = hashlib.md5()
-    with open(fname) as f:
-        for chunk in iter(lambda: f.read(128 * mhash.block_size), ''):
+    with open(fname, 'rb') as f:
+        for chunk in iter(lambda: f.read(128 * mhash.block_size), b""):
             mhash.update(chunk)
     return mhash.hexdigest()
 
