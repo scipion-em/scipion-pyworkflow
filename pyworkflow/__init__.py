@@ -58,7 +58,7 @@ __version__ = LAST_VERSION + 'a1'
 
 HOME = os.path.abspath(os.path.dirname(__file__))
 
-PYTHON = os.environ.get("SCIPION_PYTHON", 'python')
+PYTHON = os.environ.get("SCIPION_PYTHON", 'python3')
 
 
 class Config:
@@ -152,8 +152,11 @@ def getScipionPath(*paths):
 
 
 def getScipionScript():
-    return getScipionPath('scipion')
-
+    # This is no longer valid and pyworkflow should not be providing this,
+    # But other pyworkflow code line DataSets are using this.
+    # This need to be refactored
+    # return getScipionPath('scipion')
+    return "-m scipion"
 
 def getConfigPath(*paths):
     return getScipionPath('config', *paths)

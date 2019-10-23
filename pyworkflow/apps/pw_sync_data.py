@@ -37,42 +37,17 @@ from __future__ import division
 
 import sys
 import os
+from functools import partial
 from os.path import join, isdir, exists, relpath, dirname
 from subprocess import call
 import time
 import argparse
 import hashlib
 import getpass
-from urllib.request import urlopen
+from urllib.request import urlopen, urlretrieve
 
 import pyworkflow as pw
 from pyworkflow.utils import redB, red, green, yellow
-
-
-scipion_logo = """
-QQQQQQQQQT!^'::""?$QQQQQQ  S   S   S
-QQQQQQQY`          ]4QQQQ  C   C   C
-QQQQQD'              "$QQ  I   I   I
-QQQQP                 "4Q  P   P   P
-QQQP        :.,        -$  I   I   I
-QQD       awQQQQwp      )  O   O   O
-QQ'     qmQQQWQQQQg,   jm  N   N   N
-Qf     QQQD^   -?$QQp jQQ ################################################
-Q`    qQQ!        4WQmQQQ # Integrating image processing packages for EM #
-F     QQ[          ~)WQQQ ################################################
-[    ]QP             4WQQ
-f    dQ(             -$QQ Data synchronization script
-'    QQ              qQQQ
-.   )QW            _jQQQQ
--   =QQ           jmQQQQQ
-/   -QQ           QQQQQQQ
-f    4Qr    jQk   )WQQQQQ
-[    ]Qm    ]QW    "QQQQQ
-h     $Qc   jQQ     ]$QQQ
-Q,  :aQQf qyQQQL    _yQQQ
-QL jmQQQgmQQQQQQmaaaQWQQQ
-"""
-
 
 def main():
     # Get arguments.
@@ -254,7 +229,8 @@ def download(dataset, destination=None, url=None, verbose=False):
     destination = destination or os.environ['SCIPION_TESTS']
 
     # First make sure that we ask for a known dataset.
-    if dataset not in [x.strip('./\n') for x in urlopen('%s/MANIFEST' % url)]:
+    print ('%s/MANIFEST' % url)
+    if dataset not in [x.decode('utf-8').strip('./\n') for x in urlopen('%s/MANIFEST' % url)]:
         print("Unknown dataset: %s" % red(dataset))
         print("Use --list to see the available datasets.")
         return
@@ -319,7 +295,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     # Read contents of *remote* MANIFEST file, and create a dict {fname: md5}
     manifest = urlopen('%s/%s/MANIFEST' % (url, dataset)).readlines()
-    md5sRemote = dict(x.strip().split() for x in manifest)
+    md5sRemote = dict(x.decode('utf-8').strip().split() for x in manifest)
 
     # Update and read contents of *local* MANIFEST file, and create a dict
     datasetFolder = join(workingCopy, dataset)
@@ -332,6 +308,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
         createMANIFEST(datasetFolder)
     md5sLocal = dict(x.split() for x in open(join(datasetFolder, 'MANIFEST')))
 
+    print(md5sLocal)
     # Check that all the files mentioned in MANIFEST are up-to-date
     print("Verifying MD5s...")
 
@@ -349,8 +326,10 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
                 vlog("\r  %s  %s  (downloading... " % (red("XX"), fname))
                 if not isdir(dirname(fpath)):
                     os.makedirs(dirname(fpath))
-                open(fpath, 'w').writelines(
-                    urlopen('%s/%s/%s' % (url, dataset, fname)))
+
+                urlretrieve('%s/%s/%s' % (url, dataset, fname)
+                            , fpath)
+
                 vlog("done)\n")
                 filesUpdated += 1
         except Exception as e:
@@ -361,7 +340,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     # Save the new MANIFEST file in the folder of the downloaded dataset
     if filesUpdated > 0:
-        open(join(datasetFolder, 'MANIFEST'), 'w').writelines(manifest)
+        open(join(datasetFolder, 'MANIFEST'), 'w').writelines(manifest.decode('utf-8'))
 
     if taintedMANIFEST:
         print("Some files could not be updated. Regenerating local MANIFEST ...")
@@ -424,12 +403,11 @@ def createMANIFEST(path):
 def md5sum(fname):
     """ Return the md5 hash of file fname """
 
-    mhash = hashlib.md5()
-    with open(fname) as f:
-        for chunk in iter(lambda: f.read(128 * mhash.block_size), ''):
-            mhash.update(chunk)
-    return mhash.hexdigest()
-
+    with open(fname, mode='rb') as f:
+        d = hashlib.md5()
+        for buf in iter(partial(f.read, 128), b''):
+            d.update(buf)
+    return d.hexdigest()
 
 def ask(question="Continue? (y/n): ", allowed=None):
     """ Ask the question until it returns one of the allowed responses """
