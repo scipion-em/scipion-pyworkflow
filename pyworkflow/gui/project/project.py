@@ -41,6 +41,7 @@ import tempfile
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
+from pyworkflow.gui.project.utils import OS
 from pyworkflow.project import MenuConfig, ProjectSettings
 from pyworkflow.gui import Message, Icon
 from pyworkflow.gui.browser import FileBrowserWindow
@@ -121,7 +122,8 @@ class ProjectWindow(ProjectBaseWindow):
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
                                    minsize=(90,50), icon=Icon.SCIPION_ICON_PROJ)
-        self.root.state("zoomed")
+
+        OS.handler().maximizeWindow(self.root)
 
         self.switchView(VIEW_PROTOCOLS)
 
