@@ -758,7 +758,7 @@ class Protocol(Step):
         # Iterate old Style:
         domain = self.getClassDomain()
         for key, attr in self.getAttributes():
-            if isinstance(attr, domain._objectClass):
+            if isinstance(attr, type(domain._objectClass)):
                 yield key, attr
 
     def isInStreaming(self):

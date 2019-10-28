@@ -46,6 +46,7 @@ import getpass
 from urllib.request import urlopen
 
 import pyworkflow as pw
+import requests
 from pyworkflow.utils import redB, red, green, yellow
 
 
@@ -85,7 +86,7 @@ def main():
         sys.exit(0)
 
     if args.check_all:
-        datasets = [x.strip('./\n') for x in urlopen('%s/MANIFEST' % args.url)]
+        datasets = [x.decode("utf-8").strip('./\n') for x in urlopen('%s/MANIFEST' % args.url)]
         print('Checking datasets: %s' % ' '.join(datasets))
 
         all_uptodate = True
@@ -204,7 +205,7 @@ def listDatasets(url):
     try:
         print("\nRemote datasets in %s" % yellow(url))
         for line in sorted(urlopen('%s/MANIFEST' % url)):
-            print("  * %s" % line.strip('./\n'))
+            print("  * %s" % line.decode("utf-8").strip('./\n'))
     except Exception as e:
         print("Error reading %s (%s)" % (url, e))
 
@@ -223,7 +224,7 @@ def check(dataset, url, verbose=False, updateMANIFEST=False):
         vlog("(not updating local MANIFEST) ")
 
     try:
-        md5sRemote = dict(x.split() for x in
+        md5sRemote = dict(x.decode("utf-8").split() for x in
                           urlopen('%s/%s/MANIFEST' % (url, dataset)))
 
         md5sLocal = dict(x.split() for x in
@@ -349,8 +350,9 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
                 vlog("\r  %s  %s  (downloading... " % (red("XX"), fname))
                 if not isdir(dirname(fpath)):
                     os.makedirs(dirname(fpath))
-                open(fpath, 'w').writelines(
-                    urlopen('%s/%s/%s' % (url, dataset, fname)))
+                urlFile = '%s/%s/%s' % (url, dataset, fname)
+                myfile = requests.get(urlFile)
+                open(fpath, 'wb').write(myfile.content)
                 vlog("done)\n")
                 filesUpdated += 1
         except Exception as e:
@@ -361,7 +363,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     # Save the new MANIFEST file in the folder of the downloaded dataset
     if filesUpdated > 0:
-        open(join(datasetFolder, 'MANIFEST'), 'w').writelines(manifest)
+        open(join(datasetFolder, 'MANIFEST'), 'w').writelines(md5sRemote)
 
     if taintedMANIFEST:
         print("Some files could not be updated. Regenerating local MANIFEST ...")
