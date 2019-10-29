@@ -113,3 +113,9 @@ def isSameFunction(function1, function2):
     return function1.__code__.co_code == function2.__code__.co_code
 
 
+def isModuleAFolder(modulename):
+    """ Returns True if a python module is a folder"""
+    # So far e can test for the filename
+    module = sys.modules[modulename]
+
+    return module.__file__.endswith("__init__.py")
