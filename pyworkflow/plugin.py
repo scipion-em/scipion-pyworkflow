@@ -410,7 +410,6 @@ class Domain:
                 return importlib.import_module(completeModuleText)
         except Exception as e:
             msg = str(e)
-            print(e)
             # FIXME: The following is a quick and dirty way to filter
             # when the submodule is not present
             if msg != 'No module named \'%s\'' % completeModuleText:
