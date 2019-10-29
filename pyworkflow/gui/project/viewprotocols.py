@@ -105,8 +105,8 @@ ActionIcons = {
     ACTION_RESULTS: Icon.ACTION_RESULTS,
     ACTION_EXPORT: Icon.ACTION_EXPORT,
     ACTION_EXPORT_UPLOAD: Icon.ACTION_EXPORT_UPLOAD,
-    ACTION_COLLAPSE: 'fa-minus-square.png',
-    ACTION_EXPAND: 'fa-plus-square.png',
+    ACTION_COLLAPSE: 'fa-minus-square.gif',
+    ACTION_EXPAND: 'fa-plus-square.gif',
     ACTION_LABELS: Icon.TAGS,
     ACTION_RESTART_WORKFLOW: Icon.ACTION_EXECUTE,
     ACTION_CONTINUE_WORKFLOW: Icon.ACTION_CONTINUE,
@@ -1898,7 +1898,7 @@ class ProtocolsView(tk.Frame):
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_STOPPED_WORKFLOW_FAILED,
                 Message.TITLE_STOPPED_WORKFLOW_FAILED + msg,
-                'fa-times-circle_alert.png')
+                'fa-times-circle_alert.gif')
 
     def _launchWorkFlow(self, action):
         """
@@ -1937,7 +1937,7 @@ class ProtocolsView(tk.Frame):
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
                 Message.TITLE_LAUNCHED_WORKFLOW_FAILED + msg,
-                'fa-times-circle_alert.png')
+                'fa-times-circle_alert.gif')
 
     def _selectLabels(self):
         selectedNodes = self._getSelectedNodes()

@@ -181,7 +181,7 @@ setup(
     # MANIFEST.in as well.
     # include_package_data=True,
     #package_data={  # Optional
-    #   'relion': ['relion_logo.png', 'protocols.conf'],
+    #   'relion': ['relion_logo.gif', 'protocols.conf'],
     #},
 
     # Although 'package_data' is the preferred approach, in some case you may

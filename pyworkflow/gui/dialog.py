@@ -297,7 +297,7 @@ class YesNoDialog(MessageDialog):
             buttonList.append(('Cancel', RESULT_CANCEL))
             
         MessageDialog.__init__(self, master, title, msg, 
-                               'fa-exclamation-triangle_alert.png', default='No',
+                               'fa-exclamation-triangle_alert.gif', default='No',
                                buttons=buttonList)        
 
 
@@ -417,13 +417,13 @@ def askYesNoCancel(title, msg, parent):
     return d.result
 
 def showInfo(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-info-circle_alert.png')
+    MessageDialog(parent, title, msg, 'fa-info-circle_alert.gif')
 
 def showWarning(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-exclamation-triangle_alert.png')
+    MessageDialog(parent, title, msg, 'fa-exclamation-triangle_alert.gif')
     
 def showError(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-times-circle_alert.png')
+    MessageDialog(parent, title, msg, 'fa-times-circle_alert.gif')
 
 
 def askString(title, label, parent, entryWidth=20, defaultValue='', headerLabel=None):
@@ -676,7 +676,7 @@ class FileBrowseDialog(Dialog):
         self._createTree(bodyFrame)
         if self.message:
             label = tk.Label(bodyFrame, text=self.message, bg='white',
-                     image=self.getImage('fa-lightbulb-o.png'), compound=tk.LEFT)
+                     image=self.getImage('fa-lightbulb-o.gif'), compound=tk.LEFT)
             label.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
         self.initial_focus = self.tree
         

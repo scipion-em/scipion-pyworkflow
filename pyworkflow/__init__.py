@@ -58,7 +58,7 @@ __version__ = LAST_VERSION + 'a1'
 
 HOME = os.path.abspath(os.path.dirname(__file__))
 
-PYTHON = os.environ.get("SCIPION_PYTHON", 'python')
+PYTHON = os.environ.get("SCIPION_PYTHON", 'python3')
 
 
 class Config:
@@ -69,7 +69,7 @@ class Config:
     SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
     SCIPION_LOGO = __get('SCIPION_LOGO',
-                         'scipion_logo.png')
+                         'scipion_logo.gif')
     # Where is the input data for tests...also where it will be downloaded
     SCIPION_TESTS = __get('SCIPION_TESTS',
                           os.path.join(SCIPION_HOME, 'data', 'tests'))
@@ -151,8 +151,11 @@ def getScipionPath(*paths):
 
 
 def getScipionScript():
-    return getScipionPath('scipion')
-
+    # This is no longer valid and pyworkflow should not be providing this,
+    # But other pyworkflow code line DataSets are using this.
+    # This need to be refactored
+    # return getScipionPath('scipion')
+    return "-m scipion"
 
 def getConfigPath(*paths):
     return getScipionPath('config', *paths)

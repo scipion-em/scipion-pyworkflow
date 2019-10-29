@@ -29,7 +29,7 @@ from pyworkflow.plugin import Plugin
 from .bibtex import _bibtex
 
 
-_logo = 'scipion_logo.png'
+_logo = 'scipion_logo.gif'
 _references = ['delaRosaTrevin201693']
 
 

@@ -110,7 +110,7 @@ class ObjectBrowser(tk.Frame):
         self._fillRightBottom(bottom)
         
     def _fillRightTop(self, top):
-        self.noImage = self.getImage('no-image128.png')
+        self.noImage = self.getImage('no-image128.gif')
         self.label = tk.Label(top, image=self.noImage)
         self.label.grid(row=0, column=0, sticky='news')
         
@@ -198,7 +198,7 @@ class FileHandler(object):
     def getFilePreview(self, objFile):
         """ Return the preview image and description for the specific object."""
         if objFile.isDir():
-            return 'fa-folder-open.png', None
+            return 'fa-folder-open.gif', None
         return None, None
     
     def getFileActions(self, objFile):

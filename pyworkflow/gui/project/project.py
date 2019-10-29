@@ -41,6 +41,7 @@ import tempfile
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
+from pyworkflow.gui.project.utils import OS
 from pyworkflow.project import MenuConfig, ProjectSettings
 from pyworkflow.gui import Message, Icon
 from pyworkflow.gui.browser import FileBrowserWindow
@@ -79,9 +80,9 @@ class ProjectWindow(ProjectBaseWindow):
 
         projMenu = menu.addSubMenu('Project')
         projMenu.addSubMenu('Browse files', 'browse',
-                            icon='fa-folder-open.png')
+                            icon='fa-folder-open.gif')
         projMenu.addSubMenu('Remove temporary files', 'delete',
-                            icon='fa-trash-o.png')
+                            icon='fa-trash-o.gif')
         projMenu.addSubMenu('Manage project labels', 'labels',
                             icon=Icon.TAGS)
         projMenu.addSubMenu('Toggle color mode', 'color_mode',
@@ -92,22 +93,22 @@ class ProjectWindow(ProjectBaseWindow):
                             shortCut="Ctrl+f")
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
-                            icon='fa-download.png')
+                            icon='fa-download.gif')
         projMenu.addSubMenu('Search workflow', 'search_workflow',
-                            icon = 'fa-search.png')
+                            icon = 'fa-search.gif')
         projMenu.addSubMenu('Export tree graph', 'export_tree')
         projMenu.addSubMenu('', '')  # add separator
-        projMenu.addSubMenu('Notes', 'notes', icon='fa-pencil.png')
+        projMenu.addSubMenu('Notes', 'notes', icon='fa-pencil.gif')
         projMenu.addSubMenu('', '')  # add separator
-        projMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.png')
+        projMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
 
         helpMenu = menu.addSubMenu('Help')
         helpMenu.addSubMenu('Online help', 'online_help',
-                            icon='fa-external-link.png')
+                            icon='fa-external-link.gif')
         helpMenu.addSubMenu('About', 'about',
-                            icon='fa-question-circle.png')
+                            icon='fa-question-circle.gif')
         helpMenu.addSubMenu('Contact support', 'contact_us',
-                            icon='fa-question-circle.png')
+                            icon='fa-question-circle.gif')
 
         self.menuCfg = menu
         # TODO: up to here
@@ -121,7 +122,8 @@ class ProjectWindow(ProjectBaseWindow):
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
                                    minsize=(90,50), icon=Icon.SCIPION_ICON_PROJ)
-        self.root.attributes("-zoomed", True)
+
+        OS.handler().maximizeWindow(self.root)
 
         self.switchView(VIEW_PROTOCOLS)
 
@@ -350,8 +352,8 @@ class ProjectManagerWindow(ProjectBaseWindow):
         menu = MenuConfig()
 
         fileMenu = menu.addSubMenu('File')
-        fileMenu.addSubMenu('Browse files', 'browse', icon='fa-folder-open.png')
-        fileMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.png')
+        fileMenu.addSubMenu('Browse files', 'browse', icon='fa-folder-open.gif')
+        fileMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
 
         confMenu = menu.addSubMenu('Configuration')
         confMenu.addSubMenu('General', 'general')
@@ -361,8 +363,8 @@ class ProjectManagerWindow(ProjectBaseWindow):
         confMenu.addSubMenu('User', 'user')
 
         helpMenu = menu.addSubMenu('Help')
-        helpMenu.addSubMenu('Online help', 'online_help', icon='fa-external-link.png')
-        helpMenu.addSubMenu('About', 'about', icon='fa-question-circle.png')
+        helpMenu.addSubMenu('Online help', 'online_help', icon='fa-external-link.gif')
+        helpMenu.addSubMenu('About', 'about', icon='fa-question-circle.gif')
 
         self.menuCfg = menu
         self.generalCfg = settings.getConfig()

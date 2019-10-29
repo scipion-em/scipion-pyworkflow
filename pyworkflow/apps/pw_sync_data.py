@@ -43,37 +43,10 @@ import time
 import argparse
 import hashlib
 import getpass
-from urllib.request import urlopen
+from urllib.request import urlopen, urlretrieve
 
 import pyworkflow as pw
-import requests
 from pyworkflow.utils import redB, red, green, yellow
-
-
-scipion_logo = """
-QQQQQQQQQT!^'::""?$QQQQQQ  S   S   S
-QQQQQQQY`          ]4QQQQ  C   C   C
-QQQQQD'              "$QQ  I   I   I
-QQQQP                 "4Q  P   P   P
-QQQP        :.,        -$  I   I   I
-QQD       awQQQQwp      )  O   O   O
-QQ'     qmQQQWQQQQg,   jm  N   N   N
-Qf     QQQD^   -?$QQp jQQ ################################################
-Q`    qQQ!        4WQmQQQ # Integrating image processing packages for EM #
-F     QQ[          ~)WQQQ ################################################
-[    ]QP             4WQQ
-f    dQ(             -$QQ Data synchronization script
-'    QQ              qQQQ
-.   )QW            _jQQQQ
--   =QQ           jmQQQQQ
-/   -QQ           QQQQQQQ
-f    4Qr    jQk   )WQQQQQ
-[    ]Qm    ]QW    "QQQQQ
-h     $Qc   jQQ     ]$QQQ
-Q,  :aQQf qyQQQL    _yQQQ
-QL jmQQQgmQQQQQQmaaaQWQQQ
-"""
-
 
 def main():
     # Get arguments.
@@ -350,9 +323,10 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
                 vlog("\r  %s  %s  (downloading... " % (red("XX"), fname))
                 if not isdir(dirname(fpath)):
                     os.makedirs(dirname(fpath))
-                urlFile = '%s/%s/%s' % (url, dataset, fname)
-                myfile = requests.get(urlFile)
-                open(fpath, 'wb').write(myfile.content)
+
+                urlretrieve('%s/%s/%s' % (url, dataset, fname)
+                            , fpath)
+
                 vlog("done)\n")
                 filesUpdated += 1
         except Exception as e:
