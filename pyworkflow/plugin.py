@@ -247,8 +247,8 @@ class Domain:
         """ Return the name of this Domain. """
         return cls._name
 
-    @classmethod
-    def importFromPlugin(cls, module, method='', errorMsg='', doRaise=False):
+    @staticmethod
+    def importFromPlugin(module, method='', errorMsg='', doRaise=False):
         """ This method try to import either the method from the module/plugin
             or the whole module/plugin and returns what is imported if not fails.
             When the importation fails (due to the plugin or the method is not found),
@@ -264,7 +264,7 @@ class Domain:
         except Exception as e:
             plugName = module.split('.')[0]
             errMsg = str(e) if errorMsg == '' else "%s. %s" % (str(e), errorMsg)
-            cls.__pluginNotFound(plugName, errMsg, doRaise)
+            Domain.__pluginNotFound(plugName, errMsg, doRaise)
 
     @classmethod
     def findClass(cls, className):
@@ -360,7 +360,7 @@ class Domain:
 
     # ---------- Private methods of Domain class ------------------------------
     @staticmethod
-    def __pluginNotFound(cls, plugName, errorMsg='', doRaise=False):
+    def __pluginNotFound(plugName, errorMsg='', doRaise=False):
         """ Prints or raise (depending on the doRaise) telling why it is failing
         """
         hint = ("   Check the plugin manager (Configuration->Plugins in "
@@ -421,8 +421,8 @@ class Domain:
         """ Return True if the module is a Scipion plugin. """
         return m.__name__ in cls._plugins
 
-    @classmethod
-    def __findWizardsFromDict(cls, protocol, environment, wizDict):
+    @staticmethod
+    def __findWizardsFromDict(protocol, environment, wizDict):
         wizards = {}
         baseClasses = [c.__name__ for c in protocol.getClass().mro()]
 
