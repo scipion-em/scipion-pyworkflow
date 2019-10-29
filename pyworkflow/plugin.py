@@ -405,15 +405,16 @@ class Domain:
     @staticmethod
     def __getSubmodule(name, subname):
         try:
+            completeModuleText = '%s.%s' % (name, subname)
             if pwutils.isModuleAFolder(name):
-                return importlib.import_module('%s.%s' % (name, subname))
+                return importlib.import_module(completeModuleText)
         except Exception as e:
-            print(e.__class__)
             msg = str(e)
+            print(e)
             # FIXME: The following is a quick and dirty way to filter
             # when the submodule is not present
-            if msg != 'No module named %s' % subname:
-                Domain.__pluginNotFound("%s.%s" % (name, subname), msg)
+            if msg != 'No module named \'%s\'' % completeModuleText:
+                Domain.__pluginNotFound(completeModuleText, msg)
             return None
 
     @classmethod
