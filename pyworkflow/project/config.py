@@ -36,6 +36,8 @@ from configparser import ConfigParser  # FIXME Does not work in Python3
 import pyworkflow as pw
 import pyworkflow.object as pwobj
 from pyworkflow.mapper import SqliteMapper
+from pyworkflow.plugin import Domain
+from pyworkflow.utils import isModuleAFolder
 
 
 class ProjectSettings(pwobj.OrderedObject):
@@ -601,7 +603,7 @@ class ProtocolTreeConfig:
                         cls.__findTreeLocation(menu.childs, children, menu)
 
     @classmethod
-    def load(cls, Domain, protocolsConf):
+    def load(cls, domain, protocolsConf):
         """ Read the protocol configuration from a .conf file similar to the
         one in scipion/config/protocols.conf,
         which is the default one when no file is passed.
@@ -612,14 +614,19 @@ class ProtocolTreeConfig:
         cls.__addProtocolsFromConf(protocols, protocolsConf)
 
         # Read the protocols.conf of any installed plugin
-        pluginDict = Domain.getPlugins()
+        pluginDict = domain.getPlugins()
         pluginList = pluginDict.keys()
         for pluginName in pluginList:
             try:
-                # Locate the plugin protocols.conf file
-                protocolsConfPath = os.path.join(pluginDict[pluginName].__path__[0],
-                                                 cls.PLUGIN_CONFIG_PROTOCOLS)
-                cls.__addProtocolsFromConf(protocols, protocolsConfPath)
+
+                # if the plugin has a path
+                if isModuleAFolder(pluginName):
+                    # Locate the plugin protocols.conf file
+                    protocolsConfPath = os.path.join(
+                                            pluginDict[pluginName].__path__[0],
+                                            cls.PLUGIN_CONFIG_PROTOCOLS)
+                    cls.__addProtocolsFromConf(protocols, protocolsConfPath)
+
             except Exception as e:
                 print('Failed to read settings. The reported error was:\n  %s\n'
                       'To solve it, fix %s and run again.' % (

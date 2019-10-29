@@ -23,9 +23,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
-from __future__ import absolute_import
 
+import pyworkflow
 from pyworkflow.plugin import Plugin
 from .bibtex import _bibtex
 
@@ -41,3 +40,6 @@ class Plugin(Plugin):
         """ This function will be used to check if package is properly
         installed. """
         return []  # No errors
+
+
+pyworkflow.plugin.Domain.registerPlugin(__name__)

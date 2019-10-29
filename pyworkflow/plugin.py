@@ -51,7 +51,7 @@ class Domain:
     # The following classes should be defined in subclasses of Domain
     _name = None
     _protocolClass = None
-    _objectClass = None
+    _objectClass = pwobj.Object
     _viewerClass = None
     _wizardClass = None
     _baseClasses = {}  # Update this with the base classes of the Domain
@@ -359,7 +359,7 @@ class Domain:
         print("     wizards: %s" % len(cls._wizards))
 
     # ---------- Private methods of Domain class ------------------------------
-    @classmethod
+    @staticmethod
     def __pluginNotFound(cls, plugName, errorMsg='', doRaise=False):
         """ Prints or raise (depending on the doRaise) telling why it is failing
         """
@@ -402,16 +402,18 @@ class Domain:
         else:
             print(raiseMsg)
 
-    @classmethod
-    def __getSubmodule(cls, name, subname):
+    @staticmethod
+    def __getSubmodule(name, subname):
         try:
-            return importlib.import_module('%s.%s' % (name, subname))
+            if pwutils.isModuleAFolder(name):
+                return importlib.import_module('%s.%s' % (name, subname))
         except Exception as e:
+            print(e.__class__)
             msg = str(e)
             # FIXME: The following is a quick and dirty way to filter
             # when the submodule is not present
             if msg != 'No module named %s' % subname:
-                cls.__pluginNotFound("%s.%s" % (name, subname), msg)
+                Domain.__pluginNotFound("%s.%s" % (name, subname), msg)
             return None
 
     @classmethod

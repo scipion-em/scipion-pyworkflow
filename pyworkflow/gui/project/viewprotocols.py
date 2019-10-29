@@ -1034,6 +1034,9 @@ class ProtocolsView(tk.Frame):
 
             if len(img):
                 img = self.getImage(img)
+                # If image is none
+                img = img if img is not None else ''
+
 
             protClassName = value.split('.')[-1]  # Take last part
             emProtocolsDict = self.domain.getProtocols()
@@ -1075,23 +1078,28 @@ class ProtocolsView(tk.Frame):
                               level + 1)
 
     def updateProtocolsTree(self, protCfg):
-        self.protCfg = protCfg
-        self.protTree.clear()
-        self.protTree.unbind('<<TreeviewOpen>>')
-        self.protTree.unbind('<<TreeviewClose>>')
-        self.protTreeItems = {}
-        subclassedDict = {}  # Check which classes serve as base to not show them
-        emProtocolsDict = self.domain.getProtocols()
-        for _, v1 in emProtocolsDict.items():
-            for k2, v2 in emProtocolsDict.items():
-                if v1 is not v2 and issubclass(v1, v2):
-                    subclassedDict[k2] = True
-        self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg,
-                          subclassedDict)
-        self.protTree.bind('<<TreeviewOpen>>',
-                           lambda e: self._treeViewItemChange(True))
-        self.protTree.bind('<<TreeviewClose>>',
-                           lambda e: self._treeViewItemChange(False))
+
+        try:
+            self.protCfg = protCfg
+            self.protTree.clear()
+            self.protTree.unbind('<<TreeviewOpen>>')
+            self.protTree.unbind('<<TreeviewClose>>')
+            self.protTreeItems = {}
+            subclassedDict = {}  # Check which classes serve as base to not show them
+            emProtocolsDict = self.domain.getProtocols()
+            for _, v1 in emProtocolsDict.items():
+                for k2, v2 in emProtocolsDict.items():
+                    if v1 is not v2 and issubclass(v1, v2):
+                        subclassedDict[k2] = True
+            self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg,
+                              subclassedDict)
+            self.protTree.bind('<<TreeviewOpen>>',
+                               lambda e: self._treeViewItemChange(True))
+            self.protTree.bind('<<TreeviewClose>>',
+                               lambda e: self._treeViewItemChange(False))
+        except Exception as e:
+            # Tree can't be loaded report back, but continue
+            print("Protocols tree couldn't be loaded: %s" % e)
 
     def _treeViewItemChange(self, openItem):
         item = self.protTree.focus()

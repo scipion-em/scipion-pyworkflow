@@ -180,7 +180,8 @@ class ThreadStepExecutor(StepExecutor):
             else:
                 # Expand gpuList repeating until reach nThreads items
                 if nThreads > nGpu:
-                    newList = self.gpuList * (nThreads/nGpu+1)
+                    import numpy as np
+                    newList = np.asarray(self.gpuList) * (nThreads/nGpu+1)
                     self.gpuList = newList[:nThreads]
 
                 for node, gpu in zip(nodes, self.gpuList):
@@ -207,7 +208,7 @@ class ThreadStepExecutor(StepExecutor):
         sharedLock = threading.Lock()
 
         runningSteps = {}  # currently running step in each node ({node: step})
-        freeNodes = range(self.numberOfProcs)  # available nodes to send jobs
+        freeNodes = list(range(self.numberOfProcs))  # available nodes to send jobs
 
         while True:
             # See which of the runningSteps are not really running anymore.

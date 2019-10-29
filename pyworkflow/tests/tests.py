@@ -7,8 +7,8 @@ import unittest
 from os.path import join, relpath
 
 import pyworkflow as pw
+import pyworkflow.utils as pwutils
 from pyworkflow.project import Manager
-from pyworkflow.object import Object, Float
 from pyworkflow.protocol import MODE_RESTART, getProtocolFromDb
 
 
@@ -64,7 +64,7 @@ class DataSet:
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
 
-        if not pw.utils.envVarOn('SCIPION_TEST_NOSYNC'):
+        if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s testdata --download %s %s"
                        % (pw.PYTHON, pw.getScipionScript(), folder, url))
             print(">>>> %s" % command)
@@ -166,7 +166,7 @@ class BaseTest(unittest.TestCase):
         and return a newly created protocol of the given class
         """
         # Try to continue from previous execution
-        if pw.utils.envVarOn('SCIPION_TEST_CONTINUE'):
+        if pwutils.envVarOn('SCIPION_TEST_CONTINUE'):
             candidates = cls.proj.mapper.selectByClass(protocolClass.__name__)
             if candidates:
                 c = candidates[0]
@@ -209,8 +209,8 @@ class BaseTest(unittest.TestCase):
 def setupTestOutput(cls):
     """ Create the output folder for a give Test class. """
     cls.outputPath = join(pw.Config.SCIPION_TESTS_OUTPUT, cls.__name__)
-    pw.utils.cleanPath(cls.outputPath)
-    pw.utils.makePath(cls.outputPath)
+    pwutils.cleanPath(cls.outputPath)
+    pwutils.makePath(cls.outputPath)
        
 
 def setupTestProject(cls, writeLocalConfig=False):
@@ -257,14 +257,14 @@ class GTestResult(unittest.TestResult):
     def doReport(self):
         secs = time.time() - self.startTimeAll
         sys.stderr.write("\n%s run %d tests (%0.3f secs)\n" %
-                         (pw.utils.greenStr("[==========]"),
+                         (pwutils.greenStr("[==========]"),
                           self.numberTests, secs))
         if self.testFailed:
             sys.stderr.write("%s %d tests\n"
-                             % (pw.utils.redStr("[  FAILED  ]"),
+                             % (pwutils.redStr("[  FAILED  ]"),
                                 self.testFailed))
         sys.stdout.write("%s %d tests\n"
-                         % (pw.utils.greenStr("[  PASSED  ]"),
+                         % (pwutils.greenStr("[  PASSED  ]"),
                             self.numberTests - self.testFailed))
 
     def tic(self):
@@ -287,14 +287,14 @@ class GTestResult(unittest.TestResult):
     def addSuccess(self, test):
         secs = self.toc()
         sys.stderr.write("%s %s (%0.3f secs)\n" %
-                         (pw.utils.greenStr('[ RUN   OK ]'),
+                         (pwutils.greenStr('[ RUN   OK ]'),
                           self.getTestName(test), secs))
 
     def reportError(self, test, err):
-        sys.stderr.write("%s %s\n" % (pw.utils.redStr('[   FAILED ]'),
+        sys.stderr.write("%s %s\n" % (pwutils.redStr('[   FAILED ]'),
                                       self.getTestName(test)))
         sys.stderr.write("\n%s"
-                         % pw.utils.redStr("".join(format_exception(*err))))
+                         % pwutils.redStr("".join(format_exception(*err))))
         self.testFailed += 1
                 
     def addError(self, test, err):

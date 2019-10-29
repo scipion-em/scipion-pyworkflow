@@ -37,7 +37,6 @@ from __future__ import division
 
 import sys
 import os
-from functools import partial
 from os.path import join, isdir, exists, relpath, dirname
 from subprocess import call
 import time
@@ -60,7 +59,7 @@ def main():
         sys.exit(0)
 
     if args.check_all:
-        datasets = [x.strip('./\n') for x in urlopen('%s/MANIFEST' % args.url)]
+        datasets = [x.decode("utf-8").strip('./\n') for x in urlopen('%s/MANIFEST' % args.url)]
         print('Checking datasets: %s' % ' '.join(datasets))
 
         all_uptodate = True
@@ -179,7 +178,7 @@ def listDatasets(url):
     try:
         print("\nRemote datasets in %s" % yellow(url))
         for line in sorted(urlopen('%s/MANIFEST' % url)):
-            print("  * %s" % line.strip('./\n'))
+            print("  * %s" % line.decode("utf-8").strip('./\n'))
     except Exception as e:
         print("Error reading %s (%s)" % (url, e))
 
@@ -198,7 +197,7 @@ def check(dataset, url, verbose=False, updateMANIFEST=False):
         vlog("(not updating local MANIFEST) ")
 
     try:
-        md5sRemote = dict(x.split() for x in
+        md5sRemote = dict(x.decode("utf-8").split() for x in
                           urlopen('%s/%s/MANIFEST' % (url, dataset)))
 
         md5sLocal = dict(x.split() for x in
@@ -229,7 +228,6 @@ def download(dataset, destination=None, url=None, verbose=False):
     destination = destination or os.environ['SCIPION_TESTS']
 
     # First make sure that we ask for a known dataset.
-    print ('%s/MANIFEST' % url)
     if dataset not in [x.decode('utf-8').strip('./\n') for x in urlopen('%s/MANIFEST' % url)]:
         print("Unknown dataset: %s" % red(dataset))
         print("Use --list to see the available datasets.")
@@ -295,7 +293,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     # Read contents of *remote* MANIFEST file, and create a dict {fname: md5}
     manifest = urlopen('%s/%s/MANIFEST' % (url, dataset)).readlines()
-    md5sRemote = dict(x.decode('utf-8').strip().split() for x in manifest)
+    md5sRemote = dict(x.decode("utf-8").strip().split() for x in manifest)
 
     # Update and read contents of *local* MANIFEST file, and create a dict
     datasetFolder = join(workingCopy, dataset)
@@ -306,9 +304,8 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
     except (OSError, IOError, AssertionError) as e:
         print("Regenerating local MANIFEST...")
         createMANIFEST(datasetFolder)
-    md5sLocal = dict(x.split() for x in open(join(datasetFolder, 'MANIFEST')))
+    md5sLocal = dict(x.strip().split() for x in open(join(datasetFolder, 'MANIFEST')))
 
-    print(md5sLocal)
     # Check that all the files mentioned in MANIFEST are up-to-date
     print("Verifying MD5s...")
 
@@ -340,7 +337,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     # Save the new MANIFEST file in the folder of the downloaded dataset
     if filesUpdated > 0:
-        open(join(datasetFolder, 'MANIFEST'), 'w').writelines(manifest.decode('utf-8'))
+        open(join(datasetFolder, 'MANIFEST'), 'w').writelines(md5sRemote)
 
     if taintedMANIFEST:
         print("Some files could not be updated. Regenerating local MANIFEST ...")
@@ -403,11 +400,12 @@ def createMANIFEST(path):
 def md5sum(fname):
     """ Return the md5 hash of file fname """
 
-    with open(fname, mode='rb') as f:
-        d = hashlib.md5()
-        for buf in iter(partial(f.read, 128), b''):
-            d.update(buf)
-    return d.hexdigest()
+    mhash = hashlib.md5()
+    with open(fname, 'rb') as f:
+        for chunk in iter(lambda: f.read(128 * mhash.block_size), b""):
+            mhash.update(chunk)
+    return mhash.hexdigest()
+
 
 def ask(question="Continue? (y/n): ", allowed=None):
     """ Ask the question until it returns one of the allowed responses """
