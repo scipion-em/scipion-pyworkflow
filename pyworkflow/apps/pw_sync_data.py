@@ -331,7 +331,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
     except (OSError, IOError, AssertionError) as e:
         print("Regenerating local MANIFEST...")
         createMANIFEST(datasetFolder)
-    md5sLocal = dict(x.split() for x in open(join(datasetFolder, 'MANIFEST')))
+    md5sLocal = dict(x.strip().split() for x in open(join(datasetFolder, 'MANIFEST')))
 
     # Check that all the files mentioned in MANIFEST are up-to-date
     print("Verifying MD5s...")
