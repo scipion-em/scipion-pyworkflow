@@ -110,7 +110,6 @@ class Config:
         """ Import domain module from path or name defined in SCIPION_DOMAIN. """
         value = cls.SCIPION_DOMAIN
 
-        print('SCIPION_DOMAIN=%s' % value)
         if not value:
             return None
 
