@@ -249,7 +249,7 @@ class FunctionStep(Step):
         as postconditions that the result filePaths exists"""
         if not self._resultFiles.hasValue():
             return True
-        filePaths = pickle.loads(self._resultFiles.get())
+        filePaths = pickle.loads(self._resultFiles.get().encode('utf-8'))
 
         return len(pwutils.missingPaths(*filePaths)) == 0
 
