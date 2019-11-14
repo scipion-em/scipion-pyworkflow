@@ -38,13 +38,13 @@ def _getRegisteredExecutable(exeName):
     if sys.platform.startswith('win'):
         if os.path.splitext(exeName)[1].lower() != '.exe':
             exeName += '.exe'
-        import _winreg
+        import winreg
         try:
             key = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\" +\
                   exeName
-            value = _winreg.QueryValue(_winreg.HKEY_LOCAL_MACHINE, key)
+            value = winreg.QueryValue(winreg.HKEY_LOCAL_MACHINE, key)
             registered = (value, "from HKLM\\"+key)
-        except _winreg.error:
+        except winreg.error:
             pass
         if registered and not os.path.exists(registered[0]):
             registered = None

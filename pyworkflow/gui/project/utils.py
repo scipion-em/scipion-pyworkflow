@@ -80,13 +80,17 @@ class MacHandler(OSHandler, ABC):
     def maximizeWindow(root):
         root.state("zoomed")
 
+class WindowsHandler(OSHandler, ABC):
+
+    def maximizeWindow(root):
+        root.state("zoomed")
 
 class OS:
     _handler = None
 
     _handlers = {"Linux": LinuxHandler,
                  "Darwin": MacHandler,
-                 "Windows": LinuxHandler} # Until testing this on windows
+                 "Windows": WindowsHandler} # Until testing this on windows
     @staticmethod
     def getPlatform():
         return platform.system()

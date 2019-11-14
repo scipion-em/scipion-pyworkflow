@@ -32,7 +32,6 @@ from __future__ import absolute_import
 
 import sys
 import os.path
-import resource
 from subprocess import check_call
 
 from .utils import greenStr, envVarOn
@@ -59,6 +58,7 @@ def runCommand(command, env=None, cwd=None):
 
     # First let us create core dumps if in debug mode
     if envVarOn('SCIPION_DEBUG', env):
+        import resource
         resource.setrlimit(resource.RLIMIT_CORE,
                            (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
         # This is like "ulimit -u 99999999", so we can create core dumps

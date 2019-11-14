@@ -1,5 +1,5 @@
 numpy
-psutil==2.1.1
+psutil
 matplotlib
 pillow
 bibtexparser
