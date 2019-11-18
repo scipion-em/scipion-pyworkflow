@@ -141,11 +141,12 @@ class Domain:
             while module_visit:
                 for module in module_visit:
                     try:
-                        reload(module)
-                        module_visit.remove(module)
+                        importlib.reload(module)
                         break
                     except Exception as ex:
                         pass
+                    finally:
+                        module_visit.remove(module)
 
     @classmethod
     def __getSubclasses(cls, submoduleName, BaseClass,
@@ -315,12 +316,12 @@ class Domain:
     def findViewers(cls, className, environment):
         """ Find the available viewers in this Domain for this class. """
         viewers = []
-        cls = cls.findClass(className)
-        baseClasses = cls.mro()
+        clazz = cls.findClass(className)
+        baseClasses = clazz.mro()
         preferredViewers = cls.getPreferredViewers(className)
         preferedFlag = 0
 
-        for viewer in Domain.getViewers().values():
+        for viewer in cls.getViewers().values():
             if environment in viewer._environments:
                 for t in viewer._targets:
                     if t in baseClasses:
@@ -330,7 +331,7 @@ class Domain:
                                 preferedFlag = 1
                                 break
                         else:
-                            if t == cls:
+                            if t == clazz:
                                 viewers.insert(preferedFlag, viewer)
                             else:
                                 viewers.append(viewer)

@@ -36,7 +36,6 @@ from configparser import ConfigParser  # FIXME Does not work in Python3
 import pyworkflow as pw
 import pyworkflow.object as pwobj
 from pyworkflow.mapper import SqliteMapper
-from pyworkflow.plugin import Domain
 from pyworkflow.utils import isModuleAFolder
 
 
@@ -533,10 +532,10 @@ class ProtocolTreeConfig:
         return False if protClass is None else not protClass.isDisabled()
 
     @classmethod
-    def __addAllProtocols(cls, Domain, protocols):
+    def __addAllProtocols(cls, domain, protocols):
         # Add all protocols
         # FIXME: Check why this import is here
-        allProts = Domain.getProtocols()
+        allProts = domain.getProtocols()
 
         # Sort the dictionary
         allProtsSorted = OrderedDict(sorted(allProts.items(),
@@ -633,6 +632,6 @@ class ProtocolTreeConfig:
                             e, os.path.abspath(protocolsConfPath)))
 
             # Add all protocols to All view
-        cls.__addAllProtocols(Domain, protocols)
+        cls.__addAllProtocols(pw.Config.getDomain(), protocols)
 
         return protocols

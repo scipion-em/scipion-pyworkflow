@@ -35,7 +35,7 @@ import sys
 
 from pwem.protocols import (ProtImport, ProtMicrographs, ProtParticles, Prot2D,
                             Prot3D)
-from pyworkflow.plugin import Domain
+from pyworkflow import Config
 from pyworkflow.viewer import Viewer
 from pyworkflow.protocol.protocol import Protocol
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     asciidoc = '--asciidoc' in sys.argv
     extended = '--extended' in sys.argv
 
-    emProtocolsDict = Domain.getProtocols()
+    emProtocolsDict = Config.getDomain().getProtocols()
     emCategories = [('Imports', ProtImport, []),
                     ('Micrographs', ProtMicrographs, []),
                     ('Particles', ProtParticles, []),
