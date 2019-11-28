@@ -243,7 +243,7 @@ class ProtocolViewer(pwprot.Protocol, Viewer):
     
     def visualize(self, obj, **args):
         """Open the Protocol GUI Form given a Protocol instance"""
-        from gui.form import FormWindow
+        from pyworkflow.gui.form import FormWindow
         self.setProtocol(obj)
         self.windows = args.get('windows', None)
         self.formWindow = FormWindow("Protocol Viewer: " + self.getClassName(),

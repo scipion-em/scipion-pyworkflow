@@ -11,7 +11,6 @@ import argparse
 from pwem.utils import loadSetFromDb
 from pwem.objects import SetOfCoordinates
 from pyworkflow.utils import cleanPath
-from pyworkflow.plugin import Domain
 import pyworkflow.utils as pwutils
 
 
@@ -40,18 +39,18 @@ def main():
 
         if fromType == 'eman2':
             if toType == 'xmipp':
-                readSetOfCoordinates = Domain.importFromPlugin('eman2.convert',
+                readSetOfCoordinates = pwutils.Config.getDomain().importFromPlugin('eman2.convert',
                                                         'readSetOfCoordinates',
-                                                        doRaise=True)
+                                                                                   doRaise=True)
         elif fromType == 'dogpicker':
             if toType == 'xmipp':
-                readSetOfCoordinates = Domain.importFromPlugin('appion.convert',
+                readSetOfCoordinates = pwutils.Config.getDomain().importFromPlugin('appion.convert',
                                                         'readSetOfCoordinates',
                                                         doRaise=True)
         elif fromType == 'relion':
             if toType == 'xmipp':
                 def readSetOfCoordinates(outputDir, micSet, coordSet):
-                    readSetOfCoordinates = Domain.importFromPlugin('relion.convert',
+                    readSetOfCoordinates = pwutils.Config.getDomain().importFromPlugin('relion.convert',
                                                             'readSetOfCoordinates',
                                                             doRaise=True)
                     inputCoords = args.extra
@@ -61,19 +60,19 @@ def main():
                     readSetOfCoordinates(coordSet, starFiles)
         elif fromType == 'gautomatch':
             if toType == 'xmipp':
-                readSetOfCoordinates = Domain.importFromPlugin('gautomatch.convert',
+                readSetOfCoordinates = pwutils.Config.getDomain().importFromPlugin('gautomatch.convert',
                                                         'readSetOfCoordinates',
                                                         doRaise=True)
         elif fromType == 'gempicker':
             if toType == 'xmipp':
-                readSetOfCoordinates = Domain.importFromPlugin('igbmc.convert',
+                readSetOfCoordinates = pwutils.Config.getDomain().importFromPlugin('igbmc.convert',
                                                         'readSetOfCoordinates',
                                                         doRaise=True)
         else:
             raise Exception('Unknown coordinates type: %s' % fromType)
 
         readSetOfCoordinates(outputDir, micSet, coordSet)
-        writeSetOfCoordinatesWithState = Domain.importFromPlugin('xmipp3.convert',
+        writeSetOfCoordinatesWithState = pwutils.Config.getDomain().importFromPlugin('xmipp3.convert',
                                                'writeSetOfCoordinatesWithState',
                                                doRaise=True)
         writeSetOfCoordinatesWithState(outputDir, coordSet, state='Automatic')

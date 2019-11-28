@@ -141,11 +141,12 @@ class Domain:
             while module_visit:
                 for module in module_visit:
                     try:
-                        reload(module)
-                        module_visit.remove(module)
+                        importlib.reload(module)
                         break
                     except Exception as ex:
                         pass
+                    finally:
+                        module_visit.remove(module)
 
     @classmethod
     def __getSubclasses(cls, submoduleName, BaseClass,
@@ -247,8 +248,8 @@ class Domain:
         """ Return the name of this Domain. """
         return cls._name
 
-    @classmethod
-    def importFromPlugin(cls, module, method='', errorMsg='', doRaise=False):
+    @staticmethod
+    def importFromPlugin(module, method='', errorMsg='', doRaise=False):
         """ This method try to import either the method from the module/plugin
             or the whole module/plugin and returns what is imported if not fails.
             When the importation fails (due to the plugin or the method is not found),
@@ -264,7 +265,7 @@ class Domain:
         except Exception as e:
             plugName = module.split('.')[0]
             errMsg = str(e) if errorMsg == '' else "%s. %s" % (str(e), errorMsg)
-            cls.__pluginNotFound(plugName, errMsg, doRaise)
+            Domain.__pluginNotFound(plugName, errMsg, doRaise)
 
     @classmethod
     def findClass(cls, className):
@@ -315,12 +316,12 @@ class Domain:
     def findViewers(cls, className, environment):
         """ Find the available viewers in this Domain for this class. """
         viewers = []
-        cls = cls.findClass(className)
-        baseClasses = cls.mro()
+        clazz = cls.findClass(className)
+        baseClasses = clazz.mro()
         preferredViewers = cls.getPreferredViewers(className)
         preferedFlag = 0
 
-        for viewer in Domain.getViewers().values():
+        for viewer in cls.getViewers().values():
             if environment in viewer._environments:
                 for t in viewer._targets:
                     if t in baseClasses:
@@ -330,7 +331,7 @@ class Domain:
                                 preferedFlag = 1
                                 break
                         else:
-                            if t == cls:
+                            if t == clazz:
                                 viewers.insert(preferedFlag, viewer)
                             else:
                                 viewers.append(viewer)
@@ -360,7 +361,7 @@ class Domain:
 
     # ---------- Private methods of Domain class ------------------------------
     @staticmethod
-    def __pluginNotFound(cls, plugName, errorMsg='', doRaise=False):
+    def __pluginNotFound(plugName, errorMsg='', doRaise=False):
         """ Prints or raise (depending on the doRaise) telling why it is failing
         """
         hint = ("   Check the plugin manager (Configuration->Plugins in "
@@ -421,8 +422,8 @@ class Domain:
         """ Return True if the module is a Scipion plugin. """
         return m.__name__ in cls._plugins
 
-    @classmethod
-    def __findWizardsFromDict(cls, protocol, environment, wizDict):
+    @staticmethod
+    def __findWizardsFromDict(protocol, environment, wizDict):
         wizards = {}
         baseClasses = [c.__name__ for c in protocol.getClass().mro()]
 

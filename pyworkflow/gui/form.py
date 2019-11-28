@@ -1167,8 +1167,7 @@ class ParamWidget:
             protClassName = self.param.protocolClassName.get()
             
             if self.param.allowSubclasses:
-                from pyworkflow.plugin import Domain
-                classes = Domain.findSubClasses(Domain.getProtocols(), protClassName).keys()
+                classes = pw.Config.GetDomain().findSubClasses(pw.Config.getDomain().getProtocols(), protClassName).keys()
             else:
                 classes = [protClassName]
             
@@ -1259,8 +1258,7 @@ class ParamWidget:
             label, _ = getPointerLabelAndInfo(pointer, self._protocol.getMapper())
             self._showInfo('*%s* points to *None*' % label)
         else:
-            from pyworkflow.plugin import Domain
-            viewers = Domain.findViewers(obj.getClassName(), DESKTOP_TKINTER)
+            viewers = pw.Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
             if len(viewers):
                 ViewerClass = viewers[0]  # Use the first viewer registered
                 # Instantiate the viewer and visualize object
@@ -1415,8 +1413,7 @@ class ParamWidget:
             #TODO check if is present and is selected a different
             # class, so we need to delete that and create a new instance
             if not hasattr(protocol, instanceName):
-                from pyworkflow.plugin import Domain
-                cls = Domain.findClass(className)
+                cls = pw.Config.getDomain().findClass(className)
                 protocol._insertChild(instanceName, cls())
             
             prot = getattr(protocol, instanceName)
@@ -2200,9 +2197,8 @@ class FormWindow(Window):
     def _visualize(self, paramName):
         protVar = getattr(self.protocol, paramName)
         if protVar.hasValue():
-            from pyworkflow.plugin import Domain
             obj = protVar.get()  # Get the reference to the object
-            viewers = Domain.findViewers(obj.getClassName(), DESKTOP_TKINTER)
+            viewers = pw.Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
             if len(viewers):
                 ViewerClass = viewers[0]  # Use the first viewer registered
                 v = ViewerClass(project=self.protocol.getProject(),
