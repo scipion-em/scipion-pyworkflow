@@ -2,8 +2,6 @@
 # To run only the tests in this file, use:
 # python -m unittest test_canvas -v
 
-
-import unittest
 import pyworkflow.gui.canvas
 import tkinter
 import math

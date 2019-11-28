@@ -31,9 +31,6 @@ import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 
 
-import mock_domain as mod
-
-
 class SleepingProtocol(pwprot.Protocol):
     def __init__(self, **args):
         pwprot.Protocol.__init__(self, **args)

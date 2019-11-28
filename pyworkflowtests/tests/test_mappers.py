@@ -25,17 +25,11 @@
 # **************************************************************************
 from __future__ import print_function
 
-import os
-import os.path
-import unittest
-
-import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
 import pyworkflow.mapper as pwmapper
-
-import mock_domain as mod
-import mock_domain.objects as modobj
+from pyworkflowtests.objects import Complex, MockImage
+from pyworkflowtests import Domain
 
 
 class TestSqliteMapper(pwtests.BaseTest):
@@ -48,7 +42,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         mapper = pwmapper.SqliteMapper(fn)
         # Insert a Complex
-        c = modobj.Complex.createComplex()  # real = 1, imag = 1
+        c = Complex.createComplex()  # real = 1, imag = 1
         mapper.insert(c)
         # Insert an pwobj.Integer
         i = pwobj.Integer(1)
@@ -114,7 +108,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         db.close()
 
         # Reading test
-        mapper2 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
         print("Checking that Relations table is updated and version to 1")
         self.assertEqual(1, mapper2.db.getVersion())
         # Check that the new column is properly added after updated to version 1
@@ -171,7 +165,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         mapper = pwmapper.SqliteMapper(fn)
         # Insert a Complex
-        c = modobj.Complex.createComplex()  # real = 1, imag = 1
+        c = Complex.createComplex()  # real = 1, imag = 1
         mapper.insert(c)
         # Insert an pwobj.Integer
         p1 = pwobj.Pointer()
@@ -189,7 +183,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper.store(p1)
         mapper.commit()
         
-        mapper2 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
         p2 = mapper2.selectByClass('Pointer')[0]
         
         #Check the mapper was properly stored when
@@ -204,7 +198,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         print(">>> Using db: ", fn)
 
         # Let's create a Mapper to store a simple List containing two integers
-        mapper = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
+        mapper = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
         iList = pwobj.List()
         i1 = pwobj.Integer(4)
         i2 = pwobj.Integer(3)
@@ -217,7 +211,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         # Now let's open again the db with a different connection
         # and load the previously stored list
-        mapper2 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
         iList2 = mapper2.selectByClass('List')[0]
         # Let's do some basic checks
         self.assertEqual(iList2.getSize(), 2)
@@ -236,7 +230,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper2.close()
 
         # Open the db and load the list once again
-        mapper3 = pwmapper.SqliteMapper(fn, mod.Domain.getMapperDict())
+        mapper3 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
         iList3 = mapper3.selectByClass('List')[0]
         # Check the same consistency before it was stored
         self.assertEqual(iList3.getSize(), 1)
@@ -286,14 +280,14 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
     def test_insertObjects(self):
         dbName = self.getOutputPath('images.sqlite')
         print(">>> test_insertObjects: dbName = '%s'" % dbName)
-        mapper = pwmapper.SqliteFlatMapper(dbName, mod.Domain.getMapperDict())
+        mapper = pwmapper.SqliteFlatMapper(dbName, Domain.getMapperDict())
         self.assertEqual(0, mapper.count())
         self.assertEqual(0, mapper.maxId())
         n = 10
 
         indexes = list(range(1, n+1))
         for i in indexes:
-            img = modobj.MockImage()
+            img = MockImage()
             img.setLocation(i, 'images.stk')
             mapper.insert(img)
 
@@ -301,7 +295,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         self.assertEqual(n, mapper.maxId())
 
         # Store one more image with bigger id
-        img = modobj.MockImage()
+        img = MockImage()
         bigId = 1000
         img.setLocation(i+1, 'images.stk')
         img.setObjId(bigId)
@@ -324,7 +318,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         mapper.close()
 
         # Test that values where stored properly
-        mapper2 = pwmapper.SqliteFlatMapper(dbName, mod.Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteFlatMapper(dbName, Domain.getMapperDict())
         indexes.extend([bigId, bigId+1])
         for i, obj in enumerate(mapper2.selectAll(iterate=True)):
             self.assertEqual(obj.getIndex(), i+1)
@@ -362,7 +356,7 @@ class TestXmlMapper(pwtests.BaseTest):
 
     def test_XMLMapper(self):
         fn = self.getOutputPath("model.xml")
-        c = modobj.Complex.createComplex()
+        c = Complex.createComplex()
         mapper = pwmapper.XmlMapper(fn)
         mapper.insert(c)
         #write file

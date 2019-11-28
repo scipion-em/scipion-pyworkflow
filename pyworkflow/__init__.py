@@ -37,7 +37,7 @@ import types
 # if plugins are still compatible, so future hot fixes releases or even micros
 # or minor release should not change this CORE_VERSION. Only, when a new release
 # will break existing plugins, this number needs to be incremented.
-CORE_VERSION = '2.0'
+CORE_VERSION = '3.0'
 
 # Versions
 VERSION_1 = '1.0.0'

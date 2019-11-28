@@ -44,8 +44,6 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
 from .params import Form
-from . import scipion
-
 
 class Step(OrderedObject):
     """ Basic execution unit.
@@ -1576,7 +1574,7 @@ class Protocol(Step):
         #em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
         # TODO: Check if we need to return scipion by default anymore
         # Now the basic EM protocols are defined by scipion-em (pwem)
-        return getattr(cls, '_package', scipion)
+        return getattr(cls, '_package', None)
 
     @classmethod
     def getClassPlugin(cls):
@@ -1585,8 +1583,7 @@ class Protocol(Step):
 
     @classmethod
     def getClassPackageName(cls):
-        return cls.getClassPackage().__name__.replace(
-            'pyworkflow.protocol.scipion', 'scipion')
+        return cls.getClassPackage().__name__ if cls.getClassPackage() else "orphan"
 
     @classmethod
     def getClassDomain(cls):

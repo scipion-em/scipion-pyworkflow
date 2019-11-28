@@ -29,8 +29,7 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 import os
 
 import pyworkflow.object as pwobj
-import mock_domain as mod
-
+from plugin import Domain
 
 NO_INDEX = 0
 
@@ -320,15 +319,12 @@ class MockImage(MockObject):
                 return None
 
     def _getDefaultOrigin(self):
-        sampling = self.getSamplingRate()
-        t = Transform()
-        x, y, z = self.getDim()
-        if z > 1:
-            z = z / -2.
-        t.setShifts(x / -2. * sampling, y / -2. * sampling, z * sampling)
-        return t  # The identity matrix
+        # original code from em required Transform, which will require
+        # Matrix and then import numpy. Since this method is not used in
+        # the tests I'm emptying it.
+        pass
 
-    def getShiftsFromOrigin(self):
+    def getShiftsiftsFromOrigin(self):
         origin = self.getOrigin(force=True).getShifts()
         x = origin[0]
         y = origin[1]
@@ -440,7 +436,7 @@ class MockParticle(MockImage):
 class MockSet(pwobj.Set, MockObject):
 
     def _loadClassesDict(self):
-        classDict = mod.Domain.getObjects()
+        classDict = Domain.getObjects()
         classDict.update(globals())
 
         return classDict
@@ -686,7 +682,7 @@ class MockSetOfParticles(MockSetOfImages):
 
     def __init__(self, **kwargs):
         MockSetOfImages.__init__(self, **kwargs)
-        self._coordsPointer = Pointer()
+        self._coordsPointer = pwobj.Pointer()
 
     def hasCoordinates(self):
         return self._coordsPointer.hasValue()
@@ -803,7 +799,7 @@ class SetOfCoordinates(MockSet):
 
     def __init__(self, **kwargs):
         MockSet.__init__(self, **kwargs)
-        self._micrographsPointer = Pointer()
+        self._micrographsPointer = pwobj.Pointer()
         self._boxSize = pwobj.Integer()
 
     def getBoxSize(self):
