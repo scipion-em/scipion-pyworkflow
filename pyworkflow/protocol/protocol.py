@@ -97,7 +97,7 @@ class Step(OrderedObject):
         pass
 
     def setRunning(self):
-        """ The the state as STATE_RUNNING and 
+        """ The the state as STATE_RUNNING and
         set the init and end times.
         """
         self.initTime.set(dt.datetime.now())
@@ -127,7 +127,7 @@ class Step(OrderedObject):
         return self.status.get(STATUS_NEW)
 
     def getElapsedTime(self, default=dt.timedelta()):
-        """ Return the time that took to run 
+        """ Return the time that took to run
         (or the actual running time if still is running )
         """
         elapsed = default
@@ -213,7 +213,7 @@ class FunctionStep(Step):
     through the function _insertFunctionStep"""
 
     def __init__(self, func=None, funcName=None, *funcArgs, **kwargs):
-        """ 
+        """
          Params:
             func: the function that will be executed.
             funcName: the name assigned to that function (will be stored)
@@ -1842,10 +1842,18 @@ class Protocol(Step):
             childErrors = self._validate()
             if childErrors:
                 errors += childErrors
-        except Exception as e:
+        except Exception:
             import urllib
-            exceptionStr = pwutils.formatExceptionInfo(e)
+            exceptionStr = pwutils.formatExceptionInfo()
             email = pw.Config.SCIPION_SUPPORT_EMAIL
+            # In Python 3.x, you need to import urllib.parse.quote:
+            #
+            # import urllib.parse
+            # urllib.parse.quote("châteu", safe='')
+            # 'ch%C3%A2teu'
+            #
+            # The urllib module has been split into parts and renamed in Python 3 to urllib.request, urllib.parse,
+            # and urllib.error.
             errors.append("Sorry, this is embarrassing: the validation is "
                           "failing due to a programming mistake. This should "
                           "not happen. Check out the message. It might help to "
@@ -1853,7 +1861,7 @@ class Protocol(Step):
                           "report this to: "
                           "[[mailto:%s?subject=%s&body=%s][%s]]" %
                           ("Scipion validation bug found",
-                           email, urllib.quote(exceptionStr), email))
+                           email, urllib.parse.quote(exceptionStr), email))
             errors.append(exceptionStr)
 
         return errors
@@ -2181,7 +2189,7 @@ def runProtocolMain(projectPath, protDbPath, protId):
 
 def runProtocolMainMPI(projectPath, protDbPath, protId, mpiComm):
     """ This function only should be called after enter in runProtocolMain
-    and the proper MPI scripts have been started...so no validations 
+    and the proper MPI scripts have been started...so no validations
     will be made.
     """
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
