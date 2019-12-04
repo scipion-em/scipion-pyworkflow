@@ -30,8 +30,8 @@ from collections import OrderedDict
 
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
-from objects import Complex, MockSetOfImages, MockImage, MockObject, \
-    MockAcquisition, MockMicrograph
+from objects import (Complex, MockSetOfImages, MockImage, MockObject,
+                    MockAcquisition, MockMicrograph)
 
 
 class ListContainer(pwobj.Object):

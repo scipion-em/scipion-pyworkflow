@@ -29,7 +29,6 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 import os
 
 import pyworkflow.object as pwobj
-from plugin import Domain
 
 NO_INDEX = 0
 
@@ -436,6 +435,7 @@ class MockParticle(MockImage):
 class MockSet(pwobj.Set, MockObject):
 
     def _loadClassesDict(self):
+        from plugin import Domain
         classDict = Domain.getObjects()
         classDict.update(globals())
 
