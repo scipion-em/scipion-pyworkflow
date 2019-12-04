@@ -1845,25 +1845,9 @@ class Protocol(Step):
         except Exception:
             import urllib
             exceptionStr = pwutils.formatExceptionInfo()
-            email = pw.Config.SCIPION_SUPPORT_EMAIL
-            # In Python 3.x, you need to import urllib.parse.quote:
-            #
-            # import urllib.parse
-            # urllib.parse.quote("châteu", safe='')
-            # 'ch%C3%A2teu'
-            #
-            # The urllib module has been split into parts and renamed in Python 3 to urllib.request, urllib.parse,
-            # and urllib.error.
-            errors.append("Sorry, this is embarrassing: the validation is "
-                          "failing due to a programming mistake. This should "
-                          "not happen. Check out the message. It might help to "
-                          "workaround this bug. We'd really appreciate if you "
-                          "report this to: "
-                          "[[mailto:%s?subject=%s&body=%s][%s]]" %
-                          ("Scipion validation bug found",
-                           email, urllib.parse.quote(exceptionStr), email))
-            errors.append(exceptionStr)
-
+            errors.append("Protocol validation failed. It usually happens because there are some "
+                          "input missing. Please check if the error message gives you any "
+                          "hint:\n{}".format(exceptionStr))
         return errors
 
     def _warnings(self):
