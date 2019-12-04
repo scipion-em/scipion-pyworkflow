@@ -150,6 +150,18 @@ def getScipionPath(*paths):
      return os.path.join(Config.SCIPION_HOME, *paths)
 
 
+def getPWPath(*paths):
+    return os.path.join(os.path.dirname(__file__), *paths)
+
+
+def getPWAppsPath():
+    return os.path.join(getPWPath(), 'apps')
+
+
+def getPwSyncDataPath():
+    return os.path.join(getPWAppsPath(), 'pw_sync_data.py')
+
+
 def getScipionScript():
     # This is no longer valid and pyworkflow should not be providing this,
     # But other pyworkflow code line DataSets are using this.
