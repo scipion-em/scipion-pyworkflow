@@ -241,7 +241,7 @@ def download(dataset, destination=None, url=None, verbose=False):
     try:
         if verbose:
             print("Retrieving MANIFEST file")
-        open(manifest, 'w').writelines(
+        open(manifest, 'wb').writelines(
             urlopen('%s/%s/MANIFEST' % (url, dataset)))
     except Exception as e:
         print("ERROR reading %s/%s/MANIFEST (%s)" % (url, dataset, e))
@@ -259,7 +259,7 @@ def download(dataset, destination=None, url=None, verbose=False):
             # Download content and create file with it.
             if not isdir(dirname(fpath)):
                 os.makedirs(dirname(fpath))
-            open(fpath, 'w').writelines(
+            open(fpath, 'wb').writelines(
                 urlopen('%s/%s/%s' % (url, dataset, fname)))
 
             md5 = md5sum(fpath)
