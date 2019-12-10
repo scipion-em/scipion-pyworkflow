@@ -146,20 +146,35 @@ def findResource(filename):
 # Following are a set of functions to centralize the way to get
 # files from several scipion folder such as: config or apps
 
-def getScipionPath(*paths):
-     return os.path.join(Config.SCIPION_HOME, *paths)
+def getPWPath(*paths):
+    return os.path.join(os.path.dirname(__file__), *paths)
 
 
-def getScipionScript():
-    # This is no longer valid and pyworkflow should not be providing this,
-    # But other pyworkflow code line DataSets are using this.
-    # This need to be refactored
-    # return getScipionPath('scipion')
-    return "-m scipion"
-
-def getConfigPath(*paths):
-    return getScipionPath('config', *paths)
+def getAppsPath():
+    return os.path.join(getPWPath(), 'apps')
 
 
-def getTemplatePath(*paths):
-    return join('templates', *paths)
+def getSyncDataScript():
+    return os.path.join(getAppsPath(), 'pw_sync_data.py')
+
+
+def getScheduleScript():
+    return os.path.join(getAppsPath(), 'pw_schedule_run.py')
+
+
+def getPwProtMpiRunScript():
+    return os.path.join(getAppsPath(), 'pw_protocol_mpirun.py')
+
+
+def getTestsScript():
+    return os.path.join(getAppsPath(), 'pw_run_tests.py')
+
+
+def getViewerScript():
+    return os.path.join(getAppsPath(), 'pw_viewer.py')
+
+
+
+
+
+

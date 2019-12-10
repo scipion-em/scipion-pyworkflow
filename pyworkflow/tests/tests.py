@@ -63,14 +63,15 @@ class DataSet:
         ds = cls._datasetDict[name]
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
-
+        
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
-            command = ("%s %s testdata --download %s %s"
-                       % (pw.PYTHON, pw.getScipionScript(), folder, url))
+            command = ("%s %s --download %s %s"
+                       % (pw.PYTHON, pw.getSyncDataScript(), folder, url))
             print(">>>> %s" % command)
             os.system(command)
-        return cls._datasetDict[name]
 
+        return cls._datasetDict[name]
+    
 
 class BaseTest(unittest.TestCase):
     
