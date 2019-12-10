@@ -83,8 +83,7 @@ def schedule(protocol, wait=False):
     """ Use this function to schedule protocols that are not ready to
     run yet. Right now it only make sense to schedule jobs locally.
     """
-    cmd = '%s %s runprotocol pw_schedule_run.py' % (pw.PYTHON,
-                                                    pw.getScheduleScript())
+    cmd = pw.getScheduleScript()
     cmd += ' "%s" "%s" %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
                               protocol.strId())

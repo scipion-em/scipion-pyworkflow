@@ -247,7 +247,7 @@ class Text(tk.Text, Scrollable):
         if os.path.isdir(path):
             dpath = (path if os.path.isabs(path)
                      else os.path.join(os.getcwd(), path))
-            subprocess.Popen([pw.getViewerScript(), 'view', dpath])
+            subprocess.Popen([pw.getViewerScript(), dpath])
             return
 
         # If it is a file, interpret it correctly and open it with DataView
