@@ -202,7 +202,7 @@ class Tester():
     def _printNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
-            print("%s scipion test %s" % (spaces, itemName))
+            print("%s %s %s" % (spaces, getTestsScript(), itemName))
 
     def printTests(self, moduleName, tests):
         self._visitTests(moduleName, tests, self._printNewItem)
