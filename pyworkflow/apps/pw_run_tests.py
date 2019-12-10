@@ -39,7 +39,7 @@ from collections import OrderedDict
 
 import pyworkflow.utils as pwutils
 import pyworkflow.tests as pwtests
-
+from pyworkflow import getTestsScript
 
 from pyworkflow.tests import *
 
@@ -231,8 +231,8 @@ class Tester():
     def _runNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
-            scipion = pw.getScipionScript()
-            cmd = "python %s %s test %s" % (spaces, scipion, itemName)
+            script = getTestsScript()
+            cmd = "%s %s %s" % (script, spaces, itemName)
             run = ((itemType == MODULE and self.mode == 'module') or
                    (itemType == CLASS and self.mode == 'classes') or
                    (itemType == TEST and self.mode == 'all'))
@@ -250,8 +250,7 @@ class Tester():
                 self.testCount += 1
                 result = os.system(cmdFull)
                 if self.log:
-                    self._logTest(cmd.replace(scipion, 'scipion'),
-                                  t.getToc(), result, logFile)
+                    self._logTest(cmd, t.getToc(), result, logFile)
 
     def runTests(self, moduleName, tests):
         self.testCount = 0

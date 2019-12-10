@@ -84,7 +84,7 @@ def schedule(protocol, wait=False):
     run yet. Right now it only make sense to schedule jobs locally.
     """
     cmd = '%s %s runprotocol pw_schedule_run.py' % (pw.PYTHON,
-                                                    pw.getScipionScript())
+                                                    pw.getScheduleScript())
     cmd += ' "%s" "%s" %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
                               protocol.strId())

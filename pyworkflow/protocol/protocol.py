@@ -2146,9 +2146,11 @@ def runProtocolMain(projectPath, protDbPath, protId):
             # We run "scipion run pyworkflow/...mpirun.py blah" instead of
             # calling directly "$SCIPION_PYTHON ...mpirun.py blah", so that
             # when it runs on a MPI node, it *always* has the scipion env.
-            params = ['runprotocol', 'pw_protocol_mpirun.py',
+            params = ['runprotocol', pw.getPwProtMpiRunScript(),
                       projectPath, protDbPath, protId]
-            retcode = pwutils.runJob(None, pw.getScipionScript(), params,
+            # 'scipion' is treated now as an entry point, but if there is an alias with that name, the alias has higher
+            # priority
+            retcode = pwutils.runJob(None, 'scipion', params,
                                      numberOfMpi=protocol.numberOfMpi.get(),
                                      hostConfig=hostConfig)
             sys.exit(retcode)
