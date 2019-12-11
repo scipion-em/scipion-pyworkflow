@@ -144,8 +144,8 @@ class HyperlinkManager:
 
 
 class Text(tk.Text, Scrollable):    
-    """ Base Text widget with some functionalities 
-    that will be used for other extensions.
+    """ Base Text widget with some functionality
+    that will be used by children classes.
     """
     def __init__(self, master, **opts):
         if 'handlers' in opts:
