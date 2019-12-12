@@ -31,6 +31,7 @@ basic classes.
 from __future__ import print_function
 
 from collections import OrderedDict
+from collections.abc import ValuesView
 import datetime as dt
 from pyworkflow.utils.reflection import getSubclasses
 
@@ -970,7 +971,7 @@ class List(Object, list):
         
     def _convertValue(self, value):
         """Value should be a list."""
-        if not isinstance(value, list):
+        if not isinstance(value,  ValuesView):
             raise Exception("List.set: value should be a list.")
         self.clear()
         for item in value:
