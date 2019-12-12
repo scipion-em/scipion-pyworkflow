@@ -39,7 +39,7 @@ from collections import OrderedDict
 
 import pyworkflow.utils as pwutils
 import pyworkflow.tests as pwtests
-
+from pyworkflow import getTestsScript
 
 from pyworkflow.tests import *
 
@@ -93,7 +93,8 @@ class Tester():
         else:
             # In this other case, we will load the test available
             # from pyworkflow and the other plugins
-            self.paths = [('pyworkflow', os.path.dirname(os.path.dirname(pw.__file__)))]
+            #self.paths = [('pyworkflow', os.path.dirname(os.path.dirname(pw.__file__)))]
+            self.paths = []
             for name, plugin in pw.Config.getDomain().getPlugins().items():
                 self.paths.append((name, os.path.dirname(plugin.__path__[0])))
             for k, p in self.paths:
@@ -111,7 +112,7 @@ class Tester():
 
         elif args.run:
             for moduleName, tests in testsDict.items():
-                print(">>>> %s" % moduleName)
+                print(pwutils.cyan(">>>> %s" % moduleName))
                 self.runTests(moduleName, tests)
 
         elif args.grep:
@@ -122,7 +123,7 @@ class Tester():
         else:
             for moduleName, tests in testsDict.items():
                 if self._match(moduleName):
-                    print(">>>> %s" % moduleName)
+                    print(pwutils.cyan(">>>> %s" % moduleName))
                     self.printTests(moduleName, tests)
 
     def _match(self, itemName):
@@ -201,7 +202,7 @@ class Tester():
     def _printNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
-            print("%s scipion test %s" % (spaces, itemName))
+            print("%s %s %s" % (spaces, getTestsScript(), itemName))
 
     def printTests(self, moduleName, tests):
         self._visitTests(moduleName, tests, self._printNewItem)
@@ -230,8 +231,8 @@ class Tester():
     def _runNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
-            scipion = pw.getScipionScript()
-            cmd = "%s %s test %s" % (spaces, scipion, itemName)
+            script = getTestsScript()
+            cmd = "%s %s %s" % (script, spaces, itemName)
             run = ((itemType == MODULE and self.mode == 'module') or
                    (itemType == CLASS and self.mode == 'classes') or
                    (itemType == TEST and self.mode == 'all'))
@@ -249,8 +250,7 @@ class Tester():
                 self.testCount += 1
                 result = os.system(cmdFull)
                 if self.log:
-                    self._logTest(cmd.replace(scipion, 'scipion'),
-                                  t.getToc(), result, logFile)
+                    self._logTest(cmd, t.getToc(), result, logFile)
 
     def runTests(self, moduleName, tests):
         self.testCount = 0

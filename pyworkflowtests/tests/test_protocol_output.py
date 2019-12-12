@@ -31,13 +31,11 @@ import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
 import pyworkflow.mapper as pwmapper
 import pyworkflow.protocol as pwprot
-
-import mock_domain as mod
-import mock_domain.objects as modobj
-import mock_domain.protocols as modprot
+from pyworkflowtests.protocols import ProtOutputTest
+from pyworkflowtests import Domain, MockObject
 
 # Set the application domain
-pw.Config.setDomain(mod)
+pw.Config.setDomain("pyworkflowtests")
 
 
 # Protocol to output of basic scipion objects
@@ -52,14 +50,14 @@ class TestProtocolOutputs(pwtests.BaseTest):
         fn = self.getOutputPath("protocol.sqlite")
 
         # Discover objects and protocols
-        mapperDict = mod.Domain.getMapperDict()
+        mapperDict = Domain.getMapperDict()
 
         mapper = pwmapper.SqliteMapper(fn, mapperDict)
-        prot = modprot.ProtOutputTest(mapper=mapper, n=2,
+        prot = ProtOutputTest(mapper=mapper, n=2,
                                       workingDir=self.getOutputPath(''))
 
         # Add and old style o, not in the outputs dictionary
-        prot.output1 = modobj.MockObject()
+        prot.output1 = MockObject()
 
         self.assertFalse(prot._useOutputList.get(),
                          "useOutputList wrongly initialized")
@@ -105,7 +103,7 @@ class TestProtocolOutputs(pwtests.BaseTest):
 
     def test_basicObjectInProject(self):
 
-        prot = self.newProtocol(modprot.ProtOutputTest,
+        prot = self.newProtocol(ProtOutputTest,
                                 objLabel='to generate basic input')
         print("working dir: %s" % prot.getWorkingDir())
         # Define a negative output for later tests
@@ -116,7 +114,7 @@ class TestProtocolOutputs(pwtests.BaseTest):
         self.assertOutput(prot)
 
         # Second protocol to test linking
-        prot2 = self.newProtocol(modprot.ProtOutputTest,
+        prot2 = self.newProtocol(ProtOutputTest,
                                  objLabel='to read basic input')
 
         # Set the pointer for the integer
@@ -125,14 +123,14 @@ class TestProtocolOutputs(pwtests.BaseTest):
         self.assertOutput(prot2, value=40)
 
         # Test validation: only positive numbers are allowed
-        prot3 = self.newProtocol(modprot.ProtOutputTest,
+        prot3 = self.newProtocol(ProtOutputTest,
                                  objLabel='invalid input',
                                  iBoxSize=-10)
         # We expect this to fail
         with self.assertRaises(Exception):
             self.launchProtocol(prot3)
         # Test validation: pointer value is validated
-        prot4 = self.newProtocol(modprot.ProtOutputTest,
+        prot4 = self.newProtocol(ProtOutputTest,
                                  objLabel='invalid pointer input')
         # Now use negative pointer output
         prot4.iBoxSize.setPointer(pwobj.Pointer(prot, extended="negative"))

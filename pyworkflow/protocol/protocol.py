@@ -44,8 +44,6 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
 from .params import Form
-from . import scipion
-
 
 class Step(OrderedObject):
     """ Basic execution unit.
@@ -97,7 +95,7 @@ class Step(OrderedObject):
         pass
 
     def setRunning(self):
-        """ The the state as STATE_RUNNING and 
+        """ The the state as STATE_RUNNING and
         set the init and end times.
         """
         self.initTime.set(dt.datetime.now())
@@ -127,7 +125,7 @@ class Step(OrderedObject):
         return self.status.get(STATUS_NEW)
 
     def getElapsedTime(self, default=dt.timedelta()):
-        """ Return the time that took to run 
+        """ Return the time that took to run
         (or the actual running time if still is running )
         """
         elapsed = default
@@ -213,7 +211,7 @@ class FunctionStep(Step):
     through the function _insertFunctionStep"""
 
     def __init__(self, func=None, funcName=None, *funcArgs, **kwargs):
-        """ 
+        """
          Params:
             func: the function that will be executed.
             funcName: the name assigned to that function (will be stored)
@@ -1576,7 +1574,7 @@ class Protocol(Step):
         #em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
         # TODO: Check if we need to return scipion by default anymore
         # Now the basic EM protocols are defined by scipion-em (pwem)
-        return getattr(cls, '_package', scipion)
+        return getattr(cls, '_package', None)
 
     @classmethod
     def getClassPlugin(cls):
@@ -1585,8 +1583,7 @@ class Protocol(Step):
 
     @classmethod
     def getClassPackageName(cls):
-        return cls.getClassPackage().__name__.replace(
-            'pyworkflow.protocol.scipion', 'scipion')
+        return cls.getClassPackage().__name__ if cls.getClassPackage() else "orphan"
 
     @classmethod
     def getClassDomain(cls):
@@ -1842,20 +1839,12 @@ class Protocol(Step):
             childErrors = self._validate()
             if childErrors:
                 errors += childErrors
-        except Exception as e:
+        except Exception:
             import urllib
-            exceptionStr = pwutils.formatExceptionInfo(e)
-            email = pw.Config.SCIPION_SUPPORT_EMAIL
-            errors.append("Sorry, this is embarrassing: the validation is "
-                          "failing due to a programming mistake. This should "
-                          "not happen. Check out the message. It might help to "
-                          "workaround this bug. We'd really appreciate if you "
-                          "report this to: "
-                          "[[mailto:%s?subject=%s&body=%s][%s]]" %
-                          ("Scipion validation bug found",
-                           email, urllib.quote(exceptionStr), email))
-            errors.append(exceptionStr)
-
+            exceptionStr = pwutils.formatExceptionInfo()
+            errors.append("Protocol validation failed. It usually happens because there are some "
+                          "input missing. Please check if the error message gives you any "
+                          "hint:\n{}".format(exceptionStr))
         return errors
 
     def _warnings(self):
@@ -2149,9 +2138,11 @@ def runProtocolMain(projectPath, protDbPath, protId):
             # We run "scipion run pyworkflow/...mpirun.py blah" instead of
             # calling directly "$SCIPION_PYTHON ...mpirun.py blah", so that
             # when it runs on a MPI node, it *always* has the scipion env.
-            params = ['runprotocol', 'pw_protocol_mpirun.py',
+            params = ['runprotocol', pw.getPwProtMpiRunScript(),
                       projectPath, protDbPath, protId]
-            retcode = pwutils.runJob(None, pw.getScipionScript(), params,
+            # 'scipion' is treated now as an entry point, but if there is an alias with that name, the alias has higher
+            # priority
+            retcode = pwutils.runJob(None, 'scipion', params,
                                      numberOfMpi=protocol.numberOfMpi.get(),
                                      hostConfig=hostConfig)
             sys.exit(retcode)
@@ -2181,7 +2172,7 @@ def runProtocolMain(projectPath, protDbPath, protId):
 
 def runProtocolMainMPI(projectPath, protDbPath, protId, mpiComm):
     """ This function only should be called after enter in runProtocolMain
-    and the proper MPI scripts have been started...so no validations 
+    and the proper MPI scripts have been started...so no validations
     will be made.
     """
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)

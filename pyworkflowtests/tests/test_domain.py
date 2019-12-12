@@ -24,19 +24,18 @@
 # **************************************************************************
 
 import pyworkflow.tests as pwtests
-
-import mock_domain as mod
-import mock_domain.objects as modobj
+import pyworkflowtests.objects as objectsMod
+from pyworkflowtests import Domain
 
 
 class TestDomain(pwtests.BaseTest):
 
     def test_objects(self):
         """ Test that all objects are properly discovered. """
-        objects = mod.Domain.getObjects()
-        for k in dir(modobj):
-            v = getattr(modobj, k)
-            if isinstance(v, modobj.MockObject):
+        objects = Domain.getObjects()
+        for k in dir(objectsMod):
+            v = getattr(objectsMod, k)
+            if isinstance(v, objectsMod.MockObject):
                 self.assertEqual(objects[k], v)
 
     def test_viewers(self):

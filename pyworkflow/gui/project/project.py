@@ -400,7 +400,7 @@ class ProjectManagerWindow(ProjectBaseWindow):
         """ Open an Scipion configuration file, if the user have one defined,
         also open that one with the defined text editor.
         """
-        _open_cmd(pw.getConfigPath(configFile))
+        _open_cmd(configFile)
 
 
     @staticmethod

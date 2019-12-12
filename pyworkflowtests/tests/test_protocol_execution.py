@@ -27,11 +27,12 @@ import pyworkflow.tests as pwtests
 import pyworkflow.mapper as pwmapper
 import pyworkflow.protocol as pwprot
 
-import mock_domain as mod
-import mock_domain.protocols as modprot
-
 
 # TODO: this test seems not to be finished.
+from pyworkflowtests.protocols import SleepingProtocol
+from pyworkflowtests import Domain
+
+
 class TestProtocolExecution(pwtests.BaseTest):
     
     @classmethod
@@ -44,11 +45,11 @@ class TestProtocolExecution(pwtests.BaseTest):
         print("Writing to db: %s" % fn)
 
         # Discover objects and protocols
-        mapperDict = mod.Domain.getMapperDict()
+        mapperDict = Domain.getMapperDict()
 
         # Check that the protocol has associated package
         mapper = pwmapper.SqliteMapper(fn, mapperDict)
-        prot = modprot.SleepingProtocol(mapper=mapper, n=2,
+        prot = SleepingProtocol(mapper=mapper, n=2,
                                         workingDir=self.getOutputPath(''))
         domain = prot.getClassDomain()
         domain.printInfo()

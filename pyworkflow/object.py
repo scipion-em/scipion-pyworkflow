@@ -598,7 +598,14 @@ class Scalar(Object):
         # cmp does not longer exist in Python3, so we will follow
         # the recommend replacement: (a > b) - (a < b)
         # https://docs.python.org/3.0/whatsnew/3.0.html#ordering-comparisons
-        return (a > b) - (a < b)
+
+        # Consider None values
+        if a is None and b is None:
+            return True
+        elif a is None or b is None:
+            return False
+        else:
+            return (a > b) - (a < b)
 
     def __eq__(self, other):
         """ Comparison for scalars should be by value while

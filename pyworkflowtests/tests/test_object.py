@@ -30,11 +30,10 @@ from collections import OrderedDict
 
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
-import pyworkflow.utils as pwutils
+from objects import (Complex, MockSetOfImages, MockImage, MockObject,
+                    MockAcquisition, MockMicrograph)
 
-import mock_domain.objects as modobj
 
-    
 class ListContainer(pwobj.Object):
     def __init__(self, **args):
         pwobj.Object.__init__(self, **args)
@@ -72,10 +71,10 @@ class TestObject(pwtests.BaseTest):
         
         a = pwobj.Integer()
         self.assertEqual(a.hasValue(), False)
-        c = modobj.Complex.createComplex()
+        c = Complex.createComplex()
         # Check values are correct
-        self.assertEqual(c.imag.get(), modobj.Complex.cGold.imag)
-        self.assertEqual(c.real.get(), modobj.Complex.cGold.real)
+        self.assertEqual(c.imag.get(), Complex.cGold.imag)
+        self.assertEqual(c.real.get(), Complex.cGold.real)
         
         # Test Boolean logic
         b = pwobj.Boolean(False)
@@ -135,7 +134,7 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(now, s.datetime())
 
     def test_Pointer(self):
-        c = modobj.Complex.createComplex()
+        c = Complex.createComplex()
         p = pwobj.Pointer()
         p.set(c)
         p.setExtended('Name')
@@ -145,10 +144,10 @@ class TestObject(pwtests.BaseTest):
         stackFn = "images.stk"
         mrcsFn = "images.mrcs"
         fn = self.getOutputPath('test_images.sqlite')
-        imgSet = modobj.MockSetOfImages(filename=fn)
+        imgSet = MockSetOfImages(filename=fn)
         imgSet.setSamplingRate(1.0)
         for i in range(10):
-            img = modobj.MockImage()
+            img = MockImage()
             img.setLocation(i+1, stackFn)
             imgSet.append(img)
 
@@ -167,13 +166,13 @@ class TestObject(pwtests.BaseTest):
         imgSet.write()
 
         # Read again the set to be able to retrieve elements
-        imgSet = modobj.MockSetOfImages(filename=fn)
+        imgSet = MockSetOfImages(filename=fn)
 
         # Validate that image7 was properly updated
         img7 = imgSet[7]
         self.assertEqual(img7.getFileName(), mrcsFn)
 
-        o = modobj.MockObject()
+        o = MockObject()
 
         o.pointer = pwobj.Pointer()
         o.pointer.set(imgSet)
@@ -231,11 +230,11 @@ class TestObject(pwtests.BaseTest):
         fn = self.getOutputPath('test_images2.sqlite')
         print("Writing to sqlite: %s" % fn)
 
-        imgSet = modobj.MockSetOfImages(filename=fn)
+        imgSet = MockSetOfImages(filename=fn)
         imgSet.setSamplingRate(1.0)
 
         for i in range(10):
-            img = modobj.MockImage()
+            img = MockImage()
             img.setLocation(i + 1, stackFn)
             imgSet.append(img)
 
@@ -269,15 +268,15 @@ class TestObject(pwtests.BaseTest):
         """ Check that after copyAttributes, the values
         were properly copied.
         """
-        c1 = modobj.Complex(imag=10., real=11.)
-        c2 = modobj.Complex(imag=0., real=1.0001)
+        c1 = Complex(imag=10., real=11.)
+        c2 = Complex(imag=0., real=1.0001)
         
         # Float values are different, should not be equal
         self.assertFalse(c1.equalAttributes(c2))
         c2.copyAttributes(c1, 'imag', 'real')
         
         self.assertTrue(c1.equalAttributes(c2), 
-                        'modobj.Complex c1 and c2 have not equal attributes'
+                        'Complex c1 and c2 have not equal attributes'
                         '\nc1: %s\nc2: %s\n' % (c1, c2))
 
         c1.score = pwobj.Float(1.)
@@ -291,8 +290,8 @@ class TestObject(pwtests.BaseTest):
         """ Check that equal attributes function behaves well
         to compare floats with a given precision.
         """
-        c1 = modobj.Complex(imag=0., real=1.)
-        c2 = modobj.Complex(imag=0., real=1.0001)
+        c1 = Complex(imag=0., real=1.)
+        c2 = Complex(imag=0., real=1.0001)
         
         # Since Float precision is 0.001, now c1 and c2
         # should have equal attributes
@@ -315,11 +314,11 @@ class TestObject(pwtests.BaseTest):
 
     def test_getObjDict(self):
         """ Test retrieving an object dictionary with its attribute values."""
-        acq1 = modobj.MockAcquisition(magnification=50000,
+        acq1 = MockAcquisition(magnification=50000,
                                       voltage=200,
                                       sphericalAberration=2.7,
                                       dosePerFrame=1)
-        m1 = modobj.MockMicrograph(
+        m1 = MockMicrograph(
             'my_movie.mrc', objId=1, objLabel='test micrograph',
             objComment='Testing store and retrieve from dict.')
         m1.setSamplingRate(1.6)
