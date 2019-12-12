@@ -462,7 +462,11 @@ class SubclassesTreeProvider(TreeProvider):
                     objects.append(p)
                 
                 try:
-                    paramName = None
+                    # paramName and attr must be set to None 
+                    # Otherwise, if a protocol has failed and the corresponding output object of type XX does not exist 
+                    # any other protocol that uses objects of type XX as input will not be able to choose then using
+                    # the magnifier glass (object selector of type XX)
+                    paramName = None  
                     attr = None
                     for paramName, attr in prot.iterOutputAttributes():
                         def _checkParam(paramName, attr):
