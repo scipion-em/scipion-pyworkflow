@@ -462,6 +462,8 @@ class SubclassesTreeProvider(TreeProvider):
                     objects.append(p)
                 
                 try:
+                    paramName = None
+                    attr = None
                     for paramName, attr in prot.iterOutputAttributes():
                         def _checkParam(paramName, attr):
                             # If attr is a sub-classes of any desired one, add it to the list
