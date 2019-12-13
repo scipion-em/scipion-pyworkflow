@@ -971,7 +971,7 @@ class List(Object, list):
         
     def _convertValue(self, value):
         """Value should be a list."""
-        if not isinstance(value,  ValuesView):
+        if not (isinstance(value,  list)):
             raise Exception("List.set: value should be a list.")
         self.clear()
         for item in value:

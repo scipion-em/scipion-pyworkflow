@@ -288,7 +288,7 @@ class MultiPointerTreeProvider(TreeProvider):
             del self._objectDict[strId]
      
     def getObjects(self):
-        return self._objectDict.values()
+        return list(self._objectDict.values())
         
     def getColumns(self):
         return [('Object', 250), ('Info', 150)]
