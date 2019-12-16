@@ -31,7 +31,6 @@ basic classes.
 from __future__ import print_function
 
 from collections import OrderedDict
-from collections.abc import ValuesView
 import datetime as dt
 from pyworkflow.utils.reflection import getSubclasses
 
