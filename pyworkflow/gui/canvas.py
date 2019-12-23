@@ -35,8 +35,8 @@ import math
 import tkinter as tk
 import operator
 
-from . import gui, getDefaultFont, cfgFontSize
-from .widgets import Scrollable
+from pyworkflow.gui import gui, getDefaultFont, cfgFontSize
+from pyworkflow.gui.widgets import Scrollable
 
 DEFAULT_ZOOM = 100
 
@@ -749,32 +749,32 @@ class TextCircle(TextItem):
     def _paintBounds(self, x, y, w, h, fillColor):
         return self.canvas.create_oval(x, y, w, h, fill=fillColor)
     
-    
-class ImageBox(Item):
-    def __init__(self, canvas, imgPath, x=0, y=0, text=None):
-        Item.__init__(self, canvas, x, y)
-        # Create the image
-        from pyworkflow.gui import getImage, getImageFromPath
-        
-        if imgPath is None:
-            self.image = getImage('no-image.gif')
-        else:
-            self.image = getImageFromPath(imgPath)
-
-        if text is not None:
-            self.label = tk.Label(canvas, image=self.image, text=text, 
-                                  compound=tk.TOP, bg='gray')
-            self.id = self.canvas.create_window(x, y, window=self.label)
-            self.label.bind('<Button-1>', self._onClick)
-        else:
-            self.id = self.canvas.create_image(x, y, image=self.image)
-         
-        
-    def setSelected(self, value): #Ignore selection highlight
-        pass
-    
-    def _onClick(self, e=None):
-        pass
+# This are not used and depends on xmippLib
+# class ImageBox(Item):
+#     def __init__(self, canvas, imgPath, x=0, y=0, text=None):
+#         Item.__init__(self, canvas, x, y)
+#         # Create the image
+#         from pyworkflow.gui import getImage, getImageFromPath
+#
+#         if imgPath is None:
+#             self.image = getImage('no-image.gif')
+#         else:
+#             self.image = getImageFromPath(imgPath)
+#
+#         if text is not None:
+#             self.label = tk.Label(canvas, image=self.image, text=text,
+#                                   compound=tk.TOP, bg='gray')
+#             self.id = self.canvas.create_window(x, y, window=self.label)
+#             self.label.bind('<Button-1>', self._onClick)
+#         else:
+#             self.id = self.canvas.create_image(x, y, image=self.image)
+#
+#
+#     def setSelected(self, value): #Ignore selection highlight
+#         pass
+#
+#     def _onClick(self, e=None):
+#         pass
 
 class Connector(Item):
     """ Default connector has no graphical representation (hence, it'ss invisible). Subclasses offer different looks"""
