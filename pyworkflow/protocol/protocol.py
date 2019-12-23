@@ -754,7 +754,15 @@ class Protocol(Step):
         """ This method iterates assuming the old model: any EMObject attribute
         is an output."""
         # Iterate old Style:
-        domain = self.getClassDomain()
+
+        try:
+            domain = self.getClassDomain()
+        except Exception as e:
+            print(e)
+            print("Protocol in workingdir ", self.getWorkingDir(), " is of an unknown class")
+            print("Maybe the class name has changed")
+            return "none", None
+
         for key, attr in self.getAttributes():
             if isinstance(attr, domain._objectClass):
                 yield key, attr
@@ -2112,6 +2120,11 @@ class LegacyProtocol(Protocol):
     def __str__(self):
         return self.getObjLabel()
 
+    # overload getClassDomain because legacy protocols
+    # do not have a package associated to it
+    @classmethod
+    def getClassDomain(cls):
+        return pw.Config.getDomain()
 
 # ---------- Helper functions related to Protocols --------------------
 def runProtocolMain(projectPath, protDbPath, protId):
