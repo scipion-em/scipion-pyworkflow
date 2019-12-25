@@ -49,7 +49,7 @@ import os
 import errno
 #import paramiko
 
-from pyworkflow.utils.path import dirname, makeFilePath, join, isdir, isfile
+from pyworkflow.utils.path import makeFilePath
 from pyworkflow.utils.log import ScipionLogger
 
 LOCAL_USER_AND_HOST = ''
@@ -140,7 +140,7 @@ class RemotePath(object):
         """ Like os.makedirs remotely. """
         if len(remoteFolder) and not self.exists(remoteFolder):
             log.info('RemotePath.makedirs, path: %s' % remoteFolder)
-            parent = dirname(remoteFolder)
+            parent = os.path.dirname(remoteFolder)
             # if have parent and it doen't exist, create it recursively
             if len(parent) and not self.exists(parent):
                 self.makedirs(parent)
@@ -163,7 +163,7 @@ class RemotePath(object):
 
     def makeFilePath(self, *remoteFiles):
         """ Create the remote folder path for remoteFiles. """
-        self.makePath(*[dirname(r) for r in remoteFiles])
+        self.makePath(*[os.path.dirname(r) for r in remoteFiles])
 
     def makePath(self, *remoteFolders):
         """ Make all path in remoteFolders list. """
@@ -186,12 +186,12 @@ class RemotePath(object):
             self.makePath(remoteFolder)
 
         for path in os.listdir(localFolder):
-            localPath = join(localFolder, path)
-            remotePath = join(remoteFolder, path)
+            localPath = os.path.join(localFolder, path)
+            remotePath = os.path.join(remoteFolder, path)
             # Create folders
-            if isdir(localPath):
+            if os.path.isdir(localPath):
                 self.copyTree(localPath, remotePath)
-            elif isfile(localPath):
+            elif os.path.isfile(localPath):
                 self.putFile(localPath, remotePath)
 
     def cleanPath(self, *remotePaths):
@@ -202,10 +202,10 @@ class RemotePath(object):
             if self.exists(path):
                 # Create folders
                 if self.isdir(path):
-                    files = [join(path, f) for f in self.sftp.listdir(path)]
+                    files = [os.path.join(path, f) for f in self.sftp.listdir(path)]
                     self.cleanPath(*files)
                     log.info('RemotePath.cleanPath, rmdir path: %s' % path)
                     self.sftp.rmdir(path)
-                else:# isfile(path):
+                else:# os.path.isfile(path):
                     log.info('RemotePath.cleanPath, remove path: %s' % path)
                     self.sftp.remove(path)

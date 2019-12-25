@@ -21,7 +21,8 @@ import socket
 #import paramiko
 import hashlib
 
-from pyworkflow.utils.path import missingPaths, exists, makeFilePath
+from pyworkflow.utils import exists
+from pyworkflow.utils.path import missingPaths, makeFilePath
 from pyworkflow.utils.log import ScipionLogger
 
 LOCAL_USER_AND_HOST = ''
@@ -545,7 +546,7 @@ class FileTransfer():
             sftp.mkdir(remoteDirectory) 
             
     def __getLocalSHA1(self, filePath):
-        return hashlib.sha1(file(filePath, 'r').read()).hexdigest()
+        return hashlib.sha1(open(filePath, 'rt').read()).hexdigest()
 
     def __getRemoteSHA1(self, filePath, ssh):
         stdin, stdout, stderr = ssh.exec_command("sha1sum '" + filePath + "'")

@@ -1982,7 +1982,7 @@ class Protocol(Step):
 
     def citations(self):
         """ Return a citation message to provide some information to users. """
-        citations = self.getCitations().values()
+        citations = list(self.getCitations().values())
         if citations:
             citations.insert(0, '*References:* ')
 

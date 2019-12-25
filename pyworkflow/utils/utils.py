@@ -451,7 +451,7 @@ def parseBibTex(bibtexStr):
     f.seek(0, 0)
     parser = BibTexParser(f)
 
-    return parser.get_entry_dict()
+    return parser.bib_database.get_entry_dict()
 
 
 def isPower2(num):

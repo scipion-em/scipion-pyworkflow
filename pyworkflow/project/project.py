@@ -1592,7 +1592,7 @@ class Project(object):
             broken = False
             # FIXME: Remove the em.ProtImport here
             # FIXME (maybe create a base import class?)
-            if isinstance(prot, em.ProtImport):
+            if isinstance(prot, pwem.protocols.ProtImport):
                 for _, attr in prot.iterOutputAttributes():
                     fn = attr.getFiles()
                     for f in attr.getFiles():

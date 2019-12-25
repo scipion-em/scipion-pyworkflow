@@ -435,7 +435,7 @@ class MockParticle(MockImage):
 class MockSet(pwobj.Set, MockObject):
 
     def _loadClassesDict(self):
-        from plugin import Domain
+        from pyworkflow.plugin import Domain
         classDict = Domain.getObjects()
         classDict.update(globals())
 
