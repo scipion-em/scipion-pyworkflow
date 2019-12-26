@@ -122,6 +122,7 @@ class Message:
     LABEL_HELP = 'Help'
     TEXT_HELP = 'The file selected will be uploaded to the project folder. If the file was uploaded before, It will be replaced.'
     LABEL_RUNNAME = 'Run name'
+    LABEL_EXECUTION = 'Run mode'
     LABEL_RUNMODE = 'Mode'
     LABEL_PARALLEL = 'Parallel'
     LABEL_HOST = 'Host'
@@ -256,7 +257,6 @@ It is used by a few programs like Ctffind or Frealign."""
     ERROR_IMPORT_VOL = 'importVolumes:There is not filePaths matching pattern'
     
     LABEL_CTF_ESTI = 'CTF Estimation'
-    LABEL_INPUT = 'Input'
     LABEL_INPUT_MIC = 'Input Micrographs'
     LABEL_INPUT_PART = 'Input Particles'
     LABEL_INPUT_VOLS = 'Input Volumes'
