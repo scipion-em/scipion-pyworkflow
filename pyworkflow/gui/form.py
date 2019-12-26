@@ -1173,7 +1173,7 @@ class ParamWidget:
             protClassName = self.param.protocolClassName.get()
             
             if self.param.allowSubclasses:
-                classes = pw.Config.GetDomain().findSubClasses(pw.Config.getDomain().getProtocols(), protClassName).keys()
+                classes = pw.Config.getDomain().findSubClasses(pw.Config.getDomain().getProtocols(), protClassName).keys()
             else:
                 classes = [protClassName]
             

@@ -436,7 +436,7 @@ class ProtocolTreeConfig:
     @classmethod
     def isAFinalProtocol(cls, v, k):
         if (issubclass(v, pw.viewer.ProtocolViewer) or
-            v.isBase() or v.isDisabled()):
+                v.isBase() or v.isDisabled()):
             return False
 
         # To remove duplicated protocol, ProtMovieAlignment turns into OF:

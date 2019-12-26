@@ -557,7 +557,7 @@ class Item(object):
         return self.canvas.bbox(self.id)
 
     def countSockets(self,verticalLocation):
-        return len(self.getSocketsAt(verticalLocation))
+        return len(list(self.getSocketsAt(verticalLocation)))
 
     def addSocket(self,name,socketClass,verticalLocation,fillColor=DEFAULT_CONNECTOR_FILL,outline=DEFAULT_CONNECTOR_OUTLINE,position=None):
         count=self.countSockets(verticalLocation) + 1

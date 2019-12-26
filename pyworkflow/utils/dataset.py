@@ -212,7 +212,7 @@ class Table(object):
         """ Return the value of the property 'label'
         in the element that has this 'index'.
         """
-        value = self._rowDict.values()[index]._asdict()[label]
+        value = list(self._rowDict.values())[index]._asdict()[label]
         return value
     
     def getIndexFromValue(self, value, label):
