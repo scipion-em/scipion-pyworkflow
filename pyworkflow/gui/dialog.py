@@ -118,8 +118,10 @@ class Dialog(tk.Toplevel):
 
         self.deiconify() # become visible now
         self.initial_focus.focus_set()
+        # Pablo: I've commented this when migrating to python3 since I was getting and exception:
+        # window ".139897767953072.139897384058440" was deleted before its visibility changed
         # wait for window to appear on screen before calling grab_set
-        self.wait_visibility()
+        #self.wait_visibility()
         self.grab_set()
         self.wait_window(self)
 
