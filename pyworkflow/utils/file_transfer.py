@@ -32,7 +32,7 @@ PAIRS_SEPARATOR = ':'
 log = ScipionLogger()
 
 
-class FileTransfer():
+class FileTransfer:
     
     ssh = None   
     sftp = None 
@@ -65,7 +65,7 @@ class FileTransfer():
         
         for userAndHostPairs, cursorFilePaths in classifiedFiles.items():
             gatewayHostsCredentials = None
-            if (gatewayHosts is not None and userAndHostPairs in gatewayHosts):
+            if gatewayHosts is not None and userAndHostPairs in gatewayHosts:
                 gatewayHostsCredentials = gatewayHosts[userAndHostPairs]
             self.__sendFilesBetweenPairs(userAndHostPairs, 
                                          cursorFilePaths,
@@ -166,7 +166,7 @@ class FileTransfer():
         # As we are going to create a session for each target host we must get different target hosts.
         userAndHosts = self.__getDiferentHostsFromFilePaths(filePaths)
         for userAndHost in userAndHosts:
-            if (not self.__isLocalCredential(userAndHost)):
+            if not self.__isLocalCredential(userAndHost):
                 resultFilePaths = self.__getFilePaths(filePaths, userAndHost)
                 # Recover host credentials to remove files
                 userName = self.__getUserAndHost(userAndHost)[0]
@@ -205,7 +205,7 @@ class FileTransfer():
         # As we are going to create a session for each target host we must get different target hosts.
         userAndHosts = self.__getDiferentHostsFromFilePaths(directoryPaths)
         for userAndHost in userAndHosts:
-            if (not self.__isLocalCredential(userAndHost)):
+            if not self.__isLocalCredential(userAndHost):
                 resultDirectoryPaths = self.__getFilePaths(directoryPaths, userAndHost)
                 # Recover host credentials to remove files
                 userName = self.__getUserAndHost(userAndHost)[0]
@@ -246,11 +246,11 @@ class FileTransfer():
         userAndHosts = self.__getDiferentHostsFromFilePaths(filePaths)
         for userAndHost in userAndHosts:
             resultFilePaths = self.__getFilePaths(filePaths, userAndHost)
-            if (self.__isLocalCredential(userAndHost)):
+            if self.__isLocalCredential(userAndHost):
                 for resultFilePath in resultFilePaths:
                     filePath = self.__getLocationAndFilePath(resultFilePath)[1]
                     log.info("Checking: " + filePath)
-                    if (len (missingPaths(filePath)) != 0):
+                    if len (missingPaths(filePath)) != 0:
                         returnFilePaths.append(filePath)
                         log.info("Check fail!!")
             else:
@@ -304,8 +304,8 @@ class FileTransfer():
         
         for fileName in filePaths:
             log.info("Checking: " + fileName)
-            if (isLocalHost):            
-                if (len (missingPaths(fileName)) != 0):
+            if isLocalHost:
+                if len (missingPaths(fileName)) != 0:
                     returnFilePaths.append(fileName)
                     log.info("Check fail!!")
             else:
@@ -338,7 +338,7 @@ class FileTransfer():
                 targetFilePath = targetParts[1]
                 resultKey = sourceUserAndHost + PAIRS_SEPARATOR + targetUserAndHost
                 auxDict = {}
-                if (resultKey in result):     
+                if resultKey in result:
                     auxDict = result[resultKey]
                     if sourceFilePath in auxDict:
                         # This will not happen in Scipion because one source path is not going
@@ -400,9 +400,9 @@ class FileTransfer():
         Function to get the user and the userName@hostName and file path from 'userName@hostname:filePath' string
         Returns: Tuple with ('userName@hostName', 'filePath')
         """
-        if (":" in locationAndFile):
+        if ":" in locationAndFile:
             auxLocationAndFile = locationAndFile.split(":", 1)
-            if (self.__isLocalCredential(auxLocationAndFile[0])):
+            if self.__isLocalCredential(auxLocationAndFile[0]):
                 auxLocationAndFile[0] = LOCAL_USER_AND_HOST # Ease classification and other operations
         else:
             auxLocationAndFile = []
@@ -419,7 +419,7 @@ class FileTransfer():
         if (hostName is None or
             hostName == LOCAL_USER_AND_HOST):
             return True
-        elif (socket.gethostname() == hostName):
+        elif socket.gethostname() == hostName:
             return True
         else:
             return False
@@ -433,7 +433,7 @@ class FileTransfer():
             return True
         else:
             hostName = self.__getUserAndHost(userAndHost)[1]
-            return self.__isLocalHost(hostName);
+            return self.__isLocalHost(hostName)
         
     def __getDiferentHostsFromFilePaths (self, filePaths):
         """
@@ -444,9 +444,9 @@ class FileTransfer():
         differentHosts = []
         for filePath in filePaths:
             userAndHost = self.__getLocationAndFilePath(filePath)[0]
-            if (self.__isLocalCredential(userAndHost)):
+            if self.__isLocalCredential(userAndHost):
                 userAndHost = LOCAL_USER_AND_HOST # To simplify code for local credentials.
-            if (userAndHost not in differentHosts):
+            if userAndHost not in differentHosts:
                 differentHosts.append(userAndHost)
         return differentHosts
     
@@ -460,8 +460,8 @@ class FileTransfer():
         resultFilePaths = []             
         for filePath in filePaths:
             locationAndFilePath = self.__getLocationAndFilePath(filePath)
-            if (locationAndFilePath[0] == userAndHost):
-                resultFilePaths.append(filePath);
+            if locationAndFilePath[0] == userAndHost:
+                resultFilePaths.append(filePath)
         return resultFilePaths
     
     def __copyLocalFile(self, sourceFilePath, targetFilePath):
@@ -473,11 +473,11 @@ class FileTransfer():
         log.info("Copying " + sourceFilePath + " to " + targetFilePath)
         # Check if file already existsFilePath and it is up to date
         existsFilePath = False
-        if (exists(targetFilePath)):
-            if ( self.__getLocalSHA1(sourceFilePath) ==  self.__getLocalSHA1(targetFilePath)):
+        if exists(targetFilePath):
+            if self.__getLocalSHA1(sourceFilePath) ==  self.__getLocalSHA1(targetFilePath):
                 existsFilePath = True
                 log.info(targetFilePath + " already existed")
-        if (not existsFilePath):                    
+        if not existsFilePath:
             makeFilePath(targetFilePath)
             shutil.copy2(sourceFilePath, targetFilePath)
         
@@ -491,11 +491,11 @@ class FileTransfer():
         log.info("Sending " + sourceFilePath + " to " + targetFilePath)
         # Check if file already existsFilePath and it is up to date
         existsFilePath = False
-        if (self.__existsRemotePath(targetFilePath, sftp)):
-            if ( self.__getLocalSHA1(sourceFilePath) ==  self.__getRemoteSHA1(targetFilePath, self.ssh)):
+        if self.__existsRemotePath(targetFilePath, sftp):
+            if self.__getLocalSHA1(sourceFilePath) ==  self.__getRemoteSHA1(targetFilePath, self.ssh):
                 existsFilePath = True
                 log.info(targetFilePath + " already existed")
-        if (not existsFilePath):        
+        if not existsFilePath:
             self.__createRemoteFolderForFile(targetFilePath, sftp)
             try:
                 sftp.put(sourceFilePath, targetFilePath)
@@ -514,11 +514,11 @@ class FileTransfer():
         log.info("Getting " + sourceFilePath + " to " + targetFilePath)
         # Check if file already existsFilePath and it is up to date
         existsFilePath = False
-        if (exists(targetFilePath)):
-            if ( self.__getRemoteSHA1(sourceFilePath, self.ssh) ==  self.__getLocalSHA1(targetFilePath)):
+        if exists(targetFilePath):
+            if self.__getRemoteSHA1(sourceFilePath, self.ssh) ==  self.__getLocalSHA1(targetFilePath):
                 existsFilePath = True
                 log.info(targetFilePath + " already existed")
-        if (not existsFilePath):        
+        if not existsFilePath:
             makeFilePath(targetFilePath)
             try:
                 sftp.get(sourceFilePath, targetFilePath)

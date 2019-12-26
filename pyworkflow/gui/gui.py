@@ -158,10 +158,11 @@ def setCommonFonts(windows=None):
         windows.root.option_add("*TCombobox*Listbox*Font", default_font)
         windows.root.option_add("*TCombobox*Font", default_font)
 
+
 def changeFontSizeByDeltha(font, deltha, minSize=-999, maxSize=999):
     size = font['size']
     new_size = size + deltha
-    if new_size >= minSize and new_size <= maxSize:
+    if minSize <= new_size <= maxSize:
         font.configure(size=new_size)
 
 
@@ -278,7 +279,7 @@ def configureWeigths(widget, row=0, column=0):
     widget.rowconfigure(row, weight=1)
     
     
-class Window():
+class Window:
     """Class to manage a Tk windows.
     It will encapsulates some basic creation and 
     setup functions. """

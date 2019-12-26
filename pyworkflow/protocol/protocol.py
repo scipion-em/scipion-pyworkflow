@@ -726,7 +726,7 @@ class Protocol(Step):
                 else:
                     emptyPointers.append(paramName)
 
-        return (linkedPointers and not emptyPointers)
+        return linkedPointers and not emptyPointers
 
     def iterOutputAttributes(self, outputClass=None):
         """ Iterate over the outputs produced by this protocol. """
@@ -1433,6 +1433,7 @@ class Protocol(Step):
             if url.startswith('http://'):
                 self._buffer += '[[%s][%s]]' % (url, txt)
             else:
+                # FIXME: web does not exist!
                 from pyworkflow.web.pages import settings as django_settings
                 absolute_url = django_settings.ABSOLUTE_URL
                 self._buffer += '[[%s/get_log/?path=%s][%s]]' % (absolute_url,

@@ -115,7 +115,7 @@ class Table(object):
         self._columns[col.getName()] = col
         
     def getColumnValues(self, columnName):
-        if (self.hasColumn(columnName)):
+        if self.hasColumn(columnName):
             return [getattr(row, columnName) for row in self.iterRows()] 
         else:
             return [None] * self.getSize()

@@ -60,7 +60,7 @@ class Canvas(tk.Canvas, Scrollable):
         self.lastPos = (0, 0) # Track last clicked position
         self.eventPos = (0, 0)
         self.firstPos = None  # Track first clicked position (for a drag action)
-        self.items = {} # Keep a dictionary with high-level items
+        self.items = {}  # Keep a dictionary with high-level items
         self.cleanSelected = True
         
         self.onClickCallback = None
@@ -96,7 +96,7 @@ class Canvas(tk.Canvas, Scrollable):
         if tooltipCallback:
             self.bind('<Motion>', self.onMotion)
             #self.bind('<Leave>', self.onLeave)
-            self._createTooltip() # This should set
+            self._createTooltip()  # This should set
         
         self._menu = tk.Menu(self, tearoff=0)
         
@@ -126,10 +126,12 @@ class Canvas(tk.Canvas, Scrollable):
     def hideTooltip(self, e=None):
         if self._tooltipOn:
             self._tooltipOn = False
-            tw = self._tooltip # short notation
+            tw = self._tooltip  # short notation
             tw.withdraw()
+
     def getRunsFont(self):
         return self._runsFont
+
     def getImage(self, img):
         return gui.getImage(img, self._images)
     
@@ -141,7 +143,7 @@ class Canvas(tk.Canvas, Scrollable):
         # Convert screen coordinates to canvas coordinates
         xc = self.canvasx(event.x)
         yc = self.canvasy(event.y)
-        return (xc, yc)
+        return xc, yc
     
     def selectItem(self, item):
         if self.lastItem:
@@ -255,9 +257,7 @@ class Canvas(tk.Canvas, Scrollable):
             pass
 
     def onButton1Release(self, event):
-
         if self.firstPos is not None:
-
             # Failing in "data" view.
             # TODO: This is not fully implemented
             # self.onAreaSelected(self.firstPos[0], self.firstPos[1], event.x, event.y)
@@ -267,7 +267,7 @@ class Canvas(tk.Canvas, Scrollable):
         self.config(cursor='arrow')
 
     def onMotion(self, event):
-        self.onLeave(event) # Hide tooltip and cancel schedule
+        self.onLeave(event)  # Hide tooltip and cancel schedule
             
         xc, yc = self.getCoordinates(event)
         item = self._findItem(xc, yc)
@@ -373,7 +373,7 @@ class Canvas(tk.Canvas, Scrollable):
         """
 
         # Reset the zoom and font
-        scale = self._zoomFactor/DEFAULT_ZOOM
+        scale = self._zoomFactor / DEFAULT_ZOOM
         self._zoomFactor = DEFAULT_ZOOM
         self._runsFont['size'] = DEFAULT_FONT_SIZE
 
@@ -441,28 +441,26 @@ class Canvas(tk.Canvas, Scrollable):
                 for child in node.getChilds():
                     self.createEdge(item, child.item)
                     self._updatePositions(child, visitedDict)
-            
-        
-        
+
 
 def findClosestPoints(list1, list2):
     candidates=[]
     for c1 in list1:
         for c2 in list2:
-            candidates.append([c1,c2, math.hypot(c2[0] - c1[0], c2[1] - c1[1])])
-    closestTuple=min(candidates,key=operator.itemgetter(2))
-    return closestTuple[0],closestTuple[1]
+            candidates.append([c1, c2, math.hypot(c2[0] - c1[0], c2[1] - c1[1])])
+    closestTuple = min(candidates, key=operator.itemgetter(2))
+    return closestTuple[0], closestTuple[1]
 
 
 def findClosestConnectors(item1, item2):
-    return findUpDownClosestConnectors(item1,item2)
+    return findUpDownClosestConnectors(item1, item2)
 
 
 def findUpDownClosestConnectors(item1, item2):
     srcConnectors = item1.getUpDownConnectorsCoordinates()
     dstConnectors = item2.getUpDownConnectorsCoordinates()
     if srcConnectors and dstConnectors:
-        c1Coords, c2Coords = findClosestPoints(srcConnectors,dstConnectors)
+        c1Coords, c2Coords = findClosestPoints(srcConnectors, dstConnectors)
         return c1Coords, c2Coords
     return None
 
@@ -470,12 +468,11 @@ def findUpDownClosestConnectors(item1, item2):
 def findStrictClosestConnectors(item1, item2):
     srcConnectors = item1.getConnectorsCoordinates()
     dstConnectors = item2.getConnectorsCoordinates()
-    c1Coords,c2Coords = findClosestPoints(srcConnectors,dstConnectors)
+    c1Coords, c2Coords = findClosestPoints(srcConnectors, dstConnectors)
     return c1Coords, c2Coords
 
 
 def getConnectors(itemSource, itemDest):
-
     srcConnector = itemSource.getOutputConnectorCoordinates()
     dstConnector = itemDest.getInputConnectorCoordinates()
 
@@ -501,15 +498,15 @@ class Item(object):
         self.selectionListeners = []
         self._selected = False
 
-    def getCenter(self,x1,y1,x2,y2):
-        xc=(x2+x1)/2.0
-        yc=(y2+y1)/2.0
-        return (xc,yc)
+    def getCenter(self, x1, y1, x2, y2):
+        xc = (x2 + x1) / 2.0
+        yc = (y2 + y1) / 2.0
+        return xc, yc
 
     def getConnectorsCoordinates(self):
-        x1,y1,x2,y2=self.getCorners()
-        xc,yc=self.getCenter(x1,y1,x2,y2)
-        return [(xc,y1), (x2,yc), (xc,y2), (x1,yc)]
+        x1, y1, x2, y2 = self.getCorners()
+        xc, yc=self.getCenter(x1, y1, x2, y2)
+        return [(xc, y1), (x2, yc), (xc, y2), (x1, yc)]
 
     def getTopConnectorCoordinates(self):
 
@@ -548,9 +545,9 @@ class Item(object):
     def getUpDownConnectorsCoordinates(self):
         corners = self.getCorners()
         if corners:
-            x1,y1,x2,y2 = self.getCorners()
-            xc, yc = self.getCenter(x1,y1,x2,y2)
-            return [(xc,y1), (xc,y2)]
+            x1, y1, x2, y2 = self.getCorners()
+            xc, yc = self.getCenter(x1, y1, x2, y2)
+            return [(xc, y1), (xc, y2)]
         return None
 
     def getCorners(self): 
@@ -559,46 +556,52 @@ class Item(object):
     def countSockets(self,verticalLocation):
         return len(list(self.getSocketsAt(verticalLocation)))
 
-    def addSocket(self,name,socketClass,verticalLocation,fillColor=DEFAULT_CONNECTOR_FILL,outline=DEFAULT_CONNECTOR_OUTLINE,position=None):
-        count=self.countSockets(verticalLocation) + 1
-        if position==None:
-            position=count
+    def addSocket(self, name, socketClass, verticalLocation,
+                  fillColor=DEFAULT_CONNECTOR_FILL,
+                  outline=DEFAULT_CONNECTOR_OUTLINE,
+                  position=None):
+        count = self.countSockets(verticalLocation) + 1
+        if position is None:
+            position = count
         self.relocateSockets(verticalLocation, count)
-        x,y=self.getSocketCoordsAt(verticalLocation, count, count)
-        self.sockets[name]={"object": socketClass(self.canvas,x,y,name,fillColor=fillColor,outline=outline), "verticalLocation": verticalLocation, "position":position}
+        x, y = self.getSocketCoordsAt(verticalLocation, count, count)
+        self.sockets[name] = {"object": socketClass(self.canvas, x, y, name,
+                                                    fillColor=fillColor,
+                                                    outline=outline),
+                              "verticalLocation": verticalLocation,
+                              "position": position}
         self.paintSocket(self.getSocket(name))
 
-    def getSocket(self,name):
+    def getSocket(self, name):
         return self.sockets[name]["object"]
 
-    def getSocketsAt(self,verticalLocation):
+    def getSocketsAt(self, verticalLocation):
         return filter(lambda s: s["verticalLocation"] == verticalLocation, self.sockets.values())
 
     def getSocketCoords(self,name):
-        socket=self.sockets[name]
+        socket = self.sockets[name]
         return self.getSocketCoordsAt(socket["verticalLocation"], socket["position"], self.countSockets(socket["verticalLocation"]))
 
-    def getSocketCoordsAt(self,verticalLocation,position=1,socketsCount=1):
-        x1,y1,x2,y2=self.getCorners()
-        xc=(x2+x1)/2.0
-        socketsGroupSize=(socketsCount-1)*self.socketSeparation
-        socketsGroupStart=xc - (socketsGroupSize / 2)
-        x=socketsGroupStart+(position-1)*self.socketSeparation
+    def getSocketCoordsAt(self, verticalLocation, position=1, socketsCount=1):
+        x1, y1, x2, y2 = self.getCorners()
+        xc = (x2 + x1) / 2.0
+        socketsGroupSize = (socketsCount-1) * self.socketSeparation
+        socketsGroupStart = xc - (socketsGroupSize / 2)
+        x = socketsGroupStart + (position - 1) * self.socketSeparation
         if verticalLocation == "top":
-            y=y1
+            y = y1
         else:
-            y=y2
-        return (x,y)
+            y = y2
+        return x, y
 
-    def relocateSockets(self,verticalLocation,count):
-        sockets=self.getSocketsAt(verticalLocation)
+    def relocateSockets(self, verticalLocation, count):
+        sockets = self.getSocketsAt(verticalLocation)
         for socket in sockets:
-            o=socket["object"]
-            x,y=self.getSocketCoordsAt(verticalLocation,socket["position"],count)
-            o.moveTo(x,y)
+            o = socket["object"]
+            x, y = self.getSocketCoordsAt(verticalLocation, socket["position"], count)
+            o.moveTo(x, y)
 
-
-    def paintSocket(self,socket):
+    def paintSocket(self, socket):
         # x,y=self.getSocketCoords(socket["name"])
         socket.paintSocket()
 
@@ -608,22 +611,22 @@ class Item(object):
 
     def getDimensions(self):
         x, y, x2, y2 = self.canvas.bbox(self.id)
-        return (x2-x, y2-y)
+        return x2 - x, y2 - y
         
     def move(self, dx, dy):
-        if hasattr(self,"id"):
+        if hasattr(self, "id"):
             self.canvas.move(self.id, dx, dy)
         self.x += dx
         self.y += dy
         for name in self.sockets.keys():
-            socket=self.sockets[name]
-            socket["object"].move(dx,dy)
+            socket = self.sockets[name]
+            socket["object"].move(dx, dy)
         for listenerFunc in self.listeners:
             listenerFunc(dx, dy)
             
     def moveTo(self, x, y):
         """Move TextBox to a new position (x,y)"""
-        self.move(x-self.x, y-self.y)
+        self.move(x - self.x, y - self.y)
         
     def addPositionListener(self, listenerFunc):
         self.listeners.append(listenerFunc)
@@ -652,7 +655,8 @@ class Item(object):
 
     def lift(self):
         self.canvas.lift(self.id)
-        
+
+
 class TextItem(Item):
     """This class will serve to paint and store rectangle boxes with some text.
        x and y are the coordinates of the center of this item"""
@@ -681,7 +685,8 @@ class TextItem(Item):
         """Paint the object in a specific position."""
 
         self.id_text = self.canvas.create_text(self.x, self.y, text=self.text,
-                                               justify=tk.CENTER, fill=self.textColor, font=self.canvas.getRunsFont())
+                                               justify=tk.CENTER, fill=self.textColor,
+                                               font=self.canvas.getRunsFont())
         # self.id_text = self.canvas.create_text(self.x, self.y, text=self.text,
         #                 justify = tk.CENTER, fill = self.textColor)
 
@@ -707,28 +712,28 @@ class TextBox(TextItem):
     def _paintBounds(self, x, y, w, h, fillColor):
         return self.canvas.create_rectangle(x, y, w, h, fill=fillColor, outline=fillColor)
 
+
 class RoundedTextBox(TextItem):
     def __init__(self, canvas, text, x, y, bgColor, textColor='black'):
         super(RoundedTextBox,self).__init__(canvas, text, x, y, bgColor, textColor)
 
-
     def _paintBounds(self, upperLeftX, upperLeftY , bottomRightX, bottomRightY, fillColor):
-        d=5
+        d = 5
         # When smooth=1, you define a straight segment by including its ends twice
-        return self.canvas.create_polygon(upperLeftX+d+1,upperLeftY, #1
-                                          upperLeftX+d,upperLeftY, #1
-                                          bottomRightX-d,upperLeftY, #2
-                                          bottomRightX-d,upperLeftY, #2
+        return self.canvas.create_polygon(upperLeftX+d+1, upperLeftY, #1
+                                          upperLeftX+d, upperLeftY, #1
+                                          bottomRightX-d, upperLeftY, #2
+                                          bottomRightX-d, upperLeftY, #2
                                           # bottomRightX-d+1,upperLeftY, #2b
-                                          bottomRightX,upperLeftY+d-1, #3b
-                                          bottomRightX,upperLeftY+d, #3
-                                          bottomRightX,upperLeftY+d, #3
+                                          bottomRightX, upperLeftY+d-1, #3b
+                                          bottomRightX, upperLeftY+d, #3
+                                          bottomRightX, upperLeftY+d, #3
                                           bottomRightX, bottomRightY-d, #4
                                           bottomRightX, bottomRightY-d, #4
-                                          bottomRightX-d,bottomRightY, #5
-                                          bottomRightX-d,bottomRightY, #5
-                                          upperLeftX+d,bottomRightY, #6
-                                          upperLeftX+d,bottomRightY, #6
+                                          bottomRightX-d, bottomRightY, #5
+                                          bottomRightX-d, bottomRightY, #5
+                                          upperLeftX+d, bottomRightY, #6
+                                          upperLeftX+d, bottomRightY, #6
                                           # upperLeftX+d-1,bottomRightY, #6b
                                           upperLeftX, bottomRightY-d+1, #7b
                                           upperLeftX, bottomRightY-d, #7
@@ -736,12 +741,13 @@ class RoundedTextBox(TextItem):
                                           upperLeftX, upperLeftY+d, #8
                                           upperLeftX, upperLeftY+d, #8
                                           # upperLeftX, upperLeftY+d-1, #8b
-                                          upperLeftX+d-1,upperLeftY, #1b
-                                          fill=fillColor, outline='black',smooth=1) 
+                                          upperLeftX+d-1, upperLeftY, #1b
+                                          fill=fillColor, outline='black', smooth=1)
 
-        def getDimensions(self):
-            return self.canvas.bbox(self.id)
-    
+    def getDimensions(self):
+        return self.canvas.bbox(self.id)
+
+
 class TextCircle(TextItem):
     def __init__(self, canvas, text, x, y, bgColor, textColor='black'):
         super(TextCircle,self).__init__(canvas, text, x, y, bgColor, textColor)
@@ -776,11 +782,12 @@ class TextCircle(TextItem):
 #     def _onClick(self, e=None):
 #         pass
 
+
 class Connector(Item):
     """ Default connector has no graphical representation (hence, it'ss invisible). Subclasses offer different looks"""
-    def __init__(self,canvas,x,y,name):
+    def __init__(self, canvas, x, y, name):
         super(Connector,self).__init__(canvas, x, y)
-        self.name= name
+        self.name = name
 
     def paintSocket(self):
         """Should be implemented by the subclasses"""
@@ -790,43 +797,62 @@ class Connector(Item):
         """Should be implemented by the subclasses"""
         pass
 
-    def move(self,dx,dy):
-        super(Connector,self).move(dx,dy)
-        if hasattr(self,"socketId"):
+    def move(self, dx, dy):
+        super(Connector, self).move(dx, dy)
+        if hasattr(self, "socketId"):
             self.canvas.move(self.socketId, dx, dy)
-        if hasattr(self,"plugId"):
+        if hasattr(self, "plugId"):
             self.canvas.move(self.plugId, dx, dy)
 
+
 class ColoredConnector(Connector):
-    def __init__(self,canvas,x,y,name,fillColor=DEFAULT_CONNECTOR_FILL,outline=DEFAULT_CONNECTOR_OUTLINE):
-        super(ColoredConnector,self).__init__(canvas,x,y,name)
-        self.fillColor=fillColor
-        self.outline=outline
+    def __init__(self, canvas, x, y, name, fillColor=DEFAULT_CONNECTOR_FILL,
+                 outline=DEFAULT_CONNECTOR_OUTLINE):
+        super(ColoredConnector, self).__init__(canvas, x, y, name)
+        self.fillColor = fillColor
+        self.outline = outline
+
 
 class RoundConnector(ColoredConnector):
-    radius=3
+    radius = 3
+
     def paintSocket(self):
-        self.socketId= self.canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, outline=self.outline)
+        self.socketId = self.canvas.create_oval(self.x-self.radius,
+                                                self.y-self.radius,
+                                                self.x+self.radius,
+                                                self.y+self.radius,
+                                                outline=self.outline)
 
     def paintPlug(self):
-        self.plugId= self.canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.fillColor,width=0)
+        self.plugId = self.canvas.create_oval(self.x-self.radius,
+                                              self.y-self.radius,
+                                              self.x+self.radius,
+                                              self.y+self.radius,
+                                              fill=self.fillColor, width=0)
 
 
 class SquareConnector(ColoredConnector):
     halfside=3
+
     def paintSocket(self):
-        self.socketId= self.canvas.create_rectangle(self.x-self.halfside, self.y-self.halfside, self.x+self.halfside, self.y+self.halfside, outline=self.outline)
+        self.socketId = self.canvas.create_rectangle(self.x-self.halfside,
+                                                     self.y-self.halfside,
+                                                     self.x+self.halfside,
+                                                     self.y+self.halfside,
+                                                     outline=self.outline)
 
     def paintPlug(self):
-        self.plugId= self.canvas.create_rectangle(self.x-self.halfside, self.y-self.halfside, self.x+self.halfside, self.y+self.halfside, fill=self.fillColor,width=0)
+        self.plugId = self.canvas.create_rectangle(self.x-self.halfside,
+                                                   self.y-self.halfside,
+                                                   self.x+self.halfside,
+                                                   self.y+self.halfside,
+                                                   fill=self.fillColor, width=0)
 
 
 # !!!! other figures: half circle, diamond...
-class Oval():
-
+class Oval:
     """Oval or circle"""
     def __init__(self, canvas, x, y, radio, color='green', anchor=None):
-
         self.anchor = anchor
         self.X, self.Y = x, y
         self.radio = radio
@@ -842,7 +868,9 @@ class Oval():
         if self.id:
             self.canvas.delete(self.id)
 
-        self.id = self.canvas.create_oval(self.X, self.Y, self.X + self.radio, self.Y + self.radio, fill=self.color, outline='black')
+        self.id = self.canvas.create_oval(self.X, self.Y, self.X + self.radio,
+                                          self.Y + self.radio, fill=self.color,
+                                          outline='black')
         # self.canvas.tag_raise(self.id)
 
     def updateSrc(self, dx, dy):
@@ -855,8 +883,7 @@ class Oval():
             self.canvas.lift(self.id)
 
 
-class Rectangle():
-
+class Rectangle:
     def __init__(self, canvas, x, y, width, height=None, color='green', anchor=None):
 
         self.anchor = anchor
@@ -875,7 +902,9 @@ class Rectangle():
         if self.id:
             self.canvas.delete(self.id)
 
-        self.id = self.canvas.create_rectangle(self.X, self.Y, self.X + self.width, self.Y + self.height, fill=self.color, outline=self.color)
+        self.id = self.canvas.create_rectangle(self.X, self.Y, self.X + self.width,
+                                               self.Y + self.height, fill=self.color,
+                                               outline=self.color)
         # self.canvas.tag_raise(self.id)
 
     def updateSrc(self, dx, dy):
@@ -888,11 +917,11 @@ class Rectangle():
             self.canvas.lift(self.id)
 
 
-class Edge():
+class Edge:
     """Edge between two objects"""
     def __init__(self, canvas, source, dest):
-        self.source=source
-        self.dest=dest
+        self.source = source
+        self.dest = dest
         self.srcX, self.srcY = source.x, source.y
         self.dstX, self.dstY = dest.x, dest.y
         self.canvas = canvas
@@ -953,35 +982,35 @@ class Edge():
 # Although Tk 8.5 supports anti-aliasing if the Cairo library is installed:
 # @see http://wiki.tcl.tk/10630
 
-class Cable():
-    def __init__(self,canvas,src,srcConnector,dst,dstConnector):
-        self.id=None
-        self.canvas=canvas
-        self.srcPlug=src.getSocket(srcConnector)
-        self.dstPlug=dst.getSocket(dstConnector) 
-        self.srcX=self.srcPlug.x
-        self.srcY=self.srcPlug.y
-        self.dstX,self.dstY=dst.getSocketCoords(dstConnector)
+class Cable:
+    def __init__(self, canvas, src, srcConnector, dst, dstConnector):
+        self.id = None
+        self.canvas = canvas
+        self.srcPlug = src.getSocket(srcConnector)
+        self.dstPlug = dst.getSocket(dstConnector)
+        self.srcX = self.srcPlug.x
+        self.srcY = self.srcPlug.y
+        self.dstX, self.dstY = dst.getSocketCoords(dstConnector)
         src.addPositionListener(self.srcMoved)
         dst.addPositionListener(self.dstMoved)
         self.paint()
 
-    def srcMoved(self,dx,dy):
-        self.srcX=self.srcX+dx
-        self.srcY=self.srcY+dy
+    def srcMoved(self, dx, dy):
+        self.srcX = self.srcX+dx
+        self.srcY = self.srcY+dy
         self.updateCoords()
 
     def updateCoords(self):
-        self.canvas.coords(self.id, self.srcX, self.srcY,self.dstX,self.dstY)
+        self.canvas.coords(self.id, self.srcX, self.srcY, self.dstX, self.dstY)
 
-
-    def dstMoved(self,dx,dy):
-        self.dstX=self.dstX+dx
-        self.dstY=self.dstY+dy
+    def dstMoved(self, dx, dy):
+        self.dstX = self.dstX+dx
+        self.dstY = self.dstY+dy
         self.updateCoords()
 
     def paint(self):
-        self.id = self.canvas.create_line(self.srcX,self.srcY,self.dstX,self.dstY, width=2)
+        self.id = self.canvas.create_line(self.srcX, self.srcY, self.dstX,
+                                          self.dstY, width=2)
         self.canvas.tag_lower(self.id)
         self.paintPlugs()
         
@@ -1000,20 +1029,20 @@ if __name__ == '__main__':
     def canvasExample1():    
         tb1 = canvas.createTextCircle("Project", 100, 100, "blue")
         tb2 = canvas.createTextbox("This is an intentionally quite big, big box,\nas you may appreciate looking carefully\nat it,\nas many times\nas you might need", 300, 200)
-        tb2.addSocket("output1",RoundConnector, "bottom",fillColor="green")
-        tb2.addSocket("output2",SquareConnector, "bottom",fillColor="yellow")
-        tb2.addSocket("output3",SquareConnector, "bottom",fillColor="blue")
+        tb2.addSocket("output1", RoundConnector, "bottom", fillColor="green")
+        tb2.addSocket("output2", SquareConnector, "bottom", fillColor="yellow")
+        tb2.addSocket("output3", SquareConnector, "bottom", fillColor="blue")
         tb3 = canvas.createRoundedTextbox("otro mas\n", 100, 200, "red")
         tb4 = canvas.createRoundedTextbox("tb4", 300, 300, "yellow")
-        tb4.addSocket("input1",SquareConnector, "top",outline="red")
+        tb4.addSocket("input1", SquareConnector, "top", outline="red")
         tb5 = canvas.createTextCircle("tb5", 400, 300, "grey")
-        tb5.addSocket("input1",SquareConnector, "top")
+        tb5.addSocket("input1", SquareConnector, "top")
         e1 = canvas.createEdge(tb1, tb2)
         e2 = canvas.createEdge(tb1, tb3)
-        c1= canvas.createCable(tb2,"output2",tb4,"input1")
-        c2= canvas.createCable(tb2,"output3",tb5,"input1")
+        c1= canvas.createCable(tb2, "output2", tb4, "input1")
+        c2= canvas.createCable(tb2, "output3", tb5, "input1")
         tb3.moveTo(100, 300)
-        
+
        
     canvasExample1()
 

@@ -389,7 +389,7 @@ class SearchProtocolWindow(pwgui.Window):
         for key, label, installed, help, streamified, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed')
             self._resultsTree.insert(
-                '', 'end', key, text=label, tags=(tag),
+                '', 'end', key, text=label, tags=tag,
                 values=(streamified, installed, help, weight, weight))
 
 
@@ -1052,7 +1052,7 @@ class ProtocolsView(tk.Frame):
 
                 text = prot.getClassLabel()
 
-            item = tree.insert(prefix, 'end', key, text=text, image=img, tags=(tag))
+            item = tree.insert(prefix, 'end', key, text=text, image=img, tags=tag)
             treeItems[item] = obj
             # Check if the attribute should be open or close
             openItem = getattr(obj, 'openItem', level < 2)

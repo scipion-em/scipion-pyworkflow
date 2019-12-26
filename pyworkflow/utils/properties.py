@@ -112,10 +112,6 @@ class Message:
     LABEL_LOGS_ERROR = 'Error Log'
     LABEL_LOGS_SCIPION = 'Scipion Log'
     
-    LABEL_RUNNAME = 'Run name'
-    LABEL_EXECUTION = 'Run mode'
-    LABEL_PARALLEL = 'Parallel'
-    
     NO_INFO_SUMMARY = 'No summary information.'
     NO_INFO_METHODS = 'No methods information.'
     NO_INFO_LOGS = 'No logs information.'
@@ -126,7 +122,8 @@ class Message:
     LABEL_HELP = 'Help'
     TEXT_HELP = 'The file selected will be uploaded to the project folder. If the file was uploaded before, It will be replaced.'
     LABEL_RUNNAME = 'Run name'
-    LABEL_RUNMODE = 'Mode' 
+    LABEL_RUNMODE = 'Mode'
+    LABEL_PARALLEL = 'Parallel'
     LABEL_HOST = 'Host'
     LABEL_THREADS = 'Threads'
     LABEL_MPI = 'MPI'

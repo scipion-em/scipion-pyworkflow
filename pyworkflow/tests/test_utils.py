@@ -12,7 +12,6 @@ from __future__ import print_function
 from subprocess import Popen
 from io import StringIO
 
-import pyworkflow.utils as pwutils
 from pyworkflow.utils.process import killWithChilds
 from pyworkflow.tests import *
 from pyworkflow.utils import utils, prettyDict
