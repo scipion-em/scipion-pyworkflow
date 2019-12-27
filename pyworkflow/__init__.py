@@ -128,6 +128,11 @@ class Config:
         cls.SCIPION_DOMAIN = value
         os.environ['SCIPION_DOMAIN'] = value
 
+    @staticmethod
+    def getPythonLibFolder():
+        from sysconfig import get_paths
+        return join(get_paths()['data'], "lib")
+
 
 def join(*paths):
     """ join paths from HOME . """
@@ -172,6 +177,7 @@ def getTestsScript():
 
 def getViewerScript():
     return os.path.join(getAppsPath(), 'pw_viewer.py')
+
 
 
 
