@@ -1432,12 +1432,12 @@ class Protocol(Step):
             # Add the url in the TWiki style
             if url.startswith('http://'):
                 self._buffer += '[[%s][%s]]' % (url, txt)
-            else:
-                # FIXME: web does not exist!
-                from pyworkflow.web.pages import settings as django_settings
-                absolute_url = django_settings.ABSOLUTE_URL
-                self._buffer += '[[%s/get_log/?path=%s][%s]]' % (absolute_url,
-                                                                 url, txt)
+            # Web does not exist, webtools must find a solution for this case.
+            # else:
+            #     from pyworkflow.web.pages import settings as django_settings
+            #     absolute_url = django_settings.ABSOLUTE_URL
+            #     self._buffer += '[[%s/get_log/?path=%s][%s]]' % (absolute_url,
+            #                                                     url, txt)
         else:
             self._buffer += '<font color="%s">%s</font>' % (fmt, txt)
 

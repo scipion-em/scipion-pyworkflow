@@ -70,7 +70,7 @@ try:
 except:
     projectPath = manager.getProjectPath(projName)
 
-project = Project(projectPath)
+project = Project(pw.Config.getDomain(), projectPath)
 project.load()
 
 runs = project.getRuns()

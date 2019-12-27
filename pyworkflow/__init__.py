@@ -172,7 +172,3 @@ def getTestsScript():
 
 def getViewerScript():
     return os.path.join(getAppsPath(), 'pw_viewer.py')
-
-
-def getScipionScript():
-    return os.path.join(Config.SCIPION_HOME, 'scipion')
