@@ -193,7 +193,7 @@ class TreeProvider:
         where img is the preview image and 
         desc the description string. 
         """
-        return (None, None)
+        return None, None
     
     def getObjectActions(self, obj):
         """ Return a list of tuples (key, action)

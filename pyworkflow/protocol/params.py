@@ -128,7 +128,7 @@ class ElementGroup(FormElement):
     def iterParams(self):
         """ Return key and param for every child param. """
         for name in self._paramList:
-            yield (name, self._form.getParam(name))
+            yield name, self._form.getParam(name)
 
     def addParam(self, paramName, ParamClass, **kwargs):
         """Add a new param to the group"""
@@ -559,7 +559,7 @@ class Conditional(Validator):
         
     def __call__(self, value):
         errors = []
-        if (value is not None or not self._allowsNull):
+        if value is not None or not self._allowsNull:
             if not self._condition(value):
                 errors.append(self.error)
         return errors   
@@ -616,7 +616,7 @@ class GE(Conditional):
 class Range(Conditional):
     def __init__(self, minValue, maxValue, error='Value is outside range'):
         Conditional.__init__(self, error)
-        self._condition = lambda value: value >= minValue and value <= maxValue
+        self._condition = lambda value: minValue <= value <= maxValue
         
         
 class NumericListValidator(Conditional):

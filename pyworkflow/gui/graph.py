@@ -30,12 +30,8 @@ level by level, using only Tkinter.
 from __future__ import print_function
 from __future__ import absolute_import
 
-import os
-import tkinter as tk
-
 #TODO: all LevelTree code is DEPRECATED...remove it after cleanning
 # and include all code from graph_layout
-from pyworkflow import Config
 
 
 class LevelTree(object):

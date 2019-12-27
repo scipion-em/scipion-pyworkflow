@@ -134,7 +134,7 @@ class Object(object):
         subclasses of Object"""
         for key, attr in self.__dict__.items():
             if issubclass(attr.__class__, Object):
-                yield (key, attr)        
+                yield key, attr
                 
     def getAttributesToStore(self):
         """Return the list of attributes than are
@@ -147,7 +147,7 @@ class Object(object):
                        "Ignoring attribute. ")
             else:
                 if attr is not None and attr._objDoStore:
-                    yield (key, attr)
+                    yield key, attr
 
     def isPointer(self):
         """If this is true, the value field is a pointer 
@@ -561,7 +561,7 @@ class OrderedObject(Object):
     def __setattr__(self, name, value):
         if (name not in self._attributes and
             issubclass(value.__class__, Object) and
-            not self.__attrPointed(name, value) and value._objDoStore):
+                not self.__attrPointed(name, value) and value._objDoStore):
             self._attributes.append(name)
         Object.__setattr__(self, name, value)
     
@@ -569,7 +569,7 @@ class OrderedObject(Object):
         """Return the list of attributes than are
         subclasses of Object and will be stored"""
         for key in self._attributes:
-            yield (key, getattr(self, key))
+            yield key, getattr(self, key)
                 
     def deleteAttribute(self, attrName):
         """ Delete an attribute. """
@@ -897,7 +897,7 @@ class Pointer(Object):
             self.setExtendedParts(parts[:-1])
         
     def getAttributes(self):
-        yield ('_extended', getattr(self, '_extended'))
+        yield '_extended', getattr(self, '_extended')
         
     def pointsNone(self):
         return self.get() is None
@@ -938,10 +938,10 @@ class List(Object, list):
     def getAttributes(self):
         # First yield all attributes not contained in the list
         for name, attr in Object.getAttributes(self):
-            yield (name, attr)
+            yield name, attr
         # Now yield elements contained in the list
         for i, item in enumerate(self):
-            yield (self._indexToString(i), item)
+            yield self._indexToString(i), item
             
     def _indexToString(self, i):
         """Return the way the string index is generated.

@@ -31,10 +31,10 @@ from __future__ import print_function
 
 import os
 from time import time, sleep
-from cPickle import dumps, loads
-from process import buildRunCommand, runCommand
+from pickle import dumps, loads
+from .process import buildRunCommand, runCommand
 
-from pyworkflow.utils.utils import envVarOn, getLocalHostName, formatExceptionInfo
+from pyworkflow.utils.utils import envVarOn, getLocalHostName
 
 TIMEOUT = 60  # seconds trying to send/receive data through a socket
 

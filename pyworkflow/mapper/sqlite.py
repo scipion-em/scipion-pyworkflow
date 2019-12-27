@@ -1032,7 +1032,7 @@ class SqliteFlatDb(SqliteDb):
             return False
         self.executeCommand(self.SELECT_PROPERTY, (key,))
         result = self.cursor.fetchone()
-        return (result is not None)
+        return result is not None
 
     def getProperty(self, key, defaultValue=None):
         """ Return the value of a given property with this key.

@@ -50,12 +50,14 @@ def _getRegisteredExecutable(exeName):
             registered = None
     return registered
 
+
 def _samefile(fname1, fname2):
     if sys.platform.startswith('win'):
-        return ( os.path.normpath(os.path.normcase(fname1)) ==\
-            os.path.normpath(os.path.normcase(fname2)) )
+        return (os.path.normpath(os.path.normcase(fname1)) ==
+                os.path.normpath(os.path.normcase(fname2)))
     else:
         return os.path.samefile(fname1, fname2)
+
 
 def _cull(potential, matches, verbose=0):
     """Cull inappropriate matches. Possible reasons:

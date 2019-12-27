@@ -180,7 +180,7 @@ class XmlMapper(Mapper):
             else:
                 #does have attributes?
                 attributes = child.attrib
-                if (attributes and childObj.isPointer()):
+                if attributes and childObj.isPointer():
                     childObj._objId = attributes
                     #save obj in auxiliary file
                     self._addObjectToDict(obj, self.pendingPtrDict)
@@ -214,7 +214,7 @@ class XmlMapper(Mapper):
         
     def addSubElement(self, parentElem, name, value=None):
         childElem = ET.SubElement(parentElem, name)
-        if value != None:
+        if value is not None:
             childElem.text = str(value)
         return childElem
             
