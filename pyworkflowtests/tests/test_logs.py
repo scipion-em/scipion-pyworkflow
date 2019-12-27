@@ -72,7 +72,7 @@ class TestLogs(BaseTest):
             print('General logs have an incorrect order!!!')
             genLoggerChecked = False
         
-        if (isFileInfoTest | isFileWarningTest | isFileErrorTest):
+        if isFileInfoTest | isFileWarningTest | isFileErrorTest:
             print('File logs in general log!!!')
             genLoggerChecked = False
         
@@ -100,7 +100,7 @@ class TestLogs(BaseTest):
             print('File logs have an incorrect order!!!')
             fileLoggerChecked = False
         
-        if (isGenInfoTest | isGenWarningTest | isGenErrorTest):
+        if isGenInfoTest | isGenWarningTest | isGenErrorTest:
             print('General logs in file log!!!')
             fileLoggerChecked = False 
 

@@ -27,7 +27,6 @@
 Tree widget implementation.
 """
         
-import os
 import tkinter as tk
 
 from pyworkflow.project import Label
@@ -53,7 +52,7 @@ class LabelsTreeProvider(TreeProvider):
                 'tags': label.getColor()}
 
     def getObjectPreview(self, obj):
-        return (None, None)
+        return None, None
 
     def getObjectActions(self, obj):
         return []

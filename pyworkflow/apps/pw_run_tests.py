@@ -37,7 +37,6 @@ from os.path import basename
 import argparse
 from collections import OrderedDict
 
-import pyworkflow.utils as pwutils
 import pyworkflow.tests as pwtests
 from pyworkflow import getTestsScript
 
@@ -49,7 +48,7 @@ CLASS = 1
 TEST = 2
 
 
-class Tester():
+class Tester:
     def main(self):
 
         parser = argparse.ArgumentParser(description=__doc__)
@@ -133,7 +132,7 @@ class Tester():
         skip = (self.skip and
                 any(g.lower() in itemLower for g in self.skip))
 
-        return (grep and not skip)
+        return grep and not skip
 
     def __iterTests(self, test):
         """ Recursively iterate over a testsuite. """

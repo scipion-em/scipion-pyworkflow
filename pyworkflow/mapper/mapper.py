@@ -45,6 +45,7 @@ class Mapper:
     def annotateClassName(instance, oldClassName):
         """ Annotate an object with the original class name"""
         setattr(instance, Mapper.ORIGINAL_CLASS_NAME_ATTRIBUTE, oldClassName)
+
     @staticmethod
     def getObjectPersistingClassName(instance):
         if hasattr(instance, Mapper.ORIGINAL_CLASS_NAME_ATTRIBUTE):
@@ -59,7 +60,7 @@ class Mapper:
             self.dictClasses = dir(obj)
             
     def warning(self, msg):
-        if not msg in self.__warnings:
+        if msg not in self.__warnings:
             print("WARNING: %s" % msg)
             self.__warnings.add(msg)
     

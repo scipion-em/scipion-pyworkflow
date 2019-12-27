@@ -34,7 +34,7 @@ from sqlite3 import dbapi2 as sqlite
 from pyworkflow.utils import envVarOn
 
 
-class SqliteDb():
+class SqliteDb:
     """Class to handle a Sqlite database.
     It will create connection, execute queries and commands.
     """

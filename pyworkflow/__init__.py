@@ -177,10 +177,3 @@ def getTestsScript():
 
 def getViewerScript():
     return os.path.join(getAppsPath(), 'pw_viewer.py')
-
-
-
-
-
-
-

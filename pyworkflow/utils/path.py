@@ -382,7 +382,7 @@ def iterBigFile(textfile, offset=0, size=None,
 
     textfile.seek(offset)
     # If the size is bigger than the max that we want to read (in kB).
-    if maxSize > 0 and sizeKb > maxSize:
+    if 0 < maxSize < sizeKb:
         # maxSize <= 0 means we just want to read it all and not enter here.
         for line in textfile.read(headSizeB).split('\n'):
             yield line + '\n'
@@ -408,7 +408,7 @@ def createUniqueFileName(fn):
 
     make_fn = lambda i: os.path.join(path, '%s_tmp_%d_%s' % (name, i, ext))
 
-    for i in range(2, sys.maxint):
+    for i in range(2, sys.maxsize):
         uni_fn = make_fn(i)
         if not os.path.os.path.exists(uni_fn):
             return uni_fn

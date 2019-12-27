@@ -35,7 +35,6 @@ import tkinter as tk
 from tkinter.colorchooser import askcolor as _askColor
 
 from pyworkflow.utils import Message, Icon
-import pyworkflow.gui as pwgui
 from . import gui
 from .tree import BoundTree
 from .text import Text, TaggedText
@@ -556,7 +555,7 @@ class ListDialog(Dialog):
         return True
 
 
-class ToolbarButton():
+class ToolbarButton:
     """
     Store information about the buttons that will be added to the toolbar.
     """
@@ -613,7 +612,7 @@ class ToolbarListDialog(ListDialog):
         btn.bind('<Button-1>', button.command)
 
 
-class FlashMessage():
+class FlashMessage:
     def __init__(self, master, msg, delay=5, relief='solid', func=None):
         self.root = tk.Toplevel(master=master)
         #hides until know geometry

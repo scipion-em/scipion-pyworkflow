@@ -52,6 +52,7 @@ from pyworkflow.gui.dialog import askColor, FloatingMessage
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
 from pyworkflow.utils.properties import Message, Icon, Color, KEYSYM
 from pyworkflow.gui.project.utils import getStatusColorFromNode
+from pyworkflow.gui.form import FormWindow
 from pyworkflow.webservices import WorkflowRepository
 
 DEFAULT_BOX_COLOR = '#f8f8f8'
@@ -388,7 +389,7 @@ class SearchProtocolWindow(pwgui.Window):
         for key, label, installed, help, streamified, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed')
             self._resultsTree.insert(
-                '', 'end', key, text=label, tags=(tag),
+                '', 'end', key, text=label, tags=tag,
                 values=(streamified, installed, help, weight, weight))
 
 
@@ -1051,7 +1052,7 @@ class ProtocolsView(tk.Frame):
 
                 text = prot.getClassLabel()
 
-            item = tree.insert(prefix, 'end', key, text=text, image=img, tags=(tag))
+            item = tree.insert(prefix, 'end', key, text=text, image=img, tags=tag)
             treeItems[item] = obj
             # Check if the attribute should be open or close
             openItem = getattr(obj, 'openItem', level < 2)
@@ -1653,10 +1654,10 @@ class ProtocolsView(tk.Frame):
     def _openProtocolForm(self, prot):
         """Open the Protocol GUI Form given a Protocol instance"""
 
-        w = pwgui.form.FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
-                                  prot, self._executeSaveProtocol, self.windows,
-                                  hostList=self.project.getHostNames(),
-                                  updateProtocolCallback=self._updateProtocol(prot))
+        w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
+                       prot, self._executeSaveProtocol, self.windows,
+                       hostList=self.project.getHostNames(),
+                       updateProtocolCallback=self._updateProtocol(prot))
         w.adjustSize()
         w.show(center=True)
 

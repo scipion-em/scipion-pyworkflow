@@ -45,7 +45,7 @@ except ImportError:
     pass
 
 
-class RunScheduler():
+class RunScheduler:
     """ Check that all dependencies are met before launching a run. """
 
     def _parseArgs(self):

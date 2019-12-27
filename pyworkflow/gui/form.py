@@ -325,7 +325,7 @@ class ComboVar:
         return self.value         
 
 
-class TextVar():
+class TextVar:
     """Wrapper around tk.StringVar to bind the value of a Text widget. """
     def __init__(self, text, value=''):
         """
@@ -1091,7 +1091,7 @@ class ParamWidget:
                              highlightthickness=0, value=0, **args)
         rb2.grid(row=0, column=1, padx=2, sticky='w') 
         
-        return (var, frame)
+        return var, frame
     
     def _createContentWidgets(self, param, content):
         """Create the specific widgets inside the content frame"""
@@ -1173,7 +1173,7 @@ class ParamWidget:
             protClassName = self.param.protocolClassName.get()
             
             if self.param.allowSubclasses:
-                classes = pw.Config.GetDomain().findSubClasses(pw.Config.getDomain().getProtocols(), protClassName).keys()
+                classes = pw.Config.getDomain().findSubClasses(pw.Config.getDomain().getProtocols(), protClassName).keys()
             else:
                 classes = [protClassName]
             
@@ -1524,7 +1524,7 @@ class GroupWidget(ParamWidget):
         self.content.grid_remove()  
             
             
-class Binding():
+class Binding:
     def __init__(self, paramName, var, protocol, *callbacks):
         self.paramName = paramName
         self.var = var
@@ -1939,9 +1939,9 @@ class FormWindow(Window):
         queues = OrderedDict(sorted(hostConfig.queueSystem.queues.items()))
         # If there is only one Queue and it has not parameters
         # don't bother to showing the QueueDialog
-        noQueueChoices = len(queues) == 1 and len(queues.values()[0]) == 0
+        noQueueChoices = len(queues) == 1 and len(list(queues.values())[0]) == 0
         if noQueueChoices:
-            result = queues.keys()[0], {}
+            result = list(queues.keys())[0], {}
         else:
             dlg = QueueDialog(self, queues)
 
