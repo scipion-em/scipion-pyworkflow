@@ -21,9 +21,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
-from __future__ import absolute_import
-
 import ast
 import os
 import sys
@@ -55,10 +52,40 @@ OLD_VERSIONS = (VERSION_1, VERSION_1_1, VERSION_1_2, VERSION_2_0)
 # https://www.python.org/dev/peps/pep-0396/
 __version__ = LAST_VERSION + 'a1'
 
-
 HOME = os.path.abspath(os.path.dirname(__file__))
-
 PYTHON = os.environ.get("SCIPION_PYTHON", 'python3')
+
+# Variable constants, probably we can have a constants module
+PW_ALT_TESTS_CMD = 'PW_ALT_TESTS_CMD'
+
+# Following are a set of functions to centralize the way to get
+# files from several scipion folder such as: config or apps
+def getPWPath(*paths):
+    return os.path.join(os.path.dirname(__file__), *paths)
+
+
+def getAppsPath():
+    return os.path.join(getPWPath(), 'apps')
+
+
+def getSyncDataScript():
+    return os.path.join(getAppsPath(), 'pw_sync_data.py')
+
+
+def getScheduleScript():
+    return os.path.join(getAppsPath(), 'pw_schedule_run.py')
+
+
+def getPwProtMpiRunScript():
+    return os.path.join(getAppsPath(), 'pw_protocol_mpirun.py')
+
+
+def getTestsScript():
+    return os.path.join(getAppsPath(), 'pw_run_tests.py')
+
+
+def getViewerScript():
+    return os.path.join(getAppsPath(), 'pw_viewer.py')
 
 
 class Config:
@@ -104,6 +131,7 @@ class Config:
         print(e)
 
     SCIPION_DOMAIN = __get('SCIPION_DOMAIN', None)
+    PW_ALT_TESTS_CMD = __get(PW_ALT_TESTS_CMD, getTestsScript())
 
     @classmethod
     def getDomain(cls):
@@ -146,34 +174,3 @@ def findResource(filename):
     from .utils.path import findFile
 
     return findFile(filename, *__resourcesPath)
-
-
-# Following are a set of functions to centralize the way to get
-# files from several scipion folder such as: config or apps
-
-def getPWPath(*paths):
-    return os.path.join(os.path.dirname(__file__), *paths)
-
-
-def getAppsPath():
-    return os.path.join(getPWPath(), 'apps')
-
-
-def getSyncDataScript():
-    return os.path.join(getAppsPath(), 'pw_sync_data.py')
-
-
-def getScheduleScript():
-    return os.path.join(getAppsPath(), 'pw_schedule_run.py')
-
-
-def getPwProtMpiRunScript():
-    return os.path.join(getAppsPath(), 'pw_protocol_mpirun.py')
-
-
-def getTestsScript():
-    return os.path.join(getAppsPath(), 'pw_run_tests.py')
-
-
-def getViewerScript():
-    return os.path.join(getAppsPath(), 'pw_viewer.py')

@@ -38,7 +38,7 @@ import argparse
 from collections import OrderedDict
 
 import pyworkflow.tests as pwtests
-from pyworkflow import getTestsScript
+from pyworkflow import getTestsScript, PW_ALT_TESTS_CMD
 
 from pyworkflow.tests import *
 
@@ -174,7 +174,7 @@ class Tester:
                 testModuleName, className, testName = t.id().rsplit('.', 2)
 
                 # If there is a failure loading the test, show it
-                errorStr = 'unittest.loader.ModuleImportFailure.'
+                errorStr = 'unittest.loader._FailedTest.'
                 if testModuleName.startswith(errorStr):
                     newName = t.id().replace(errorStr, '')
                     if self._match(newName):
@@ -201,7 +201,7 @@ class Tester:
     def _printNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
-            print("%s %s %s" % (spaces, getTestsScript(), itemName))
+            print("%s %s %s" % (spaces, os.environ.get(PW_ALT_TESTS_CMD, getTestsScript()), itemName))
 
     def printTests(self, moduleName, tests):
         self._visitTests(moduleName, tests, self._printNewItem)
