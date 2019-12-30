@@ -81,7 +81,8 @@ class Dialog(tk.Toplevel):
             self.title(title)
 
         self.parent = parent
-        self.result = None
+        # Default to CANCEL so if window is "Closed" behaves the same.
+        self.result = RESULT_CANCEL
         self.initial_focus = None
 
         bodyFrame = tk.Frame(self)
@@ -120,7 +121,7 @@ class Dialog(tk.Toplevel):
         # Pablo: I've commented this when migrating to python3 since I was getting and exception:
         # window ".139897767953072.139897384058440" was deleted before its visibility changed
         # wait for window to appear on screen before calling grab_set
-        #self.wait_visibility()
+        self.wait_visibility()
         self.grab_set()
         self.wait_window(self)
 
@@ -629,12 +630,12 @@ class FlashMessage:
 
         if func:
             self.root.update_idletasks()
-            self.root.after(10, self.proccess, func)
+            self.root.after(10, self.process, func)
         else:
             self.root.after(int(delay*1000), self.close)
         self.root.wait_window(self.root)
         
-    def proccess(self, func):
+    def process(self, func):
         func()
         self.root.destroy()
         
