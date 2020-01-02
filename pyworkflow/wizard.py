@@ -65,4 +65,3 @@ class Wizard(object):
         in those wizards that have WEB_DJANGO environment defined. 
         """
         return None
-    

@@ -55,7 +55,7 @@ elif os.name == 'nt':  # there is a function os.startfile for windows
         os.startfile(path)
 elif os.name == 'posix':  # linux systems and so on
     def find_prog(*args):
-        "Return the first argument that is a program in PATH"
+        """Return the first argument that is a program in PATH"""
         for command in args:
             if which(command):
                 return command
@@ -73,14 +73,14 @@ elif os.name == 'posix':  # linux systems and so on
                 return
             except:
                 pass
-        #OK, it is a file. Check if it does exist
-        #and notify if it does not
+        # OK, it is a file. Check if it does exist
+        # and notify if it does not
         if not os.path.isfile(path):
             try:
-                #if tkRoot is null the error message may be behind
-                #other windows
-                tkMessageBox.showerror("File Error",#bar title
-                                       "File not found\n(%s)"%path,#message
+                # if tkRoot is null the error message may be behind
+                # other windows
+                tkMessageBox.showerror("File Error",  # bar title
+                                       "File not found\n(%s)" % path,  # message
                                        parent=tkParent)
                 return
             except:
@@ -100,13 +100,12 @@ elif os.name == 'posix':  # linux systems and so on
 else:
     def _open_cmd(path, tkParent=None):
         try:
-            tkMessageBox.showerror("Unknown System",#bar title
-                                   'Unknown system, so cannot open %s' % path,#message
+            tkMessageBox.showerror("Unknown System",  # bar title
+                                   'Unknown system, so cannot open %s' % path,  # message
                                    parent=tkParent)
             return
         except:
             pass
-
 
 
 class HyperlinkManager:
@@ -204,7 +203,6 @@ class Text(tk.Text, Scrollable):
         # Remove the last new line
         return textWithNewLine.rstrip('\n')
 
-    
     def setText(self, text):
         """ Replace the current text with new one. """
         self.clear()
@@ -240,7 +238,7 @@ class Text(tk.Text, Scrollable):
         self.openPath(self.selection)
 
     def openPath(self, path):
-        "Try to open the selected path"
+        """Try to open the selected path"""
         path = expandPattern(path)
 
         # If the path is a dir, open it with scipion browser dir <path>
@@ -278,7 +276,7 @@ class Text(tk.Text, Scrollable):
 
     def updateMenu(self, e=None):
         state = 'normal'
-        #if not xmippExists(self.selection):
+        # if not xmippExists(self.selection):
         #    state = 'disabled'#self.menu.entryconfig(1, background="green")
         self.menu.entryconfig(1, state=state)
         
@@ -297,18 +295,19 @@ class Text(tk.Text, Scrollable):
         """
         start = self.index(start)
         end = self.index(end)
-        self.mark_set("matchStart",start)
-        self.mark_set("matchEnd",start)
+        self.mark_set("matchStart", start)
+        self.mark_set("matchEnd", start)
         self.mark_set("searchLimit", end)
 
         count = tk.IntVar()
         while True:
-            index = self.search(pattern, "matchEnd","searchLimit",
+            index = self.search(pattern, "matchEnd", "searchLimit",
                                 count=count, regexp=regexp)
-            if index == "": break
+            if index == "":
+                break
             self.mark_set("matchStart", index)
-            self.mark_set("matchEnd", "%s+%sc" % (index,count.get()))
-            self.tag_add(tag, "matchStart","matchEnd")
+            self.mark_set("matchEnd", "%s+%sc" % (index, count.get()))
+            self.tag_add(tag, "matchStart", "matchEnd")
 
 
 def configureColorTags(text):
@@ -337,7 +336,7 @@ class TaggedText(Text):
         self.hm = HyperlinkManager(self)
 
     def getDefaults(self):
-        return {'bg': "white", 'bd':0}
+        return {'bg': "white", 'bd': 0}
         # It used to have also 'font': gui.fontNormal  but that stops
         # this file from running. Apparently there is no fontNormal in gui.
 
@@ -409,8 +408,8 @@ class OutputText(Text):
         self.doRefresh()
 
     def getDefaults(self):
-        return {'bg': "black", 'fg':'white', 'bd':0,
-                'height':30,  'width':100}
+        return {'bg': "black", 'fg': 'white', 'bd': 0,
+                'height': 30,  'width': 100}
         # It used to have also  'font': gui.fontNormal  but that stops this
         # file from running. Apparently there is no fontNormal in gui.
         
@@ -536,15 +535,15 @@ class TextFileViewer(tk.Frame):
         self.notebook.add(tab, text=tabText)        
     
     def createWidgets(self, fileList):
-        #registerCommonFonts()
+        # registerCommonFonts()
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)        
 
-        #Create toolbar frame
+        # Create toolbar frame
         toolbarFrame = tk.Frame(self)
         toolbarFrame.grid(column=0, row=0, padx=5, sticky='new')
         gui.configureWeigths(toolbarFrame)
-        #Add the search box
+        # Add the search box
         right = tk.Frame(toolbarFrame)
         right.grid(column=1, row=0, sticky='ne')        
         self.searchVar = tk.StringVar()
@@ -603,11 +602,11 @@ class TextFileViewer(tk.Frame):
     def addBinding(self):
 
         shortcutDefinitions = [(lambda e: self.findText(), "Trigger the search", ['<Return>']),
-                   (lambda e: self.findText(), "Trigger the search", ['<KP_Enter>']),
-                   (lambda e: self.findText(matchCase=True), "Trigger a case sensitive search", ['<Shift-Return>']),
-                   (lambda e: self.findText(), "Move to the next highlighted item", ["<Down>", '<F3>']),
-                   (lambda e: self.findText(-1), "Move to the previous highlighted item", ["<Up>", '<Shift-F3>']),
-                   ]
+                               (lambda e: self.findText(), "Trigger the search", ['<KP_Enter>']),
+                               (lambda e: self.findText(matchCase=True), "Trigger a case sensitive search", ['<Shift-Return>']),
+                               (lambda e: self.findText(), "Move to the next highlighted item", ["<Down>", '<F3>']),
+                               (lambda e: self.findText(-1), "Move to the previous highlighted item", ["<Up>", '<Shift-F3>']),
+                               ]
         tooltip = "Shortcuts:"
 
         for callback, help, keys in shortcutDefinitions:
@@ -687,21 +686,22 @@ class TextFileViewer(tk.Frame):
             idx = '1.0'
             while True:
                 idx = text.search(str, idx, nocase=not matchCase, stopindex=tk.END)
-                if not idx: break
+                if not idx:
+                    break
                 lastidx = '%s+%dc' % (idx, len(str))
                 text.tag_add('found', idx, lastidx)
                 list.append((idx, lastidx))
                 idx = lastidx
         text.tag_config('found', foreground='white', background='blue')
-        #Set class variables
+        # Set class variables
         self.searchList = list
         self.currentIndex = -1
-        self.nextSearchIndex(text) #select first element
+        self.nextSearchIndex(text)  # select first element
     
     def nextSearchIndex(self, text, direction=1):
-        #use direction=-1 to go backward
+        # use direction=-1 to go backward
         text.tag_remove('found_current', '1.0', tk.END)
-        if len(self.searchList)==0:
+        if len(self.searchList) == 0:
             return
         self.currentIndex = (self.currentIndex + direction) % len(self.searchList)
         idx, lastidx = self.searchList[self.currentIndex]
@@ -729,7 +729,7 @@ def openTextFile(filename):
     
 def openTextFileEditor(filename, tkParent=None):
     try:
-        _open_cmd(filename,tkParent)
+        _open_cmd(filename, tkParent)
     except:
         showTextFileViewer("File viewer", [filename])
     

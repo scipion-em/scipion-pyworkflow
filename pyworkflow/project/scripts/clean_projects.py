@@ -43,6 +43,7 @@ def usage(error):
     """ % error)
     sys.exit(1)
 
+
 n = len(sys.argv)
 
 if n > 3:
@@ -68,12 +69,9 @@ for projInfo in manager.listProjects():
     
     leftTime = proj.getLeftTime()
     if (leftTime is not None and 
-        leftTime.days < 0):
+            leftTime.days < 0):
         if delete:
             print("Deleting: %s (%s) " % (projName, leftTime))
             manager.deleteProject(projName)
         else: 
             print("Should delete: %s (%s)" % (projName, leftTime))
-    
-    
-

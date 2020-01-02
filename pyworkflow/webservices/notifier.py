@@ -63,8 +63,8 @@ class ProjectWorkflowNotifier(object):
                 uuidValue = f.readline()
         except IOError:
             uuidValue = str(uuid.uuid4())
-            with open(uuidFn,'w') as f:
-                 f.write(uuidValue)
+            with open(uuidFn, 'w') as f:
+                f.write(uuidValue)
 
         return uuidValue
 
@@ -104,32 +104,32 @@ class ProjectWorkflowNotifier(object):
     def notifyWorkflow(self):
 
         try:
-            #check if enviroment exists otherwise abort
+            # check if enviroment exists otherwise abort
             if not pwutils.envVarOn('SCIPION_NOTIFY'):
                 return
 
             # Check the seconds range of the notify, by default one day
             seconds = int(os.environ.get('SCIPION_NOTIFY_SECONDS', '86400'))
 
-            if self._modifiedBefore(seconds): # notify not more than once a day
+            if self._modifiedBefore(seconds):  # notify not more than once a day
                 return
 
             # INFO: now we are only sending the protocols names in the project.
             # We could pass namesOnly=False to get the full workflow template
             projectWorfklow = self.project.getProtocolsJson(namesOnly=True)
 
-            #if list with workflow has not been altered do not sent it
+            # if list with workflow has not been altered do not sent it
             if not self._dataModified(projectWorfklow):
                 return
             else:
                 # For compatibility with version 1.0 check
                 # if Log directory exists. If it does not
                 # create it
-                #TODO REMOVE this check in scipion 1.3
+                # TODO: REMOVE this check in scipion 1.3
                 dataFile = self._getDataFileName()
                 # create the folder of the file path if not exists
                 pwutils.makeFilePath(dataFile)
-                with open(dataFile,'w') as f:
+                with open(dataFile, 'w') as f:
                     f.write(projectWorfklow)
             dataDict = {'project_uuid': self._getUuid(),
                         'project_workflow': projectWorfklow}
@@ -142,11 +142,11 @@ class ProjectWorkflowNotifier(object):
         except Exception as e:
             print("Can't report usage: ", e)
             
-    def getEntryFromWebservice(self,uuid):
+    def getEntryFromWebservice(self, uuid):
         if not pwutils.envVarOn('SCIPION_NOTIFY'):
             return
         urlName = os.environ.get('SCIPION_NOTIFY_URL').strip()
-        #remove last directory
+        # remove last directory
         urlName = os.path.split(urlName)[0]
         url = urlName + "/?project_uuid=" + uuid
         resultDict = self._sendData(url)

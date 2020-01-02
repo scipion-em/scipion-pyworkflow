@@ -28,11 +28,11 @@ This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
 
-#------------------ Constants values --------------------------------------
+# ------------------ Constants values -----------------------------------------
 
 # Possible status of a protocol run, used mainly to monitor progress
 
-STATUS_SAVED = "saved" # Parameters saved for later use
+STATUS_SAVED = "saved"  # Parameters saved for later use
 STATUS_LAUNCHED = "launched"  # launched to queue system, only useful for protocols
 STATUS_NEW = "new"
 STATUS_RUNNING = "running"    # currently executing
@@ -52,7 +52,7 @@ MODE_RESUME = 0    # Try to starting at the first changed step, skipping unchang
 MODE_RESTART = 1   # Restart the protocol from the beginning, deleting all previous results
 MODE_CONTINUE = 2  # Continue from specific step, not widely used //DEPRECATED.
 # JMRT: We now use 'Continue' label instead of 'Resume' which is more intuitive for users.
-MODE_CHOICES = ('Continue', 'Restart')#, 'Continue')
+MODE_CHOICES = ('Continue', 'Restart')  # , 'Continue')
 
 # Steps execution mode
 STEPS_SERIAL = 0      # Execute steps serially, some of the steps can be mpi programs
@@ -66,4 +66,3 @@ LEVEL_CHOICES = ('Normal', 'Advanced')
 # Param names for GPU processing
 USE_GPU = 'useGpu'
 GPU_LIST = 'gpuList'
-                

@@ -30,7 +30,7 @@ level by level, using only Tkinter.
 from __future__ import print_function
 from __future__ import absolute_import
 
-#TODO: all LevelTree code is DEPRECATED...remove it after cleanning
+# TODO: all LevelTree code is DEPRECATED...remove it after cleanning
 # and include all code from graph_layout
 
 
@@ -101,7 +101,7 @@ class LevelTree(object):
         n = len(childs)
 
         if n > 0:
-            #width = (xmax - xmin) / n
+            # width = (xmax - xmin) / n
             for c in childs:
                 self._paintNodeWithChilds(c, level + 1)
                 
@@ -131,7 +131,7 @@ class LevelTree(object):
         nodeText = node.getLabel()
         textColor = 'black'
         if nodeText.startswith('Project'):
-            textColor='white'
+            textColor = 'white'
         
         return canvas.createTextbox(nodeText, 100, y, bgColor='light blue', textColor=textColor, margin=0)
         

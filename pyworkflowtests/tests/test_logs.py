@@ -5,11 +5,11 @@ import unittest
 
 from pyworkflow import Config
 from pyworkflow.utils import (getLineInFile, isInFile, ScipionLogger,
-                              getLogConfiguration )
+                              getLogConfiguration)
 from pyworkflow.tests import BaseTest, setupTestOutput
 
 
-#FIXME:Nacho
+# FIXME:Nacho
 # Ok, Nacho and Airen, explain what you have to fix! :)
 
 class TestLogs(BaseTest):
@@ -30,7 +30,7 @@ class TestLogs(BaseTest):
         genWarningTest = 'Testing general warning [%d]' % logTestCode
         genErrorTest = 'Testing general error [%d]' % logTestCode
         log1.info(genInfoTest)
-        #log.debug(genDebugTest)
+        # log.debug(genDebugTest)
         log1.warning(genWarningTest)
 
         logFn = self.getOutputPath('fileLog.log')
@@ -40,7 +40,7 @@ class TestLogs(BaseTest):
         fileWarningTest = 'Not really a warning, just testing logger [%d]' % logTestCode
         fileErrorTest = 'Not really an error, just testing logger [%d]' % logTestCode
         log2.info(fileInfoTest)
-        #log.debug(fileDebugTest)
+        # log.debug(fileDebugTest)
         log2.warning(fileWarningTest)
         log3 = logging.getLogger('pyworkflow.tests.log')
         log3.error(genErrorTest)
@@ -68,7 +68,7 @@ class TestLogs(BaseTest):
             print('General error log failed!!!')
             genLoggerChecked = False
         
-        if not((lineGenInfoTest<lineGenWarningTest) & (lineGenWarningTest<lineGenErrorTest)):
+        if not((lineGenInfoTest < lineGenWarningTest) & (lineGenWarningTest < lineGenErrorTest)):
             print('General logs have an incorrect order!!!')
             genLoggerChecked = False
         
@@ -96,7 +96,7 @@ class TestLogs(BaseTest):
             print('File error log failed!!!')
             fileLoggerChecked = False
         
-        if not((lineFileInfoTest<lineFileWarningTest) & (lineFileWarningTest<lineFileErrorTest)):
+        if not((lineFileInfoTest < lineFileWarningTest) & (lineFileWarningTest < lineFileErrorTest)):
             print('File logs have an incorrect order!!!')
             fileLoggerChecked = False
         

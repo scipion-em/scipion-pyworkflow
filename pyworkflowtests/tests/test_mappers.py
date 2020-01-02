@@ -186,7 +186,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
         p2 = mapper2.selectByClass('Pointer')[0]
         
-        #Check the mapper was properly stored when
+        # Check the mapper was properly stored when
         # set to None and the _extended property cleanned
         self.assertIsNone(p2.get())
 
@@ -359,10 +359,10 @@ class TestXmlMapper(pwtests.BaseTest):
         c = Complex.createComplex()
         mapper = pwmapper.XmlMapper(fn)
         mapper.insert(c)
-        #write file
+        # write file
         mapper.commit()
 
-        #TODO: Following is the gold Xml
+        # TODO: Following is the gold Xml
         # now we can not parse it from StringIO
         goldXml = """
 <?xml version='1.0' encoding='utf-8'?>

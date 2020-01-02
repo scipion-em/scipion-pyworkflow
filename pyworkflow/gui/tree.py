@@ -295,7 +295,6 @@ class BoundTree(Tree):
                 obj = self._objDict[selected]
                 self.itemKeyPressed(obj, e)
 
-
     def _unpostMenu(self, e=None):
 
         self.menu.unpost()
@@ -313,7 +312,7 @@ class BoundTree(Tree):
             obj = self._objDict[selected]
             if hasattr(self, 'itemDoubleClick'):
                 self.itemDoubleClick(obj)
-            else: # If not callback, use default action
+            else:  # If not callback, use default action
                 actions = self.provider.getObjectActions(obj)
                 if len(actions):
                     # actions[0] = first Action, [1] = the action callback
@@ -333,7 +332,7 @@ class BoundTree(Tree):
                         self.menu.add_separator()
                     else:
                         img = ''
-                        if len(a) > 2: # image for the action
+                        if len(a) > 2:  # image for the action
                             img = self.getImage(a[2])
                         self.menu.add_command(label=a[0], command=a[1], 
                                               image=img, compound=tk.LEFT)
@@ -345,12 +344,12 @@ class BoundTree(Tree):
     def update(self):
         self.clear()
         self.provider.configureTags(self)
-        self._objDict = {} # Store the mapping between Tree ids and objects
+        self._objDict = {}  # Store the mapping between Tree ids and objects
         self._objects = self.provider.getObjects()
         
         for obj in self._objects:
             # If the object is a pointer that has a null value do not show
-            #if ((not obj.isPointer()) or (obj.isPointer() and obj.get() is not None)): 
+            # if ((not obj.isPointer()) or (obj.isPointer() and obj.get() is not None)):
             objDict = self.provider.getObjectInfo(obj)
             if objDict is not None:
                 key = objDict.get('key')
@@ -360,8 +359,8 @@ class BoundTree(Tree):
                 if parent is None:
                     parentId = ''
                 else:
-                    if hasattr(parent, '_treeId'): # This should happens always
-                        parentId = parent._treeId # Previously set
+                    if hasattr(parent, '_treeId'):  # This should happens always
+                        parentId = parent._treeId  # Previously set
                     else:
                         parentId = ''
                         text += '---> Error: parent not Inserted'
@@ -376,7 +375,7 @@ class BoundTree(Tree):
 
                 try:
                     obj._treeId = self.insert(parentId, 'end', key,
-                                text=text, image=image, values=values, tags=tags)
+                                              text=text, image=image, values=values, tags=tags)
                     self._objDict[obj._treeId] = obj
                     
                     if objDict.get('open', False):
@@ -398,7 +397,8 @@ class BoundTree(Tree):
 
     def sortTree(self, heading, column):
 
-        if not self.provider.sortEnabled(): return
+        if not self.provider.sortEnabled():
+            return
 
         # Calculate the sorting direction. default to true
         ascending = True

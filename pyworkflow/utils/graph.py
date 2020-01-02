@@ -63,7 +63,7 @@ class Node(object):
     
     def addChild(self, *nodes):
         for n in nodes:
-            if not n in self._childs:
+            if n not in self._childs:
                 self._childs.append(n)
                 n._parents.append(self)
                 
@@ -113,7 +113,7 @@ class Graph(object):
     
     def __init__(self, rootName='ROOT', root=None):
         self._nodes = []
-        self._nodesDict = {} # To retrieve nodes from name
+        self._nodesDict = {}  # To retrieve nodes from name
         if root is None:
             self._root = self.createNode(rootName)
         else:

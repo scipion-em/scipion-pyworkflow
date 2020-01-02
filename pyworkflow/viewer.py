@@ -152,7 +152,7 @@ class Viewer(object):
         """
         return []
     
-    #FIXME: REMOVE THIS METHOD AFTER RE-FACTORING
+    # FIXME: REMOVE THIS METHOD AFTER RE-FACTORING
     def getView(self):
         """ This method should return the string value of the view in web
         that will respond to this viewer. This method only should be implemented
@@ -289,15 +289,15 @@ class ProtocolViewer(pwprot.Protocol, Viewer):
     def _citations(self):
         return self.protocol._citations()
 
-    #TODO: This method should not be necessary, instead NumericListParam should
+    # TODO: This method should not be necessary, instead NumericListParam should
     # return a list and not a String
     def _getListFromRangeString(self, rangeStr):
-        ''' Create a list of integer from a string with range definitions
+        """ Create a list of integer from a string with range definitions
         Examples:
         "1,5-8,10" -> [1,5,6,7,8,10]
         "2,6,9-11" -> [2,6,9,10,11]
         "2 5, 6-8" -> [2,5,6,7,8]
-        '''
+        """
         elements = rangeStr.split(',')
         values = []
         for e in elements:

@@ -37,7 +37,7 @@ from .widgets import Button
 
 
 # --------------- GUI CONFIGURATION parameters -----------------------
-#TODO: read font size and name from config file
+# TODO: read font size and name from config file
 FONT_ITALIC = 'fontItalic'
 FONT_NORMAL = 'fontNormal'
 FONT_BOLD = 'fontBold'
@@ -45,11 +45,11 @@ FONT_BIG = 'fontBig'
 cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
 cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))
 cfgFontBigSize = cfgFontSize + 2
-#TextColor
+# TextColor
 cfgCitationTextColor = "dark olive green"
 cfgLabelTextColor = "black"
 cfgSectionTextColor = "blue4"
-#Background Color
+# Background Color
 cfgBgColor = "light grey"
 cfgLabelBgColor = "white"
 cfgHighlightBgColor = cfgBgColor
@@ -60,11 +60,11 @@ cfgButtonActiveBgColor = "#A60C0C"
 cfgEntryBgColor = "lemon chiffon" 
 cfgExpertLabelBgColor = "light salmon"
 cfgSectionBgColor = cfgButtonBgColor
-#Color
+# Color
 cfgListSelectColor = "DeepSkyBlue4"
 cfgBooleanSelectColor = "white"
 cfgButtonSelectColor = "DeepSkyBlue2"
-#Dimensions limits
+# Dimensions limits
 cfgMaxHeight = 650
 cfgMaxWidth = 800
 cfgMaxFontSize = 14
@@ -191,7 +191,7 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         image = Image.open(imagePath)
         w, h = image.size
         newSize = None
-        if percent != 100: # Display image with other dimensions
+        if percent != 100:  # Display image with other dimensions
             fp = float(percent)/100.0
             newSize = int(fp * w), int(fp * h)
         elif maxheight and h > maxheight:
@@ -306,7 +306,7 @@ class Window:
         
         if weight:
             configureWeigths(self.root)
-        if not minsize is None:
+        if minsize is not None:
             self.root.minsize(minsize[0], minsize[1])
 
         # Set the icon
@@ -341,7 +341,7 @@ class Window:
                 # Do nothing if icon could not be loaded
                 pass
 
-    def __processQueue(self):#called from main frame
+    def __processQueue(self):  # called from main frame
         if not self.queue.empty():
             func = self.queue.get(block=False)
             # executes graphic interface function
@@ -435,7 +435,7 @@ class Window:
         # Helper function to create the main menu.
         for sub in menuConfig:
             menuLabel = sub.text.get()
-            if not menuLabel: # empty or None label means a separator
+            if not menuLabel:  # empty or None label means a separator
                 menu.add_separator()
             elif len(sub) > 0:  # sub-menu
                 submenu = tk.Menu(self.root, tearoff=0, font=self.font)
@@ -477,8 +477,7 @@ class Window:
         the proper label and icon. 
         """
         return Button(parent, Message.LABEL_BUTTON_CLOSE, Icon.ACTION_CLOSE, 
-                          command=self.close)
+                      command=self.close)
         
     def configureWeights(self, row=0, column=0):
         configureWeigths(self.root, row, column)
-

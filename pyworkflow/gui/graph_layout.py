@@ -93,6 +93,7 @@ class BasicLayout(GraphLayout):
                 # Do nothing
                 return
 
+
 class LevelTreeLayout(GraphLayout):
     """ Organize the nodes of the graph by levels.
     It will recursively organize childs and then
@@ -171,7 +172,7 @@ class LevelTreeLayout(GraphLayout):
         if self.__isNodeExpanded(node):
             return [c for c in node.getChilds() if c._layout['parent'] is node]
         else:
-            return [] # treat collapsed nodes as if they have no childs
+            return []  # treat collapsed nodes as if they have no childs
         
     def _computeNodeOffsets(self, node, level):
         """ Position a parent node and its childs.
@@ -238,8 +239,8 @@ class LevelTreeLayout(GraphLayout):
                 count += 1
                 
     def _getChildsSeparation(self, child1, child2, rightLimits):
-        '''Calcualte separation between siblings
-        at each height level'''
+        """Calculate separation between siblings
+        at each height level"""
         sep = 0 
         hL2 = child2._layout['hLimits']
         n1 = len(rightLimits)

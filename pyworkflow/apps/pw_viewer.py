@@ -38,9 +38,9 @@ def showDir(path):
     window = FileBrowserWindow("Browsing: " + path, path=path) 
     window.show()
     
+
 def showFile(path, viewParams):
     DataView(path, viewParams).show()
-
 
 
 if __name__ == '__main__':    
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         print("usage: scipion view [file1 file2 file3 ... fileN]")
         
     else:
-        if len(sys.argv) == 1: # no extra arguments, show current directory
+        if len(sys.argv) == 1:  # no extra arguments, show current directory
             showDir(os.getcwd())
         else:
             args = {'-i': []}
@@ -74,4 +74,3 @@ if __name__ == '__main__':
                     showDir(fn)
                 else:
                     showFile(fn, viewParams)
-     

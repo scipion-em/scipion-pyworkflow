@@ -29,7 +29,7 @@ This module implement the classes to create plots on xmipp.
 
 try:
     import matplotlib.pyplot as plt
-except:
+except ImportError:
     plt = None
 
 from pyworkflow.viewer import View
@@ -70,12 +70,12 @@ class Plotter(View):
         if self.backend is None:
             Plotter.setBackend('Agg')
 
-        plt.style.use(kwargs.get('style','default'))
+        plt.style.use(kwargs.get('style', 'default'))
 
         if figure is None:
             self.tightLayoutOn = True
             
-            if figsize is None: # Set some defaults values
+            if figsize is None:  # Set some defaults values
                 if x == 1 and y == 1:
                     figsize = (6, 5)
                 elif x == 1 and y == 2:
@@ -86,14 +86,14 @@ class Plotter(View):
                     figsize = (8, 6)
             
             # Create grid
-            #import matplotlib.gridspec as gridspec
-            #self.grid = gridspec.GridSpec(x, y)#, height_ratios=[7,4])
-            #self.grid.update(left=0.15, right=0.95, hspace=0.25, wspace=0.4)#, top=0.8, bottom=0.2)  
+            # import matplotlib.gridspec as gridspec
+            # self.grid = gridspec.GridSpec(x, y)#, height_ratios=[7,4])
+            # self.grid.update(left=0.15, right=0.95, hspace=0.25, wspace=0.4)#, top=0.8, bottom=0.2)
             global figureCounter
             figureCounter += 1
             self.figure = plt.figure(figureCounter, figsize=figsize, dpi=dpi)
-            #from matplotlib.figure import Figure
-            #self.figure = Figure(figsize=figsize, dpi=dpi)
+            # from matplotlib.figure import Figure
+            # self.figure = Figure(figsize=figsize, dpi=dpi)
             if mainTitle:
                 self.figure.suptitle(mainTitle, fontsize=fontsize + 4)
             if windowTitle:
@@ -108,8 +108,8 @@ class Plotter(View):
             
         self.fontsize = fontsize
         self.plot_title_fontsize = fontsize + 4
-        self.plot_axis_fontsize  = fontsize + 2
-        self.plot_text_fontsize  = fontsize
+        self.plot_axis_fontsize = fontsize + 2
+        self.plot_text_fontsize = fontsize
         self.gridx = x
         self.gridy = y
             
@@ -131,25 +131,24 @@ class Plotter(View):
     def legend(self, loc='best', **kwargs):
         self.last_subplot.legend(loc=loc, **kwargs)
 
-        
-    def createSubPlot(self, title, xlabel, ylabel, xpos=None, ypos=None, 
+    def createSubPlot(self, title, xlabel, ylabel, xpos=None, ypos=None,
                       yformat=False, projection='rectilinear'
                       ):
-        '''
-        Create a subplot in the figure. 
+        """
+        Create a subplot in the figure.
         You should provide plot title, and x and y axis labels.
         yformat True specified the use of global self.plot_yformat
-        Posibles values for projection are: 
-            'aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear' 
-        
-        '''
+        Posibles values for projection are:
+            'aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear'
+
+        """
         if xpos is None:
             self.plot_count += 1
             pos = self.plot_count
         else:
             pos = xpos + (ypos - 1) * self.gridx
         a = self.figure.add_subplot(self.gridx, self.gridy, pos, projection=projection)
-        #a.get_label().set_fontsize(12)
+        # a.get_label().set_fontsize(12)
         a.set_title(title, fontsize=self.plot_title_fontsize)
         a.set_xlabel(xlabel, fontsize=self.plot_axis_fontsize)
         a.set_ylabel(ylabel, fontsize=self.plot_axis_fontsize)
@@ -163,8 +162,8 @@ class Plotter(View):
 
         labels = a.xaxis.get_ticklabels() + a.yaxis.get_ticklabels()
         for label in labels:
-            label.set_fontsize(self.plot_text_fontsize) # Set fontsize
-            #label.set_text('aa')
+            label.set_fontsize(self.plot_text_fontsize)  # Set fontsize
+            # label.set_text('aa')
         self.last_subplot = a
         self.plot = a.plot
         self.hist = a.hist

@@ -94,6 +94,7 @@ def dateStr(dt=None, time=True, secs=False, dateFormat=None):
 
     return dt.strftime(dateFormat)
 
+
 prettyTime = dateStr
 
 
@@ -174,7 +175,8 @@ def trace(nlevels, separator=' --> ', stream=sys.stdout):
         def tracedFunc(*args, **kwargs):
             stack = traceback.extract_stack()[-nlevels-1:-1]
             fmt = lambda x: '%s:%d %s' % (os.path.basename(x[0]), x[1], x[2])
-            stream.write(separator.join(map(fmt, stack)+[f.__name__]) + '\n')
+            stList = list(map(fmt, stack))
+            stream.write(separator.join(stList + [f.__name__]) + '\n')
             return f(*args, **kwargs)
 
         return tracedFunc
@@ -208,11 +210,11 @@ def getUniqueItems(originalList):
     returns -- New list with the content of original list without repeated items
     """  
     auxDict = {}
-    resultList = [auxDict.setdefault(x,x) for x in originalList if x not in auxDict]
+    resultList = [auxDict.setdefault(x, x) for x in originalList if x not in auxDict]
     return resultList
 
 
-def executeRemoteX (command, hostName, userName, password):
+def executeRemoteX(command, hostName, userName, password):
     """ Execute a remote command with X11 forwarding.
     Params:
         command: Command to execute.
@@ -222,14 +224,15 @@ def executeRemoteX (command, hostName, userName, password):
     Returns: 
         Tuple with standard output and error output.
     """
-    scriptPath = os.path.abspath(os.path.join(os.path.dirname( __file__ ), "sshAskPass.sh"))
+    scriptPath = os.path.abspath(os.path.join(os.path.dirname(__file__), "sshAskPass.sh"))
     pswCommand = "echo '" + password + "' | " + scriptPath + " ssh -X " + userName + "@" + hostName + " " + command
     import subprocess
     p = subprocess.Popen(pswCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
     return stdout, stderr
 
-def executeRemote (command, hostName, userName, password):
+
+def executeRemote(command, hostName, userName, password):
     """ Execute a remote command.
     Params:
         command: Command to execute.
@@ -249,7 +252,7 @@ def executeRemote (command, hostName, userName, password):
     return stdin, stdout, stderr
     
     
-def executeLongRemote (command, hostName, userName, password):
+def executeLongRemote(command, hostName, userName, password):
     """ Execute a remote command.
     Params:
         command: Command to execute.
@@ -300,7 +303,6 @@ def getHostFullName():
     return socket.getfqdn()
 
 
-
 def isInFile(text, filePath):
     """ Checks if given text is in the given file.
     params:
@@ -326,7 +328,7 @@ def getLineInFile(text, fileName):
     return None
 
 
-#------------- Colored message strings -------------------------------
+# ------------- Colored message strings -----------------------------
 def getColorStr(text, color, bold=False):
     """ Add ANSI color codes to the string if there is a terminal sys.stdout.
     Params:
@@ -344,28 +346,34 @@ def getColorStr(text, color, bold=False):
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), text)
 
+
 def yellowStr(text):
     return getColorStr(text, color='yellow')
+
 
 def greenStr(text):
     return getColorStr(text, color='green')
 
+
 def redStr(text):
     return getColorStr(text, color='red')
+
 
 def magentaStr(text):
     return getColorStr(text, color='magenta')
 
+
 def ansi(n, bold=False):
     """Return function that escapes text with ANSI color n."""
     return lambda txt: '\x1b[%d%sm%s\x1b[0m' % (n, ';1' if bold else '', txt)
+
 
 black, red, green, yellow, blue, magenta, cyan, white = map(ansi, range(30, 38))
 blackB, redB, greenB, yellowB, blueB, magentaB, cyanB, whiteB = [
     ansi(i, bold=True) for i in range(30, 38)]
 
 
-#-------------- Hyper text highlighting ----------------------------
+# -------------- Hyper text highlighting ----------------------------
 """
 We use a subset of TWiki hyper text conventions.
 In particular:
@@ -385,9 +393,9 @@ HYPER_ALL = 'all'
 
 # Associated regular expressions
 PATTERN_BOLD = "(^|[\s])[*](?P<bold>[^\s*][^*]*[^\s*]|[^\s*])[*]"
-#PATTERN_BOLD = r"[\s]+[*]([^\s][^*]+[^\s])[*][\s]+"
+# PATTERN_BOLD = r"[\s]+[*]([^\s][^*]+[^\s])[*][\s]+"
 PATTERN_ITALIC = "(^|[\s])[_](?P<italic>[^\s_][^_]*[^\s_]|[^\s_])[_]"
-#PATTERN_ITALIC = r"[\s]+[_]([^\s][^_]+[^\s])[_][\s]+"
+# PATTERN_ITALIC = r"[\s]+[_]([^\s][^_]+[^\s])[_][\s]+"
 PATTERN_LINK1 = '(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
 PATTERN_LINK2 = "[\[]{2}(?P<link2>[^\s][^\]]+[^\s])[\]][\[](?P<link2_label>[^\s][^\]]+[^\s])[\]]{2}"
 # __PATTERN_LINK2 should be first since it could contain __PATTERN_LINK1
@@ -395,13 +403,14 @@ PATTERN_ALL = '|'.join([PATTERN_BOLD, PATTERN_ITALIC, PATTERN_LINK2, PATTERN_LIN
 
 # Compiled regex
 # Not need now, each pattern compiled separately
-#HYPER_REGEX = {
+# HYPER_REGEX = {
 #               HYPER_BOLD: re.compile(PATTERN_BOLD),
 #               HYPER_ITALIC: re.compile(PATTERN_ITALIC),
 #               HYPER_LINK1: re.compile(PATTERN_LINK1),
 #               HYPER_LINK2: re.compile(PATTERN_LINK1),
 #               }
 HYPER_ALL_RE = re.compile(PATTERN_ALL)
+
 
 def parseHyperText(text, matchCallback):
     """ Parse the text recognizing Hyper definitions below.
@@ -432,6 +441,7 @@ def parseHyperText(text, matchCallback):
 #
 #    return text
 
+
 def parseBibTex(bibtexStr):
     """ Parse a bibtex file and return a dictionary. """
     import bibtexparser
@@ -455,9 +465,10 @@ def isPower2(num):
     """ Return True if 'num' is a power of 2. """
     return num != 0 and ((num & (num - 1)) == 0)
 
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 # Parsing of arguments
-#---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+
 def getListFromRangeString(rangeStr):
     """ Create a list of integers from a string with range definitions.
     Examples:
@@ -484,7 +495,7 @@ def getRangeStringFromList(list):
     ranges = []
 
     def addRange():
-        if left == right: # Single element
+        if left == right:  # Single element
             ranges.append("%d" % right)
         else:
             ranges.append("%(left)d-%(right)d" % locals())
@@ -516,9 +527,9 @@ def getListFromValues(valuesStr, length=None):
     for chunk in valuesStr.split():
         values = chunk.split('x')
         n = len(values)
-        if n == 1: # 'x' is not present in the chunk, single value
+        if n == 1:  # 'x' is not present in the chunk, single value
             result += values
-        elif n == 2: # multiple the values by the number after 'x'
+        elif n == 2:  # multiple the values by the number after 'x'
             result += [values[1]] * int(values[0])
         else:
             raise Exception("More than one 'x' is not allowed in list string value.")
@@ -533,18 +544,18 @@ def getListFromValues(valuesStr, length=None):
         
     
 def getFloatListFromValues(valuesStr, length=None):
-    ''' Convert a string to a list of floats'''
+    """ Convert a string to a list of floats"""
     return [float(v) for v in getListFromValues(valuesStr, length)]
 
 
 def getBoolListFromValues(valuesStr, length=None):
-    ''' Convert a string to a list of booleans'''
+    """ Convert a string to a list of booleans"""
     from pyworkflow.object import Boolean
     return [Boolean(value=v).get() for v in getListFromValues(valuesStr, length)]
 
 
 def getStringListFromValues(valuesStr, length=None):
-    ''' Convert a string to a list of booleans'''
+    """ Convert a string to a list of booleans"""
     from pyworkflow.object import String
     return [String(value=v).get() for v in getListFromValues(valuesStr, length)]
 
@@ -647,28 +658,30 @@ def startDebugger(mode='SCIPION_DEBUG', password='a'):
             print("Error importing rpdb2 debugging module, consider installing winpdb.")
 
 
-def getFreePort(basePort=0,host=''):
-        import socket
-        port = 0
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.bind((host, basePort))
-            ipaddr, port = s.getsockname()
-            s.close()
-        except Exception as e:
-            print(e)
-            return 0
-        return port
+def getFreePort(basePort=0, host=''):
+    import socket
+    port = 0
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((host, basePort))
+        ipaddr, port = s.getsockname()
+        s.close()
+    except Exception as e:
+        print(e)
+        return 0
+    return port
     
     
 def readProperties(propsFile):
     myprops = {}
     with open(propsFile, 'r') as f:
         for line in f:
-            line = line.rstrip() #removes trailing whitespace and '\n' chars
+            line = line.rstrip()  # removes trailing whitespace and '\n' chars
     
-            if "=" not in line: continue #skips blanks and comments w/o =
-            if line.startswith("#"): continue #skips comments which contain =
+            if "=" not in line:
+                continue  # skips blanks and comments w/o =
+            if line.startswith("#"):
+                continue  # skips comments which contain =
     
             k, v = line.split("=", 1)
             myprops[k] = v
@@ -687,14 +700,14 @@ def rgb_to_hex(rgb):
 
 
 def lighter(color, percent):
-    '''assumes color is rgb between (0, 0, 0) and (255, 255, 255)'''
+    """assumes color is rgb between (0, 0, 0) and (255, 255, 255)"""
     color = np.array(color)
     white = np.array([255, 255, 255])
     vector = white - color
     return tuple(np.around(color + vector * percent))
 
 
-def formatExceptionInfo(level = 6):
+def formatExceptionInfo(level=6):
     error_type, error_value, trbk = sys.exc_info()
     tb_list = traceback.format_tb(trbk, level)
     s = "Error: %s \nDescription: %s \nTraceback:" % (error_type.__name__, error_value)

@@ -283,7 +283,7 @@ class Project(object):
 
         creationTime = self.mapper.selectBy(name=PROJECT_CREATION_TIME)
 
-        if creationTime: # CreationTime was found in project.sqlite
+        if creationTime:  # CreationTime was found in project.sqlite
             self._creationTime = creationTime[0].datetime()
         else:
             # We should read the creation time from settings.sqlite and
@@ -531,11 +531,11 @@ class Project(object):
                                        if not isinstance(item.getObjValue(),
                                                          pwprot.Protocol)]
                 if oldStylePointerList:
-                        # Fix the protocol parameters
-                        for pointer in oldStylePointerList:
-                            auxPointer = pointer.getObjValue()
-                            pointer.set(self.getProtocol(pointer.get().getObjParentId()))
-                            pointer.setExtended(auxPointer.getLastName())
+                    # Fix the protocol parameters
+                    for pointer in oldStylePointerList:
+                        auxPointer = pointer.getObjValue()
+                        pointer.set(self.getProtocol(pointer.get().getObjParentId()))
+                        pointer.setExtended(auxPointer.getLastName())
                         protocol._store()
                         self._storeProtocol(protocol)
                         self._updateProtocol(protocol)
@@ -668,7 +668,8 @@ class Project(object):
 
         if skipUpdatedProtocols:
             # If we are already updated, comparing timestamps
-            if pwprot.isProtocolUpToDate(protocol): return
+            if pwprot.isProtocolUpToDate(protocol):
+                return
 
         try:
             # Backup the values of 'jobId', 'label' and 'comment'
@@ -857,7 +858,7 @@ class Project(object):
             for _, inputObj in node.run.iterInputAttributes():
                 value = inputObj.get()
                 if (value is not None and
-                            value.getObjId() == output.getObjId() and
+                        value.getObjId() == output.getObjId() and
                         not node.run.isSaved()):
                     deps.append(node.run)
 
@@ -884,11 +885,11 @@ class Project(object):
             if m and m.groupdict()['prefix'].strip() == defaultLabel:
                 stringSuffix = m.groupdict()['number'].strip('(').strip(')')
                 try:
-                    maxSuffix = max(int(stringSuffix),maxSuffix)
+                    maxSuffix = max(int(stringSuffix), maxSuffix)
                 except:
                     print("stringSuffix", stringSuffix)
-            elif otherProtLabel == defaultLabel: # When only we have the prefix,
-                maxSuffix = max(1,maxSuffix)     # this REGEX don't match.
+            elif otherProtLabel == defaultLabel:  # When only we have the prefix,
+                maxSuffix = max(1, maxSuffix)     # this REGEX don't match.
 
         if maxSuffix:
             protLabel = '%s (%d)' % (defaultLabel, maxSuffix+1)
@@ -1040,7 +1041,6 @@ class Project(object):
         if namesOnly:
             return {i: prot.getClassName() for i, prot in enumerate(protocols)}
 
-
         # Handle the copy of a list of protocols
         # for this case we need to update the references of input/outputs
         newDict = OrderedDict()
@@ -1070,7 +1070,7 @@ class Project(object):
                                                inputAttr]
                         else:
                             childDict[iKey] = '%s.%s' % (
-                            protId, oKey)  # equivalent to pointer.getUniqueId
+                                protId, oKey)  # equivalent to pointer.getUniqueId
 
         return newDict
 
@@ -1178,7 +1178,7 @@ class Project(object):
         self._checkModificationAllowed([protocol], 'Cannot SAVE protocol')
 
         if (protocol.isRunning() or protocol.isFinished()
-            or protocol.isLaunched()):
+                or protocol.isLaunched()):
             raise Exception('Cannot SAVE a protocol that is %s. '
                             'Copy it instead.' % protocol.getStatus())
 
@@ -1252,7 +1252,7 @@ class Project(object):
             self._storeProtocol(protocol)  # Store first to get a proper id
             # Set important properties of the protocol
             workingDir = "%06d_%s" % (
-            protocol.getObjId(), protocol.getClassName())
+                protocol.getObjId(), protocol.getClassName())
             self._setProtocolMapper(protocol)
 
             protocol.setWorkingDir(self.getPath(PROJECT_RUNS, workingDir))
@@ -1295,7 +1295,8 @@ class Project(object):
     def _annotateLastRunTime(self, protLastTS):
         """ Sets _lastRunTime for the project if it is after current _lastRunTime"""
         try:
-            if protLastTS is None: return
+            if protLastTS is None:
+                return
 
             if self._lastRunTime is None:
                 self._lastRunTime = protLastTS
@@ -1325,7 +1326,7 @@ class Project(object):
 
         if (protocol.isRunning() and _runsLocally(protocol)
             and not protocol.useQueue()
-            and not pwutils.isProcessAlive(pid)):
+                and not pwutils.isProcessAlive(pid)):
             protocol.setFailed("Process %s not found running on the machine. "
                                "It probably has died or been killed without "
                                "reporting the status to Scipion. Logs might "
@@ -1362,7 +1363,7 @@ class Project(object):
         :param runs: The input runs to build the graph
         :return: The graph taking into account run dependencies
         """
-        outputDict = {} # Store the output dict
+        outputDict = {}  # Store the output dict
         g = pwutils.Graph(rootName='PROJECT')
 
         for r in runs:
@@ -1404,7 +1405,7 @@ class Project(object):
         rootNode.label = "PROJECT"
 
         for n in g.getNodes():
-            if n.isRoot() and not n is rootNode:
+            if n.isRoot() and n is not rootNode:
                 rootNode.addChild(n)
         return g
 
@@ -1481,7 +1482,7 @@ class Project(object):
                     print("   parent: ", pid)
 
         for n in g.getNodes():
-            if n.isRoot() and not n is root:
+            if n.isRoot() and n is not root:
                 root.addChild(n)
 
         return g
@@ -1556,7 +1557,7 @@ class Project(object):
         """
         n = graph.getNode(obj.strId())
         # Get the oldest ancestor of a node, before reaching the root node
-        while not n is None and not n.getParent().isRoot():
+        while n is not None and not n.getParent().isRoot():
             n = n.getParent()
 
         connection = {}

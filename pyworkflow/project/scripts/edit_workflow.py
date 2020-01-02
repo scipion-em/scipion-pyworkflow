@@ -48,6 +48,7 @@ def usage(error):
     """ % error)
     sys.exit(1)    
 
+
 n = len(sys.argv)
 
 if n < 2 or n > 3:
@@ -76,7 +77,7 @@ class EditorProjectWindow(ProjectWindow):
     def close(self, e=None):
         try:
             print("Writing protocols to: ", jsonFn)
-            proj.getRunsGraph() # Build project runs graph
+            proj.getRunsGraph()  # Build project runs graph
             proj.exportProtocols(proj.getRuns(), jsonFn)
             print("Deleting temporary folder: ", customUserData)
             pwutils.cleanPath(customUserData)
@@ -84,7 +85,6 @@ class EditorProjectWindow(ProjectWindow):
             print("Error saving the workflow: ", ex)
         ProjectWindow.close(self, e)
 
+
 projWindow = EditorProjectWindow(projPath)
 projWindow.show()
-
-

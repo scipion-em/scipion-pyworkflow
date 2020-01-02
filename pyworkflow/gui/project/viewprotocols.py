@@ -349,7 +349,7 @@ class SearchProtocolWindow(pwgui.Window):
         protList = []
 
         def addSearchWeight(line2Search, searchtext):
-        # Adds a weight value for the search
+            # Adds a weight value for the search
             weight = 0
 
             # prioritize findings in label
@@ -366,7 +366,6 @@ class SearchProtocolWindow(pwgui.Window):
 
                     for value in line2Search[2:]:
                         weight += 1 if word in value else 0
-
 
             return line2Search + (weight,)
 
@@ -457,7 +456,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             objLabel = self.getObjectLabel(obj, prot)
             if self.parent.windows.askYesNo("Delete object",
                                             "Are you sure to delete *%s* object?"
-                                                    % objLabel):
+                                            % objLabel):
                 prot.getProject().deleteProtocolOutput(prot, obj)
                 self.parent._fillSummary()
                 self.parent.windows.showInfo("Object *%s* successfully deleted."
@@ -487,7 +486,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             actions.append(('Open with %s' % v.__name__,
                             viewerCallback(v),
                             Icon.ACTION_VISUALIZE))
-         # EDIT
+        # EDIT
         actions.append((Message.LABEL_EDIT,
                         lambda: self._editObject(obj),
                         Icon.ACTION_EDIT))
@@ -575,7 +574,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
 
                 value = str(labelObj)
             except Exception as e:
-                print("Can not convert object %s - %s to string." % (objKey , name))
+                print("Can not convert object %s - %s to string." % (objKey, name))
                 value = str(e)
 
             info = {'key': objKey, 'parent': parent, 'image': image,
@@ -1038,7 +1037,6 @@ class ProtocolsView(tk.Frame):
                 # If image is none
                 img = img if img is not None else ''
 
-
             protClassName = value.split('.')[-1]  # Take last part
             emProtocolsDict = self.domain.getProtocols()
             prot = emProtocolsDict.get(protClassName, None)
@@ -1457,7 +1455,6 @@ class ProtocolsView(tk.Frame):
             # we open the resulting CSV file with the OS default software
             pwgui.text.openTextFileEditor(filePath)
 
-
     # NOt used!: pconesa 02/11/2016.
     # def _deleteSelectedProtocols(self, e=None):
     #
@@ -1467,7 +1464,6 @@ class ProtocolsView(tk.Frame):
     #
     #     self._updateSelection()
     #     self.updateRunsGraph()
-    #
 
     def _updateSelection(self):
         self._fillSummary()
@@ -1569,7 +1565,7 @@ class ProtocolsView(tk.Frame):
             else:
 
                 item.setSelected(True)
-                if len(self._selection) == 1: #repaint first selected item
+                if len(self._selection) == 1:  # repaint first selected item
                     firstSelectedNode = self.runsGraph.getNode(str(self._selection[0]))
                     if hasattr(firstSelectedNode, 'item'):
                         firstSelectedNode.item.setSelected(False)
@@ -1958,7 +1954,7 @@ class ProtocolsView(tk.Frame):
         children = []
         # If parent param not passed...
         if childRun is None:
-            #..use selection, must be first call
+            # ..use selection, must be first call
             for protId in self._selection:
                 run = self.runsGraph.getNode(str(protId))
                 children.append(run)
@@ -2240,7 +2236,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             file = open(filename, 'r')
             lineNum = str(len(file.readlines())+1)
             file.close()
-            nameDict = str(name)[0:15]+' ...' if len(str(name))> 25 else str(name)
+            nameDict = str(name)[0:15]+' ...' if len(str(name)) > 25 else str(name)
             memoryDict[str(hex(id(value)))] = '>>> '+nameDict + ' - L:'+lineNum
             isNew = True
         
@@ -2275,7 +2271,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         # if it's the last item, its childs has not the bar indention
         if isFirstOrLast == IS_LAST:  # void indention when no more items
             prefixList = prefix.split(INDENT_COUNTER)
-            prefixList[-2]=prefixList[-2].replace('|',' ') 
+            prefixList[-2] = prefixList[-2].replace('|', ' ')
             prefix = INDENT_COUNTER.join(prefixList)
 
         # recursive step with the new prefix and memory dict.
@@ -2289,7 +2285,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             #   to improve the readability when filter 
             deepStr = str(indentionDeep+1) + COL_DELIM
 
-        prefix = prefix.replace(INDENT_COUNTER,'') + COL_DELIM
+        prefix = prefix.replace(INDENT_COUNTER, '') + COL_DELIM
 
         # We introduce the end of the child and 
         #   also the next header while it is not the last
@@ -2303,21 +2299,21 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
 
     def isIterable(obj):
         """ Returns true if obj is a tuple, list, dict or calss. """
-        isTupleListDict = ( type(obj)==type(tuple()) or 
-                            type(obj)==type(dict())  or
-                            type(obj)==type(list()) ) and len(value)>1
+        isTupleListDict = (isinstance(obj, tuple) or
+                           isinstance(obj, dict) or
+                           isinstance(obj, list)) and len(value) > 1
 
         # FIX ME: I don't know how to assert if is a class or not... 
-        isClass = str(type(obj))[1]=='c'
+        isClass = str(type(obj))[1] == 'c'
 
-        return isClass or (isTupleListDict and inspectDetail<2)
+        return isClass or (isTupleListDict and inspectDetail < 2)
 
     indentionDeep = prefix.count(INDENT_COUNTER)
-    if indentionDeep==0:
+    if indentionDeep == 0:
         prefix = ' - Root - '
 
         # dict with name and value pairs of the members
-        if len(obj)==1: 
+        if len(obj) == 1:
             # if only one obj is passed in the input list,
             #   we directly inspect that obj.
             obj_dict = obj[0].__dict__
@@ -2340,13 +2336,13 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         prefix = '  ' + BAR_CHILD
     else:
         # firsts settings depending on the type of the obj
-        if str(type(obj))[1]=='c':
+        if str(type(obj))[1] == 'c':
             obj_dict = obj.__dict__
-        elif (type(obj)==type(tuple()) or
-              type(obj)==type(list())):
+        elif (isinstance(obj, tuple) or
+              isinstance(obj, list)):
             column1 = '    - Value - ' + COL_DELIM
             column3 = '  - Pos./Len. - ' + COL_DELIM
-        elif type(obj)==type(dict()):
+        elif isinstance(obj, dict):
             column1 = '    - Key - ' + COL_DELIM
             obj_dict = obj
         else:  # if is not of the type above it not make sense to continue
@@ -2356,7 +2352,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
     deepStr = str(indentionDeep) + COL_DELIM
     isBelowMaxDeep = indentionDeep < maxDeep if maxDeep > 0 else True 
 
-    prefixToWrite = prefix.replace(INDENT_COUNTER,'') + COL_DELIM
+    prefixToWrite = prefix.replace(INDENT_COUNTER, '') + COL_DELIM
     file = open(filename, 'a')
     file.write(deepStr + prefixToWrite + 
                column1 + column2 + column3 + column4 + END_LINE)
@@ -2368,20 +2364,20 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
     #  we return to the string structure
     #    with a certain indention if it's the root
     prefixToWrite = '  ' + INDENT_COUNTER.join(prefixList) if indentionDeep == 1 \
-                     else  INDENT_COUNTER.join(prefixList)
+        else INDENT_COUNTER.join(prefixList)
 
     isNew = True
-    if str(type(obj))[1]=='c' or type(obj)==type(dict()):
+    if str(type(obj))[1] == 'c' or isinstance(obj, dict):
         counter = 0
         for key, value in obj_dict.items():
-            counter+=1
+            counter += 1
             # write the variable
             isNew = writeRow(key, value, prefixToWrite)
 
             # managing the extrems of the loop
-            if counter==1:
+            if counter == 1:
                 isFirstOrLast = IS_FIRST
-            elif counter==len(obj_dict):
+            elif counter == len(obj_dict):
                 isFirstOrLast = IS_LAST
             else:
                 isFirstOrLast = IS_MIDDLE
@@ -2390,15 +2386,15 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             if isBelowMaxDeep and isNew and isIterable(value):
                 recursivePrint(value, prefix, isFirstOrLast)
     else:
-        for i in range(0,len(obj)): 
+        for i in range(0, len(obj)):
             # write the variable
             isNew = writeRow(obj[i], obj[i], prefixToWrite, 
                              str(i+1)+'/'+str(len(obj)))
 
             # managing the extrems of the loop
-            if i==0:
+            if i == 0:
                 isFirstOrLast = IS_FIRST
-            elif len(obj)==i+1:
+            elif len(obj) == i+1:
                 isFirstOrLast = IS_LAST
             else:
                 isFirstOrLast = IS_MIDDLE

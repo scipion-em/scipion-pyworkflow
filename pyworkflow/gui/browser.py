@@ -325,10 +325,11 @@ class FileTreeProvider(TreeProvider):
         
 # Some constants for the type of selection
 # when the file browser is opened
-SELECT_NONE = 0 # No selection, just browse files                  
+
+SELECT_NONE = 0  # No selection, just browse files
 SELECT_FILE = 1
 SELECT_FOLDER = 2
-SELECT_PATH = 3 # Can be either file or folder
+SELECT_PATH = 3  # Can be either file or folder
 
 
 class FileBrowser(ObjectBrowser):
@@ -341,12 +342,12 @@ class FileBrowser(ObjectBrowser):
                  allowFilter=True, 
                  filterFunction=None, 
                  previewDim=144,
-                 showHidden=False, # Show hidden files or not?
-                 selectButton='Select', # Change the Select button text
-                 entryLabel=None, # Display an entry for some input
-                 entryValue='', # Display a value in the entry field
-                 showInfo=None, # Used to notify errors or messages
-                 shortCuts=None, # Shortcuts to common locations/paths
+                 showHidden=False,  # Show hidden files or not?
+                 selectButton='Select',  # Change the Select button text
+                 entryLabel=None,  # Display an entry for some input
+                 entryValue='',  # Display a value in the entry field
+                 showInfo=None,  # Used to notify errors or messages
+                 shortCuts=None,  # Shortcuts to common locations/paths
                  onlyFolders=False
                  ):
         self.pathVar = tk.StringVar()
@@ -427,7 +428,7 @@ class FileBrowser(ObjectBrowser):
 
     def _addButton(self, frame, text, image, command):
         btn = tk.Label(frame, text=text, image=self.getImage(image),
-                   compound=tk.LEFT, cursor='hand2')
+                       compound=tk.LEFT, cursor='hand2')
         btn.bind('<Button-1>', command)
         btn.grid(row=0, column=self._col, sticky='nw',
                  padx=(0, 5), pady=5)
@@ -463,7 +464,7 @@ class FileBrowser(ObjectBrowser):
         is distinct from SELECT_NONE.
         """
         Button(frame, "Close", pwutils.Icon.BUTTON_CLOSE, 
-               command=self._close).grid(row=0, column=0, padx=(0,5))   
+               command=self._close).grid(row=0, column=0, padx=(0, 5))
         if self.selectButton:                     
             HotButton(frame, self.selectButton, pwutils.Icon.BUTTON_SELECT,
                       command=self._select).grid(row=0, column=1)
@@ -486,7 +487,7 @@ class FileBrowser(ObjectBrowser):
         self.tree.focus_set()
 
         itemKeyToFocus = PARENT_FOLDER
-        if not PARENT_FOLDER in self.tree._objDict:
+        if PARENT_FOLDER not in self.tree._objDict:
             itemKeyToFocus = self.tree.get_children()[0]
 
         # Focusing on a item, but nothing is selected 
@@ -598,6 +599,7 @@ class ShortCut:
         self.icon = icon
         self.toolTip = toolTip
 
+
 class BrowserWindow(gui.Window):
     """ Windows to hold a browser frame inside. """
     def __init__(self, title, master=None, **kwargs):
@@ -612,6 +614,7 @@ class BrowserWindow(gui.Window):
         
  
 STANDARD_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg']
+
 
 def isStandardImage(filename):
     """ Check if a filename have an standard image extension. """
@@ -645,7 +648,7 @@ class FileBrowserWindow(BrowserWindow):
         return self.browser.getCurrentDir()
         
     def registerHandlers(self):
-        register = FileTreeProvider.registerFileHandler # shortcut
+        register = FileTreeProvider.registerFileHandler  # shortcut
 
         register(TextFileHandler('file_text.gif'),
                  '.txt', '.log', '.out', '.err', '.stdout', '.stderr', '.emx',
@@ -661,4 +664,3 @@ class FileBrowserWindow(BrowserWindow):
         # register(VolFileHandler(), '.vol')
         # register(StackHandler(), '.stk', '.mrcs', '.st', '.pif', '.dm4')
         # register(ChimeraHandler(), '.bild')
-    

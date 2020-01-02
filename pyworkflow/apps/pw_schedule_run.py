@@ -172,7 +172,7 @@ class RunScheduler:
             if not failedInputProtocols:
                 _updateProtocol(protocol, project)
                 if len(protocol.validate()) > 0:
-                        missing = True
+                    missing = True
                 elif not protocol.worksInStreaming():
                     for key, attr in protocol.iterInputAttributes():
                         pointer = attr.get()

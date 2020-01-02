@@ -94,7 +94,7 @@ class AutoScrollbar(tk.Scrollbar):
     def set(self, lo, hi):
         if float(lo) <= 0.0 and float(hi) >= 1.0:
             self.grid_remove()
-            #self.tk.call("grid", "remove", self)
+            # self.tk.call("grid", "remove", self)
         else:
             self.grid()
         tk.Scrollbar.set(self, lo, hi)
@@ -129,7 +129,7 @@ class Scrollable(object):
         self.bindWidget(self)
         
     def scroll(self, event):
-        #print "scrolling, event.num", event.num, "deltha", event.delta
+        # print "scrolling, event.num", event.num, "deltha", event.delta
         if event.num == 5 or event.delta < 0:
             count = 1
         if event.num == 4 or event.delta > 0:
@@ -157,7 +157,7 @@ class LabelSlider(ttk.Frame):
         ttk.Frame.__init__(self, master)
         ttk.Label(self, text=label).pack(side=tk.LEFT, padx=2, pady=2, anchor='s')
         self.slider = tk.Scale(self, from_=from_, to=to, variable=self.var, 
-                                bigincrement=step, resolution=step, orient=tk.HORIZONTAL)
+                               bigincrement=step, resolution=step, orient=tk.HORIZONTAL)
         if callback:
             self.var.trace('w', callback)
         self.slider.pack(side=tk.LEFT, padx=2)
@@ -184,7 +184,7 @@ class ComboBox(ttk.Combobox):
         indexes = range(len(choices))
         if values is None:
             values = indexes
-        choices = [str(c) for c in choices] # Convert to a list of strings
+        choices = [str(c) for c in choices]  # Convert to a list of strings
         
         if initial is None:
             initial = choices[0]

@@ -92,7 +92,7 @@ class Tester:
         else:
             # In this other case, we will load the test available
             # from pyworkflow and the other plugins
-            #self.paths = [('pyworkflow', os.path.dirname(os.path.dirname(pw.__file__)))]
+            # self.paths = [('pyworkflow', os.path.dirname(os.path.dirname(pw.__file__)))]
             self.paths = []
             for name, plugin in pw.Config.getDomain().getPlugins().items():
                 self.paths.append((name, os.path.dirname(plugin.__path__[0])))
@@ -213,7 +213,7 @@ class Tester:
             for l in lines:
                 if '<!-- LAST_ROW -->' in l:
                     rowStr = "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>"
-                    if result: # != 0 means failed in os.system
+                    if result:  # != 0 means failed in os.system
                         resultStr = '<font color="red">[FAILED]</font>'
                     else:
                         resultStr = '<font color="green">[SUCCEED]</font>'
@@ -221,7 +221,7 @@ class Tester:
 
                     f.write(rowStr % (self.testCount, cmd, runTime, resultStr, logStr))
                     f.write('\n')
-                if self.headerPrefix  in l:
+                if self.headerPrefix in l:
                     f.write(self.headerPrefix + self.testTimer.getToc() + '</h3>\n')
                 else:
                     f.write(l)

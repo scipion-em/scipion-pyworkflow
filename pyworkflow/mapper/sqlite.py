@@ -61,8 +61,8 @@ class SqliteMapper(Mapper):
         value = obj.getObjValue()
 
         if obj.isPointer() and obj.hasValue():
-            if value.hasObjId(): # Check the object has been stored previously
-                value = value.strId() # For pointers store the id of referenced object
+            if value.hasObjId():  # Check the object has been stored previously
+                value = value.strId()  # For pointers store the id of referenced object
             else:
                 self.updatePendingPointers.append(obj)
                 value = "Pending update" 
@@ -167,7 +167,7 @@ class SqliteMapper(Mapper):
         self.updateDict[obj._objId] = obj
 
         for key, attr in obj.getAttributesToStore():
-            if attr._objId is None: # Insert new items from the previous state
+            if attr._objId is None:  # Insert new items from the previous state
                 attr._objParentId = obj._objId
                 namePrefix = self.__getNamePrefix(obj)
                 attr._objName = joinExt(namePrefix, key)
@@ -193,7 +193,7 @@ class SqliteMapper(Mapper):
                     self.fillObject(obj, objRow)
         return obj
 
-    def exists(self,objId):
+    def exists(self, objId):
         return self.db.doesRowExist(objId)
 
     def getParent(self, obj):
@@ -238,7 +238,7 @@ class SqliteMapper(Mapper):
                 # Here we are assuming that always the parent have
                 # been processed first, so it will be in the dictionary
                 parentObj = self.objDict.get(parentId, None)
-                if parentObj is None: # Something went wrong
+                if parentObj is None:  # Something went wrong
                     continue
                 childObj = getattr(parentObj, childName, None)
                 if childObj is None:
@@ -284,7 +284,7 @@ class SqliteMapper(Mapper):
 
             return childObj
 
-    def __objFromRow(self, objRow, includeChildren = True):
+    def __objFromRow(self, objRow, includeChildren=True):
         objClassName = objRow['classname']
         obj = self._buildObjectFromClass(objClassName)
 
@@ -298,7 +298,7 @@ class SqliteMapper(Mapper):
             obj = self.objDict.get(objRow['id'], None) or self.__objFromRow(objRow)
 
             if (obj is not None and
-                objectFilter is None or objectFilter(obj)):
+                    objectFilter is None or objectFilter(obj)):
                 yield obj
         
     def __objectsFromRows(self, objRows, iterate=False, objectFilter=None):
@@ -503,7 +503,6 @@ class SqliteObjectsDb(SqliteDb):
     SELECT_RELATIONS = "SELECT * FROM Relations WHERE "
     EXISTS = "SELECT EXISTS(SELECT 1 FROM Objects WHERE %s=? LIMIT 1)"
     
-    
     def selectCmd(self, whereStr, orderByStr=' ORDER BY id'):
         return self.SELECT + whereStr + orderByStr
     
@@ -561,15 +560,15 @@ class SqliteObjectsDb(SqliteDb):
         """ This method is intended to update the table schema
         in the case of dealing with old database version.
         """
-        if self.getVersion() < self.VERSION: # This applies for version 1
+        if self.getVersion() < self.VERSION:  # This applies for version 1
             # Add the extra column for pointer extended attribute in Relations table
             # from version 1 on, there is not needed since the table will 
             # already contains this column
             columns = [c[1] for c in self.getTableColumns('Relations')]
-            if not 'object_parent_extended' in columns:
+            if 'object_parent_extended' not in columns:
                 self.executeCommand("ALTER TABLE Relations "
                                     "ADD COLUMN object_parent_extended  TEXT DEFAULT NULL")
-            if not 'object_child_extended' in columns:    
+            if 'object_child_extended' not in columns:
                 self.executeCommand("ALTER TABLE Relations "
                                     "ADD COLUMN object_child_extended  TEXT DEFAULT NULL")
             self.setVersion(self.VERSION)
@@ -580,12 +579,12 @@ class SqliteObjectsDb(SqliteDb):
             self.executeCommand(
                 'INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation)' +
                 ' VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))',
-                                (parent_id, name, classname, value, label, comment))
+                (parent_id, name, classname, value, label, comment))
             return self.cursor.lastrowid
         except Exception as ex:
             print("insertObject: ERROR")
             print('INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation)' +
-                ' VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))')
+                  ' VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))')
             print((parent_id, name, classname, value, label, comment))
             raise ex
         
@@ -668,7 +667,7 @@ class SqliteObjectsDb(SqliteDb):
                             % ancestor_namePrefix)
 
     def selectMissingObjectsByAncestor(self, ancestor_namePrefix,
-                                           idList):
+                                       idList):
         """Select all objects in the hierarchy of ancestor_id"""
         idStr = ','.join(str(i) for i in idList)
         cmd = self.selectCmd("name LIKE '%s.%%' AND id NOT IN (%s) "
@@ -734,14 +733,14 @@ class SqliteFlatMapper(Mapper):
             # creation and manipulation of python objects that take
             # longer than the access time to the database
             pragmas = {
-                #0 | OFF | 1 | NORMAL | 2 | FULL | 3 | EXTRA;
-                ##'synchronous': 'OFF', # ON
-                #DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
-                ##'journal_mode': 'OFF', # DELETE
+                # 0 | OFF | 1 | NORMAL | 2 | FULL | 3 | EXTRA;
+                # #'synchronous': 'OFF', # ON
+                # DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
+                # #'journal_mode': 'OFF', # DELETE
                 # FILE 0 | DEFAULT | 1 | FILE | 2 | MEMORY;
-                ##'temp_store': 'MEMORY',
+                # #'temp_store': 'MEMORY',
                 # PRAGMA schema.cache_size = pages;
-                ##'cache_size': '5000' # versus -2000
+                # #'cache_size': '5000' # versus -2000
             }
             self.db = SqliteFlatDb(dbName, tablePrefix,
                                    pragmas=pragmas, indexes=indexes)
@@ -751,8 +750,8 @@ class SqliteFlatMapper(Mapper):
                 self.__loadObjDict()
         except Exception as ex:
             raise SqliteFlatMapperException('Error creating SqliteFlatMapper, '
-                            'dbName: %s, tablePrefix: %s\n error: %s' %
-                            (dbName, tablePrefix, ex))
+                                            'dbName: %s, tablePrefix: %s\n error: %s' %
+                                            (dbName, tablePrefix, ex))
     
     def commit(self):
         self.db.commit()
@@ -863,7 +862,7 @@ class SqliteFlatMapper(Mapper):
         if self._objTemplate is None:
             self.__loadObjDict()
             
-        obj = self._objTemplate #self.__buildAndFillObj()
+        obj = self._objTemplate  # self.__buildAndFillObj()
         obj.setObjId(objRow[ID])
         obj.setObjLabel(self._getStrValue(objRow['label']))
         obj.setObjComment(self._getStrValue(objRow['comment']))
@@ -1140,7 +1139,7 @@ class SqliteFlatDb(SqliteDb):
             # first check if the attribute to be indexed exists
             if idx in colMap:
                 self.executeCommand("CREATE INDEX index_%s ON Objects (%s);"
-                                % (idx.replace('.', '_'), colMap[idx]))
+                                    % (idx.replace('.', '_'), colMap[idx]))
 
         self.commit()
         # Prepare the INSERT and UPDATE commands
@@ -1253,11 +1252,11 @@ class SqliteFlatDb(SqliteDb):
         return self._results(iterate)
 
     def aggregate(self, operations, operationLabel, groupByLabels=None):
-        #let us count for testing
+        # let us count for testing
         selectStr = 'SELECT '
         separator = ' '
-        #This cannot be like the following line should be expresed in terms
-        #of C1, C2 etc....
+        # This cannot be like the following line should be expresed in terms
+        # of C1, C2 etc....
         for operation in operations:
             selectStr += "%s %s(%s) AS %s" % (separator, operation,
                                               self._columnsMapping[operationLabel],
@@ -1273,7 +1272,7 @@ class SqliteFlatDb(SqliteDb):
                 separator = ', '
         else:
             groupByStr = ' '
-        sqlCommand = selectStr +"\n" + self.FROM + "\n" + groupByStr
+        sqlCommand = selectStr + "\n" + self.FROM + "\n" + groupByStr
         self.executeCommand(sqlCommand)
         return self._results(iterate=False)
 

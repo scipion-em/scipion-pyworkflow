@@ -45,6 +45,7 @@ def usage(error):
     """ % error)
     sys.exit(1)    
 
+
 n = len(sys.argv)
 
 if n < 2 or n > 4:

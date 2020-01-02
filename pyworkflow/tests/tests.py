@@ -237,8 +237,6 @@ def setupTestProject(cls, writeLocalConfig=False):
     cls.proj = proj
 
 
-
-
 class GTestResult(unittest.TestResult):
     """ Subclass TestResult to output tests results with colors
     (green for success and red for failure)

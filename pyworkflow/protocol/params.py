@@ -190,12 +190,13 @@ class Section(ElementGroup):
         return self.addParam(labelName, Group, form=self._form, 
                              label=groupName, **kwargs)
         
+
 class Form(object):
     """Store all sections and parameters"""
     def __init__(self, protocol):
         """ Build a Form from a given protocol. """
         object.__init__(self)
-        self._sectionList = [] # Store list of sections
+        self._sectionList = []  # Store list of sections
         # Dictionary to store all params, grouped by sections
         self._paramsDict = collections.OrderedDict()
         self._lastSection = None
@@ -338,7 +339,7 @@ class Form(object):
             self.addParam('numberOfThreads', IntParam, default=threads,
                           label='Threads',
                           help='This option provides shared-memory parallelization on multi-core machines.'
-                                'It does not require any additional software, other than <Xmipp>' )
+                                'It does not require any additional software, other than <Xmipp>')
         if mpi > 0:
             self.addParam('numberOfMpi', IntParam, default=mpi,
                           label='MPI processes',
@@ -367,6 +368,7 @@ class TextParam(StringParam):
         self.height = args.get('height', 5)
         self.width = args.get('width', 30)        
         
+
 class RegexParam(StringParam):
     """Regex based string param"""
     pass
@@ -375,6 +377,7 @@ class RegexParam(StringParam):
 class PathParam(StringParam):
     """Param for path strings"""
     pass
+
 
 # TODO: Handle filter pattern
 class FileParam(PathParam):
@@ -407,7 +410,7 @@ class EnumParam(IntParam):
     # Possible values for display
     DISPLAY_LIST = 0
     DISPLAY_COMBO = 1
-    DISPLAY_HLIST = 2 # horizontal list, save space
+    DISPLAY_HLIST = 2  # horizontal list, save space
     
     def __init__(self, **args):
         IntParam.__init__(self, **args)
@@ -461,8 +464,8 @@ class MultiPointerParam(PointerParam):
     """
     def __init__(self, **args):
         PointerParam.__init__(self, paramClass=PointerList, **args)
-        self.maxNumObjects = Integer(args.get('maxNumObjects',100))
-        self.minNumObjects = Integer(args.get('minNumObjects',2))   
+        self.maxNumObjects = Integer(args.get('maxNumObjects', 100))
+        self.minNumObjects = Integer(args.get('minNumObjects', 2))
 
         
 class RelationParam(Param):
@@ -541,9 +544,9 @@ class TupleParam(Param):
         Param.__init__(self, **args)
 
 
-# ------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #         Validators
-#-------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 class Validator(object):
     pass
 

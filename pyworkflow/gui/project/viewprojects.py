@@ -51,7 +51,7 @@ class ProjectsView(tk.Frame):
         self.manager = windows.manager
         self.root = windows.root
 
-        #tkFont.Font(size=12, family='verdana', weight='bold')
+        # tkFont.Font(size=12, family='verdana', weight='bold')
         bigSize = pwgui.cfgFontSize + 2
         smallSize = pwgui.cfgFontSize - 2
         fontName = pwgui.cfgFontName
@@ -82,7 +82,7 @@ class ProjectsView(tk.Frame):
          project or filter"""
         # Add the create project button
         bg = "white"
-        btnFrame = tk.Frame(self, bg = bg)
+        btnFrame = tk.Frame(self, bg=bg)
         btn = HotButton(btnFrame, text=Message.LABEL_CREATE_PROJECT,
                         font=self.projNameFont,
                         command=self._onCreateProject)
@@ -127,7 +127,7 @@ class ProjectsView(tk.Frame):
                 # If it's a link, get the linked folder
                 if p.isLink:
                     p.linkedFolder = os.path.realpath(project.path)
-                frame = self.createProjectLabel(parent, p, color=colors[i%2])
+                frame = self.createProjectLabel(parent, p, color=colors[i % 2])
                 frame.grid(row=r, column=0, padx=10, pady=5, sticky='new')
                 r += 1
             except Exception as ex:
@@ -167,7 +167,6 @@ class ProjectsView(tk.Frame):
             lblLink = tk.Label(frame, text=linkMsg, font=self.projDateFont, bg=color, fg='grey', justify=tk.LEFT)
             lblLink.grid(row=2, column=0, columnspan=3, sticky='w')
 
-
         return frame
 
     def createNewProject(self, projName, projLocation):
@@ -197,7 +196,6 @@ class ProjectsView(tk.Frame):
                                  prettyTime(project.cTime, time=False)])
 
         return self.filter.get().lower() in searchString
-
 
 
     def importProject(self, projLocation, copyFiles, projName, searchLocation):
@@ -266,7 +264,8 @@ class ProjectCreateWindow(Window):
 
         self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40, textvariable=self.projLocation)
         self.entryBrowse.grid(row=1, column=1, sticky='nw', padx=5, pady=5)
-        self.btnBrowse = IconButton(content, 'Browse', Icon.ACTION_BROWSE, highlightthickness=0, command=self._browsePath)
+        self.btnBrowse = IconButton(content, 'Browse', Icon.ACTION_BROWSE,
+                                    highlightthickness=0, command=self._browsePath)
         self.btnBrowse.grid(row=1, column=2, sticky='e', padx=5, pady=5)
 
         self.initial_focus = entryName
@@ -350,13 +349,14 @@ class ProjectImportWindow(Window):
         content.columnconfigure(1, weight=1)
         content.config(bg='white')
         content.grid(row=0, column=0, sticky='news',
-                       padx=5, pady=5)
+                     padx=5, pady=5)
 
         # Path explorer
         labelProjectLocation = tk.Label(content, text="Project location", bg='white', bd=0)
         labelProjectLocation.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
         # it seems tk.Entry does not uses default font...grrrr!!
-        self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40, textvariable=self.projLocation, font=self.font)
+        self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40,
+                                    textvariable=self.projLocation, font=self.font)
         self.entryBrowse.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
         self.btnBrowse = IconButton(content, 'Browse', Icon.ACTION_BROWSE, highlightthickness=0,
                                     command=self._browseProjectLocation)
@@ -372,25 +372,27 @@ class ProjectImportWindow(Window):
         btnCheck.grid(row=1, column=1, sticky='nw', padx=0, pady=5)
 
         btnCopyHelp = IconButton(content, Message.LABEL_BUTTON_HELP, Icon.ACTION_HELP, highlightthickness=0,
-             command=lambda: self.showInfo('If checked, \"Project location\" will be copied. Otherwise a soft link to it will be created.'))
+                                 command=lambda: self.showInfo('If checked, \"Project location\" will be copied. Otherwise a soft link to it will be created.'))
         btnCopyHelp.grid(row=1, column=3, sticky='e', padx=2, pady=2)
 
         # Project name
         labelName = tk.Label(content, text='Project name (Optional)', bg='white', bd=0)
         labelName.grid(row=2, column=0, sticky='nw', padx=5, pady=5)
-        entryName = tk.Entry(content, bg='white', width=20, textvariable=self.projName,font=self.font)
+        entryName = tk.Entry(content, bg='white', width=20, textvariable=self.projName, font=self.font)
         entryName.grid(row=2, column=1, sticky='nw', padx=5, pady=5)
 
         # Path to search for raw data and restore broken links.
         labelSearchLocation = tk.Label(content, text="Raw files location (Optional)", bg='white', bd=0)
         labelSearchLocation.grid(row=3, column=0, sticky='nw', padx=5, pady=5)
 
-        self.entrySearchLocation = tk.Entry(content, bg='white', width=40, textvariable=self.searchLocation,font=self.font)
+        self.entrySearchLocation = tk.Entry(content, bg='white', width=40,
+                                            textvariable=self.searchLocation, font=self.font)
         self.entrySearchLocation.grid(row=3, column=1, sticky='nw', padx=5, pady=5)
-        self.btnSearch = IconButton(content, 'Browse', Icon.ACTION_BROWSE, highlightthickness=0, command=self._browseSearchLocation)
+        self.btnSearch = IconButton(content, 'Browse', Icon.ACTION_BROWSE,
+                                    highlightthickness=0, command=self._browseSearchLocation)
         self.btnSearch.grid(row=3, column=2, sticky='e', padx=5, pady=5)
         btnSearchHelp = IconButton(content, Message.LABEL_BUTTON_HELP, Icon.ACTION_HELP, highlightthickness=0,
-             command=lambda: self.showInfo('Optional: Folder where raw files, binaries (movies, micrographs,..) can be found. Used to repair broken links.'))
+                                   command=lambda: self.showInfo('Optional: Folder where raw files, binaries (movies, micrographs,..) can be found. Used to repair broken links.'))
         btnSearchHelp.grid(row=3, column=3, sticky='e', padx=2, pady=2)
 
         self.initial_focus = entryName
@@ -456,7 +458,7 @@ class ProjectImportWindow(Window):
 
         # Validate that project location is a directory
         elif not os.path.isdir(projLocation):
-                errorMessage += "Project location is not a directory\n"
+            errorMessage += "Project location is not a directory\n"
         # Validate that the project location is a scipion project folder
         elif not os.path.exists(os.path.join(projLocation, Project.getDbName())):
             errorMessage += "Project location doesn't look like a scipion folder\n"

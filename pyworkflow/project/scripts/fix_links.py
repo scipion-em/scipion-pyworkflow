@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys
+import os
 
 from pyworkflow.project import Manager
 import pyworkflow.utils as pwutils
