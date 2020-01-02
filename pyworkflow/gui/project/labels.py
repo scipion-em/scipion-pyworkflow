@@ -1,4 +1,4 @@
-    # **************************************************************************
+# **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es)
 # *
@@ -93,13 +93,13 @@ class LabelsDialog(dialog.ToolbarListDialog):
         ]
 
         dialog.ToolbarListDialog.__init__(self, parent,
-                                   "Manage labels",
-                                   LabelsTreeProvider(labels),
-                                   "Select the label to edit or delete",
-                                   toolbarButtons,
-                                   allowsEmptySelection=True,
-                                   itemDoubleClick=self._editLabel,
-                                   **kwargs)
+                                          "Manage labels",
+                                          LabelsTreeProvider(labels),
+                                          "Select the label to edit or delete",
+                                          toolbarButtons,
+                                          allowsEmptySelection=True,
+                                          itemDoubleClick=self._editLabel,
+                                          **kwargs)
 
     def _newColor(self):
         """ Pick a color by default for a given label from a predefined list.
@@ -113,7 +113,6 @@ class LabelsDialog(dialog.ToolbarListDialog):
                 return c
 
         return 'red'
-
 
     def _addLabel(self, e=None):
         label = Label(color=self._newColor())

@@ -215,7 +215,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     makeFilePath(scripPath)
     # Add some line ends because in some clusters it fails
     # to submit jobs if the submit script does not have end of line
-    f.write(template +'\n\n')
+    f.write(template + '\n\n')
     f.close()
     # This should format the command using a template like: 
     # "qsub %(JOB_SCRIPT)s"
@@ -230,7 +230,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     s = re.search('(\d+)', out)
     if s:
         job = int(s.group(0))
-        print( "launched job with id %s" % job)
+        print("launched job with id %s" % job)
         return job
     else:
         print("Couldn't submit to queue for reason %s " % redStr(out))
@@ -251,6 +251,7 @@ def _run(command, wait, stdin=None, stdout=None, stderr=None):
 # ******************************************************************
 # *                 Function related to STOP
 # ******************************************************************
+
 
 def _stopLocal(protocol):
     

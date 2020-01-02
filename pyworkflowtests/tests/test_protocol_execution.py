@@ -50,7 +50,7 @@ class TestProtocolExecution(pwtests.BaseTest):
         # Check that the protocol has associated package
         mapper = pwmapper.SqliteMapper(fn, mapperDict)
         prot = SleepingProtocol(mapper=mapper, n=2,
-                                        workingDir=self.getOutputPath(''))
+                                workingDir=self.getOutputPath(''))
         domain = prot.getClassDomain()
         domain.printInfo()
 

@@ -49,7 +49,7 @@ class Mapper:
     @staticmethod
     def getObjectPersistingClassName(instance):
         if hasattr(instance, Mapper.ORIGINAL_CLASS_NAME_ATTRIBUTE):
-            return getattr(instance,Mapper.ORIGINAL_CLASS_NAME_ATTRIBUTE)
+            return getattr(instance, Mapper.ORIGINAL_CLASS_NAME_ATTRIBUTE)
         else:
             return instance.getClassName()
 
@@ -110,9 +110,9 @@ class Mapper:
         priority of the update.
         If "to" is used, object data is put in storage.
         If "from", object data is retrieved from storage"""
-        if direction == 'to': # Update db with object changes
+        if direction == 'to':  # Update db with object changes
             self.updateTo(obj)
-        elif direction == 'from': # Update object with db info
+        elif direction == 'from':  # Update object with db info
             self.updateFrom(obj)
         else:
             raise Exception('Invalid option %s for Sqlite.updateObject' % direction)
@@ -135,9 +135,11 @@ class Mapper:
     def selectById(self, objId):
         """Return the object which id is objId"""
         pass
-    def exists(self,objId):
+
+    def exists(self, objId):
         """Return True if the id is in the database"""
         pass
+
     def selectAll(self):
         """Return all object from storage"""
         pass
@@ -212,5 +214,3 @@ class Mapper:
     def deleteRelations(self, creatorObj):
         """ Delete all relations created by object creatorObj """
         pass
-    
-    

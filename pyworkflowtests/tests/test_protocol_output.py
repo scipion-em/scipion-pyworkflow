@@ -54,7 +54,7 @@ class TestProtocolOutputs(pwtests.BaseTest):
 
         mapper = pwmapper.SqliteMapper(fn, mapperDict)
         prot = ProtOutputTest(mapper=mapper, n=2,
-                                      workingDir=self.getOutputPath(''))
+                              workingDir=self.getOutputPath(''))
 
         # Add and old style o, not in the outputs dictionary
         prot.output1 = MockObject()

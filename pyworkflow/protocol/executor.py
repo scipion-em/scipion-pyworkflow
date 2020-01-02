@@ -58,8 +58,8 @@ class StepExecutor:
         return self.gpuList
 
     def runJob(self, log, programName, params,           
-           numberOfMpi=1, numberOfThreads=1, 
-           env=None, cwd=None):
+               numberOfMpi=1, numberOfThreads=1,
+               env=None, cwd=None):
         """ This function is a wrapper around runJob, 
         providing the host configuration. 
         """
@@ -72,7 +72,7 @@ class StepExecutor:
         """ Return the n steps that are 'new' and all its
         dependencies have been finished, or None if none ready.
         """
-        rs = [] # return a list of runnable steps
+        rs = []  # return a list of runnable steps
 
         for s in steps:
             if (s.getStatus() == cts.STATUS_NEW and
@@ -132,8 +132,7 @@ class StepExecutor:
                 stepsCheckCallback()
                 lastCheck = now
 
-
-        stepsCheckCallback() # one last check to finalize stuff
+        stepsCheckCallback()  # one last check to finalize stuff
 
 
 class StepThread(threading.Thread):
@@ -266,6 +265,7 @@ class ThreadStepExecutor(StepExecutor):
             if t is not threading.current_thread():
                 t.join()
 
+
 class QueueStepExecutor(ThreadStepExecutor):
     def __init__(self, hostConfig, submitDict, nThreads, **kwargs):
         ThreadStepExecutor.__init__(self, hostConfig, nThreads, **kwargs)
@@ -280,12 +280,13 @@ class QueueStepExecutor(ThreadStepExecutor):
         else:
             self.runJobs = StepExecutor.runSteps
 
-
     def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
         submitDict.update(self.submitDict)
-        submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi, self.hostConfig, env, gpuList=self.getGpuList())
+        submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
+                                                            self.hostConfig, env,
+                                                            gpuList=self.getGpuList())
         self.threadCommands[threadId] += 1
         subthreadId = '-%s-%s' % (threadId, self.threadCommands[threadId])
         submitDict['JOB_NAME'] = submitDict['JOB_NAME'] + subthreadId
@@ -310,7 +311,6 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         return status
 
-
     def _checkJobStatus(self, hostConfig, jobid):
 
         command = hostConfig.getCheckCommand() % {"JOB_ID": jobid}
@@ -333,6 +333,7 @@ class QueueStepExecutor(ThreadStepExecutor):
         # If JOB_DONE_REGEX is not defined and queue has returned something we assume that job is still running
         else:
             return cts.STATUS_RUNNING
+
 
 class MPIStepExecutor(ThreadStepExecutor):
     """ Run steps in parallel using threads.

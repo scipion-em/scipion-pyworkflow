@@ -38,7 +38,7 @@ class SqliteDb:
     """Class to handle a Sqlite database.
     It will create connection, execute queries and commands.
     """
-    OPEN_CONNECTIONS = {} # Store all conections made
+    OPEN_CONNECTIONS = {}  # Store all conections made
     
     def __init__(self):
         self._reuseConnections = False

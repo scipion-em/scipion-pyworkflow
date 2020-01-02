@@ -86,7 +86,7 @@ class MockAcquisition(MockObject):
         self._voltage = pwobj.Float(kwargs.get('voltage', None))
         # Spherical aberration in mm
         self._sphericalAberration = pwobj.Float(kwargs.get('sphericalAberration',
-                                                     None))
+                                                           None))
         self._amplitudeContrast = pwobj.Float(kwargs.get('amplitudeContrast', None))
         self._doseInitial = pwobj.Float(kwargs.get('doseInitial', 0))
         self._dosePerFrame = pwobj.Float(kwargs.get('dosePerFrame', None))
@@ -333,7 +333,7 @@ class MockImage(MockObject):
 
     def setShiftsInOrigin(self, x, y, z):
         origin = self.getOrigin(force=True)
-        origin.setShifts(x, y, z )
+        origin.setShifts(x, y, z)
 
     def setOrigin(self, newOrigin):
         """shifts in A"""
@@ -604,7 +604,7 @@ class MockSetOfImages(MockSet):
     def iterItems(self, orderBy='id', direction='ASC', where='1', limit=None):
         """ Redefine iteration to set the acquisition to images. """
         for img in pwobj.Set.iterItems(self, orderBy=orderBy, direction=direction,
-                                 where=where, limit=limit):
+                                       where=where, limit=limit):
 
             # Sometimes the images items in the set could
             # have the acquisition info per data row and we

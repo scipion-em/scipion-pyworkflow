@@ -46,6 +46,7 @@ def usage(error):
     """ % error)
     sys.exit(1)    
 
+
 n = len(sys.argv)
 
 if n < 2 or n > 3:
@@ -81,7 +82,6 @@ class EditorProjectWindow(ProjectWindow):
             print("Error: ", ex)
         ProjectWindow.close(self, e)
 
+
 projWindow = EditorProjectWindow(projPath)
 projWindow.show()
-
-

@@ -47,7 +47,7 @@ Main classes are:
 
 import os
 import errno
-#import paramiko
+# import paramiko
 
 from pyworkflow.utils.path import makeFilePath
 from pyworkflow.utils.log import ScipionLogger
@@ -57,7 +57,6 @@ SSH_PORT = 22
 PAIRS_SEPARATOR = ':'
 
 log = ScipionLogger()
-
 
 
 def testHostConfig(host):
@@ -133,7 +132,7 @@ class RemotePath(object):
             from stat import S_ISDIR
             return S_ISDIR(self.sftp.stat(path).st_mode)
         except IOError:
-            #Path does not exist, so by definition not a directory
+            # Path does not exist, so by definition not a directory
             return False
 
     def makedirs(self, remoteFolder):
@@ -206,6 +205,6 @@ class RemotePath(object):
                     self.cleanPath(*files)
                     log.info('RemotePath.cleanPath, rmdir path: %s' % path)
                     self.sftp.rmdir(path)
-                else:# os.path.isfile(path):
+                else:  # os.path.isfile(path):
                     log.info('RemotePath.cleanPath, remove path: %s' % path)
                     self.sftp.remove(path)

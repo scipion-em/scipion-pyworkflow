@@ -167,7 +167,6 @@ Define the number of processors to be used in the execution.
     for the current host in the _hosts.conf_ file.
     """
 
-
     HELP_WAIT_FOR = """
     Specify a comma separated list of protocol IDs if you want
 that this protocol starts after the input protocols in the list
@@ -205,7 +204,6 @@ runs that will be executed after each other.
     VAR_RUN_MODE = 'runMode'
     VAR_THREADS = 'numberOfThreads'
     
-    
     LABEL_PATTERN = 'Pattern'
     TEXT_PATTERN = """\
 Pattern (that can include wildcards) of the files to import.
@@ -233,7 +231,6 @@ is automatically computed. It should be a positive number, typically between
     LABEL_PATTERNU = 'Pattern untilted'
     LABEL_PATTERNT = 'Pattern tilted'
 
-    
     LABEL_SAMP_MODE = 'Sampling rate mode'
     TEXT_SAMP_MODE = """\
 You can specify the sampling rate (pixel size) directly from the image
@@ -252,7 +249,6 @@ Size ("Sampling Rate") (Ts) using the Scanner Pixel Size (Tm), Ts = Tm / M.
 
 It is used by a few programs like Ctffind or Frealign."""
     LABEL_SCANNED = 'Scanned pixel size (microns/px)'
-
 
     ERROR_IMPORT_VOL = 'importVolumes:There is not filePaths matching pattern'
     
@@ -307,7 +303,7 @@ Do you really want to continue?'
     TITLE_STOPPED_WORKFLOW_FAILED = 'Error while stopping the workflow'
     TITLE_LAUNCHED_WORKFLOW_FAILED = 'The workflow can not be relaunch from this protocol.\n'
     
-    #SHOWJ_WEB
+    # SHOWJ_WEB
     SHOWJ_TITLE = 'Showj'
     
     LABEL_RESLICE = 'Reslice'
@@ -421,7 +417,7 @@ class Icon:
     ACTION_OUT = 'fa-sign-out.gif'
     ACTION_FIND_NEXT = 'fa-next.gif'
     ACTION_FIND_PREVIOUS = 'fa-previous.gif'
-    #Host template
+    # Host template
     BUTTON_SELECT = 'fa-check.gif'
     BUTTON_CLOSE = 'fa-times.gif'
     BUTTON_CANCEL = 'fa-ban.gif'
@@ -459,12 +455,12 @@ class Icon:
 
 
 class Color:
-    RED_COLOR = 'Firebrick' # Red color for background label  = #B22222
-    LIGHT_RED_COLOR = '#F3CBCB' # Very light red for row selection
-    LIGHT_BLUE_COLOR = '#EAEBFF' # Very light blue for even rows
-    LIGHT_GREY_COLOR = '#EAEBEC' # Light grey for background color in form, protocol, table header and west container
-    LIGHT_GREY_COLOR_2 = '#F2F2F2' # Very light grey for odd rows, input background, etc
-    DARK_GREY_COLOR = '#6E6E6E' # Very dark grey for project title, tubes, etc
+    RED_COLOR = 'Firebrick'  # Red color for background label  = #B22222
+    LIGHT_RED_COLOR = '#F3CBCB'  # Very light red for row selection
+    LIGHT_BLUE_COLOR = '#EAEBFF'  # Very light blue for even rows
+    LIGHT_GREY_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
+    LIGHT_GREY_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
+    DARK_GREY_COLOR = '#6E6E6E'  # Very dark grey for project title, tubes, etc
     
     STATUS_SAVED = '#D9F1FA', 
     STATUS_LAUNCHED = '#D9F1FA', 

@@ -46,7 +46,7 @@ RESULT_CANCEL = 2
 
 
 class Dialog(tk.Toplevel):
-    _images = {} #Images cache
+    _images = {}  # Images cache
     """Implementation of our own dialog to display messages
     It will have by default a three buttons: YES, NO and CANCEL
     Subclasses can rename the labels of the buttons like: OK, CLOSE or others
@@ -70,7 +70,7 @@ class Dialog(tk.Toplevel):
     
         tk.Toplevel.__init__(self, parent)
         
-        self.withdraw() # remain invisible for now
+        self.withdraw()  # remain invisible for now
         # If the master is not viewable, don't
         # make the child transient, or else it
         # would be opened withdrawn
@@ -116,7 +116,7 @@ class Dialog(tk.Toplevel):
                                                parent.winfo_rooty() + 50))
             self.geometry("+%d+%d" % position)
 
-        self.deiconify() # become visible now
+        self.deiconify()  # become visible now
         self.initial_focus.focus_set()
         # Pablo: I've commented this when migrating to python3 since I was getting and exception:
         # window ".139897767953072.139897384058440" was deleted before its visibility changed
@@ -156,7 +156,7 @@ class Dialog(tk.Toplevel):
             btn = self._createButton(frame, btnLabel, btnResult)
             btn.grid(row=0, column=col, padx=5, pady=5)
             if (btnLabel == self.defaultButton and 
-                self.initial_focus is None):
+                    self.initial_focus is None):
                 self.initial_focus = btn
             col += 1
         self.bind("<Return>", self._handleReturn)
@@ -171,7 +171,7 @@ class Dialog(tk.Toplevel):
         noCancel = self.result != RESULT_CANCEL
         
         if noCancel and not self.validate():
-            self.initial_focus.focus_set() # put focus back
+            self.initial_focus.focus_set()  # put focus back
             return
         
         self.withdraw()
@@ -204,14 +204,14 @@ class Dialog(tk.Toplevel):
         This method is called automatically to validate the data before the
         dialog is destroyed. By default, it always validates OK.
         """
-        return 1 # override
+        return 1  # override
 
     def apply(self):
         """process the data
         This method is called automatically to process the data, *after*
         the dialog is destroyed. By default, it does nothing.
         """
-        pass # override
+        pass  # override
     
     def getImage(self, imgName):
         """A shortcut to get an image from its name"""
@@ -280,7 +280,7 @@ class MessageDialog(Dialog):
     def __init__(self, parent, title, msg, iconPath, **args):
         self.msg = msg
         self.iconPath = iconPath
-        if not 'buttons' in args:
+        if 'buttons' not in args:
             args['buttons'] = [('OK', RESULT_YES)]
             args['default'] = 'OK'
         Dialog.__init__(self, parent, title, **args)
@@ -293,7 +293,7 @@ class MessageDialog(Dialog):
 class YesNoDialog(MessageDialog):
     """Ask a question with YES/NO answer"""
     def __init__(self, master, title, msg, **kwargs):
-        buttonList =  [('Yes', RESULT_YES), ('No', RESULT_NO)]
+        buttonList = [('Yes', RESULT_YES), ('No', RESULT_NO)]
         
         if kwargs.get('showCancel', False):
             buttonList.append(('Cancel', RESULT_CANCEL))
@@ -328,7 +328,7 @@ class EntryDialog(Dialog):
         label.grid(row=row, column=0, sticky='nw', padx=(15, 10), pady=15)
         self.entry = tk.Entry(bodyFrame, bg=gui.cfgEntryBgColor,
                               width=self.entryWidth, textvariable=self.tkvalue)
-        self.entry.grid(row=row, column=1, sticky='new', padx=(0,15), pady=15)
+        self.entry.grid(row=row, column=1, sticky='new', padx=(0, 15), pady=15)
         self.initial_focus = self.entry
         
     def apply(self):
@@ -351,7 +351,7 @@ class EditObjectDialog(Dialog):
         self.textWidth = 5
         self.textHeight = 1
         self.labelText = kwargs.get('labelText', Message.TITLE_LABEL)
-        self.valueText= self.obj.getObjLabel()
+        self.valueText = self.obj.getObjLabel()
         
         self.commentLabel = Message.TITLE_COMMENT
         self.commentWidth = 50
@@ -402,28 +402,34 @@ class EditObjectDialog(Dialog):
     def buttonbox(self, btnFrame):
         # Cancel the binding of <Return> key
         Dialog.buttonbox(self, btnFrame)
-        #self.bind("<Return>", self._noReturn)
+        # self.bind("<Return>", self._noReturn)
         self.unbind("<Return>")
         
     def _noReturn(self, e):
         pass
-        
+
 
 """ Functions to display dialogs """
+
+
 def askYesNo(title, msg, parent):
     d = YesNoDialog(parent, title, msg)
     return d.resultYes()
+
 
 def askYesNoCancel(title, msg, parent):
     d = YesNoDialog(parent, title, msg, showCancel=True)
     return d.result
 
+
 def showInfo(title, msg, parent):
     MessageDialog(parent, title, msg, 'fa-info-circle_alert.gif')
 
+
 def showWarning(title, msg, parent):
     MessageDialog(parent, title, msg, 'fa-exclamation-triangle_alert.gif')
-    
+
+
 def showError(title, msg, parent):
     MessageDialog(parent, title, msg, 'fa-times-circle_alert.gif')
 
@@ -541,7 +547,7 @@ class ListDialog(Dialog):
         self.values = self.tree.getSelectedObjects()
     
     def validate(self):
-        self.apply() # load self.values with selected items
+        self.apply()  # load self.values with selected items
         err = ''
         
         if self.values:
@@ -618,7 +624,7 @@ class ToolbarListDialog(ListDialog):
 class FlashMessage:
     def __init__(self, master, msg, delay=5, relief='solid', func=None):
         self.root = tk.Toplevel(master=master)
-        #hides until know geometry
+        # hides until know geometry
         self.root.withdraw()
         self.root.wm_overrideredirect(1)
         tk.Label(self.root, text="   %s   " % msg,
@@ -648,7 +654,7 @@ class FloatingMessage:
                  font='Helvetica', size=12, bd=1, bg='#6E6E6E', fg='white'):
 
         self.floatingMessage = tk.Label(master, text="   %s   " % msg,
-                                   bd=bd, bg=bg, fg=fg)
+                                        bd=bd, bg=bg, fg=fg)
         self.floatingMessage.place(x=xPos, y=yPos, width=textWidth)
         self.floatingMessage.config(font=(font, size))
 
@@ -678,7 +684,7 @@ class FileBrowseDialog(Dialog):
         self._createTree(bodyFrame)
         if self.message:
             label = tk.Label(bodyFrame, text=self.message, bg='white',
-                     image=self.getImage('fa-lightbulb-o.gif'), compound=tk.LEFT)
+                             image=self.getImage('fa-lightbulb-o.gif'), compound=tk.LEFT)
             label.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
         self.initial_focus = self.tree
         
@@ -693,5 +699,4 @@ class FileBrowseDialog(Dialog):
         if self.tree.getFirst() is None:
             showError("Validation error", "Please select an element", self)
             return False
-        return True                
-        
+        return True

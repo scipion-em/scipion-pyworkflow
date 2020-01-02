@@ -68,7 +68,7 @@ try:
 except:
     projectPath = manager.getProjectPath(projName)
 
-project = Project(projectPath)
+project = Project(path=projectPath)
 project.load()
 
 runs = project.getRuns()
@@ -81,4 +81,3 @@ for prot in runs:
             project.stopProtocol(prot)
         except:
             print("Couldn't stop protocol %s" % prot)
-

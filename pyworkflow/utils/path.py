@@ -286,6 +286,7 @@ colorName = {'30': 'gray',
              '36': 'cyan',
              '37': 'white'}
 
+
 def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
                    maxSize=400, headSize=40, tailSize=None, notifyLine=None):
     """
@@ -314,7 +315,7 @@ def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
             add(' to open it with the default viewer\n\n')
             if numberLines:
                 add('    ==> Line numbers below are not '
-                         'in sync with the input data\n\n')
+                    'in sync with the input data\n\n')
 
     offset = textfile.tell()  # save last position in file
     textfile.close()
@@ -395,11 +396,11 @@ def iterBigFile(textfile, offset=0, size=None,
 
 
 def createUniqueFileName(fn):
-    '''
-    This function creates a file name that is similar to the original 
+    """
+    This function creates a file name that is similar to the original
     by adding a unique numeric suffix. check   NamedTemporaryFile
     from tempfile for alternatives
-    '''
+    """
     if not os.path.os.path.exists(fn):
         return fn
 

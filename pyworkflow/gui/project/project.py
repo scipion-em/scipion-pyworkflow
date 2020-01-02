@@ -48,7 +48,7 @@ from pyworkflow.gui.browser import FileBrowserWindow
 # Usage commented.
 # from pyworkflow.em.viewers import EmPlotter
 # Moved to Scipion-app
-#from pyworkflow.gui.plugin_manager import PluginManager
+# from pyworkflow.gui.plugin_manager import PluginManager
 from pyworkflow.gui.plotter import Plotter
 from pyworkflow.gui.text import _open_cmd, openTextFileEditor
 from pyworkflow.webservices import ProjectWorkflowNotifier, WorkflowRepository
@@ -95,7 +95,7 @@ class ProjectWindow(ProjectBaseWindow):
         projMenu.addSubMenu('Import workflow', 'load_workflow',
                             icon='fa-download.gif')
         projMenu.addSubMenu('Search workflow', 'search_workflow',
-                            icon = 'fa-search.gif')
+                            icon='fa-search.gif')
         projMenu.addSubMenu('Export tree graph', 'export_tree')
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Notes', 'notes', icon='fa-pencil.gif')
@@ -121,7 +121,7 @@ class ProjectWindow(ProjectBaseWindow):
         self.showGraph = False
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
-                                   minsize=(90,50), icon=Icon.SCIPION_ICON_PROJ)
+                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ)
 
         OS.handler().maximizeWindow(self.root)
 
@@ -197,7 +197,7 @@ class ProjectWindow(ProjectBaseWindow):
             if os.environ.get('SCIPION_NOTES_ARGS', None):
                 args.append(os.environ['SCIPION_NOTES_ARGS'])
             args.append(notesFile)
-            subprocess.Popen(args)  #nonblocking
+            subprocess.Popen(args)  # nonblocking
         else:
             # if no program has been selected
             # xdg-open will try to guess but
@@ -402,7 +402,6 @@ class ProjectManagerWindow(ProjectBaseWindow):
         """
         _open_cmd(configFile)
 
-
     @staticmethod
     def onHosts():
         # Config -> Hosts
@@ -434,6 +433,7 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
             project = self.server.project
             window = self.server.window
             msg = self.request.recv(1024)
+            msg = msg.decode()
             tokens = shlex.split(msg)
             if msg.startswith('run protocol'):
                 protocolName = tokens[2]
@@ -442,7 +442,6 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
                 protocol = project.newProtocol(protocolClass)
 
                 for token in tokens[3:]:
-                    #print token
                     param, value = token.split('=')
                     attr = getattr(protocol, param, None)
                     if param == 'label':
@@ -452,7 +451,7 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
                         attr.set(obj)
                     elif value:
                         attr.set(value)
-                #project.launchProtocol(protocol)
+                # project.launchProtocol(protocol)
                 # We need to enqueue the action of execute a new protocol
                 # to be run in the same GUI thread and avoid concurrent
                 # access to the project sqlite database
@@ -468,4 +467,3 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
             print(e)
             import traceback
             traceback.print_stack()
-

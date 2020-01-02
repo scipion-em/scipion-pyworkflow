@@ -49,6 +49,7 @@ def getFirstLine(doc):
                 return l
     return ''
 
+
 def hasDoubleInheritance(classRef):
     # loop while class has single parent
     numParents = len(classRef.__bases__)
@@ -60,9 +61,10 @@ def hasDoubleInheritance(classRef):
     else:
         return False
 
+
 if __name__ == '__main__':
     count = 0
-    withDoc  = '--with-doc' in sys.argv
+    withDoc = '--with-doc' in sys.argv
     asciidoc = '--asciidoc' in sys.argv
     extended = '--extended' in sys.argv
 
@@ -146,7 +148,7 @@ if __name__ == '__main__':
                                            p[1].getClassLabel(), *p[2:]))
         else:
             formatStr = "{:<15}\t{:<35}\t{:<35}"
-            print(formatStr.format("PACKAGE", "PROTOCOL","LABEL"))
+            print(formatStr.format("PACKAGE", "PROTOCOL", "LABEL"))
             for group, prots in iterGroups(protDict):
                 for k, v in prots:
                     print(formatStr.format(group, k, v.getClassLabel()))

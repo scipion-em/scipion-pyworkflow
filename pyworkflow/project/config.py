@@ -57,9 +57,9 @@ class ProjectSettings(pwobj.OrderedObject):
         self.nodeList = NodeConfigList()
         self.labelsList = LabelsList()  # Label list
         self.mapper = None  # This should be set when load, or write
-        self.runsView = pwobj.Integer(1) # by default the graph view
+        self.runsView = pwobj.Integer(1)  # by default the graph view
         self.readOnly = pwobj.Boolean(False)
-        self.runSelection = pwobj.CsvList(int) # Store selected runs
+        self.runSelection = pwobj.CsvList(int)  # Store selected runs
         self.dataSelection = pwobj.CsvList(int)  # Store selected runs
         # Some extra settings stored, now mainly used
         # from the webtools

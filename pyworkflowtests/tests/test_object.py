@@ -315,9 +315,9 @@ class TestObject(pwtests.BaseTest):
     def test_getObjDict(self):
         """ Test retrieving an object dictionary with its attribute values."""
         acq1 = MockAcquisition(magnification=50000,
-                                      voltage=200,
-                                      sphericalAberration=2.7,
-                                      dosePerFrame=1)
+                               voltage=200,
+                               sphericalAberration=2.7,
+                               dosePerFrame=1)
         m1 = MockMicrograph(
             'my_movie.mrc', objId=1, objLabel='test micrograph',
             objComment='Testing store and retrieve from dict.')

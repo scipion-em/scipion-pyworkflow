@@ -20,6 +20,7 @@ def usage(error):
     """ % error)
     sys.exit(1)    
 
+
 if len(sys.argv) != 2:
     usage("Incorrect number of input parameters")
 

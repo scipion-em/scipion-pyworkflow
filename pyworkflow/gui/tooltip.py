@@ -70,10 +70,10 @@ create_contents() : creates the contents of the tooltip window (by default a Tki
 class ToolTip:
     def __init__(self, master, text='Your text here', delay=1500, **opts):
         self.master = master
-        self._opts = {'anchor':'center', 'bd':1, 'bg':'lightyellow', 'delay':delay, 'fg':'black',
-                      'follow_mouse':0, 'font':None, 'justify':'left', 'padx':4, 'pady':2,
-                      'relief':'solid', 'state':'normal', 'text':text, 'textvariable':None,
-                      'width':0, 'wraplength':150}
+        self._opts = {'anchor': 'center', 'bd': 1, 'bg': 'lightyellow', 'delay': delay, 'fg': 'black',
+                      'follow_mouse': 0, 'font': None, 'justify': 'left', 'padx': 4, 'pady': 2,
+                      'relief': 'solid', 'state': 'normal', 'text': text, 'textvariable': None,
+                      'width': 0, 'wraplength': 150}
         self.configure(**opts)
         self._tipwindow = None
         self._id = None
@@ -93,8 +93,8 @@ class ToolTip:
                 KeyError = 'KeyError: Unknown option: "%s"' % key
                 raise KeyError
     
-    ##----these methods handle the callbacks on "<Enter>", "<Leave>" and "<Motion>"---------------##
-    ##----events on the parent widget; override them if you want to change the widget's behavior--##
+    # ----these methods handle the callbacks on "<Enter>", "<Leave>" and "<Motion>"-------------
+    # ----events on the parent widget; override them if you want to change the widget's behavior
     
     def enter(self, event=None):
         self._schedule()

@@ -40,7 +40,8 @@ class SleepingProtocol(pwprot.Protocol):
 
     def sleepStep(self, t, s):
         log = self._getPath("step_%02d.txt" % t)
-        import time, datetime
+        import time
+        import datetime
         f = open(log, 'w+')
         f.write("Going to sleep at %s\n"
                 % pwutils.dateStr(datetime.datetime.now(), True))

@@ -33,6 +33,7 @@
 class TclError:
     pass
 
+
 TK_VERSION = 0
 TCL_VERSION = 0
 READABLE = 0

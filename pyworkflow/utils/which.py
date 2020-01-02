@@ -25,12 +25,13 @@ whichgen(command, path=None, verbose=0, exts=None)
 import os
 import sys
 import stat
-#---- exceptions
+# ---- exceptions
+
 
 class WhichError(Exception):
     pass
 
-#---- internal support stuff
+# ---- internal support stuff
 
 def _getRegisteredExecutable(exeName):
     """Windows allow application paths to be registered in the registry."""
@@ -78,14 +79,14 @@ def _cull(potential, matches, verbose=0):
                 sys.stderr.write("not a regular file: %s (%s)\n" % potential)
         elif not os.access(potential[0], os.X_OK):
             if verbose:
-                sys.stderr.write("no executable access: %s (%s)\n"\
+                sys.stderr.write("no executable access: %s (%s)\n"
                                  % potential)
         else:
             matches.append(potential)
             return potential
 
         
-#---- module API
+# ---- module API
 
 def whichgen(command, path=None, verbose=0, exts=None):
     """Return a generator of full paths to the given command.
@@ -131,7 +132,7 @@ def whichgen(command, path=None, verbose=0, exts=None):
             raise TypeError("'exts' argument must be a list or None")
     else:
         if exts is not None:
-            raise WhichError("'exts' argument is not supported on "\
+            raise WhichError("'exts' argument is not supported on "
                              "platform '%s'" % sys.platform)
         exts = []
 

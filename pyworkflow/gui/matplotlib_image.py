@@ -35,8 +35,8 @@ try:
     matplotlib.use('TkAgg')
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     import matplotlib.pyplot as plt
-except:
-    #matplotlib.use('Agg')
+except ImportError:
+    # matplotlib.use('Agg')
     plt = None
 
 from matplotlib.figure import Figure
@@ -70,7 +70,7 @@ class FigureFrame(tk.Frame):
     
     
 class Preview(tk.Frame):
-    #def __init__(self, parent, dim, dpi=36, label=None):
+    # def __init__(self, parent, dim, dpi=36, label=None):
     def __init__(self, parent, dim, dpi=36, label=None, col=0, row=0):
         tk.Frame.__init__(self, parent)
         self.dim = dim
@@ -78,12 +78,12 @@ class Preview(tk.Frame):
         ddim = dim/dpi
         self.figure = Figure(figsize=(ddim, ddim), dpi=dpi, frameon=False)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self)
-        self.canvas.get_tk_widget().grid(column=0, row=0)#, sticky=(N, W, E, S))
+        self.canvas.get_tk_widget().grid(column=0, row=0)  # , sticky=(N, W, E, S))
         if label:
             tk.Label(self, text=label).grid(column=0, row=1)
         self._createAxes()
         
-    def setWindowTitle(self,title):
+    def setWindowTitle(self, title):
         """ Set window title"""
         self.canvas.set_window_title(title)
 
@@ -108,8 +108,8 @@ class ImagePreview(Preview):
         Preview.__init__(self, parent, dim, dpi, label, col)
             
     def _createAxes(self):
-        ax = self.figure.add_axes([0,0,1,1], frameon=False)       
-        self.figureimg = ax.imshow(self.bg, cmap=cm.gray)#, extent=[-h, h, -h, h])
+        ax = self.figure.add_axes([0, 0, 1, 1], frameon=False)
+        self.figureimg = ax.imshow(self.bg, cmap=cm.gray)  # , extent=[-h, h, -h, h])
         ax.set_axis_off()
         self.ax = ax
         
@@ -131,11 +131,11 @@ class PsdPreview(Preview):
             self.canvas.draw()
                             
     def _createAxes(self):
-        #axdef = SubplotZero(self.figure, 111)
-        #ax = self.figure.add_subplot(axdef)
-        ax = self.figure.add_axes([0.1,0.1,0.8,0.8], frameon=False)
-        #ax.xaxis.set_offset_position(0.5)       
-        #ax.set_position([0, 0, 1, 1])
+        # axdef = SubplotZero(self.figure, 111)
+        # ax = self.figure.add_subplot(axdef)
+        ax = self.figure.add_axes([0.1, 0.1, 0.8, 0.8], frameon=False)
+        # ax.xaxis.set_offset_position(0.5)
+        # ax.set_position([0, 0, 1, 1])
         h = 0.5
         ax.set_xlim(-h, h)
         ax.set_ylim(-h, h)
@@ -147,7 +147,7 @@ class PsdPreview(Preview):
     def createRing(self):
         radius = float(self.hf)
         width = radius - float(self.lf)
-        self.ring = Wedge((0,0), radius, 0, 360, width=width, alpha=0.15) # Full ring
+        self.ring = Wedge((0, 0), radius, 0, 360, width=width, alpha=0.15)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         
@@ -184,7 +184,7 @@ class MaskPreview(ImagePreview):
             self.ring.remove()
         center = self.dim / 2
         width = outerRadius - innerRadius
-        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, alpha=0.15) # Full ring
+        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, alpha=0.15)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         
@@ -223,11 +223,11 @@ class MaskPreview(ImagePreview):
 #         self.updateData(image.getData())
 #
         
-def getPngData(filename):  
+
+def getPngData(filename):
     import matplotlib.image as mpimg
     return mpimg.imread(filename)
 
+
 def createBgImage(dim):
     return np.ones((dim, dim, 3))
-
-

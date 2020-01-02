@@ -45,6 +45,7 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
 from .constants import *
 from .params import Form
 
+
 class Step(OrderedObject):
     """ Basic execution unit.
     It should defines its Input, Output
@@ -678,8 +679,8 @@ class Protocol(Step):
                         # (without extended): hopefully this will only be
                         # created from tests
                         print("Can't get protocol info from input attribute."
-                               " This could render unexpected results when "
-                               "scheduling protocols.")
+                              " This could render unexpected results when "
+                              "scheduling protocols.")
                         continue
 
                 if output is not None:
@@ -856,7 +857,7 @@ class Protocol(Step):
         """ Stores objects of the protocol using the mapper.
         If not objects are passed, the whole protocol is stored.
         """
-        if not self.mapper is None:
+        if self.mapper is not None:
             if len(objs) == 0:
                 self.mapper.store(self)
             else:
@@ -1076,7 +1077,7 @@ class Protocol(Step):
             newStep = self._steps[i]
             oldStep = self._prevSteps[i]
             if (not oldStep.isFinished() or newStep != oldStep
-                or not oldStep._postconditions()):
+                    or not oldStep._postconditions()):
                 return i
             newStep.copy(oldStep)
 
@@ -1579,8 +1580,8 @@ class Protocol(Step):
         this method the protocol classes are registered with it Plugin
         and Domain info.
         """
-        #import pyworkflow.em as em
-        #em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
+        # import pyworkflow.em as em
+        # em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
         # TODO: Check if we need to return scipion by default anymore
         # Now the basic EM protocols are defined by scipion-em (pwem)
         return getattr(cls, '_package', None)
@@ -2084,7 +2085,7 @@ class Protocol(Step):
             else:
                 for p in step.getPrerequisites():
                     # If prerequisite exists
-                    if not p in stepsDone:
+                    if p not in stepsDone:
                         addStep(p, stepsDict[p])
                     stepsDone[p].addChild(n)
 
@@ -2128,6 +2129,7 @@ class LegacyProtocol(Protocol):
         return pw.Config.getDomain()
 
 # ---------- Helper functions related to Protocols --------------------
+
 def runProtocolMain(projectPath, protDbPath, protId):
     """ Main entry point when a protocol will be executed.
     This function should be called when:
@@ -2243,13 +2245,16 @@ def getUpdatedProtocol(protocol):
 def isProtocolUpToDate(protocol):
     """ Check timestamps between protocol lastModificationDate and the
     corresponding runs.db timestamp"""
-    if protocol is None: return True
+    if protocol is None:
+        return True
 
-    if protocol.lastUpdateTimeStamp.get(None) is None: return False
+    if protocol.lastUpdateTimeStamp.get(None) is None:
+        return False
 
     protTS = protocol.lastUpdateTimeStamp.datetime()
 
-    if protTS is None: return False
+    if protTS is None:
+        return False
 
     dbTS = pwutils.getFileLastModificationDate(protocol.getDbPath())
 

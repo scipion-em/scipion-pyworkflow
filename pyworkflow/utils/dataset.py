@@ -32,7 +32,7 @@ pw.utils and not imported by default
 import os
 from collections import OrderedDict, namedtuple
 
-from pyworkflow.mapper import SqliteDb, SqliteFlatDb, SqliteDb
+from pyworkflow.mapper import SqliteFlatDb, SqliteDb
 
 
 class DataSet(object):
@@ -43,11 +43,10 @@ class DataSet(object):
     def __init__(self, tables, tableName=None, volumeName=None, numberSlices=0):
         self._tables = list(tables)
         self._tableName = tableName
-        #NAPA de LUXE: Hay que ver si el volumen name se usa en algun lado        
+        # NAPA de LUXE: Hay que ver si el volumen name se usa en algun lado
         self._volumeName = volumeName 
         self._numberSlices = numberSlices 
         self.projectPath = None
-        
         
     def currentTable(self):
         """ Returns the name of the last selected table. """    
@@ -75,7 +74,7 @@ class DataSet(object):
     def getTable(self, tableName=None):
         if tableName is None:
             tableName = self.listTables()[0]
-        if not tableName in self._tables:
+        if tableName not in self._tables:
             raise Exception("DataSet: table '%s' not found.\n   Current tables: %s" % 
                             (tableName, self._tables))
             
@@ -128,8 +127,9 @@ class Table(object):
         return columnName in self._columns
     
     def getColumn(self, columnName):
-        if not columnName in self._columns:
-            raise Exception('Table: column "%s" not found.\Current columns: %s' % (columnName, '\n'.join(self._columns.keys())))
+        if columnName not in self._columns:
+            raise Exception('Table: column "%s" not found.\Current columns: %s' % (
+                columnName, '\n'.join(self._columns.keys())))
         return self._columns[columnName] 
     
     def hasEnabledColumn(self):
@@ -298,7 +298,7 @@ class SqliteDataSet(DataSet):
                 flatDb = SqliteFlatDb(filename, tablePrefix=prefix)
                 tableName = prefix + self._getPlural(flatDb.getSelfClassName())
                 self.tablePrefixes[tableName] = prefix
-                #tablePrefixes.append(prefix)
+                # tablePrefixes.append(prefix)
         DataSet.__init__(self, self.tablePrefixes.keys())
         db.close()
         
@@ -314,7 +314,7 @@ class SqliteDataSet(DataSet):
         tableName = self.tablePrefixes[tableName]
         
         BASIC_COLUMNS = [Column('id', int, renderType=COL_RENDER_ID), 
-                         Column('enabled', bool ,renderType=COL_RENDER_CHECKBOX),
+                         Column('enabled', bool, renderType=COL_RENDER_CHECKBOX),
                          Column('label', str), 
                          Column('comment', str),
                          Column('creation', str)]
@@ -347,7 +347,7 @@ class SqliteDataSet(DataSet):
                         renderType = COL_RENDER_IMAGE
                         imgCols[colName] = imgCols[prefix]
                 
-                #CTF FIX
+                # CTF FIX
                 elif (colLabel.endswith('_psdFile') or 
                       colLabel.endswith('_enhanced_psd') or 
                       colLabel.endswith('_ctfmodel_quadrant') or 
@@ -360,7 +360,7 @@ class SqliteDataSet(DataSet):
                 columns.append(Column(colName, str, label=colLabel, renderType=renderType))
         table = Table(*columns)
         
-        checkedImgCols = {} # Check if the image columns are volumes
+        checkedImgCols = {}  # Check if the image columns are volumes
         # FIXME: Move this to scipion-em? Maybe remove the whole module that is not used?
         from pwem.convert import ImageHandler
         ih = ImageHandler() 
@@ -381,7 +381,7 @@ class SqliteDataSet(DataSet):
                     filepath = filename.replace(":mrc", "")
                     if not checkedImgCols.get(colName, False):
                         if os.path.exists(filepath):
-                            #print "Fn to get dims: %s@%s" % (index,filename)
+                            # print "Fn to get dims: %s@%s" % (index,filename)
                             x, y, z, n = ih.getDimensions((index, filename))
                             if z > 1:
                                 table.getColumn(k).setRenderType(COL_RENDER_VOLUME)
@@ -405,7 +405,7 @@ class SingleFileDataSet(DataSet):
         
     def _createSingleTable(self):
         table = Table(Column('filename', str, 
-                            renderType=COL_RENDER_VOLUME)) #FIXME: for single images we need to read the dimensions
+                             renderType=COL_RENDER_VOLUME))  # FIXME: for single images we need to read the dimensions
         table.addRow(1, filename=self._filename)
         
         return table

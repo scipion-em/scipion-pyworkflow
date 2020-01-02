@@ -226,7 +226,7 @@ class QueueSystemConfig(OrderedObject):
         # 0 means no mandatory at all
         # 1 will force to launch all jobs through the queue
         self.mandatory = Integer()
-        self.queues = None # List for queue configurations
+        self.queues = None  # List for queue configurations
         self.submitCommand = String()
         # Allow to change the prefix of submission scripts
         # we used by default the ID.job, but in some clusters
@@ -291,7 +291,7 @@ class QueueSystemConfig(OrderedObject):
     def setCancelCommand(self, cancelCommand):
         self.cancelCommand.set(cancelCommand)
 
-    def setJobDoneRegex(self,jobDoneRegex):
+    def setJobDoneRegex(self, jobDoneRegex):
         self.jobDoneRegex.set(jobDoneRegex)
     
     def setQueues(self, queues):
@@ -305,7 +305,7 @@ class QueueSystemConfig(OrderedObject):
         return None
         
         
-#TODO: maybe deprecated
+# TODO: maybe deprecated
 class QueueConfig(OrderedObject):
     def __init__(self, **kwargs):
         OrderedObject.__init__(self, **kwargs)

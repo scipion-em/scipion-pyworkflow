@@ -61,8 +61,8 @@ RUNS_TREE = pwutils.Icon.RUNS_TREE
 RUNS_LIST = pwutils.Icon.RUNS_LIST
  
 ActionIcons = {
-    ACTION_EDIT: pwutils.Icon.ACTION_EDIT , 
-    ACTION_COPY: pwutils.Icon.ACTION_COPY ,
+    ACTION_EDIT: pwutils.Icon.ACTION_EDIT,
+    ACTION_COPY: pwutils.Icon.ACTION_COPY,
     ACTION_DELETE:  pwutils.Icon.ACTION_DELETE,
     ACTION_REFRESH:  pwutils.Icon.ACTION_REFRESH,
     ACTION_STEPS:  pwutils.Icon.ACTION_STEPS,
@@ -81,7 +81,7 @@ STATUS_COLORS = {
     pwprot.STATUS_FAILED: '#F5CCCB',
     pwprot.STATUS_INTERACTIVE: '#F3F5CB',
     pwprot.STATUS_ABORTED: '#F5CCCB',
-    #pwprot.STATUS_SAVED: '#124EB0',
+    # pwprot.STATUS_SAVED: '#124EB0',
 }
 
 
@@ -114,7 +114,7 @@ class ProjectDataView(tk.Frame):
         
         self.root.bind("<F5>", self.refreshData)
         self.__autoRefresh = None
-        self.__autoRefreshCounter = 3 # start by 3 secs  
+        self.__autoRefreshCounter = 3  # start by 3 secs
 
         self._dataGraph = windows.project.getSourceGraph(True)
 
@@ -141,7 +141,7 @@ class ProjectDataView(tk.Frame):
         rightFrame = tk.Frame(p, bg='white')
         rightFrame.columnconfigure(0, weight=1)
         rightFrame.rowconfigure(1, weight=1)
-        #rightFrame.rowconfigure(0, minsize=label.winfo_reqheight())
+        # rightFrame.rowconfigure(0, minsize=label.winfo_reqheight())
         self._fillRightPane(rightFrame)
 
         # Add sub-windows to PanedWindows
@@ -181,7 +181,6 @@ class ProjectDataView(tk.Frame):
         
         self._updateDataTree()
         
-        
     def _updateDataTree(self):
             
         def createClassNode(classObj):
@@ -214,7 +213,6 @@ class ProjectDataView(tk.Frame):
         
         populateTree(self.dataTree, classesGraph.getRootNodes())
 
-    
     def _fillRightPane(self, parent):
         """
         # Create the right Pane that will be composed by:
@@ -227,7 +225,7 @@ class ProjectDataView(tk.Frame):
         toolbar = tk.Frame(parent, bg='white')
         toolbar.grid(row=0, column=0, sticky='news')
         gui.configureWeigths(toolbar)
-        #toolbar.columnconfigure(0, weight=1)
+        # toolbar.columnconfigure(0, weight=1)
         toolbar.columnconfigure(1, weight=1)
         
         self.runsToolbar = tk.Frame(toolbar, bg='white')
@@ -236,11 +234,11 @@ class ProjectDataView(tk.Frame):
         # actions that can be applied to all runs (refresh, graph view...)
         self.allToolbar = tk.Frame(toolbar, bg='white')
         self.allToolbar.grid(row=0, column=10, sticky='se')
-        #self.createActionToolbar()
+        # self.createActionToolbar()
 
         # Create the Run History tree
         v = ttk.PanedWindow(parent, orient=tk.VERTICAL)
-        #runsFrame = ttk.Labelframe(v, text=' History ', width=500, height=500)
+        # runsFrame = ttk.Labelframe(v, text=' History ', width=500, height=500)
         runsFrame = tk.Frame(v, bg='white')
         self._createDataGraph(runsFrame)
         gui.configureWeigths(runsFrame)
@@ -272,7 +270,7 @@ class ProjectDataView(tk.Frame):
             nodeText = (label[:25]+'...') if len(label) > 25 else label
                 
         textColor = 'black'
-        color = '#ADD8E6' #Lightblue
+        color = '#ADD8E6'  # Lightblue
         item = self._dataCanvas.createTextbox(nodeText, 100, y, bgColor=color,
                                               textColor=textColor)
 
@@ -386,8 +384,10 @@ class ProjectDataView(tk.Frame):
 
         if not select:
             try:
-                if dataId in selection: selection.remove(dataId)
-                if protocolId in runSelection: runSelection.remove(protocolId)
+                if dataId in selection:
+                    selection.remove(dataId)
+                if protocolId in runSelection:
+                    runSelection.remove(protocolId)
             except ValueError:
                 print("id not in selection")
         else:
@@ -491,7 +491,7 @@ class ProjectDataView(tk.Frame):
         self._updateDataGraph()
  
         if initRefreshCounter:
-            self.__autoRefreshCounter = 3 # start by 3 secs
+            self.__autoRefreshCounter = 3  # start by 3 secs
             if self.__autoRefresh:
                 self.dataTree.after_cancel(self.__autoRefresh)
                 self.__autoRefresh = self.dataTree.after(

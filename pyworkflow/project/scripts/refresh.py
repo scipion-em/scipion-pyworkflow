@@ -76,7 +76,7 @@ try:
 except:
     projectPath = manager.getProjectPath(projName)
 
-project = Project(projectPath)
+project = Project(path=projectPath)
 project.load()
 while True:
     runs = project.getRuns()

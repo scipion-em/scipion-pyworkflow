@@ -48,6 +48,7 @@ from urllib.request import urlopen, urlretrieve
 import pyworkflow as pw
 from pyworkflow.utils import redB, red, green, yellow
 
+
 def main():
     # Get arguments.
     args = get_parser().parse_args()
@@ -101,13 +102,13 @@ def main():
                     update(dataset, url=args.url, verbose=args.verbose)
                 else:
                     print('Dataset %s not in local machine. '
-                           'Downloading...' % dataset)
+                          'Downloading...' % dataset)
                     download(dataset, url=args.url, verbose=args.verbose)
         except IOError as e:
             print('Warning: %s' % e)
             if e.errno == 13:  # permission denied
                 print('Maybe you need to run as the user that '
-                       'did the global installation?')
+                      'did the global installation?')
             sys.exit(1)
         sys.exit(0)
 
@@ -159,7 +160,6 @@ def get_parser():
         help='remote folder to put the dataset there. For upload.')
     add('-v', '--verbose', action='store_true', help='Print more details.')
 
-
     return parser
 
 
@@ -210,8 +210,10 @@ def check(dataset, url, verbose=False, updateMANIFEST=False):
             vlog("\thas differences\n")
             flocal = set(md5sLocal.keys())
             fremote = set(md5sRemote.keys())
+
             def show(txt, lst):
-                if lst: vlog("  %s: %s\n" % (txt, ' '.join(lst)))
+                if lst:
+                    vlog("  %s: %s\n" % (txt, ' '.join(lst)))
             show("Local files missing in the server", flocal - fremote)
             show("Remote files missing locally", fremote - flocal)
             show("Files with differences", [f for f in fremote & flocal

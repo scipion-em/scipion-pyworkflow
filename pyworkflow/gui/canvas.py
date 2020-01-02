@@ -56,8 +56,8 @@ class Canvas(tk.Canvas, Scrollable):
         defaults.update(kwargs)
         Scrollable.__init__(self, parent, tk.Canvas, **defaults)
         
-        self.lastItem = None # Track last item selected
-        self.lastPos = (0, 0) # Track last clicked position
+        self.lastItem = None  # Track last item selected
+        self.lastPos = (0, 0)  # Track last clicked position
         self.eventPos = (0, 0)
         self.firstPos = None  # Track first clicked position (for a drag action)
         self.items = {}  # Keep a dictionary with high-level items
@@ -80,7 +80,7 @@ class Canvas(tk.Canvas, Scrollable):
         self.bind('<FocusOut>', self._unpostMenu)
         self.bind("<Key>", self._unpostMenu)
         self.bind("<Control-1>", self.onControlClick)
-        #self.bind("<MouseWheel>", self.onScroll)
+        # self.bind("<MouseWheel>", self.onScroll)
         # Scroll bindings in Linux
         self.bind("<Shift-Button-4>", self.zoomerP)
         self.bind("<Shift-Button-5>", self.zoomerM)
@@ -95,7 +95,7 @@ class Canvas(tk.Canvas, Scrollable):
         
         if tooltipCallback:
             self.bind('<Motion>', self.onMotion)
-            #self.bind('<Leave>', self.onLeave)
+            # self.bind('<Leave>', self.onLeave)
             self._createTooltip()  # This should set
         
         self._menu = tk.Menu(self, tearoff=0)
@@ -105,8 +105,8 @@ class Canvas(tk.Canvas, Scrollable):
         the canvas.
         """
         tw = tk.Toplevel(self)
-        tw.withdraw() # hidden by default
-        tw.wm_overrideredirect(1) # Remove window decorations
+        tw.withdraw()  # hidden by default
+        tw.wm_overrideredirect(1)  # Remove window decorations
         tw.bind("<Leave>", self.hideTooltip)
         
         self._tooltip = tw
@@ -117,7 +117,7 @@ class Canvas(tk.Canvas, Scrollable):
         ny = self.winfo_pointery()
         if x == nx and y == ny:
             self._tooltipOn = True
-            tw = self._tooltip # short notation
+            tw = self._tooltip  # short notation
             self._tooltipCallback(tw, item)
             tw.update_idletasks()
             tw.wm_geometry("+%d+%d" % (x, y))
@@ -218,10 +218,10 @@ class Canvas(tk.Canvas, Scrollable):
                     self._menu.add_separator()
                 else:
                     img = ''
-                    if len(a) > 2: # image for the action
+                    if len(a) > 2:  # image for the action
                         img = self.getImage(a[2])
                     self._menu.add_command(label=a[0], command=a[1], 
-                                          image=img, compound=tk.LEFT)
+                                           image=img, compound=tk.LEFT)
             self._menu.post(e.x_root, e.y_root)
             unpost = False
         if unpost:
@@ -302,11 +302,11 @@ class Canvas(tk.Canvas, Scrollable):
     
     def createEdge(self, srcItem, dstItem):
         edge = Edge(self, srcItem, dstItem)
-        #self.items[edge.id] = edge
+        # self.items[edge.id] = edge
         return edge
     
-    def createCable(self,src,srcSocket,dst,dstSocket):
-        return Cable(self,src,srcSocket,dst,dstSocket)
+    def createCable(self, src, srcSocket, dst, dstSocket):
+        return Cable(self, src, srcSocket, dst, dstSocket)
 
     def clear(self):
         """ Clear all items from the canvas """
@@ -317,12 +317,13 @@ class Canvas(tk.Canvas, Scrollable):
         self.update_idletasks()
         self.config(scrollregion=self.bbox("all"))
         
-    #linux zoom
+    # linux zoom
     def __zoom(self, event, scale):
 
         newZoomFactor = round(self._zoomFactor * scale)
 
-        if self._zoomFactor == newZoomFactor: return
+        if self._zoomFactor == newZoomFactor:
+            return
 
         self._zoomFactor = newZoomFactor
 
@@ -360,7 +361,7 @@ class Canvas(tk.Canvas, Scrollable):
     def zoomerP(self, event):
         self.__zoom(event, 1.111111)
         
-    def zoomerM(self,event):
+    def zoomerM(self, event):
         self.__zoom(event, 0.9)
         
     def drawGraph(self, graph, layout=None, drawNode=None):
@@ -376,7 +377,6 @@ class Canvas(tk.Canvas, Scrollable):
         scale = self._zoomFactor / DEFAULT_ZOOM
         self._zoomFactor = DEFAULT_ZOOM
         self._runsFont['size'] = DEFAULT_FONT_SIZE
-
 
         if drawNode is None:
             self.drawNode = self._drawNode
@@ -444,7 +444,7 @@ class Canvas(tk.Canvas, Scrollable):
 
 
 def findClosestPoints(list1, list2):
-    candidates=[]
+    candidates = []
     for c1 in list1:
         for c2 in list2:
             candidates.append([c1, c2, math.hypot(c2[0] - c1[0], c2[1] - c1[1])])
@@ -505,7 +505,7 @@ class Item(object):
 
     def getConnectorsCoordinates(self):
         x1, y1, x2, y2 = self.getCorners()
-        xc, yc=self.getCenter(x1, y1, x2, y2)
+        xc, yc = self.getCenter(x1, y1, x2, y2)
         return [(xc, y1), (x2, yc), (xc, y2), (x1, yc)]
 
     def getTopConnectorCoordinates(self):
@@ -553,7 +553,7 @@ class Item(object):
     def getCorners(self): 
         return self.canvas.bbox(self.id)
 
-    def countSockets(self,verticalLocation):
+    def countSockets(self, verticalLocation):
         return len(list(self.getSocketsAt(verticalLocation)))
 
     def addSocket(self, name, socketClass, verticalLocation,
@@ -578,9 +578,10 @@ class Item(object):
     def getSocketsAt(self, verticalLocation):
         return filter(lambda s: s["verticalLocation"] == verticalLocation, self.sockets.values())
 
-    def getSocketCoords(self,name):
+    def getSocketCoords(self, name):
         socket = self.sockets[name]
-        return self.getSocketCoordsAt(socket["verticalLocation"], socket["position"], self.countSockets(socket["verticalLocation"]))
+        return self.getSocketCoordsAt(socket["verticalLocation"], socket["position"],
+                                      self.countSockets(socket["verticalLocation"]))
 
     def getSocketCoordsAt(self, verticalLocation, position=1, socketsCount=1):
         x1, y1, x2, y2 = self.getCorners()
@@ -661,7 +662,7 @@ class TextItem(Item):
     """This class will serve to paint and store rectangle boxes with some text.
        x and y are the coordinates of the center of this item"""
     def __init__(self, canvas, text, x, y, bgColor, textColor='black'):
-        super(TextItem,self).__init__(canvas,x,y)
+        super(TextItem, self).__init__(canvas, x, y)
         self.bgColor = bgColor
         self.textColor = textColor
         self.text = text
@@ -697,7 +698,7 @@ class TextItem(Item):
         self.canvas.lift(self.id_text)
 
     def move(self, dx, dy):
-        super(TextItem, self).move(dx,dy)
+        super(TextItem, self).move(dx, dy)
         self.canvas.move(self.id_text, dx, dy)
 
     def lift(self):
@@ -707,7 +708,7 @@ class TextItem(Item):
         
 class TextBox(TextItem):
     def __init__(self, canvas, text, x, y, bgColor, textColor='black'):
-        super(TextBox,self).__init__(canvas, text, x, y, bgColor, textColor)
+        super(TextBox, self).__init__(canvas, text, x, y, bgColor, textColor)
 
     def _paintBounds(self, x, y, w, h, fillColor):
         return self.canvas.create_rectangle(x, y, w, h, fill=fillColor, outline=fillColor)
@@ -715,33 +716,33 @@ class TextBox(TextItem):
 
 class RoundedTextBox(TextItem):
     def __init__(self, canvas, text, x, y, bgColor, textColor='black'):
-        super(RoundedTextBox,self).__init__(canvas, text, x, y, bgColor, textColor)
+        super(RoundedTextBox, self).__init__(canvas, text, x, y, bgColor, textColor)
 
-    def _paintBounds(self, upperLeftX, upperLeftY , bottomRightX, bottomRightY, fillColor):
+    def _paintBounds(self, upperLeftX, upperLeftY, bottomRightX, bottomRightY, fillColor):
         d = 5
         # When smooth=1, you define a straight segment by including its ends twice
-        return self.canvas.create_polygon(upperLeftX+d+1, upperLeftY, #1
-                                          upperLeftX+d, upperLeftY, #1
-                                          bottomRightX-d, upperLeftY, #2
-                                          bottomRightX-d, upperLeftY, #2
+        return self.canvas.create_polygon(upperLeftX+d+1, upperLeftY,  # 1
+                                          upperLeftX+d, upperLeftY,  # 1
+                                          bottomRightX-d, upperLeftY,  # 2
+                                          bottomRightX-d, upperLeftY,  # 2
                                           # bottomRightX-d+1,upperLeftY, #2b
-                                          bottomRightX, upperLeftY+d-1, #3b
-                                          bottomRightX, upperLeftY+d, #3
-                                          bottomRightX, upperLeftY+d, #3
-                                          bottomRightX, bottomRightY-d, #4
-                                          bottomRightX, bottomRightY-d, #4
-                                          bottomRightX-d, bottomRightY, #5
-                                          bottomRightX-d, bottomRightY, #5
-                                          upperLeftX+d, bottomRightY, #6
-                                          upperLeftX+d, bottomRightY, #6
+                                          bottomRightX, upperLeftY+d-1,  # 3b
+                                          bottomRightX, upperLeftY+d,  # 3
+                                          bottomRightX, upperLeftY+d,  # 3
+                                          bottomRightX, bottomRightY-d,  # 4
+                                          bottomRightX, bottomRightY-d,  # 4
+                                          bottomRightX-d, bottomRightY,  # 5
+                                          bottomRightX-d, bottomRightY,  # 5
+                                          upperLeftX+d, bottomRightY,  # 6
+                                          upperLeftX+d, bottomRightY,  # 6
                                           # upperLeftX+d-1,bottomRightY, #6b
-                                          upperLeftX, bottomRightY-d+1, #7b
-                                          upperLeftX, bottomRightY-d, #7
-                                          upperLeftX, bottomRightY-d, #7
-                                          upperLeftX, upperLeftY+d, #8
-                                          upperLeftX, upperLeftY+d, #8
+                                          upperLeftX, bottomRightY-d+1,  # 7b
+                                          upperLeftX, bottomRightY-d,  # 7
+                                          upperLeftX, bottomRightY-d,  # 7
+                                          upperLeftX, upperLeftY+d,  # 8
+                                          upperLeftX, upperLeftY+d,  # 8
                                           # upperLeftX, upperLeftY+d-1, #8b
-                                          upperLeftX+d-1, upperLeftY, #1b
+                                          upperLeftX+d-1, upperLeftY,  # 1b
                                           fill=fillColor, outline='black', smooth=1)
 
     def getDimensions(self):
@@ -750,7 +751,7 @@ class RoundedTextBox(TextItem):
 
 class TextCircle(TextItem):
     def __init__(self, canvas, text, x, y, bgColor, textColor='black'):
-        super(TextCircle,self).__init__(canvas, text, x, y, bgColor, textColor)
+        super(TextCircle, self).__init__(canvas, text, x, y, bgColor, textColor)
 
     def _paintBounds(self, x, y, w, h, fillColor):
         return self.canvas.create_oval(x, y, w, h, fill=fillColor)
@@ -786,7 +787,7 @@ class TextCircle(TextItem):
 class Connector(Item):
     """ Default connector has no graphical representation (hence, it'ss invisible). Subclasses offer different looks"""
     def __init__(self, canvas, x, y, name):
-        super(Connector,self).__init__(canvas, x, y)
+        super(Connector, self).__init__(canvas, x, y)
         self.name = name
 
     def paintSocket(self):
@@ -832,7 +833,7 @@ class RoundConnector(ColoredConnector):
 
 
 class SquareConnector(ColoredConnector):
-    halfside=3
+    halfside = 3
 
     def paintSocket(self):
         self.socketId = self.canvas.create_rectangle(self.x-self.halfside,
@@ -1028,7 +1029,9 @@ if __name__ == '__main__':
     
     def canvasExample1():    
         tb1 = canvas.createTextCircle("Project", 100, 100, "blue")
-        tb2 = canvas.createTextbox("This is an intentionally quite big, big box,\nas you may appreciate looking carefully\nat it,\nas many times\nas you might need", 300, 200)
+        tb2 = canvas.createTextbox("This is an intentionally quite big, big box,"
+                                   "\nas you may appreciate looking carefully"
+                                   "\nat it,\nas many times\nas you might need", 300, 200)
         tb2.addSocket("output1", RoundConnector, "bottom", fillColor="green")
         tb2.addSocket("output2", SquareConnector, "bottom", fillColor="yellow")
         tb2.addSocket("output3", SquareConnector, "bottom", fillColor="blue")
@@ -1039,8 +1042,8 @@ if __name__ == '__main__':
         tb5.addSocket("input1", SquareConnector, "top")
         e1 = canvas.createEdge(tb1, tb2)
         e2 = canvas.createEdge(tb1, tb3)
-        c1= canvas.createCable(tb2, "output2", tb4, "input1")
-        c2= canvas.createCable(tb2, "output3", tb5, "input1")
+        c1 = canvas.createCable(tb2, "output2", tb4, "input1")
+        c2 = canvas.createCable(tb2, "output3", tb5, "input1")
         tb3.moveTo(100, 300)
 
        

@@ -1,8 +1,8 @@
-'''
+"""
 Created on Apr 8, 2013
 
 @author: antonio
-'''
+"""
 
 # This file is not really being used, and its tests cannot run because
 # of this. So far we are not really using paramiko, and so all its
@@ -18,7 +18,7 @@ import os
 from os.path import join
 import shutil
 import socket
-#import paramiko
+# import paramiko
 import hashlib
 
 from pyworkflow.utils import exists
@@ -48,10 +48,10 @@ class FileTransfer:
     def transferFiles(self,
                       filePaths, 
                       hostsPasswords, 
-                      gatewayHosts = None, 
-                      numberTrials = 1,                        
-                      forceOperation = False,
-                      operationId = 1):
+                      gatewayHosts=None,
+                      numberTrials=1,
+                      forceOperation=False,
+                      operationId=1):
         """
         filePaths -- Files dictionary with this format: "userName@hostName:absolute_file_path": ["userName1@hostName1:absolute_file_path1", "userName2@hostName2:absolute_file_path2"]
         Key is the source file path and value the target file paths.
@@ -75,12 +75,11 @@ class FileTransfer:
                                          forceOperation,
                                          operationId) 
     
-    
     def copyFiles(self,
                   filePaths,                        
-                  numberTrials = 1,                        
-                  forceOperation = False,
-                  operationId = 1):
+                  numberTrials=1,
+                  forceOperation=False,
+                  operationId=1):
         """
         filePaths -- Files dictionary with this format: "source_file_path": "target_file_path"
         forceOperation -- Flag to indicate if, when an error happens and number of trials is exceeded, the operation must continue with the rest of files.        
@@ -94,10 +93,10 @@ class FileTransfer:
                         hostName,
                         userName,
                         hostPassword,
-                        gatewayHosts = None, 
-                        numberTrials = 1,                        
-                        forceOperation = False,
-                        operationId = 1):
+                        gatewayHosts=None,
+                        numberTrials=1,
+                        forceOperation=False,
+                        operationId=1):
         """
         filePaths -- Files dictionary with this format: "source_file_path": "target_file_path"
         hostName -- Remote host to transfer files.
@@ -118,14 +117,14 @@ class FileTransfer:
         self.sftp.close()  
             
     def transferFilesFrom(self,
-                        filePaths,
-                        hostName,
-                        userName,
-                        hostPassword,
-                        gatewayHosts = None, 
-                        numberTrials = 1,                        
-                        forceOperation = False,
-                        operationId = 1):
+                          filePaths,
+                          hostName,
+                          userName,
+                          hostPassword,
+                          gatewayHosts=None,
+                          numberTrials=1,
+                          forceOperation=False,
+                          operationId=1):
         """
         filePaths -- Files dictionary with this format: "source_file_path": "target_file_path"
         hostName -- Remote host to transfer files.
@@ -145,8 +144,7 @@ class FileTransfer:
         self.ssh.close()
         self.sftp.close()  
                 
-        
-    def deleteFiles(self, 
+    def deleteFiles(self,
                     filePaths,                    
                     hostsPasswords, 
                     gatewayHosts=None, 
@@ -229,7 +227,7 @@ class FileTransfer:
                    hostsPasswords,
                    gatewayHosts=None, 
                    numberTrials=1, 
-                   forceOperation = False,  
+                   forceOperation=False,
                    operationId=1):
         """
         Check if file paths exists.
@@ -250,7 +248,7 @@ class FileTransfer:
                 for resultFilePath in resultFilePaths:
                     filePath = self.__getLocationAndFilePath(resultFilePath)[1]
                     log.info("Checking: " + filePath)
-                    if len (missingPaths(filePath)) != 0:
+                    if len(missingPaths(filePath)) != 0:
                         returnFilePaths.append(filePath)
                         log.info("Check fail!!")
             else:
@@ -276,14 +274,14 @@ class FileTransfer:
         return returnFilePaths
     
     def checkOneHostFiles(self, 
-                   filePaths,
-                   hostName,
-                   userName,                   
-                   hostsPassword,
-                   gatewayHosts=None, 
-                   numberTrials=1, 
-                   forceOperation = False,  
-                   operationId=1):
+                          filePaths,
+                          hostName,
+                          userName,
+                          hostsPassword,
+                          gatewayHosts=None,
+                          numberTrials=1,
+                          forceOperation=False,
+                          operationId=1):
         """
         Check if file paths exists.
         filepaths -- List of file paths to check with this format: ["absolute_file_path1","absolute_file_path2"]
@@ -305,7 +303,7 @@ class FileTransfer:
         for fileName in filePaths:
             log.info("Checking: " + fileName)
             if isLocalHost:
-                if len (missingPaths(fileName)) != 0:
+                if len(missingPaths(fileName)) != 0:
                     returnFilePaths.append(fileName)
                     log.info("Check fail!!")
             else:
@@ -354,10 +352,10 @@ class FileTransfer:
                                 userAndHostPairs, 
                                 filePaths,
                                 hostsPasswords, 
-                                gatewayHosts = None, 
-                                numberTrials = 1,                        
-                                forceOperation = False,
-                                operationId = 1):  
+                                gatewayHosts=None,
+                                numberTrials=1,
+                                forceOperation=False,
+                                operationId=1):
         """
         filePaths -- Dictionary with this structure: {"filePath1":"filePath2"}
         gatewayHosts -- Gateway hosts List with this format: ["userName1@hostName1","userName2@hostName2"] 
@@ -372,11 +370,15 @@ class FileTransfer:
                 self.copyFiles(filePaths, numberTrials, forceOperation, operationId)
             else:
                 targetUserAndHost = self.__getUserAndHost(targetCredentials)
-                self.transferFilesTo(filePaths, targetUserAndHost[1], targetUserAndHost[0], hostsPasswords[targetCredentials], gatewayHosts, numberTrials, forceOperation, operationId)
+                self.transferFilesTo(filePaths, targetUserAndHost[1],
+                                     targetUserAndHost[0], hostsPasswords[targetCredentials],
+                                     gatewayHosts, numberTrials, forceOperation, operationId)
         else:
             sourceUserAndHost = self.__getUserAndHost(sourceCredentials)
             if self.__isLocalCredential(targetCredentials):
-                self.transferFilesFrom(filePaths, sourceUserAndHost[1], sourceUserAndHost[0], hostsPasswords[sourceCredentials], gatewayHosts, numberTrials, forceOperation, operationId)
+                self.transferFilesFrom(filePaths, sourceUserAndHost[1], sourceUserAndHost[0],
+                                       hostsPasswords[sourceCredentials], gatewayHosts,
+                                       numberTrials, forceOperation, operationId)
             else:
                 pass            
             
@@ -403,9 +405,9 @@ class FileTransfer:
         if ":" in locationAndFile:
             auxLocationAndFile = locationAndFile.split(":", 1)
             if self.__isLocalCredential(auxLocationAndFile[0]):
-                auxLocationAndFile[0] = LOCAL_USER_AND_HOST # Ease classification and other operations
+                auxLocationAndFile[0] = LOCAL_USER_AND_HOST  # Ease classification and other operations
         else:
-            auxLocationAndFile = []
+            auxLocationAndFile = list()
             auxLocationAndFile.append(LOCAL_USER_AND_HOST)
             auxLocationAndFile.append(locationAndFile)
         
@@ -417,7 +419,7 @@ class FileTransfer:
         No name or empty name means local host.
         """
         if (hostName is None or
-            hostName == LOCAL_USER_AND_HOST):
+                hostName == LOCAL_USER_AND_HOST):
             return True
         elif socket.gethostname() == hostName:
             return True
@@ -435,7 +437,7 @@ class FileTransfer:
             hostName = self.__getUserAndHost(userAndHost)[1]
             return self.__isLocalHost(hostName)
         
-    def __getDiferentHostsFromFilePaths (self, filePaths):
+    def __getDiferentHostsFromFilePaths(self, filePaths):
         """
         Gets different userName@hostName credentials of files list.
         files -- File list with this format: userName1@hostName1:absolute_file_path1
@@ -445,7 +447,7 @@ class FileTransfer:
         for filePath in filePaths:
             userAndHost = self.__getLocationAndFilePath(filePath)[0]
             if self.__isLocalCredential(userAndHost):
-                userAndHost = LOCAL_USER_AND_HOST # To simplify code for local credentials.
+                userAndHost = LOCAL_USER_AND_HOST  # To simplify code for local credentials.
             if userAndHost not in differentHosts:
                 differentHosts.append(userAndHost)
         return differentHosts
@@ -474,7 +476,7 @@ class FileTransfer:
         # Check if file already existsFilePath and it is up to date
         existsFilePath = False
         if exists(targetFilePath):
-            if self.__getLocalSHA1(sourceFilePath) ==  self.__getLocalSHA1(targetFilePath):
+            if self.__getLocalSHA1(sourceFilePath) == self.__getLocalSHA1(targetFilePath):
                 existsFilePath = True
                 log.info(targetFilePath + " already existed")
         if not existsFilePath:
@@ -492,7 +494,7 @@ class FileTransfer:
         # Check if file already existsFilePath and it is up to date
         existsFilePath = False
         if self.__existsRemotePath(targetFilePath, sftp):
-            if self.__getLocalSHA1(sourceFilePath) ==  self.__getRemoteSHA1(targetFilePath, self.ssh):
+            if self.__getLocalSHA1(sourceFilePath) == self.__getRemoteSHA1(targetFilePath, self.ssh):
                 existsFilePath = True
                 log.info(targetFilePath + " already existed")
         if not existsFilePath:
@@ -500,9 +502,9 @@ class FileTransfer:
             try:
                 sftp.put(sourceFilePath, targetFilePath)
             except IOError as err:
-                log.error("Fail sending local file " + sourceFilePath + " to remote file " + targetFilePath + " - " + str(err))
+                log.error("Fail sending local file " + sourceFilePath +
+                          " to remote file " + targetFilePath + " - " + str(err))
                 raise
-        
         
     def __getRemoteFile(self, sourceFilePath, targetFilePath, gatewayHosts, sftp):
         """
@@ -515,7 +517,7 @@ class FileTransfer:
         # Check if file already existsFilePath and it is up to date
         existsFilePath = False
         if exists(targetFilePath):
-            if self.__getRemoteSHA1(sourceFilePath, self.ssh) ==  self.__getLocalSHA1(targetFilePath):
+            if self.__getRemoteSHA1(sourceFilePath, self.ssh) == self.__getLocalSHA1(targetFilePath):
                 existsFilePath = True
                 log.info(targetFilePath + " already existed")
         if not existsFilePath:
@@ -523,7 +525,8 @@ class FileTransfer:
             try:
                 sftp.get(sourceFilePath, targetFilePath)
             except IOError as err:
-                log.error("Fail getting remote file " + sourceFilePath + " to local file " + targetFilePath + " - " + str(err))
+                log.error("Fail getting remote file " + sourceFilePath +
+                          " to local file " + targetFilePath + " - " + str(err))
                 raise
     
     def __createRemoteFolderForFile(self, filePath, sftp):
@@ -560,11 +563,9 @@ class FileTransfer:
             return False
 
 
-################################################################
-
-#                AUXILIARY FUNCTIONS                           #
-
-################################################################        
+# -----------------------------------------------------------------------------
+#                AUXILIARY FUNCTIONS
+# -----------------------------------------------------------------------------
 
 def isRemoteDir(sftp, path):
     """ Check if one remote directory exists
@@ -625,7 +626,7 @@ def getRemoteFiles(sftp, folderPath, recursive=True):
     return resultFilePathList
 
 
-def removeRemoteFolder (hostName, userName, password, folderPath):
+def removeRemoteFolder(hostName, userName, password, folderPath):
     """ Removes a remote folder and all it content.
     Params:
         hostName: Remote host name.

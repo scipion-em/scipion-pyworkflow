@@ -75,16 +75,16 @@ class XmlMapper(Mapper):
         else:
             # TODO: generalize the matching of consecutive items
             if level and (not elem.tail or not elem.tail.strip()):
-                for ii in ['t11','t12','t13','t21','t22','t23','t31','t32','t33']:
+                for ii in ['t11', 't12', 't13', 't21', 't22', 't23', 't31', 't32', 't33']:
                     if elem.tag == ii:
                         elem.tail = " "
                         return
                 elem.tail = i
     
     def _create(self, rootName, **args):
-            self.root = ET.Element(rootName)
-            if 'header' in args:
-                self.root.append(ET.Comment(args.get('header')))
+        self.root = ET.Element(rootName)
+        if 'header' in args:
+            self.root.append(ET.Comment(args.get('header')))
             if 'version' in args:
                 self.root.set("version", str(args.get('version')))
     
@@ -128,7 +128,7 @@ class XmlMapper(Mapper):
             obj = self._buildObjectFromClass(child.tag)
             self.fillObject(obj, child)
             self._addObjectToDict(obj, self.objDict)
-        #set properlly primary keys
+        # set properlly primary keys
         for obj in self.pendingPtrDict.values():
             for key, attr in obj.getAttributesToStore():
                 if attr.isPointer(): 
@@ -137,7 +137,6 @@ class XmlMapper(Mapper):
                     attr.set(ptr)
         return self.objDict.values()
                    
-        
     def setChildObject(self, obj, childName, childClass=None):
         childObj = getattr(obj, childName, None)
         if childObj is None:
@@ -166,7 +165,7 @@ class XmlMapper(Mapper):
                 tagKey = '%s.%s' % (obj.getClassName(), child.tag)
                 
                 tag = self.classTags.get(tagKey, None)
-                if tag == 'name_only' or not child.tag in self.dictClasses:
+                if tag == 'name_only' or child.tag not in self.dictClasses:
                     childName = child.tag
                     childClass = None
                 else:
@@ -178,11 +177,11 @@ class XmlMapper(Mapper):
             if child.text and len(child.text.strip()):
                 childObj.set(child.text.strip())
             else:
-                #does have attributes?
+                # does have attributes?
                 attributes = child.attrib
                 if attributes and childObj.isPointer():
                     childObj._objId = attributes
-                    #save obj in auxiliary file
+                    # save obj in auxiliary file
                     self._addObjectToDict(obj, self.pendingPtrDict)
                 self.fillObject(childObj, child)
         
@@ -210,7 +209,7 @@ class XmlMapper(Mapper):
         objElem = self.addSubElement(self.root, obj.getClassName(), obj._objValue) 
         self.setObjectId(objElem, obj.getObjId())
         # Insert object childs
-        self.insertObjectWithChilds(obj, objElem )
+        self.insertObjectWithChilds(obj, objElem)
         
     def addSubElement(self, parentElem, name, value=None):
         childElem = ET.SubElement(parentElem, name)
@@ -224,15 +223,15 @@ class XmlMapper(Mapper):
             if attr.hasValue():
                 attrClass = attr.getClassName()
                 objClass = obj.getClassName()
-                allKey = '%s.ALL' % objClass # First try with .ALL
+                allKey = '%s.ALL' % objClass  # First try with .ALL
                 tag = self.classTags.get(allKey, '')
                 allKey = 'ALL.%s' % attrClass 
                 tag = self.classTags.get(allKey, tag)
-                allKey = 'ALL.%s' % key # also with ALL.attribute
+                allKey = 'ALL.%s' % key  # also with ALL.attribute
                 tag = self.classTags.get(allKey, tag)
-                classKey = '%s.%s' % (objClass, attrClass) # Second, with .childClass
+                classKey = '%s.%s' % (objClass, attrClass)  # Second, with .childClass
                 tag = self.classTags.get(classKey, tag)
-                attrKey = '%s.%s' % (objClass, key) # Finally with .attribute
+                attrKey = '%s.%s' % (objClass, key)  # Finally with .attribute
                 tag = self.classTags.get(attrKey, tag)
                 
                 if tag == 'attribute':
@@ -254,7 +253,6 @@ class XmlMapper(Mapper):
                         elif tag.endswith('name'):
                             childElem.set('attrname', key)
                         
-                        
                         self.insertObjectWithChilds(attr, childElem)
             
     def updateFrom(self, obj):
@@ -264,6 +262,3 @@ class XmlMapper(Mapper):
     def updateTo(self, obj):
         """Update storage with object info"""
         pass
-
-            
-    

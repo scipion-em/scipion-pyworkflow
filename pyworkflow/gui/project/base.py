@@ -153,7 +153,7 @@ class ProjectBaseWindow(Window):
     #
     # The next functions are callbacks from the menu options.
     # See how it is done in pyworkflow/gui/gui.py:Window._addMenuChilds()
-    #
+
     def onExit(self):
         # Project -> Exit
         self._onClosing()

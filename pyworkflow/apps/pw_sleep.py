@@ -29,7 +29,8 @@ This module is responsible for launching protocol executions.
 """
 from __future__ import print_function
 
-import os, sys
+import os
+import sys
 
 if __name__ == '__main__':
     seconds = sys.argv[1]

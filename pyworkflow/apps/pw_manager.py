@@ -32,8 +32,6 @@ Launch the windows with all Projects.
 from pyworkflow.gui.project import ProjectManagerWindow
 
 
-
 if __name__ == '__main__':
     
     ProjectManagerWindow().show()
-    

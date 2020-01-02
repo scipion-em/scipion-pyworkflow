@@ -57,16 +57,16 @@ class Object(object):
 
     def __init__(self, value=None, **kwargs):
         object.__init__(self)
-        self._objIsPointer = kwargs.get('objIsPointer', False) # True if will be treated as a reference for storage
-        self._objId = kwargs.get('objId', None) # Unique identifier of this object in some context
-        self._objParentId = kwargs.get('objParentId', None) # identifier of the parent object
-        self._objName = kwargs.get('objName', '') # The name of the object will contains the whole path of ancestors
-        self._objLabel = kwargs.get('objLabel', '') # This will serve to label the objects
+        self._objIsPointer = kwargs.get('objIsPointer', False)  # True if will be treated as a reference for storage
+        self._objId = kwargs.get('objId', None)  # Unique identifier of this object in some context
+        self._objParentId = kwargs.get('objParentId', None)  # identifier of the parent object
+        self._objName = kwargs.get('objName', '')  # The name of the object will contains the whole path of ancestors
+        self._objLabel = kwargs.get('objLabel', '')  # This will serve to label the objects
         self._objComment = kwargs.get('objComment', '')
-        self._objTag = kwargs.get('objTag', None) # This attribute serve to make some annotation on the object.
-        self._objDoStore = kwargs.get('objDoStore', True) # True if this object will be stored from his parent
+        self._objTag = kwargs.get('objTag', None)  # This attribute serve to make some annotation on the object.
+        self._objDoStore = kwargs.get('objDoStore', True)  # True if this object will be stored from his parent
         self._objCreation = None
-        self._objParent = None # Reference to parent object
+        self._objParent = None  # Reference to parent object
         self._objEnabled = True
         self.set(value)
 
@@ -80,7 +80,7 @@ class Object(object):
     def getDoc(cls):
         return cls.__doc__ or ''
 
-    #FIXME: This function should be renamed to hasAttribute when we address that issue
+    # FIXME: This function should be renamed to hasAttribute when we address that issue
     def hasAttributeExt(self, attrName):
         attrList = attrName.split('.')
         obj = self
@@ -94,7 +94,7 @@ class Object(object):
     def hasAttribute(self, attrName):
         return hasattr(self, attrName)
 
-    #FIXME: This function is not symmetric with setAttributeValue
+    # FIXME: This function is not symmetric with setAttributeValue
     def getAttributeValue(self, attrName, defaultValue=None):
         """ Get the attribute value given its name.
         Equivalent to getattr(self, name).get() 
@@ -107,7 +107,7 @@ class Object(object):
         elif isinstance(attr, Object):
             value = attr.get()
         else:
-            value = attr # behave well for non-Object attributes
+            value = attr  # behave well for non-Object attributes
         return value
     
     def setAttributeValue(self, attrName, value, ignoreMissing=False):
@@ -144,7 +144,7 @@ class Object(object):
                 print("Object.getAttributesToStore: attribute '%s' seems to "
                       "be overwritten," % key)
                 print("   since '_objDoStore' was not found. "
-                       "Ignoring attribute. ")
+                      "Ignoring attribute. ")
             else:
                 if attr is not None and attr._objDoStore:
                     yield key, attr
@@ -161,7 +161,7 @@ class Object(object):
     def set(self, value):
         """Set the internal value, if it is different from None
         call the convert function in subclasses"""
-        if not value is None:
+        if value is not None:
             value = self._convertValue(value)            
         self._objValue = value
     
@@ -201,7 +201,7 @@ class Object(object):
         self.setObjId(other.getObjId())
         
     def hasObjId(self):
-        return not self._objId is None
+        return self._objId is not None
     
     def cleanObjId(self):
         """ This function will set to None this object id
@@ -252,7 +252,7 @@ class Object(object):
         return str(self._objId)
     
     def getName(self):
-        #TODO: REMOVE THIS FUNCTION, SINCE IT DOES NOT COMPLAIN WITH _objX naming
+        # TODO: REMOVE THIS FUNCTION, SINCE IT DOES NOT COMPLAIN WITH _objX naming
         return self._objName
     
     def getObjName(self):
@@ -306,7 +306,7 @@ class Object(object):
     def equalAttributes(self, other, ignore=[], verbose=False):
         """Compare that all attributes are equal"""
         for k, v1 in self.getAttributes():
-            #v1 = getattr(self, k) # This is necessary because of FakedObject simulation of getattr
+            # v1 = getattr(self, k) # This is necessary because of FakedObject simulation of getattr
             # Skip comparison of attribute names in 'ignore' list
             if k in ignore:
                 continue
@@ -460,7 +460,7 @@ class Object(object):
             has been properly set.
         """
         # Copy basic object data
-        #self._objName = other._objName
+        # self._objName = other._objName
         if copyId:
             self._objId = other._objId
         self._objValue = other._objValue
@@ -515,11 +515,11 @@ class Object(object):
         """Print object and all its attributes.
         Mainly for debugging"""
         tab = ' ' * (level*3)
-        idStr = '' #' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
+        idStr = ''  # ' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
             print(tab, self.getClassName(), idStr)
         else:
-            if name == 'submitTemplate': # Skip this because very large value
+            if name == 'submitTemplate':  # Skip this because very large value
                 value = '...'
             else:
                 value = self.getObjValue()
@@ -815,7 +815,7 @@ class Pointer(Object):
     
     def __clean(self, extended):
         """ Remove old attributes conventions. """
-        #TODO: This replacements are needed now by backward compatibility
+        # TODO: This replacements are needed now by backward compatibility
         # reasons, when we used __attribute__ and __item__ to mark both cases
         # in a future the following two lines can be removed.
         ext = extended.replace(self.EXTENDED_ATTR, '')
@@ -838,7 +838,7 @@ class Pointer(Object):
             value = self._objValue
             for p in parts:
                 if p.isdigit():
-                    value = value[int(p)] # item case
+                    value = value[int(p)]  # item case
                 else:
                     value = getattr(value, p, None)
                 if value is None:
@@ -857,7 +857,7 @@ class Pointer(Object):
             self._extended.set(None)
         
     def hasExtended(self):
-        return bool(self._extended.get()) # consider empty string as false
+        return bool(self._extended.get())  # consider empty string as false
     
     def getExtended(self):
         return self.__clean(self._extended.get(''))
@@ -930,7 +930,7 @@ class List(Object, list):
         raise AttributeError("List object has not attribute: " + name)
             
     def __setattr__(self, name, value):
-        if name.startswith('__item__') or len(name)==0:
+        if name.startswith('__item__') or len(name) == 0:
             self.append(value)
         else:
             object.__setattr__(self, name, value)
@@ -959,7 +959,7 @@ class List(Object, list):
     def __len__(self):
         return list.__len__(self)
 
-    def getSize(self): # Just to have similar API than Set
+    def getSize(self):  # Just to have similar API than Set
         return len(self)
     
     def isEmpty(self):
@@ -1052,7 +1052,7 @@ class Set(OrderedObject):
     It will use an extra sqlite file to store the elements.
     All items will have an unique id that identifies each element in the set.
     """
-    ITEM_TYPE = None # This property should be defined to know the item type
+    ITEM_TYPE = None  # This property should be defined to know the item type
     
     # This will be used for stream Set where data is populated on the fly
     STREAM_OPEN = 1
@@ -1064,12 +1064,12 @@ class Set(OrderedObject):
         OrderedObject.__init__(self, **kwargs)
         self._mapper = None
         self._idCount = 0
-        self._size = Integer(0) # cached value of the number of images
+        self._size = Integer(0)  # cached value of the number of images
         # It is a bit contradictory that initially a set is Closed
         # but this is the default behaviour of the Set before Streamming extension
         self._streamState = Integer(self.STREAM_CLOSED)  
         self.setMapperClass(mapperClass)
-        self._mapperPath = CsvList() # sqlite filename
+        self._mapperPath = CsvList()  # sqlite filename
         self._representative = None
         self._classesDict = classesDict
         self._indexes = kwargs.get('indexes', [])
@@ -1113,7 +1113,7 @@ class Set(OrderedObject):
         return self._getMapper().selectAll(orderBy=orderBy,
                                            direction=direction,
                                            where=where,
-                                           limit=limit)#has flat mapper, iterate is true
+                                           limit=limit)  # has flat mapper, iterate is true
 
     def getFirstItem(self):
         """ Return the first item in the Set. """
