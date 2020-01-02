@@ -51,7 +51,7 @@ TEST = 2
 class Tester:
     def main(self):
 
-        parser = argparse.ArgumentParser(description=__doc__)
+        parser = argparse.ArgumentParser(prog= self.getTestsCommand(), description=__doc__)
         g = parser.add_mutually_exclusive_group()
         g.add_argument('--run', action='store_true', help='run the selected tests')
         g.add_argument('--show', action='store_true', help='show available tests',
@@ -201,7 +201,10 @@ class Tester:
     def _printNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
-            print("%s %s %s" % (spaces, os.environ.get(PW_ALT_TESTS_CMD, getTestsScript()), itemName))
+            print("%s %s %s" % (spaces, self.getTestsCommand(), itemName))
+
+    def getTestsCommand(self):
+        return os.environ.get(PW_ALT_TESTS_CMD, getTestsScript())
 
     def printTests(self, moduleName, tests):
         self._visitTests(moduleName, tests, self._printNewItem)
