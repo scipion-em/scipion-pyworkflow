@@ -56,8 +56,10 @@ projName = sys.argv[1]
 jsonFile = None if n < 3 else os.path.abspath(sys.argv[2])
 location = None if n < 4 else sys.argv[3]
 
-path = pw.join('gui', 'no-tkinter')
-sys.path.insert(1, path)
+# This might not be working anymore for python3.
+# I'm getting invalid ELF header triggered by matplotlib -->from . import _tkagg
+# path = pw.join('gui', 'no-tkinter')
+# sys.path.insert(1, path)
 
 # Create a new project
 manager = Manager()
