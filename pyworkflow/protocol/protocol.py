@@ -1598,7 +1598,7 @@ class Protocol(Step):
     @classmethod
     def getClassDomain(cls):
         """ Return the Domain class where this Protocol class is defined. """
-        return cls.getClassPackage().Domain
+        return pw.Config.getDomain()
 
     @classmethod
     def getPluginLogoPath(cls):

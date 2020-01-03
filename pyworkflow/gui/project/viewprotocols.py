@@ -22,9 +22,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
 
 from pyworkflow import Config
 
@@ -477,7 +474,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             isPointer = False
         actions = []
 
-        viewers = self.domain.findViewers(obj.getClassName(), DESKTOP_TKINTER)
+        viewers = Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
 
         def viewerCallback(viewer):
             return lambda: self._visualizeObject(viewer, obj)
