@@ -746,10 +746,16 @@ class Protocol(Step):
         # Loop through the output list
         for attrName in self._outputs:
 
-            # Get it from the protocol
-            attr = getattr(self, attrName)
+            # FIX: When deleting manually an output, specially for interactive protocols.
+            # The _outputs is properly deleted in projects.sqlite, not it's run.db remains.
+            # When the protocol is updated from run.db it brings the outputs that were deleted
+            if hasattr(self,attrName):
+                # Get it from the protocol
+                attr = getattr(self, attrName)
 
-            yield attrName, attr
+                yield attrName, attr
+            else:
+                self._outputs.remove(attrName)
 
     def _iterOutputsOld(self):
         """ This method iterates assuming the old model: any EMObject attribute
