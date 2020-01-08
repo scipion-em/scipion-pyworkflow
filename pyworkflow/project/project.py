@@ -697,7 +697,15 @@ class Project(object):
             # Copy is only working for db restored objects
             protocol.setMapper(self.mapper)
 
+            localOutputs = list(protocol._outputs)
             protocol.copy(prot2, copyId=False, excludeInputs=True)
+
+            # merge outputs: This is necessary when outputs are added from the GUI
+            # e.g.: adding coordinates from analyze result and protocol is active (interactive).
+            for attr in localOutputs:
+                if not attr in protocol._outputs:
+                    protocol._outputs.append(attr)
+
             # Restore backup values
             protocol.setJobId(jobId)
             protocol.setObjLabel(label)
