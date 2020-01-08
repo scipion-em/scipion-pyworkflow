@@ -295,7 +295,17 @@ class Object(object):
     def setStore(self, value):
         """set the store flag"""
         self._objDoStore = value
-    
+
+    def __hash__(self):
+        # Issue found in scipion-em-xmipp/xmipp3/protocols/protocol_extract_particles_pairs.py (_setupBasicProperties)
+        # TypeError: unhashable type: 'Micrograph'
+        # Solution: Hashability makes an object usable as a dictionary key and a set member, because these data
+        # structures use the hash value internally. All of Python’s immutable built-in objects are hashable, while no
+        # mutable containers (such as lists or dictionaries) are. Objects which are instances of user-defined classes
+        # are hashable by default; they all compare unequal, and their hash value is their id().
+        # https://docs.python.org/3.1/glossary.html
+        return id(self)
+
     def __eq__(self, other):
         """Comparison for scalars should be by value
         and for other objects by reference"""
