@@ -513,14 +513,14 @@ class SubclassesTreeProvider(TreeProvider):
                                                            attr.getFileName()))
                                         print(ex)
 
-                    _checkParam(paramName, attr)
-                    # The following is a dirty fix for the RCT case where there
-                    # are inner output, maybe we should consider extend this for 
-                    # in a more general manner
-                    for subParam in ['_untilted', '_tilted']:
-                        if hasattr(attr, subParam):
-                            _checkParam('%s.%s' % (paramName, subParam), 
-                                        getattr(attr, subParam))
+                        _checkParam(paramName, attr)
+                        # The following is a dirty fix for the RCT case where there
+                        # are inner output, maybe we should consider extend this for
+                        # in a more general manner
+                        for subParam in ['_untilted', '_tilted']:
+                            if hasattr(attr, subParam):
+                                _checkParam('%s.%s' % (paramName, subParam),
+                                            getattr(attr, subParam))
                 except Exception as e:
                     print("Cannot read attributes for %s (%s)" % (prot.getClass(), e))
 

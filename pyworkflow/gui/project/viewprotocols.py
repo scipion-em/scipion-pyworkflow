@@ -709,14 +709,14 @@ class ProtocolsView(tk.Frame):
         infoFrame.columnconfigure(0, weight=1)
         infoFrame.rowconfigure(1, weight=1)
         # Create the Analyze results button
-        btnAnalyze = pwgui.Button(infoFrame, text=Message.LABEL_ANALYZE,
+        self.btnAnalyze = pwgui.Button(infoFrame, text=Message.LABEL_ANALYZE,
                                   fg='white', bg=Color.RED_COLOR,
                                   image=self.getImage(Icon.ACTION_VISUALIZE),
                                   compound=tk.LEFT,
                                   activeforeground='white',
                                   activebackground='#A60C0C',
                                   command=self._analyzeResultsClicked)
-        btnAnalyze.grid(row=0, column=0, sticky='ne', padx=15)
+        self.btnAnalyze.grid(row=0, column=0, sticky='ne', padx=15)
         # self.style.configure("W.TNotebook")#, background='white')
         tab = ttk.Notebook(infoFrame)  # , style='W.TNotebook')
 
@@ -1466,6 +1466,7 @@ class ProtocolsView(tk.Frame):
         self._fillSummary()
         self._fillMethod()
         self._fillLogs()
+        self._showHideAnalyzeResult()
 
         if self._isSingleSelection():
             last = self.getSelectedProtocol()
@@ -1705,6 +1706,13 @@ class ProtocolsView(tk.Frame):
         if self._selection:
             return self.project.getProtocol(self._selection[0])
         return None
+
+    def _showHideAnalyzeResult(self):
+
+        if self._selection:
+            self.btnAnalyze.grid()
+        else:
+            self.btnAnalyze.grid_remove()
 
     def _fillSummary(self):
         self.summaryText.setReadOnly(False)
@@ -2054,6 +2062,11 @@ class ProtocolsView(tk.Frame):
     def _analyzeResultsClicked(self, e=None):
         """ Function called when button "Analyze results" is called. """
         prot = self.getSelectedProtocol()
+
+        # Nothing selected
+        if prot is None:
+            return
+
         if os.path.exists(prot._getPath()):
             self._analyzeResults(prot)
         else:
