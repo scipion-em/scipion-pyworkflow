@@ -283,8 +283,11 @@ class ProjectWindow(ProjectBaseWindow):
         server_thread.start()
 
     # Seems it is not used and should be in scipion-em
-    # def schedulePlot(self, path, *args):
-    #     self.enqueue(lambda: EmPlotter.createFromFile(path, *args).show())
+    # Not within scipion but used from ShowJ
+    def schedulePlot(self, path, *args):
+        # FIXME: This import should not be here
+        from pwem.viewers import EmPlotter
+        self.enqueue(lambda: EmPlotter.createFromFile(path, *args).show())
 
     @classmethod
     def registerObjectCommand(cls, cmd, func):
