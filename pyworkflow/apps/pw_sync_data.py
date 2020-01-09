@@ -31,10 +31,6 @@ Scipion data synchronization.
 
 Get(put) tests data, from(to) the server to(from) the $SCIPION_TESTS folder.
 """
-from __future__ import print_function
-
-from __future__ import division
-
 import sys
 import os
 from os.path import join, isdir, exists, relpath, dirname

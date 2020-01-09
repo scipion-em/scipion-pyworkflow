@@ -29,8 +29,8 @@ It is composed by three panels:
 2. Right upper: VIEWS (Data/Protocols)
 3. Summary/Details
 """
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 
 import os
 import threading

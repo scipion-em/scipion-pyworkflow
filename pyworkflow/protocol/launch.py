@@ -39,7 +39,7 @@ B. Remote execution:
 3- Run a local process (for local execution, see case A) in the remote host
 4- Get the result back after launching remotely
 """
-from __future__ import print_function
+
 
 import os
 import re

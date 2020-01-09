@@ -30,9 +30,6 @@ Run or show the selected tests. Tests can be selected by giving
 the "case", or by giving the paths and file pattern to use for
 searching them.
 """
-
-from __future__ import print_function
-
 from os.path import basename
 import argparse
 from collections import OrderedDict

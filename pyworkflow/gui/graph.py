@@ -27,8 +27,8 @@
 This module implements a simple algorithm to display a graph(mainly a tree)
 level by level, using only Tkinter.
 """
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 
 # TODO: all LevelTree code is DEPRECATED...remove it after cleanning
 # and include all code from graph_layout

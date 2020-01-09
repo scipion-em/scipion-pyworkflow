@@ -26,9 +26,6 @@
 """
 This module define a Graph class and some utilities 
 """
-from __future__ import print_function
-
-
 class Node(object):
     """ A node inside the graph. """
     _count = 1

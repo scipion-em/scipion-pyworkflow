@@ -22,8 +22,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 
 """
 This modules contains classes required for the workflow

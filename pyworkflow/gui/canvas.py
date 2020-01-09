@@ -28,9 +28,6 @@ This module extends the functionalities of a normal Tkinter Canvas.
 The new Canvas class allows to easily display Texboxes and Edges
 that can be interactively dragged and clicked.
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
 import math
 import tkinter as tk
 import operator

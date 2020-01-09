@@ -21,9 +21,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
-from __future__ import absolute_import
-
 import os
 import tkinter as tk
 import tkinter.font as tkFont
@@ -44,7 +41,7 @@ FONT_BOLD = 'fontBold'
 FONT_BIG = 'fontBig'
 cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
 cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))
-cfgFontBigSize = cfgFontSize + 2
+cfgFontBigSize = cfgFontSize + 8
 # TextColor
 cfgCitationTextColor = "dark olive green"
 cfgLabelTextColor = "black"

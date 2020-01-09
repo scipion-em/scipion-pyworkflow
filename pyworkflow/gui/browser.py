@@ -29,9 +29,6 @@ This class can be subclasses to extend its functionality.
 A concrete use of ObjectBrowser is FileBrowser, where the
 elements to inspect and preview are files.
 """
-from __future__ import print_function
-from __future__ import absolute_import
-
 import os.path
 import stat
 import tkinter as tk
