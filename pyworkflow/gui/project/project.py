@@ -180,17 +180,10 @@ class ProjectWindow(ProjectBaseWindow):
                           ).show()
 
     def onNotes(self):
-        notes_program = pw.Config.SCIPION_NOTES_PROGRAM_VAL
-        notes_args = pw.Config.SCIPION_NOTES_ARGS_VAL
-
-        if not all(var in os.environ for var in [pw.Config.SCIPION_NOTES_FILE,
-                                                 pw.Config.SCIPION_NOTES_PROGRAM,
-                                                 pw.Config.SCIPION_NOTES_ARGS]):
-            return self.showError("Missing variables SCIPION_NOTES_* under\n"
-                                  "[VARIABLES] section in the configuration file\n"
-                                  "~/.config/scipion/scipion.conf")
+        notes_program = pw.Config.SCIPION_NOTES_PROGRAM
+        notes_args = pw.Config.SCIPION_NOTES_ARGS
         args = []
-        notes_file = self.project.getPath('Logs', pw.Config.SCIPION_NOTES_FILE_VAL)
+        notes_file = self.project.getPath('Logs', pw.Config.SCIPION_NOTES_FILE)
 
         # If notesFile does not exist, it is created and an explanation/documentation comment is added at the top.
         if not os.path.exists(notes_file):

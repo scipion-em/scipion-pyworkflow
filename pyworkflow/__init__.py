@@ -60,7 +60,8 @@ PW_ALT_TESTS_CMD = 'PW_ALT_TESTS_CMD'
 NOTES_HEADING_MSG = \
      '############################################  SCIPION NOTES  ##############################################' + \
      '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' + \
-     'Scipion notes behaviour can be edited in the user config file:\n\n' + \
+     'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they:\n' + \
+     'already exist, the following variables:\n\n' + \
      '\t-SCIPION_NOTES_FILE is used to store the file name (default is {})\n' + \
      '\t-SCIPION_NOTES_PROGRAM is used to select the program which will be used to open the notes file. If \n' + \
      '\t empty, it will use the default program used by your OS to open that type of file.\n' + \
@@ -136,12 +137,9 @@ class Config:
     SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE')
 
     # Scipion Notes
-    SCIPION_NOTES_FILE = 'SCIPION_NOTES_FILE'
-    SCIPION_NOTES_PROGRAM = 'SCIPION_NOTES_PROGRAM'
-    SCIPION_NOTES_ARGS = 'SCIPION_NOTES_ARGS'
-    SCIPION_NOTES_FILE_VAL = __get(SCIPION_NOTES_FILE, 'notes.txt')
-    SCIPION_NOTES_PROGRAM_VAL = __get(SCIPION_NOTES_PROGRAM, None)
-    SCIPION_NOTES_ARGS_VAL = __get(SCIPION_NOTES_ARGS, None)
+    SCIPION_NOTES_FILE = __get('SCIPION_NOTES_FILE', 'notes.txt')
+    SCIPION_NOTES_PROGRAM = __get('SCIPION_NOTES_PROGRAM', None)
+    SCIPION_NOTES_ARGS = __get('SCIPION_NOTES_ARGS', None)
 
     try:
         VIEWERS = ast.literal_eval(__get('VIEWERS', "{}"))
@@ -196,4 +194,4 @@ def findResource(filename):
     return findFile(filename, *__resourcesPath)
 
 def genNotesHeading():
-    return NOTES_HEADING_MSG.format(Config.SCIPION_NOTES_FILE_VAL)
+    return NOTES_HEADING_MSG.format(Config.SCIPION_NOTES_FILE)
