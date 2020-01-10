@@ -57,6 +57,18 @@ PYTHON = os.environ.get("SCIPION_PYTHON", 'python3')
 
 # Variable constants, probably we can have a constants module
 PW_ALT_TESTS_CMD = 'PW_ALT_TESTS_CMD'
+NOTES_HEADING_MSG = \
+     '############################################  SCIPION NOTES  ##############################################' + \
+     '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' + \
+     'Scipion notes behaviour can be edited in the user config file:\n\n' + \
+     '\t-SCIPION_NOTES_FILE is used to store the file name (default is {})\n' + \
+     '\t-SCIPION_NOTES_PROGRAM is used to select the program which will be used to open the notes file. If \n' + \
+     '\t empty, it will use the default program used by your OS to open that type of file.\n' + \
+     '\t-SCIPION_NOTES_ARGS is used to add input arguments that will be used in the calling of the program\n' + \
+     '\t specified in SCIPION_NOTES_PROGRAM.\n\n' + \
+     'These lines can be removed if desired.\n\n' + \
+     '###########################################################################################################' + \
+     '\n\nPROJECT NOTES:'
 
 # Following are a set of functions to centralize the way to get
 # files from several scipion folder such as: config or apps
@@ -123,6 +135,14 @@ class Config:
 
     SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE')
 
+    # Scipion Notes
+    SCIPION_NOTES_FILE = 'SCIPION_NOTES_FILE'
+    SCIPION_NOTES_PROGRAM = 'SCIPION_NOTES_PROGRAM'
+    SCIPION_NOTES_ARGS = 'SCIPION_NOTES_ARGS'
+    SCIPION_NOTES_FILE_VAL = __get(SCIPION_NOTES_FILE, 'notes.txt')
+    SCIPION_NOTES_PROGRAM_VAL = __get(SCIPION_NOTES_PROGRAM, None)
+    SCIPION_NOTES_ARGS_VAL = __get(SCIPION_NOTES_ARGS, None)
+
     try:
         VIEWERS = ast.literal_eval(__get('VIEWERS', "{}"))
     except Exception as e:
@@ -174,3 +194,6 @@ def findResource(filename):
     from .utils.path import findFile
 
     return findFile(filename, *__resourcesPath)
+
+def genNotesHeading():
+    return NOTES_HEADING_MSG.format(Config.SCIPION_NOTES_FILE_VAL)
