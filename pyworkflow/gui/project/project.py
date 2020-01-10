@@ -111,7 +111,6 @@ class ProjectWindow(ProjectBaseWindow):
                             icon='fa-question-circle.gif')
 
         self.menuCfg = menu
-        # TODO: up to here
 
         if self.project.openedAsReadOnly():
             self.projName += "<READ ONLY>"
@@ -347,6 +346,9 @@ class ProjectWindow(ProjectBaseWindow):
 
 class ProjectManagerWindow(ProjectBaseWindow):
     """ Windows to manage all projects. """
+    # To allow plugins to add their own menus
+    _pluginMenus = list()
+
     def __init__(self, **kwargs):
         # Load global configuration
         settings = ProjectSettings()
