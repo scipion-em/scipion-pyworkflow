@@ -60,7 +60,7 @@ PW_ALT_TESTS_CMD = 'PW_ALT_TESTS_CMD'
 NOTES_HEADING_MSG = \
      '############################################  SCIPION NOTES  ##############################################' + \
      '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' + \
-     'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they:\n' + \
+     'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they\n' + \
      'already exist, the following variables:\n\n' + \
      '\t-SCIPION_NOTES_FILE is used to store the file name (default is {})\n' + \
      '\t-SCIPION_NOTES_PROGRAM is used to select the program which will be used to open the notes file. If \n' + \
