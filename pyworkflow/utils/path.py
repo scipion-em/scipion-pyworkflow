@@ -25,8 +25,8 @@
 This module contains the PATH related utilities
 inside the utils module
 """
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 
 import os
 import shutil

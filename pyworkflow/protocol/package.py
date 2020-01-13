@@ -23,7 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
+
 
 """
 This modules contains classes related to EM package management

@@ -27,7 +27,7 @@
 MPI utilities. runJobMPI and runJobMPISlave send and receive the commands
 to execute, in the given directory and with the given environment.
 """
-from __future__ import print_function
+
 
 import os
 from time import time, sleep

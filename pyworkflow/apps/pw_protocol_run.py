@@ -27,8 +27,6 @@
 """
 This module is responsible for launching protocol executions.
 """
-from __future__ import print_function
-
 import sys
 
 # Add callback for remote debugging if available.

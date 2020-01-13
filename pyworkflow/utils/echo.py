@@ -28,7 +28,7 @@ This module trace through printing
 module and class functions...
 Code from: http://wordaligned.org/articles/echo
 """
-from __future__ import print_function
+
 
 import inspect
 import sys

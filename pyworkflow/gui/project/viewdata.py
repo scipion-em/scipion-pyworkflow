@@ -25,7 +25,7 @@
 """
 Data-oriented view of the project objects.
 """
-from __future__ import print_function
+
 
 import tkinter as tk
 import tkinter.ttk as ttk

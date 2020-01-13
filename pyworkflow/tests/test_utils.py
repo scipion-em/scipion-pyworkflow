@@ -7,7 +7,7 @@ Created on Mar 25, 2014
 @author: roberto.marabini
 """
 
-from __future__ import print_function
+
 
 from subprocess import Popen
 from io import StringIO

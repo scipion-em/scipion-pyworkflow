@@ -69,11 +69,11 @@ class Domain:
         creating a class with __metaclass__=PluginMeta that will trigger this.
         """
         m = importlib.import_module(name)
-        cls._plugins[name] = m  # Register the name to as a plugin
-        # TODO: Load subclasses (protocols, viewers, wizards)
+
         # Define variables
         m.Plugin._defineVariables()
         m.Domain = cls  # Register the domain class for this module
+        # TODO avoid loading bibtex here and make a lazy load like the rest.
         # Load bibtex
         m._bibtex = {}
         bib = cls.__getSubmodule(name, 'bibtex')
@@ -82,24 +82,26 @@ class Domain:
                 m._bibtex = pwutils.parseBibTex(bib.__doc__)
             except Exception:
                 pass
-        return m
+        cls._plugins[name] = m  # Register the name to as a plugin
 
     @classmethod
     def getPlugins(cls):
         """ Return existing plugins for this Domain. """
         loaded = getattr(cls, '_pluginsLoaded', False)
         if not loaded:  # Load plugin only once
-            for p, name, isModule in pkgutil.iter_modules():
-                if isModule:
-                    try:
-                        importlib.import_module(name)
-                        # NOTE: After importing the modules they will
-                        # automatically being register if they has
-                        # called Domain.registerPlugin(__name__)
-                    except Exception:
-                        pass
+            cls._discoverPlugins()
             cls._pluginsLoaded = True
         return dict(cls._plugins)
+
+    @classmethod
+    def _discoverPlugins(cls):
+        for entry_point in pkg_resources.iter_entry_points('pyworkflow.plugin'):
+            cls.registerPlugin(entry_point.name)
+
+    @classmethod
+    def _discoverGUIPlugins(cls):
+        for entry_point in pkg_resources.iter_entry_points('pyworkflow.guiplugin'):
+            entry_point.load()
 
     @classmethod
     def getPlugin(cls, name):

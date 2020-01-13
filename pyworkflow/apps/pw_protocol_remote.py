@@ -29,9 +29,6 @@ This script is intended to be invoked using ssh from a master.
 So, it will just do the same job of launch._launchLocal and print
 the jobId to be tracked from the machine that was invoked.
 """
-
-from __future__ import print_function
-
 import os
 import sys
 import subprocess

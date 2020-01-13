@@ -29,8 +29,6 @@
 List all existing protocols within Scipion
 """
 
-from __future__ import print_function
-
 import sys
 
 from pwem.protocols import (ProtImport, ProtMicrographs, ProtParticles, Prot2D,

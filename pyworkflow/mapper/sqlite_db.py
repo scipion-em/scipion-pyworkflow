@@ -23,7 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
+
 
 """
 This module contains some sqlite basic tools to handle Databases.

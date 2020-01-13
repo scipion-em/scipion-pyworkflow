@@ -28,8 +28,6 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
-from __future__ import print_function
-
 from collections import OrderedDict
 import datetime as dt
 from pyworkflow.utils.reflection import getSubclasses

@@ -23,7 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
+
 
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests

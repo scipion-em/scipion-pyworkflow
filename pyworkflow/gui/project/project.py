@@ -29,8 +29,8 @@ It is composed by three panels:
 2. Right upper: VIEWS (Data/Protocols)
 3. Summary/Details
 """
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 
 import os
 import threading
@@ -111,7 +111,6 @@ class ProjectWindow(ProjectBaseWindow):
                             icon='fa-question-circle.gif')
 
         self.menuCfg = menu
-        # TODO: up to here
 
         if self.project.openedAsReadOnly():
             self.projName += "<READ ONLY>"
@@ -282,8 +281,11 @@ class ProjectWindow(ProjectBaseWindow):
         server_thread.start()
 
     # Seems it is not used and should be in scipion-em
-    # def schedulePlot(self, path, *args):
-    #     self.enqueue(lambda: EmPlotter.createFromFile(path, *args).show())
+    # Not within scipion but used from ShowJ
+    def schedulePlot(self, path, *args):
+        # FIXME: This import should not be here
+        from pwem.viewers import EmPlotter
+        self.enqueue(lambda: EmPlotter.createFromFile(path, *args).show())
 
     @classmethod
     def registerObjectCommand(cls, cmd, func):
@@ -343,6 +345,9 @@ class ProjectWindow(ProjectBaseWindow):
 
 class ProjectManagerWindow(ProjectBaseWindow):
     """ Windows to manage all projects. """
+    # To allow plugins to add their own menus
+    _pluginMenus = list()
+
     def __init__(self, **kwargs):
         # Load global configuration
         settings = ProjectSettings()

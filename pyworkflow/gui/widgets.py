@@ -26,9 +26,9 @@ Some basic GUI widgets are implemented in this module.
 The widgets here are suppose to be used to build more complex 
 elements.
 """
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+
+
+
 
 import tkinter as tk
 import tkinter.ttk as ttk

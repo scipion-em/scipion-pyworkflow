@@ -22,8 +22,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 
 from pyworkflow.utils import replaceExt, joinExt
 from .mapper import Mapper

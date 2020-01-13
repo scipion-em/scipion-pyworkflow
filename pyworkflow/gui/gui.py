@@ -21,16 +21,13 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from __future__ import print_function
-from __future__ import absolute_import
-
 import os
 import tkinter as tk
 import tkinter.font as tkFont
 import queue
 
 from pyworkflow.object import OrderedObject
-from pyworkflow import findResource
+from pyworkflow import findResource, Config as pwConfig
 from pyworkflow.utils import Message, Color, Icon
 
 from .widgets import Button
@@ -44,7 +41,7 @@ FONT_BOLD = 'fontBold'
 FONT_BIG = 'fontBig'
 cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
 cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))
-cfgFontBigSize = cfgFontSize + 2
+cfgFontBigSize = cfgFontSize + 8
 # TextColor
 cfgCitationTextColor = "dark olive green"
 cfgLabelTextColor = "black"
@@ -283,7 +280,9 @@ class Window:
     """Class to manage a Tk windows.
     It will encapsulates some basic creation and 
     setup functions. """
-    
+    # To allow plugins to add their own menus
+    _pluginMenus = list()
+
     def __init__(self, title='', masterWindow=None, weight=True,
                  minsize=(500, 300), icon=Icon.SCIPION_ICON, **kwargs):
         """Create a Tk window.
@@ -293,6 +292,9 @@ class Window:
         minsize: a minimum size for height and width
         icon: if not None, set the windows icon
         """
+        # Init gui plugins
+        pwConfig.getDomain()._discoverGUIPlugins()
+
         if masterWindow is None:
             Window._root = self
             self.root = tk.Tk()
@@ -322,6 +324,7 @@ class Window:
             self.queue = queue.Queue(maxsize=0)
         else:
             self.queue = None
+
 
     def _setIcon(self, icon):
 
@@ -426,6 +429,7 @@ class Window:
         """Create Main menu from the given MenuConfig object."""
         menu = tk.Menu(self.root, font=self.font)
         self._addMenuChilds(menu, menuConfig)
+        self._addPluginMenus(menu)
         self.root.config(menu=menu)
         return menu
         
@@ -455,6 +459,24 @@ class Window:
                 menu.add_command(label=menuLabel, compound=tk.LEFT,
                                  image=self.getImage(sub.icon.get()),
                                  command=callback(name=sub.text.get()))
+
+    def _addPluginMenus(self, menu):
+
+        if self._pluginMenus:
+            submenu = tk.Menu(self.root, tearoff=0, font=self.font)
+            menu.add_cascade(label="Others", menu=submenu)
+
+            # For each plugin menu
+            for label, callback, icon in self._pluginMenus:
+                submenu.add_command(label=label, compound=tk.LEFT,
+                                 image=self.getImage(icon),
+                                 command=callback)
+
+
+    @classmethod
+    def registerPluginMenu(cls, label, callback, icon=None):
+        # TODO: have a proper model instead of a tuple?
+        cls._pluginMenus.append((label, callback, icon))
 
     def showError(self, msg, header="Error"):
         from .dialog import showError
