@@ -108,10 +108,10 @@ class Domain:
         """ Load a given plugin name. """
         m = importlib.import_module(name)
 
-        if not cls.__isPlugin(m):
-            raise Exception("Invalid plugin '%s'. "
-                            "Class Plugin with __metaclass__=PluginMeta "
-                            "not found" % name)
+        # if not cls.__isPlugin(m):
+        #     raise Exception("Invalid plugin '%s'. "
+        #                     "Class Plugin with __metaclass__=PluginMeta "
+        #                     "not found" % name)
         return m
 
     @classmethod
