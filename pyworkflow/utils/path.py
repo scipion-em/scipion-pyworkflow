@@ -238,8 +238,8 @@ def createLink(source, dest):
     if os.path.exists(dest):
         raise Exception('Destination %s os.path.exists and is not a link'
                         % dest)
-    sourcedir = os.path.dirname(source)
-    destdir = os.path.dirname(dest)
+    sourcedir = getParentFolder(source)
+    destdir = getParentFolder(dest)
     relsource = os.path.join(os.path.relpath(sourcedir, destdir),
                              os.path.basename(source))
     os.symlink(relsource, dest)

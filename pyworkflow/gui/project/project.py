@@ -179,23 +179,24 @@ class ProjectWindow(ProjectBaseWindow):
                           ).show()
 
     def onNotes(self):
-        if not all(var in os.environ for var in ['SCIPION_NOTES_PROGRAM',
-                                                 'SCIPION_NOTES_FILE',
-                                                 'SCIPION_NOTES_ARGS']):
-            return self.showError("Missing variables SCIPION_NOTES_* under\n"
-                                  "[VARIABLES] section in the configuration file\n"
-                                  "~/.config/scipion/scipion.conf")
+        notes_program = pw.Config.SCIPION_NOTES_PROGRAM
+        notes_args = pw.Config.SCIPION_NOTES_ARGS
         args = []
-        # Program name
-        program = os.environ.get('SCIPION_NOTES_PROGRAM', None)
-        notesFile = self.project.getPath('Logs', os.environ['SCIPION_NOTES_FILE'])
+        notes_file = self.project.getPath('Logs', pw.Config.SCIPION_NOTES_FILE)
 
-        if program:
-            args.append(program)
+        # If notesFile does not exist, it is created and an explanation/documentation comment is added at the top.
+        if not os.path.exists(notes_file):
+            f = open(notes_file, 'a')
+            f.write(pw.genNotesHeading())
+            f.close()
+
+        # Then, it will be opened as specified in the conf
+        if notes_program:
+            args.append(notes_program)
             # Custom arguments
-            if os.environ.get('SCIPION_NOTES_ARGS', None):
-                args.append(os.environ['SCIPION_NOTES_ARGS'])
-            args.append(notesFile)
+            if notes_args:
+                args.append(notes_args)
+            args.append(notes_file)
             subprocess.Popen(args)  # nonblocking
         else:
             # if no program has been selected
@@ -204,9 +205,7 @@ class ProjectWindow(ProjectBaseWindow):
             # will return an error so If the file does
             # not exist I will create an empty one
             # 'a' will avoid accidental truncation
-            if not os.path.exists(notesFile):
-                open(notesFile, 'a').close()
-            openTextFileEditor(notesFile)
+            openTextFileEditor(notes_file)
 
     def onRemoveTemporaryFiles(self):
         # Project -> Remove temporary files
