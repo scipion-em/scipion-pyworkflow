@@ -1325,6 +1325,9 @@ class ProtocolsView(tk.Frame):
 
     def _getNodeText(self, node):
         nodeText = node.getLabel()
+        # Truncate text to prevent overflow
+        if len(nodeText) > 40:
+            nodeText = nodeText[:37] + "..."
 
         if node.run:
             expandedStr = '' if node.expanded else ' (+)'
