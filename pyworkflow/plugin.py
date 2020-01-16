@@ -272,7 +272,7 @@ class Domain:
 
              # Import some classes from a plugin's module,
              #   the returned tuple has the same length of the second argument
-             pt2, pt2, ... = importFromPlugin('plugin1.protocols',
+             pt1, pt2, ... = importFromPlugin('plugin1.protocols',
                                               ['pt1', 'pt2', ...])
         """
         def _tryImportFromPlugin(submodule=None):
