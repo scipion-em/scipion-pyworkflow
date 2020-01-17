@@ -179,6 +179,17 @@ class Config:
         from sysconfig import get_paths
         return join(get_paths()['data'], "lib")
 
+    @staticmethod
+    def debugOn(*args):
+        from pyworkflow.utils import envVarOn
+        return bool(envVarOn("SCIPION_DEBUG", *args))
+
+    @staticmethod
+    def toggleDebug():
+
+        newValue = not Config.debugOn()
+
+        os.environ["SCIPION_DEBUG"] = str(newValue)
 
 def join(*paths):
     """ join paths from HOME . """

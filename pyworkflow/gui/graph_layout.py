@@ -23,8 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
-
+from pyworkflow import Config
 
 
 class GraphLayout(object):
@@ -85,7 +84,7 @@ class BasicLayout(GraphLayout):
                 node.y = rightSibling.y
         except Exception as e:
             from pyworkflow.utils import envVarOn
-            if envVarOn('SCIPION_DEBUG'):
+            if Config.debugOn():
                 print("Can't draw node: %s" % node, e)
                 import traceback
                 traceback.print_stack()
