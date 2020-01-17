@@ -114,9 +114,6 @@ class Config:
     SCIPION_TESTS = __get('SCIPION_TESTS',
                           os.path.join(SCIPION_HOME, 'data', 'tests'))
 
-    SCIPION_EM_ROOT = __get('SCIPION_EM_ROOT',
-                            os.path.join(SCIPION_HOME, 'software', 'em'))
-
     # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = __get('SCIPION_TESTS_OUTPUT',
                                  os.path.join(SCIPION_USER_DATA, 'Tests'))

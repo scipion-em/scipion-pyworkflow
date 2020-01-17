@@ -451,13 +451,6 @@ class Plugin:
         """ Internal method to define variables from the environment. """
         cls._vars[varName] = os.environ.get(varName, defaultValue)
 
-    @classmethod
-    def _defineEmVar(cls, varName, defaultValue):
-        """ Shortcut method to define variables by prepending EM_ROOT
-        to the default value.
-        """
-        cls._defineVar(varName,
-                       os.path.join(pw.Config.SCIPION_EM_ROOT, defaultValue))
 
     @classmethod
     @abstractmethod
