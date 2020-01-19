@@ -28,7 +28,6 @@
 import sys
 import os
 
-import pyworkflow as pw
 from pyworkflow.project import Manager
 import pyworkflow.utils as pwutils
 
