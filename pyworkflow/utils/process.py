@@ -33,6 +33,8 @@ This module handles process execution
 import sys
 from subprocess import check_call
 
+from pyworkflow import Config
+
 from .utils import greenStr, envVarOn
 
 
@@ -56,7 +58,7 @@ def runCommand(command, env=None, cwd=None):
     """ Execute command with given environment env and directory cwd """
 
     # First let us create core dumps if in debug mode
-    if envVarOn('SCIPION_DEBUG', env):
+    if Config.DebugOn(env):
         import resource
         resource.setrlimit(resource.RLIMIT_CORE,
                            (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
