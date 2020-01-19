@@ -1494,7 +1494,7 @@ class Protocol(Step):
         self._log.error(message, redirectStandard)
 
     def debug(self, message):
-        if pwutils.envVarOn('SCIPION_DEBUG'):
+        if pw.Config.debugOn():
             self.info(message)
 
     def getWorkingDir(self):
