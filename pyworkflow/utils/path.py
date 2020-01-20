@@ -388,7 +388,7 @@ def iterBigFile(textfile, offset=0, size=None,
         for line in textfile.read(headSizeB).split('\n'):
             yield line + '\n'
         yield None  # Special result to mark omitting lines
-        textfile.seek(-tailSizeB, 2)  # ready to show the last bytes
+        textfile.seek(sizeKb*1024-tailSizeB)  # ready to show the last bytes
 
     # Add the remaining lines (from our last offset)
     for line in textfile:
