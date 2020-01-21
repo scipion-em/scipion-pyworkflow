@@ -144,10 +144,10 @@ class PsdPreview(Preview):
         self.img = ax.imshow(self.bg, cmap=cm.gray, extent=[-h, h, -h, h])
         self.ax = ax
         
-    def createRing(self):
+    def createRing(self, fc='r'):
         radius = float(self.hf)
         width = radius - float(self.lf)
-        self.ring = Wedge((0, 0), radius, 0, 360, width=width, alpha=0.15)  # Full ring
+        self.ring = Wedge((0, 0), radius, 0, 360, width=width, alpha=0.15, fc=fc)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         
@@ -179,12 +179,12 @@ class MaskPreview(ImagePreview):
         self.ring = None
         self.updateMask(outerRadius, innerRadius)
             
-    def updateMask(self, outerRadius, innerRadius=0):
+    def updateMask(self, outerRadius, innerRadius=0, fc='r'):
         if self.ring is not None:
             self.ring.remove()
         center = self.dim / 2
         width = outerRadius - innerRadius
-        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, alpha=0.15)  # Full ring
+        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, alpha=0.15, fc=fc)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         
