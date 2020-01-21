@@ -144,11 +144,10 @@ class Domain:
                 for module in module_visit:
                     try:
                         importlib.reload(module)
+                        module_visit.remove(module)
                         break
                     except Exception as ex:
                         pass
-                    finally:
-                        module_visit.remove(module)
 
     @classmethod
     def __getSubclasses(cls, submoduleName, BaseClass,
