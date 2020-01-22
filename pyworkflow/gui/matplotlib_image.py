@@ -91,7 +91,7 @@ class Preview(tk.Frame):
         """ Should be implemented in subclasses. """
         pass
     
-    def _update(self):
+    def _update(self, *args):
         """ Should be implemented in subclasses. """
         pass
     

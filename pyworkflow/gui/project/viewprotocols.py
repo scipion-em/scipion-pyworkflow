@@ -839,11 +839,11 @@ class ProtocolsView(tk.Frame):
             proc = psutil.Process(os.getpid())
             mem = psutil.virtual_memory()
             print("------------- refreshing ---------- ")
-            files = proc.get_open_files()
+            files = proc.open_files()
             print("  open files: ", len(files))
             for f in files:
                 print("    - %s, %s" % (f.path, f.fd))
-            print("  memory percent: ", proc.get_memory_percent())
+            print("  memory percent: ", proc.memory_percent())
 
         self.updateRunsGraph(True, checkPids=checkPids)
         self.updateRunsTree(False)
@@ -1326,6 +1326,9 @@ class ProtocolsView(tk.Frame):
 
     def _getNodeText(self, node):
         nodeText = node.getLabel()
+        # Truncate text to prevent overflow
+        if len(nodeText) > 40:
+            nodeText = nodeText[:37] + "..."
 
         if node.run:
             expandedStr = '' if node.expanded else ' (+)'

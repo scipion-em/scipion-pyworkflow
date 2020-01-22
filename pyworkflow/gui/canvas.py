@@ -685,8 +685,6 @@ class TextItem(Item):
         self.id_text = self.canvas.create_text(self.x, self.y, text=self.text,
                                                justify=tk.CENTER, fill=self.textColor,
                                                font=self.canvas.getRunsFont())
-        # self.id_text = self.canvas.create_text(self.x, self.y, text=self.text,
-        #                 justify = tk.CENTER, fill = self.textColor)
 
         xr, yr, w, h = self.canvas.bbox(self.id_text)
         m = self.margin

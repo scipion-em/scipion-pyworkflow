@@ -58,7 +58,7 @@ def runCommand(command, env=None, cwd=None):
     """ Execute command with given environment env and directory cwd """
 
     # First let us create core dumps if in debug mode
-    if Config.DebugOn(env):
+    if Config.debugOn(env):
         import resource
         resource.setrlimit(resource.RLIMIT_CORE,
                            (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
@@ -106,7 +106,7 @@ def killWithChilds(pid):
     """
     import psutil
     proc = psutil.Process(pid)
-    for c in proc.get_children(recursive=True):
+    for c in proc.children(recursive=True):
         if c.pid is not None:
             print("Terminating child pid: %d" % c.pid)
             c.kill()
