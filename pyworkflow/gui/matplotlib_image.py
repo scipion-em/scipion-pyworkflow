@@ -71,7 +71,7 @@ class FigureFrame(tk.Frame):
     
 class Preview(tk.Frame):
     # def __init__(self, parent, dim, dpi=36, label=None):
-    def __init__(self, parent, dim, dpi=36, label=None, col=0, row=0):
+    def __init__(self, parent, dim, dpi=36, label=None, col=0, row=0, listenersDict=None):
         tk.Frame.__init__(self, parent)
         self.dim = dim
         self.bg = np.zeros((int(dim), int(dim)), float)
@@ -82,7 +82,11 @@ class Preview(tk.Frame):
         if label:
             tk.Label(self, text=label).grid(column=0, row=1)
         self._createAxes()
-        
+
+        if listenersDict is not None:
+            for bindingKey, callback in listenersDict.items():
+                self.canvas.get_tk_widget().bind(bindingKey, callback)
+
     def setWindowTitle(self, title):
         """ Set window title"""
         self.canvas.set_window_title(title)
@@ -104,8 +108,8 @@ class Preview(tk.Frame):
     
     
 class ImagePreview(Preview):
-    def __init__(self, parent, dim, dpi=36, label=None, col=0):
-        Preview.__init__(self, parent, dim, dpi, label, col)
+    def __init__(self, parent, dim, dpi=36, label=None, col=0, listenersDict=None):
+        Preview.__init__(self, parent, dim, dpi, label, col, listenersDict=listenersDict)
             
     def _createAxes(self):
         ax = self.figure.add_axes([0, 0, 1, 1], frameon=False)
@@ -172,12 +176,12 @@ class PsdPreview(Preview):
         
         
 class MaskPreview(ImagePreview):
-    def __init__(self, parent, dim, dpi=36, label=None, col=0, outerRadius=None, innerRadius=0):
-        ImagePreview.__init__(self, parent, dim, dpi, label, col)
+    def __init__(self, parent, dim, dpi=36, label=None, col=0, outerRadius=None, innerRadius=0, listenersDict=None):
+        ImagePreview.__init__(self, parent, dim, dpi, label, col, listenersDict)
         if outerRadius is None:
             outerRadius = dim / 2
         self.ring = None
-        self.updateMask(outerRadius, innerRadius)
+        # self.updateMask(outerRadius, innerRadius)
             
     def updateMask(self, outerRadius, innerRadius=0, fc='r'):
         if self.ring is not None:
