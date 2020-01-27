@@ -30,7 +30,6 @@ import traceback
 import numpy as np
 import math
 
-
 def prettyDate(time=False):
     """
     Get a datetime object or a int() Epoch timestamp and return a
@@ -717,7 +716,6 @@ def formatExceptionInfo(level=6):
 
 
 def printTraceBack():
-    import traceback
     traceback.print_stack()
 
 

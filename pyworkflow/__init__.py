@@ -26,7 +26,7 @@ import os
 import sys
 import importlib
 import types
-
+import pyworkflow.utils as pwutils
 
 # This variable is useful to determinate the plugins compatibility with the
 # current Scipion core release.
@@ -102,20 +102,36 @@ def getViewerScript():
 
 
 class Config:
+    ''' Main Config for pyworkflow. It host the main configuration values
+    providing dafault values or, if present, taking them from the environment.
+    It has SCIPION_HOME, SCIPION_USER_DATA.
+    Necessary value is SCIPION_HOME and has to be present in the environment'''
     __get = os.environ.get  # shortcut
-    SCIPION_HOME = __get('SCIPION_HOME', '')
+
+    # SCIPION PATHS
+    SCIPION_HOME = __get('SCIPION_HOME', '') # Home for scipion
+    # Location for scipion projects
     SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
                               os.path.expanduser('~/ScipionUserData'))
+    # Where is the input data for tests...also where it will be downloaded
+    SCIPION_TESTS = __get('SCIPION_TESTS',
+                          os.path.join(SCIPION_HOME, 'data', 'tests'))
+    # Get general log file path
+    LOG_FILE = os.path.join(__get('SCIPION_LOGS', SCIPION_USER_DATA),
+                            'scipion.log')
+    # Where to install software
+    SCIPION_SOFTWARE = __get('SCIPION_SOFTWARE',
+                            os.path.join(SCIPION_HOME, 'software'))
+    # General purpose scipion tmp folder
+    SCIPION_TMP = __get('SCIPION_TMP',
+                            os.path.join(SCIPION_USER_DATA, 'tmp'))
+
+
     SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
     SCIPION_LOGO = __get('SCIPION_LOGO',
                          'scipion_logo.gif')
-    # Where is the input data for tests...also where it will be downloaded
-    SCIPION_TESTS = __get('SCIPION_TESTS',
-                          os.path.join(SCIPION_HOME, 'data', 'tests'))
 
-    SCIPION_EM_ROOT = __get('SCIPION_EM_ROOT',
-                            os.path.join(SCIPION_HOME, 'software', 'em'))
 
     # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = __get('SCIPION_TESTS_OUTPUT',
@@ -130,16 +146,18 @@ class Config:
     SCIPION_PLUGIN_REPO_URL = __get('SCIPION_PLUGIN_REPO_URL',
                                     'http://scipion.i2pc.es/getplugins/')
 
-    # Get general log file path
-    LOG_FILE = os.path.join(__get('SCIPION_LOGS', SCIPION_USER_DATA),
-                            'scipion.log')
-
-    SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE')
+    # REMOTE Section
+    SCIPION_URL = __get('SCIPION_URL' , 'http://scipion.cnb.csic.es/downloads/scipion')
+    SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE', SCIPION_URL + '/software')
+    SCIPION_URL_TESTDATA = __get('SCIPION_URL_TESTDATA', SCIPION_URL + '/data/tests')
 
     # Scipion Notes
     SCIPION_NOTES_FILE = __get('SCIPION_NOTES_FILE', 'notes.txt')
     SCIPION_NOTES_PROGRAM = __get('SCIPION_NOTES_PROGRAM', None)
     SCIPION_NOTES_ARGS = __get('SCIPION_NOTES_ARGS', None)
+
+    # Notification
+    SCIPION_NOTIFY = pwutils.envVarOn(__get('SCIPION_NOTIFY', 'True'))
 
     try:
         VIEWERS = ast.literal_eval(__get('VIEWERS', "{}"))
