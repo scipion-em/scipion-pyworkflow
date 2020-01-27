@@ -94,9 +94,12 @@ class Tester:
             for name, plugin in pw.Config.getDomain().getPlugins().items():
                 self.paths.append((name, os.path.dirname(plugin.__path__[0])))
             for k, p in self.paths:
-                testsDict[k] = testLoader.discover(os.path.join(p, k),
-                                                   pattern=args.pattern,
-                                                   top_level_dir=p)
+                testPath = os.path.join(p, k, 'tests')
+                if os.path.exists(testPath):
+                    testsDict[k] = testLoader.discover(testPath,
+                                                       pattern=args.pattern,
+                                                       top_level_dir=p)
+
 
         self.grep = [g.lower() for g in args.grep] if args.grep else []
         self.skip = args.skip
@@ -158,7 +161,7 @@ class Tester:
             test = toCheck.pop()
             if isinstance(test, unittest.TestSuite):
                 toCheck += [t for t in test]
-            else:
+            elif test not in testsFlat:
                 testsFlat.append(test)
 
         # Follow the flattened list of tests and show the module, class
