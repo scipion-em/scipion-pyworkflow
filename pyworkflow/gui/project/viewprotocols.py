@@ -133,15 +133,15 @@ class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
             status = None
 
         stoppable = status in [pwprot.STATUS_RUNNING, pwprot.STATUS_SCHEDULED, 
-                               pwprot.STATUS_LAUNCHED] 
+                               pwprot.STATUS_LAUNCHED]
 
         return [(ACTION_EDIT, single),
                 (ACTION_RENAME, single),
                 (ACTION_COPY, True),
                 (ACTION_DELETE, status != pwprot.STATUS_RUNNING),
-                (ACTION_STEPS, single),
+                (ACTION_STEPS, single and Config.debugOn()),
                 (ACTION_BROWSE, single),
-                (ACTION_DB, single),
+                (ACTION_DB, single and Config.debugOn()),
                 (ACTION_STOP, stoppable and single),
                 (ACTION_EXPORT, not single),
                 (ACTION_EXPORT_UPLOAD, not single),
@@ -612,7 +612,8 @@ class ProtocolsView(tk.Frame):
         self.root.bind("<Control-f>", self._findProtocol)
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
-        if pwutils.envVarOn('SCIPION_DEBUG'):
+        self.root.bind("<Control-d>", self._toggleDebug)
+        if Config.debugOn():
             self.root.bind("<Control-i>", self._inspectProtocols)
 
         # To bind key press to methods
@@ -833,16 +834,16 @@ class ProtocolsView(tk.Frame):
              then only case when False is from _automaticRefreshRuns where the
              refresh time is doubled each time to avoid refreshing too often.
         """
-        if pwutils.envVarOn('SCIPION_DEBUG'):
+        if Config.debugOn():
             import psutil
             proc = psutil.Process(os.getpid())
             mem = psutil.virtual_memory()
             print("------------- refreshing ---------- ")
-            files = proc.get_open_files()
+            files = proc.open_files()
             print("  open files: ", len(files))
             for f in files:
                 print("    - %s, %s" % (f.path, f.fd))
-            print("  memory percent: ", proc.get_memory_percent())
+            print("  memory percent: ", proc.memory_percent())
 
         self.updateRunsGraph(True, checkPids=checkPids)
         self.updateRunsTree(False)
@@ -1421,6 +1422,9 @@ class ProtocolsView(tk.Frame):
         self._updateActionToolbar()
         # self.updateRunsGraph()
         self.drawRunsGraph()
+
+    def _toggleDebug(self, e=None):
+        Config.toggleDebug()
 
     def _selectAllProtocols(self, e=None):
         self._selection.clear()
@@ -2169,7 +2173,7 @@ class ProtocolsView(tk.Frame):
 
             except Exception as ex:
                 self.windows.showError(str(ex))
-                if pwutils.envVarOn('SCIPION_DEBUG'):
+                if Config.debugOn():
                     import traceback
                     traceback.print_exc()
 

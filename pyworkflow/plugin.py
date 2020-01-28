@@ -250,23 +250,50 @@ class Domain:
         return cls._name
 
     @staticmethod
-    def importFromPlugin(module, method='', errorMsg='', doRaise=False):
-        """ This method try to import either the method from the module/plugin
-            or the whole module/plugin and returns what is imported if not fails.
-            When the importation fails (due to the plugin or the method is not found),
-            it prints a common message + optional errorMsg or
-            it raise with the same message if doRaise is True.
-            """
-        try:
-            if method == '':
-                output = importlib.import_module(module)
-            else:
-                output = getattr(importlib.import_module(module), method)
-            return output
-        except Exception as e:
-            plugName = module.split('.')[0]
-            errMsg = str(e) if errorMsg == '' else "%s. %s" % (str(e), errorMsg)
-            Domain.__pluginNotFound(plugName, errMsg, doRaise)
+    def importFromPlugin(module, objects=None, errorMsg='', doRaise=False):
+        """ This method try to import either a list of objects from the
+            module/plugin or the whole module/plugin and returns what is
+            imported if not fails.
+            When the import fails (due to the plugin or the object is not found),
+            it prints a common message + optional errorMsg;
+            or it raise an error with the same message, if doRaise is True.
+
+         -> Usages:
+
+             # Import the whole plugin 'plugin1' as 'plug1'
+             plug1 = importFromPlugin('plugin1')
+
+             # Import a plugin's module
+             pl1Cons = importFromPlugin('plug1.constants')
+
+             # Import a single class from a plugin's module
+             p1prot1 = importFromPlugin('plug1.protocols', 'prot1')
+
+             # Import some classes from a plugin's module,
+             #   the returned tuple has the same length of the second argument
+             pt1, pt2, ... = importFromPlugin('plugin1.protocols',
+                                              ['pt1', 'pt2', ...])
+        """
+        def _tryImportFromPlugin(submodule=None):
+            try:
+                if submodule is None:  # Import only the module
+                    output = importlib.import_module(module)
+                else:  # Import the class of that module
+                    output = getattr(importlib.import_module(module), submodule)
+                return output
+            except Exception as e:
+                plugName = module.split('.')[0]  # The Main module is the plugin
+                errMsg = (str(e) if errorMsg == ''
+                          else "%s. %s" % (str(e), errorMsg))
+                Domain.__pluginNotFound(plugName, errMsg, doRaise)
+
+        if objects is None or isinstance(objects, str):
+            output = _tryImportFromPlugin(objects)
+        else:
+            output = tuple()
+            for obj in objects:
+                output += (_tryImportFromPlugin(obj), )  # append in tuple
+        return output
 
     @classmethod
     def findClass(cls, className):
@@ -399,8 +426,7 @@ class Domain:
 
         raiseMsg = "%s\n %s\n%s\n" % (msgStr, calling, hint)
         if doRaise:
-            print("\n\n" + raiseMsg)
-            raise
+            raise Exception("\n\n" + raiseMsg)
         else:
             print(raiseMsg)
 
@@ -450,13 +476,6 @@ class Plugin:
         """ Internal method to define variables from the environment. """
         cls._vars[varName] = os.environ.get(varName, defaultValue)
 
-    @classmethod
-    def _defineEmVar(cls, varName, defaultValue):
-        """ Shortcut method to define variables by prepending EM_ROOT
-        to the default value.
-        """
-        cls._defineVar(varName,
-                       os.path.join(pw.Config.SCIPION_EM_ROOT, defaultValue))
 
     @classmethod
     @abstractmethod

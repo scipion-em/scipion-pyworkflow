@@ -29,6 +29,8 @@ from datetime import datetime
 import traceback
 import numpy as np
 import math
+from pyworkflow import Config
+
 
 def prettyDate(time=False):
     """
@@ -647,8 +649,8 @@ def getMemoryAvailable():
     return virtual_memory().total // 1024**2
 
 
-def startDebugger(mode='SCIPION_DEBUG', password='a'):
-    if mode != 'SCIPION_DEBUG' or envVarOn('SCIPION_DEBUG'):
+def startDebugger(password='a'):
+    if Config.debugOn():
         try:
             from rpdb2 import start_embedded_debugger
             print("Starting debugger...")

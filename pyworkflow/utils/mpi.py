@@ -32,6 +32,9 @@ to execute, in the given directory and with the given environment.
 import os
 from time import time, sleep
 from pickle import dumps, loads
+
+from pyworkflow import Config
+
 from .process import buildRunCommand, runCommand
 
 from pyworkflow.utils.utils import envVarOn, getLocalHostName
@@ -126,7 +129,7 @@ def runJobMPISlave(mpiComm):
             elif command.startswith("env="):
                 env = loads(command.split("=", 1)[-1])
                 print("  Setting the environment...")
-                if envVarOn('SCIPION_DEBUG'):
+                if Config.debugOn():
                     print(env)
             else:
                 print("  %s" % command)

@@ -98,6 +98,9 @@ class ProjectWindow(ProjectBaseWindow):
                             icon='fa-search.gif')
         projMenu.addSubMenu('Export tree graph', 'export_tree')
         projMenu.addSubMenu('', '')  # add separator
+        projMenu.addSubMenu('Debug Mode', 'debug mode',
+                            shortCut="Ctrl+d")
+        projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Notes', 'notes', icon='fa-pencil.gif')
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
@@ -177,6 +180,9 @@ class ProjectWindow(ProjectBaseWindow):
                           self, self.project.getPath(''), 
                           selectButton=None  # we will select nothing
                           ).show()
+
+    def onDebugMode(self):
+        pw.Config.toggleDebug()
 
     def onNotes(self):
         notes_program = pw.Config.SCIPION_NOTES_PROGRAM
