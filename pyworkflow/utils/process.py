@@ -33,10 +33,8 @@ This module handles process execution
 import sys
 from subprocess import check_call
 
-from pyworkflow import Config
-
 from .utils import greenStr, envVarOn
-
+from pyworkflow import Config
 
 # The job should be launched from the working directory!
 def runJob(log, programname, params,           

@@ -26,7 +26,6 @@ import os
 import sys
 import importlib
 import types
-import pyworkflow.utils as pwutils
 
 # This variable is useful to determinate the plugins compatibility with the
 # current Scipion core release.
@@ -113,12 +112,16 @@ class Config:
     # Location for scipion projects
     SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
                               os.path.expanduser('~/ScipionUserData'))
+    # Path for Scipion logs
+    SCIPION_LOGS = __get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs'))
+
+    # Get general log file path
+    LOG_FILE = os.path.join(SCIPION_LOGS, 'scipion.log')
+
     # Where is the input data for tests...also where it will be downloaded
     SCIPION_TESTS = __get('SCIPION_TESTS',
                           os.path.join(SCIPION_HOME, 'data', 'tests'))
-    # Get general log file path
-    LOG_FILE = os.path.join(__get('SCIPION_LOGS', SCIPION_USER_DATA),
-                            'scipion.log')
+
     # Where to install software
     SCIPION_SOFTWARE = __get('SCIPION_SOFTWARE',
                             os.path.join(SCIPION_HOME, 'software'))
@@ -155,8 +158,13 @@ class Config:
     SCIPION_NOTES_PROGRAM = __get('SCIPION_NOTES_PROGRAM', None)
     SCIPION_NOTES_ARGS = __get('SCIPION_NOTES_ARGS', None)
 
+    # Aspect
+    SCIPION_FONT_NAME = __get('SCIPION_FONT_NAME', "Helvetica")
+    SCIPION_FONT_SIZE = int(__get('SCIPION_FONT_SIZE', 10))
+
+
     # Notification
-    SCIPION_NOTIFY = pwutils.envVarOn(__get('SCIPION_NOTIFY', 'True'))
+    SCIPION_NOTIFY = __get('SCIPION_NOTIFY', 'True') != "False"
 
     try:
         VIEWERS = ast.literal_eval(__get('VIEWERS', "{}"))

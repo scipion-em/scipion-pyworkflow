@@ -39,8 +39,8 @@ FONT_ITALIC = 'fontItalic'
 FONT_NORMAL = 'fontNormal'
 FONT_BOLD = 'fontBold'
 FONT_BIG = 'fontBig'
-cfgFontName = os.environ.get('SCIPION_FONT_NAME', "Helvetica")
-cfgFontSize = int(os.environ.get('SCIPION_FONT_SIZE', 10))
+cfgFontName = pwConfig.SCIPION_FONT_NAME
+cfgFontSize = pwConfig.SCIPION_FONT_SIZE
 cfgFontBigSize = cfgFontSize + 8
 # TextColor
 cfgCitationTextColor = "dark olive green"

@@ -29,8 +29,6 @@ from datetime import datetime
 import traceback
 import numpy as np
 import math
-from pyworkflow import Config
-
 
 def prettyDate(time=False):
     """
