@@ -257,8 +257,8 @@ class Text(tk.Text, Scrollable):
             path = os.path.join(dirname, fname)
 
         if os.path.exists(path):
-            import xmippLib
-            fn = xmippLib.FileName(path)
+            from pwem import emlib
+            fn = emlib.FileName(path)
             if fn is not None and (fn.isImage() or fn.isMetaData()):
                 # fn is None if xmippLib is the xmippLib ghost library
                 from pwem.viewers import DataView
