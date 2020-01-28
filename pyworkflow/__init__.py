@@ -114,9 +114,6 @@ class Config:
     SCIPION_TESTS = __get('SCIPION_TESTS',
                           os.path.join(SCIPION_HOME, 'data', 'tests'))
 
-    SCIPION_EM_ROOT = __get('SCIPION_EM_ROOT',
-                            os.path.join(SCIPION_HOME, 'software', 'em'))
-
     # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = __get('SCIPION_TESTS_OUTPUT',
                                  os.path.join(SCIPION_USER_DATA, 'Tests'))
@@ -179,6 +176,17 @@ class Config:
         from sysconfig import get_paths
         return join(get_paths()['data'], "lib")
 
+    @staticmethod
+    def debugOn(*args):
+        from pyworkflow.utils import envVarOn
+        return bool(envVarOn("SCIPION_DEBUG", *args))
+
+    @staticmethod
+    def toggleDebug():
+
+        newValue = not Config.debugOn()
+
+        os.environ["SCIPION_DEBUG"] = str(newValue)
 
 def join(*paths):
     """ join paths from HOME . """
