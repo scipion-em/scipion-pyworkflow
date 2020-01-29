@@ -152,10 +152,13 @@ class LabelSlider(ttk.Frame):
         it also keeps a variable with the value """
 
     def __init__(self, master, label, from_=0, to=100, value=50, callback=None, step=0.01):
+        self.selectedLabelText = '=> {}'.format(label)
+        self.labelText = '   {}'.format(label)
         self.var = tk.DoubleVar()
         self.var.set(float(value))
         ttk.Frame.__init__(self, master)
-        ttk.Label(self, text=label).pack(side=tk.LEFT, padx=2, pady=2, anchor='s')
+        self.labelWidget = ttk.Label(self, text=self.labelText)
+        self.labelWidget.pack(side=tk.LEFT, padx=2, pady=2, anchor='s')
         self.slider = tk.Scale(self, from_=from_, to=to, variable=self.var, 
                                bigincrement=step, resolution=step, orient=tk.HORIZONTAL)
         if callback:
@@ -164,6 +167,13 @@ class LabelSlider(ttk.Frame):
         
     def get(self):
         return self.var.get()
+
+    def highlightLabel(self):
+        self.labelWidget.config(text=self.selectedLabelText)
+
+    def removeHighlightFromLabel(self):
+        self.labelWidget.config(text=self.labelText)
+
     
     
 class ComboBox(ttk.Combobox):
