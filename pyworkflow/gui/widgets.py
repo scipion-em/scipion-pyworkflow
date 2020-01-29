@@ -151,19 +151,22 @@ class LabelSlider(ttk.Frame):
     """ Create a personalized frame that contains label, slider and label value
         it also keeps a variable with the value """
 
-    def __init__(self, master, label, from_=0, to=100, value=50, callback=None, step=0.01):
+    def __init__(self, master, label, from_=0, to=100, value=50, callback=None, step=0.01, length=None,
+                 tickinterval=None, showvalue=None):
         self.selectedLabelText = '=> {}'.format(label)
         self.labelText = '   {}'.format(label)
         self.var = tk.DoubleVar()
         self.var.set(float(value))
         ttk.Frame.__init__(self, master)
         self.labelWidget = ttk.Label(self, text=self.labelText)
-        self.labelWidget.pack(side=tk.LEFT, padx=2, pady=2, anchor='s')
         self.slider = tk.Scale(self, from_=from_, to=to, variable=self.var, 
-                               bigincrement=step, resolution=step, orient=tk.HORIZONTAL)
+                               bigincrement=step, resolution=step, orient=tk.HORIZONTAL, length=length,
+                               tickinterval=tickinterval, showvalue=showvalue)
         if callback:
             self.var.trace('w', callback)
-        self.slider.pack(side=tk.LEFT, padx=2)
+
+        self.labelWidget.grid(row=0, column=0, sticky='NSE', padx=5, pady=5)
+        self.slider.grid(row=0, column=1, sticky='NS', padx=5, pady=5)
         
     def get(self):
         return self.var.get()
