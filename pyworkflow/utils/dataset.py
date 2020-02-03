@@ -362,7 +362,7 @@ class SqliteDataSet(DataSet):
         
         checkedImgCols = {}  # Check if the image columns are volumes
         # FIXME: Move this to scipion-em? Maybe remove the whole module that is not used?
-        from pwem.convert import ImageHandler
+        from pwem.emlib.image import ImageHandler
         ih = ImageHandler() 
         
         # Populate the table in the DataSet

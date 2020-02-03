@@ -568,7 +568,6 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             # To tolerate str(labelObj) in case xmippLib is missing, but
             # still being able to open a project.
             try:
-
                 value = str(labelObj)
             except Exception as e:
                 print("Can not convert object %s - %s to string." % (objKey, name))

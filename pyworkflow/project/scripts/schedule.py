@@ -26,7 +26,6 @@
 # **************************************************************************
 
 
-
 import sys
 import os
 
@@ -39,18 +38,25 @@ import pyworkflow.utils as pwutils
 def usage(error):
     print("""
     ERROR: %s
-
-    Usage: scipion python scripts/schedule_project.py
-        name="project name"
-        This script will schedule all the protocols in a linear project
+    
+    Usage: scipion python -m pyworkflow/project/scripts/schedule projectName 
+    
+              options: --ignore ProtClassName1 ProtClassName2 ProtClassLabel1 ...
+              
+        This script will schedule all the protocols in a project. If '--ignore' 
+          options is passed, it doesn't schedule those protocols that belongs to 
+          ProtClassName1 or ProtClassName2 class, also those protocols with a 
+          objLabel equals to ProtClassLabel1
     """ % error)
     sys.exit(1)
 
 
 n = len(sys.argv)
 
-if n != 2:
-    usage("This script accepts 1 parameter: the project name.")
+if n < 2:
+    usage("This script accepts 1 mandatory parameter: the project name.")
+elif n > 2 and sys.argv[2] != '--ignore':
+    usage("The protocol class names to be ignored must be after a '--ignore' flag.")
 
 projName = sys.argv[1]
 
@@ -78,4 +84,11 @@ runs = project.getRuns()
 # Now assuming that there is no dependencies between runs
 # and the graph is lineal
 for prot in runs:
-    project.scheduleProtocol(prot)
+    protClassName = prot.getClassName()
+    protLabelName = prot.getObjLabel()
+    if (protClassName not in sys.argv[3:] and
+        protLabelName not in sys.argv[3:]):
+        project.scheduleProtocol(prot)
+    else:
+        print(pwutils.getColorStr("\nNot scheduling '%s' protocol named '%s'.\n"
+                                  % (protClassName, protLabelName), 'blue'))
