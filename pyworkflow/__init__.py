@@ -101,10 +101,11 @@ def getViewerScript():
 
 
 class Config:
-    ''' Main Config for pyworkflow. It host the main configuration values
-    providing dafault values or, if present, taking them from the environment.
-    It has SCIPION_HOME, SCIPION_USER_DATA.
-    Necessary value is SCIPION_HOME and has to be present in the environment'''
+    """ Main Config for pyworkflow. It contains the main configuration values
+    providing default values or, if present, taking them from the environment.
+    It has SCIPION_HOME, SCIPION_USER_DATA ...
+    Necessary value is SCIPION_HOME and has to be present in the environment"""
+
     __get = os.environ.get  # shortcut
 
     # SCIPION PATHS
@@ -140,7 +141,7 @@ class Config:
                                  os.path.join(SCIPION_USER_DATA, 'Tests'))
 
     SCIPION_CONFIG = __get('SCIPION_CONFIG', 'scipion.conf')
-    SCIPION_LOCAL_CONFIG = __get('SCIPION_LOCAL_CONFIG', 'scipion.conf')
+    SCIPION_LOCAL_CONFIG = __get('SCIPION_LOCAL_CONFIG', SCIPION_CONFIG)
     SCIPION_HOSTS = __get('SCIPION_HOSTS', 'hosts.conf')
     SCIPION_PROTOCOLS = __get('SCIPION_PROTOCOLS', 'protocols.conf')
 
@@ -175,6 +176,21 @@ class Config:
 
     SCIPION_DOMAIN = __get('SCIPION_DOMAIN', None)
     PW_ALT_TESTS_CMD = __get(PW_ALT_TESTS_CMD, getTestsScript())
+
+    @classmethod
+    def getVariableDict(cls):
+        """ fill environment with own values"""
+        myDict = dict()
+        # For each attribute
+        for name, value in vars(cls).items():
+            # Skip methods, only str objects
+            if isinstance(value, str):
+                # Skip starting with __ : __doc__, __module__
+                if not name.startswith("__"):
+                    # Update environment
+                    myDict[name] =value
+
+        return myDict
 
     @classmethod
     def getDomain(cls):
