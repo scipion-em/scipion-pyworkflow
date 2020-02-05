@@ -135,14 +135,12 @@ class PsdPreview(Preview):
             self.canvas.draw()
                             
     def _createAxes(self):
-        # axdef = SubplotZero(self.figure, 111)
-        # ax = self.figure.add_subplot(axdef)
-        ax = self.figure.add_axes([0.1, 0.1, 0.8, 0.8], frameon=False)
-        # ax.xaxis.set_offset_position(0.5)
-        # ax.set_position([0, 0, 1, 1])
+        ax = self.figure.add_axes([0, 0, 1, 1], frameon=False)
         h = 0.5
         ax.set_xlim(-h, h)
         ax.set_ylim(-h, h)
+        ax.tick_params(axis="x", direction="in", pad=-15)
+        ax.tick_params(axis="y", direction="in", pad=-22)
         ax.grid(True)
         self.ring = None
         self.img = ax.imshow(self.bg, cmap=cm.gray, extent=[-h, h, -h, h])
