@@ -33,6 +33,7 @@ elements.
 import tkinter as tk
 import tkinter.ttk as ttk
 
+from math import ceil
 from . import gui
 from .tooltip import ToolTip
 
@@ -144,8 +145,25 @@ class Scrollable(object):
         widget.bind("<MouseWheel>", self.scroll)
         # with Linux OS
         widget.bind("<Button-4>", self.scroll)
-        widget.bind("<Button-5>", self.scroll) 
-        
+        widget.bind("<Button-5>", self.scroll)
+
+
+class ExplanationText(tk.Text):
+    """Create an explanation text box"""
+
+    def __init__(self, frame, width=50, text='', bg='#d9d9d9', border=0, wrap='word'):
+        self.width = width
+        self.text = tk.Text(frame, width=width, bg=bg, wrap=wrap, border=border)
+        self.updateExpText(text)
+
+    def updateExpText(self, text):
+        # Adapt textbox height to text length (width is in characters)
+        n_lines = ceil(len(text)/self.width)
+
+        self.text.config(state='normal', height=n_lines)  # Make it editable
+        self.text.insert(tk.END, text)
+        self.text.config(state='disabled')  # Disable text edit
+
             
 class LabelSlider(ttk.Frame):
     """ Create a personalized frame that contains label, slider and label value

@@ -176,12 +176,9 @@ class PsdPreview(Preview):
         
         
 class MaskPreview(ImagePreview):
-    def __init__(self, parent, dim, dpi=36, label=None, col=0, outerRadius=None, innerRadius=0, listenersDict=None):
+    def __init__(self, parent, dim, dpi=36, label=None, col=0, listenersDict=None):
         ImagePreview.__init__(self, parent, dim, dpi, label, col, listenersDict)
-        if outerRadius is None:
-            outerRadius = dim / 2
         self.ring = None
-        # self.updateMask(outerRadius, innerRadius)
             
     def updateMask(self, outerRadius, innerRadius=0, fc=None):
         if self.ring is not None:
