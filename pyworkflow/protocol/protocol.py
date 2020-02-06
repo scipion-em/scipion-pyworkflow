@@ -1078,7 +1078,19 @@ class Protocol(Step):
             newStep = self._steps[i]
             oldStep = self._prevSteps[i]
             if (not oldStep.isFinished() or newStep != oldStep
-                    or not oldStep._postconditions()):
+                or not oldStep._postconditions()):
+                if pw.Config.debugOn():
+                    self.info("Starting at step %d" % i)
+                    self.info("     Old step: %s, args: %s"
+                              % (oldStep.funcName, oldStep.argsStr))
+                    self.info("     New step: %s, args: %s"
+                              % (newStep.funcName, newStep.argsStr))
+                    self.info("     not oldStep.isFinished(): %s"
+                              % (not oldStep.isFinished()))
+                    self.info("     newStep != oldStep: %s"
+                              % (newStep != oldStep))
+                    self.info("     not oldStep._postconditions(): %s"
+                              % (not oldStep._postconditions()))
                 return i
             newStep.copy(oldStep)
 
