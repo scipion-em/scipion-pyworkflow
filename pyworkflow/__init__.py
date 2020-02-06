@@ -163,9 +163,8 @@ class Config:
     SCIPION_FONT_NAME = __get('SCIPION_FONT_NAME', "Helvetica")
     SCIPION_FONT_SIZE = int(__get('SCIPION_FONT_SIZE', 10))
 
-
     # Notification
-    SCIPION_NOTIFY = __get('SCIPION_NOTIFY', 'True') != "False"
+    SCIPION_NOTIFY = __get('SCIPION_NOTIFY', 'True')
 
     try:
         VIEWERS = ast.literal_eval(__get('VIEWERS', "{}"))
