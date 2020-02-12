@@ -55,7 +55,7 @@ HOME = os.path.abspath(os.path.dirname(__file__))
 PYTHON = os.environ.get("SCIPION_PYTHON", 'python3')
 
 # Variable constants, probably we can have a constants module
-PW_ALT_TESTS_CMD = 'PW_ALT_TESTS_CMD'
+SCIPION_LAUNCH_CMD = 'SCIPION_LAUNCH_CMD'
 NOTES_HEADING_MSG = \
      '############################################  SCIPION NOTES  ##############################################' + \
      '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' + \
@@ -174,7 +174,7 @@ class Config:
         print(e)
 
     SCIPION_DOMAIN = __get('SCIPION_DOMAIN', None)
-    PW_ALT_TESTS_CMD = __get(PW_ALT_TESTS_CMD, getTestsScript())
+    SCIPION_LAUNCH_CMD = __get(SCIPION_LAUNCH_CMD, getTestsScript())
 
     @classmethod
     def getVariableDict(cls):
