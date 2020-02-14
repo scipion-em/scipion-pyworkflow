@@ -35,7 +35,7 @@ import argparse
 from collections import OrderedDict
 
 import pyworkflow.tests as pwtests
-from pyworkflow import getTestsScript, SCIPION_LAUNCH_CMD
+from pyworkflow import getTestsScript, SCIPION_TESTS_CMD
 
 from pyworkflow.tests import *
 
@@ -204,7 +204,7 @@ class Tester:
             print("%s %s %s" % (spaces, self.getTestsCommand(), itemName))
 
     def getTestsCommand(self):
-        return os.environ.get(SCIPION_LAUNCH_CMD, getTestsScript())
+        return os.environ.get(SCIPION_TESTS_CMD, getTestsScript())
 
     def printTests(self, moduleName, tests):
         self._visitTests(moduleName, tests, self._printNewItem)
