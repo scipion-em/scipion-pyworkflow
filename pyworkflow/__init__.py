@@ -26,22 +26,7 @@ import os
 import sys
 import importlib
 import types
-
-
-# This variable is useful to determinate the plugins compatibility with the
-# current Scipion core release.
-# This version does not need to change with future scipion releases
-# if plugins are still compatible, so future hot fixes releases or even micros
-# or minor release should not change this CORE_VERSION. Only, when a new release
-# will break existing plugins, this number needs to be incremented.
-CORE_VERSION = '3.0.0'
-
-# Versions
-VERSION_1 = '1.0.0'
-VERSION_1_1 = '1.1.0'
-VERSION_1_2 = '1.2.0'
-VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.0'
+from .constants import *
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -53,23 +38,10 @@ OLD_VERSIONS = (VERSION_1, VERSION_1_1, VERSION_1_2, VERSION_2_0)
 __version__ = LAST_VERSION + 'a1'
 
 HOME = os.path.abspath(os.path.dirname(__file__))
-PYTHON = os.environ.get("SCIPION_PYTHON", 'python3')
+PYTHON = os.environ.get(SCIPION_PYTHON, SCIPION_PYTHON_DEFAULT)
 
 # Variable constants, probably we can have a constants module
-PW_ALT_TESTS_CMD = 'PW_ALT_TESTS_CMD'
-NOTES_HEADING_MSG = \
-     '############################################  SCIPION NOTES  ##############################################' + \
-     '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' + \
-     'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they\n' + \
-     'already exist, the following variables:\n\n' + \
-     '\t-SCIPION_NOTES_FILE is used to store the file name (default is {})\n' + \
-     '\t-SCIPION_NOTES_PROGRAM is used to select the program which will be used to open the notes file. If \n' + \
-     '\t empty, it will use the default program used by your OS to open that type of file.\n' + \
-     '\t-SCIPION_NOTES_ARGS is used to add input arguments that will be used in the calling of the program\n' + \
-     '\t specified in SCIPION_NOTES_PROGRAM.\n\n' + \
-     'These lines can be removed if desired.\n\n' + \
-     '###########################################################################################################' + \
-     '\n\nPROJECT NOTES:'
+
 
 # Following are a set of functions to centralize the way to get
 # files from several scipion folder such as: config or apps
@@ -78,74 +50,72 @@ def getPWPath(*paths):
 
 
 def getAppsPath():
-    return os.path.join(getPWPath(), 'apps')
+    return os.path.join(getPWPath(), APPS)
 
 
 def getSyncDataScript():
-    return os.path.join(getAppsPath(), 'pw_sync_data.py')
+    return os.path.join(getAppsPath(), PW_SYNC_DATA)
 
 
 def getScheduleScript():
-    return os.path.join(getAppsPath(), 'pw_schedule_run.py')
+    return os.path.join(getAppsPath(), PW_SCHEDULE_RUN)
 
 
 def getPwProtMpiRunScript():
-    return os.path.join(getAppsPath(), 'pw_protocol_mpirun.py')
+    return os.path.join(getAppsPath(), PW_PROTOCOL_MPIRUN)
 
 
 def getTestsScript():
-    return os.path.join(getAppsPath(), 'pw_run_tests.py')
+    return os.path.join(getAppsPath(), PW_RUN_TESTS)
 
 
 def getViewerScript():
-    return os.path.join(getAppsPath(), 'pw_viewer.py')
+    return os.path.join(getAppsPath(), PW_VIEWER)
 
 
 class Config:
     __get = os.environ.get  # shortcut
-    SCIPION_HOME = __get('SCIPION_HOME', '')
-    SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
-                              os.path.expanduser('~/ScipionUserData'))
-    SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
-                                  'scipion@cnb.csic.es')
-    SCIPION_LOGO = __get('SCIPION_LOGO',
-                         'scipion_logo.gif')
+    SCIPION_HOME = __get(SCIPION_HOME, '')
+    SCIPION_USER_DATA = __get(SCIPION_USER_DATA,
+                              os.path.expanduser(SCIPION_USER_DATA_DEFAULT))
+    SCIPION_SUPPORT_EMAIL = __get(SCIPION_SUPPORT_EMAIL,
+                                  SCIPION_SUPPORT_EMAIL_DEFAULT)
+    SCIPION_LOGO = __get(SCIPION_LOGO,
+                         SCIPION_LOGO_DEFAULT)
     # Where is the input data for tests...also where it will be downloaded
-    SCIPION_TESTS = __get('SCIPION_TESTS',
+    SCIPION_TESTS = __get(SCIPION_TESTS,
                           os.path.join(SCIPION_HOME, 'data', 'tests'))
 
     # Where the output of the tests will be stored
-    SCIPION_TESTS_OUTPUT = __get('SCIPION_TESTS_OUTPUT',
-                                 os.path.join(SCIPION_USER_DATA, 'Tests'))
+    SCIPION_TESTS_OUTPUT = __get(SCIPION_TESTS_OUTPUT,
+                                 os.path.join(SCIPION_USER_DATA, 'tests'))
 
-    SCIPION_CONFIG = __get('SCIPION_CONFIG', 'scipion.conf')
-    SCIPION_LOCAL_CONFIG = __get('SCIPION_LOCAL_CONFIG', 'scipion.conf')
-    SCIPION_HOSTS = __get('SCIPION_HOSTS', 'hosts.conf')
-    SCIPION_PROTOCOLS = __get('SCIPION_PROTOCOLS', 'protocols.conf')
+    SCIPION_CONFIG = __get(SCIPION_CONFIG, SCIPION_CONFIG_DEFAULT)
+    SCIPION_LOCAL_CONFIG = __get(SCIPION_LOCAL_CONFIG, SCIPION_CONFIG_DEFAULT)
+    SCIPION_HOSTS = __get(SCIPION_HOSTS, SCIPION_HOSTS_DEFAULT)
+    SCIPION_PROTOCOLS = __get(SCIPION_PROTOCOLS, SCIPION_PROTOCOLS_DEFAULT)
 
-    SCIPION_PLUGIN_JSON = __get('SCIPION_PLUGIN_JSON', None)
-    SCIPION_PLUGIN_REPO_URL = __get('SCIPION_PLUGIN_REPO_URL',
-                                    'http://scipion.i2pc.es/getplugins/')
+    SCIPION_PLUGIN_JSON = __get(SCIPION_PLUGIN_JSON, None)
+    SCIPION_PLUGIN_REPO_URL = __get(SCIPION_PLUGIN_REPO_URL, SCIPION_PLUGIN_REPO_URL_DEFAULT)
 
     # Get general log file path
-    LOG_FILE = os.path.join(__get('SCIPION_LOGS', SCIPION_USER_DATA),
-                            'scipion.log')
+    LOG_FILE = os.path.join(__get(SCIPION_LOGS, SCIPION_USER_DATA), SCIPION_LOGS_DEFAULT)
 
-    SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE')
+    SCIPION_URL_SOFTWARE = __get(SCIPION_URL_SOFTWARE)
 
     # Scipion Notes
-    SCIPION_NOTES_FILE = __get('SCIPION_NOTES_FILE', 'notes.txt')
-    SCIPION_NOTES_PROGRAM = __get('SCIPION_NOTES_PROGRAM', None)
-    SCIPION_NOTES_ARGS = __get('SCIPION_NOTES_ARGS', None)
+    SCIPION_NOTES_FILE = __get(SCIPION_NOTES_FILE, SCIPION_NOTES_FILE_DEFAULT)
+    SCIPION_NOTES_PROGRAM = __get(SCIPION_NOTES_PROGRAM, None)
+    SCIPION_NOTES_ARGS = __get(SCIPION_NOTES_ARGS, None)
 
     try:
-        VIEWERS = ast.literal_eval(__get('VIEWERS', "{}"))
+        VIEWERS = ast.literal_eval(__get(VIEWERS, "{}"))
     except Exception as e:
         VIEWERS = {}
-        print("ERROR loading preferred viewers, VIEWERS variable will be ignored")
+        print("ERROR loading preferred viewers, {} variable will be ignored".format(VIEWERS))
         print(e)
 
-    SCIPION_DOMAIN = __get('SCIPION_DOMAIN', None)
+    SCIPION_DOMAIN = __get(SCIPION_DOMAIN, None)
     PW_ALT_TESTS_CMD = __get(PW_ALT_TESTS_CMD, getTestsScript())
 
     @classmethod
@@ -169,24 +139,24 @@ class Config:
         else:
             value = moduleOrNameOrPath
         cls.SCIPION_DOMAIN = value
-        os.environ['SCIPION_DOMAIN'] = value
+        os.environ[SCIPION_DOMAIN] = value
 
     @staticmethod
     def getPythonLibFolder():
         from sysconfig import get_paths
-        return join(get_paths()['data'], "lib")
+        return join(get_paths()['data'], 'lib')
 
     @staticmethod
     def debugOn(*args):
         from pyworkflow.utils import envVarOn
-        return bool(envVarOn("SCIPION_DEBUG", *args))
+        return bool(envVarOn(SCIPION_DEBUG, *args))
 
     @staticmethod
     def toggleDebug():
 
         newValue = not Config.debugOn()
 
-        os.environ["SCIPION_DEBUG"] = str(newValue)
+        os.environ[SCIPION_DEBUG] = str(newValue)
 
 def join(*paths):
     """ join paths from HOME . """
@@ -202,4 +172,4 @@ def findResource(filename):
     return findFile(filename, *__resourcesPath)
 
 def genNotesHeading():
-    return NOTES_HEADING_MSG.format(Config.SCIPION_NOTES_FILE)
+    return SCIPION_NOTES_HEADING_MSG.format(Config.SCIPION_NOTES_FILE)

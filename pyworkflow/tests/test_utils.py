@@ -12,6 +12,7 @@ Created on Mar 25, 2014
 from subprocess import Popen
 from io import StringIO
 
+from pyworkflow import APPS
 from pyworkflow.utils.process import killWithChilds
 from pyworkflow.tests import *
 from pyworkflow.utils import utils, prettyDict
@@ -86,7 +87,7 @@ class TestProccess(BaseTest):
         setupTestOutput(cls)
         
     def test_Process(self):
-        prog = pw.join('apps', 'pw_sleep.py')
+        prog = pw.join(APPS, 'pw_sleep.py')
         p = Popen('python %s 500' % prog, shell=True)
         print("pid: %s" % p.pid)
         time.sleep(5)
