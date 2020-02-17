@@ -44,10 +44,7 @@ VERSION_3_0 = '3.0.0'
 
 # Dir names
 APPS = 'apps'
-DATA = 'data'
-TESTS = 'tests'
-LIB = 'lib'
-RESOURCES = 'resources'
+DATA_TAG = 'data'
 
 # Scripts
 PW_SYNC_DATA = 'pw_sync_data.py'

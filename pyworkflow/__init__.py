@@ -84,11 +84,11 @@ class Config:
                          SCIPION_LOGO_DEFAULT)
     # Where is the input data for tests...also where it will be downloaded
     SCIPION_TESTS = __get(SCIPION_TESTS,
-                          os.path.join(SCIPION_HOME, DATA, TESTS))
+                          os.path.join(SCIPION_HOME, 'data', 'tests'))
 
     # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = __get(SCIPION_TESTS_OUTPUT,
-                                 os.path.join(SCIPION_USER_DATA, TESTS))
+                                 os.path.join(SCIPION_USER_DATA, 'tests'))
 
     SCIPION_CONFIG = __get(SCIPION_CONFIG, SCIPION_CONFIG_DEFAULT)
     SCIPION_LOCAL_CONFIG = __get(SCIPION_LOCAL_CONFIG, SCIPION_CONFIG_DEFAULT)
@@ -144,7 +144,7 @@ class Config:
     @staticmethod
     def getPythonLibFolder():
         from sysconfig import get_paths
-        return join(get_paths()[DATA], LIB)
+        return join(get_paths()['data'], 'lib')
 
     @staticmethod
     def debugOn(*args):
@@ -163,7 +163,7 @@ def join(*paths):
     return os.path.join(HOME, *paths)
 
 
-__resourcesPath = [join(RESOURCES)]
+__resourcesPath = [join('resources')]
 
 
 def findResource(filename):

@@ -42,7 +42,7 @@ from pyworkflow.gui.text import TaggedText
 from pyworkflow.gui import Canvas, RoundedTextBox
 from pyworkflow.gui.graph import LevelTree
 from pyworkflow.gui.form import getObjectLabel
-from pyworkflow.constants import DATA
+from pyworkflow.constants import DATA_TAG
 
 ACTION_EDIT = pwutils.Message.LABEL_EDIT
 ACTION_COPY = pwutils.Message.LABEL_COPY
@@ -91,11 +91,11 @@ def populateTree(tree, elements, parentId=''):
             if node.count:
                 t += ' (%d)' % node.count
             node.nodeId = tree.insert(parentId, 'end', node.getName(),
-                                      text=t, tags=DATA)
+                                      text=t, tags=DATA_TAG)
             populateTree(tree, node.getChilds(), node.nodeId)
             if node.count:
                 tree.see(node.nodeId)
-                tree.item(node.nodeId, tags=('non-empty', DATA))
+                tree.item(node.nodeId, tags=('non-empty', DATA_TAG))
 
     
 class ProjectDataView(tk.Frame):
@@ -171,9 +171,9 @@ class ProjectDataView(tk.Frame):
         self.dataTree.grid(row=0, column=0, sticky='news')
 
         # bind click events
-        self.dataTree.tag_bind(DATA, '<Double-1>', self._dataItemClick)
-        self.dataTree.tag_bind(DATA, '<Return>', self._dataItemClick)
-        self.dataTree.tag_bind(DATA, '<KP_Enter>', self._dataItemClick)
+        self.dataTree.tag_bind(DATA_TAG, '<Double-1>', self._dataItemClick)
+        self.dataTree.tag_bind(DATA_TAG, '<Return>', self._dataItemClick)
+        self.dataTree.tag_bind(DATA_TAG, '<KP_Enter>', self._dataItemClick)
 
         # Program automatic refresh
         self.dataTree.after(3000, self._automaticRefreshData)
