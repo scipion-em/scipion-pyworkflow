@@ -17,14 +17,6 @@ class Config:
 
     # SCIPION PATHS
     SCIPION_HOME = __get('SCIPION_HOME', '') # Home for scipion
-    # Location for scipion projects
-    SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
-                              os.path.expanduser('~/ScipionUserData'))
-    # Path for Scipion logs
-    SCIPION_LOGS = __get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs'))
-
-    # Get general log file path
-    LOG_FILE = os.path.join(SCIPION_LOGS, 'scipion.log')
 
     # Where is the input data for tests...also where it will be downloaded
     SCIPION_TESTS = __get('SCIPION_TESTS',
@@ -33,20 +25,36 @@ class Config:
     # Where to install software
     SCIPION_SOFTWARE = __get('SCIPION_SOFTWARE',
                             os.path.join(SCIPION_HOME, 'software'))
+
+    # Where libraries folder
+    SCIPION_LIBS = os.path.join(SCIPION_HOME, 'lib')
+    SCIPION_BINDINGS = os.path.join(SCIPION_HOME, 'bindings')
+
+    # User dependent paths
+    # Location for scipion projects
+    SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
+                              os.path.expanduser('~/ScipionUserData'))
+
     # General purpose scipion tmp folder
     SCIPION_TMP = __get('SCIPION_TMP',
                             os.path.join(SCIPION_USER_DATA, 'tmp'))
+    # LOGS PATHS
+    # Path for Scipion logs
+    SCIPION_LOGS = __get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs'))
 
+    # Get general log file path
+    LOG_FILE = os.path.join(SCIPION_LOGS, 'scipion.log')
+
+    # Where the output of the tests will be stored
+    SCIPION_TESTS_OUTPUT = __get('SCIPION_TESTS_OUTPUT',
+                                 os.path.join(SCIPION_USER_DATA, 'Tests'))
 
     SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
     SCIPION_LOGO = __get('SCIPION_LOGO',
                          'scipion_logo.gif')
 
-    # Where the output of the tests will be stored
-    SCIPION_TESTS_OUTPUT = __get('SCIPION_TESTS_OUTPUT',
-                                 os.path.join(SCIPION_USER_DATA, 'Tests'))
-
+    # Config folders
     SCIPION_CONFIG = __get('SCIPION_CONFIG', 'scipion.conf')
     SCIPION_LOCAL_CONFIG = __get('SCIPION_LOCAL_CONFIG', SCIPION_CONFIG)
     SCIPION_HOSTS = __get('SCIPION_HOSTS', 'hosts.conf')
