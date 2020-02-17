@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -22,9 +21,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
-
-
 """
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
@@ -32,7 +28,6 @@ execution and tracking like: Step and Protocol
 
 import os
 import sys
-import pickle
 import json
 import time
 
@@ -223,7 +218,7 @@ class FunctionStep(Step):
         self._func = func  # Function should be set before run
         self._args = funcArgs
         self.funcName = String(funcName)
-        self.argsStr = String(pickle.dumps(funcArgs))
+        self.argsStr = String(json.dumps(funcArgs))
         self.setInteractive(kwargs.get('interactive', False))
         if kwargs.get('wait', False):
             self.setStatus(STATUS_WAITING)
@@ -241,14 +236,14 @@ class FunctionStep(Step):
             missingFiles = pwutils.missingPaths(*resultFiles)
             if len(missingFiles):
                 raise Exception('Missing filePaths: ' + ' '.join(missingFiles))
-            self._resultFiles.set(pickle.dumps(resultFiles))
+            self._resultFiles.set(json.dumps(resultFiles))
 
     def _postconditions(self):
         """ This type of Step, will simply check
         as postconditions that the result filePaths exists"""
         if not self._resultFiles.hasValue():
             return True
-        filePaths = pickle.loads(self._resultFiles.get().encode('utf-8'))
+        filePaths = json.loads(self._resultFiles.get())
 
         return len(pwutils.missingPaths(*filePaths)) == 0
 
@@ -1083,7 +1078,19 @@ class Protocol(Step):
             newStep = self._steps[i]
             oldStep = self._prevSteps[i]
             if (not oldStep.isFinished() or newStep != oldStep
-                    or not oldStep._postconditions()):
+                or not oldStep._postconditions()):
+                if pw.Config.debugOn():
+                    self.info("Starting at step %d" % i)
+                    self.info("     Old step: %s, args: %s"
+                              % (oldStep.funcName, oldStep.argsStr))
+                    self.info("     New step: %s, args: %s"
+                              % (newStep.funcName, newStep.argsStr))
+                    self.info("     not oldStep.isFinished(): %s"
+                              % (not oldStep.isFinished()))
+                    self.info("     newStep != oldStep: %s"
+                              % (newStep != oldStep))
+                    self.info("     not oldStep._postconditions(): %s"
+                              % (not oldStep._postconditions()))
                 return i
             newStep.copy(oldStep)
 
