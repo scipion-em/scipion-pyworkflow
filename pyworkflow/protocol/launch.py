@@ -113,13 +113,13 @@ def _runsLocally(protocol):
 def _getAppsProgram(prog):
     """ Get a command to launch a program under the apps folder.
     """
-    return "%s %s" % (pw.PYTHON, pw.join('apps', prog))
+    return "%s %s" % (pw.PYTHON, pw.join(pw.APPS, prog))
 
 
 def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
     # Check first if we need to launch with MPI or not
     command = ('%s "%s" "%s" %s'
-               % (pw.join('apps', 'pw_protocol_run.py'),
+               % (pw.join(pw.APPS, 'pw_protocol_run.py'),
                   protocol.getProject().path, protocol.getDbPath(),
                   protocol.strId()))
     hostConfig = protocol.getHostConfig()

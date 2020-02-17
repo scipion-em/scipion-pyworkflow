@@ -31,20 +31,18 @@ import tkinter as tk
 import matplotlib
 import numpy as np
 
+from pyworkflow import TK_GRAY_DEFAULT
+
 try:
     matplotlib.use('TkAgg')
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     import matplotlib.pyplot as plt
 except ImportError:
-    # matplotlib.use('Agg')
     plt = None
 
 from matplotlib.figure import Figure
 import matplotlib.cm as cm
 from matplotlib.patches import Wedge
-
-# import xmippLib
-# import pyworkflow.gui as pwgui
 
 
 class FigureFrame(tk.Frame):
@@ -79,6 +77,7 @@ class Preview(tk.Frame):
         self.figure = Figure(figsize=(ddim, ddim), dpi=dpi, frameon=False)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self)
         self.canvas.get_tk_widget().grid(column=0, row=0)  # , sticky=(N, W, E, S))
+        self.canvas.get_tk_widget().config(bg=TK_GRAY_DEFAULT)
         if label:
             tk.Label(self, text=label).grid(column=0, row=1)
         self._createAxes()
@@ -125,8 +124,8 @@ class ImagePreview(Preview):
         
         
 class PsdPreview(Preview):
-    def __init__(self, master, dim, lf, hf, dpi=72, label="PSD", Z=None):
-        Preview.__init__(self, master, dim, dpi, label)
+    def __init__(self, master, dim, lf, hf, dpi=72, label="PSD", listenersDict=None):
+        Preview.__init__(self, master, dim, dpi, label, listenersDict=listenersDict)
         self.lf = lf
         self.hf = hf
         if self.ring:
