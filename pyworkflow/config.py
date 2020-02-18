@@ -4,7 +4,9 @@ import os
 import sys
 import types
 
-from pyworkflow import SCIPION_TESTS_CMD, getTestsScript
+from pyworkflow import (SCIPION_TESTS_CMD, getTestsScript, SCIPION_HOME,
+                        SCIPION_NOTES_FILE, SCIPION_NOTES_PROGRAM, SCIPION_NOTES_ARGS,
+                        SCIPION_DOMAIN, SCIPION_DEBUG)
 
 
 class Config:
@@ -16,19 +18,15 @@ class Config:
     __get = os.environ.get  # shortcut
 
     # SCIPION PATHS
-    SCIPION_HOME = __get('SCIPION_HOME', '') # Home for scipion
-
-    # Where is the input data for tests...also where it will be downloaded
-    SCIPION_TESTS = __get('SCIPION_TESTS',
-                          os.path.join(SCIPION_HOME, 'data', 'tests'))
+    SCIPION_HOME = __get(SCIPION_HOME, '') # Home for scipion
 
     # Where to install software
     SCIPION_SOFTWARE = __get('SCIPION_SOFTWARE',
                             os.path.join(SCIPION_HOME, 'software'))
 
     # Where libraries folder
-    SCIPION_LIBS = os.path.join(SCIPION_HOME, 'lib')
-    SCIPION_BINDINGS = os.path.join(SCIPION_HOME, 'bindings')
+    SCIPION_LIBS = os.path.join(SCIPION_SOFTWARE, 'lib')
+    SCIPION_BINDINGS = os.path.join(SCIPION_SOFTWARE, 'bindings')
 
     # User dependent paths
     # Location for scipion projects
@@ -70,9 +68,9 @@ class Config:
     SCIPION_URL_TESTDATA = __get('SCIPION_URL_TESTDATA', SCIPION_URL + '/data/tests')
 
     # Scipion Notes
-    SCIPION_NOTES_FILE = __get('SCIPION_NOTES_FILE', 'notes.txt')
-    SCIPION_NOTES_PROGRAM = __get('SCIPION_NOTES_PROGRAM', None)
-    SCIPION_NOTES_ARGS = __get('SCIPION_NOTES_ARGS', None)
+    SCIPION_NOTES_FILE = __get(SCIPION_NOTES_FILE, 'notes.txt')
+    SCIPION_NOTES_PROGRAM = __get(SCIPION_NOTES_PROGRAM, None)
+    SCIPION_NOTES_ARGS = __get(SCIPION_NOTES_ARGS, None)
 
     # Aspect
     SCIPION_FONT_NAME = __get('SCIPION_FONT_NAME', "Helvetica")
@@ -88,7 +86,7 @@ class Config:
         print("ERROR loading preferred viewers, VIEWERS variable will be ignored")
         print(e)
 
-    SCIPION_DOMAIN = __get('SCIPION_DOMAIN', None)
+    SCIPION_DOMAIN = __get(SCIPION_DOMAIN, None)
     SCIPION_TESTS_CMD = __get(SCIPION_TESTS_CMD, getTestsScript())
 
     @classmethod
@@ -127,7 +125,7 @@ class Config:
         else:
             value = moduleOrNameOrPath
         cls.SCIPION_DOMAIN = value
-        os.environ['SCIPION_DOMAIN'] = value
+        os.environ[SCIPION_DOMAIN] = value
 
     @staticmethod
     def getPythonLibFolder():
@@ -137,11 +135,10 @@ class Config:
     @staticmethod
     def debugOn(*args):
         from pyworkflow.utils import envVarOn
-        return bool(envVarOn("SCIPION_DEBUG", *args))
+        return bool(envVarOn(SCIPION_DEBUG, *args))
 
     @staticmethod
     def toggleDebug():
 
         newValue = not Config.debugOn()
-
-        os.environ["SCIPION_DEBUG"] = str(newValue)
+        os.environ[SCIPION_DEBUG] = str(newValue)

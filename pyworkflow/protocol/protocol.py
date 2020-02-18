@@ -1367,9 +1367,9 @@ class Protocol(Step):
         self._store(self.methodsVar)
         self._store(self.endTime)
 
-        if pwutils.envVarOn('SCIPION_DEBUG_NOCLEAN'):
+        if pwutils.envVarOn(pw.SCIPION_DEBUG_NOCLEAN):
             self.warning('Not cleaning temp folder since '
-                         'SCIPION_DEBUG_NOCLEAN is set to True.')
+                         '%s is set to True.' % pw.SCIPION_DEBUG_NOCLEAN)
         elif not self.isFailed():
             self.info('Cleaning temp folder....')
             self.cleanTmp()

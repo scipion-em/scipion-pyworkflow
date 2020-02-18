@@ -133,11 +133,11 @@ def get_parser():
     g.add_argument(
         '--upload', action='store_true',
         help=("Upload local dataset to the server. The dataset name must be "
-              "the name of its folder relative to the $SCIPION_TESTS folder."))
+              "the name of its folder relative to the $%s folder." % pw.SCIPION_TESTS))
     g.add_argument(
         '--list', action='store_true',
-        help=('List local datasets (from $SCIPION_TESTS) and remote ones '
-              '(remote url can be specified with --url).'))
+        help=('List local datasets (from $%s) and remote ones '
+              '(remote url can be specified with --url).' % pw.SCIPION_TESTS))
     g.add_argument(
         '--format', action='store_true',
         help='Create a MANIFEST file with checksums in the datasets folders.')

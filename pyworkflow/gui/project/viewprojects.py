@@ -206,7 +206,7 @@ class ProjectsView(tk.Frame):
 
     def openProject(self, projName):
         from subprocess import Popen
-        script = pw.join('apps', 'pw_project.py')
+        script = pw.join(pw.APPS, 'pw_project.py')
         Popen([pw.PYTHON, script, projName])
 
     def deleteProject(self, projName):
