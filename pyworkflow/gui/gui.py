@@ -27,7 +27,7 @@ import tkinter.font as tkFont
 import queue
 
 from pyworkflow.object import OrderedObject
-from pyworkflow import findResource, Config as pwConfig
+import pyworkflow  as pw
 from pyworkflow.utils import Message, Color, Icon
 
 from .widgets import Button
@@ -39,8 +39,8 @@ FONT_ITALIC = 'fontItalic'
 FONT_NORMAL = 'fontNormal'
 FONT_BOLD = 'fontBold'
 FONT_BIG = 'fontBig'
-cfgFontName = pwConfig.SCIPION_FONT_NAME
-cfgFontSize = pwConfig.SCIPION_FONT_SIZE
+cfgFontName = pw.Config.SCIPION_FONT_NAME
+cfgFontSize = pw.Config.SCIPION_FONT_SIZE
 cfgFontBigSize = cfgFontSize + 8
 # TextColor
 cfgCitationTextColor = "dark olive green"
@@ -179,7 +179,7 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
     if imgDict is not None and imageName in imgDict:
         return imgDict[imageName]
     if not os.path.isabs(imageName):
-        imagePath = findResource(imageName)
+        imagePath = pw.findResource(imageName)
     else:
         imagePath = imageName
     image = None
@@ -258,7 +258,7 @@ class Window:
         icon: if not None, set the windows icon
         """
         # Init gui plugins
-        pwConfig.getDomain()._discoverGUIPlugins()
+        pw.Config.getDomain()._discoverGUIPlugins()
 
         if masterWindow is None:
             Window._root = self
@@ -295,11 +295,11 @@ class Window:
 
         if icon is not None:
             try:
-                path = findResource(icon)
+                path = pw.findResource(icon)
                 # If path is None --> Icon not found
                 if path is None:
                     # By default, if icon is not found use default scipion one.
-                    path = findResource(Icon.SCIPION_ICON)
+                    path = pw.findResource(Icon.SCIPION_ICON)
 
                 abspath = os.path.abspath(path)
 
