@@ -24,9 +24,13 @@ class Config:
     SCIPION_SOFTWARE = __get('SCIPION_SOFTWARE',
                             os.path.join(SCIPION_HOME, 'software'))
 
-    # Where libraries folder
+    # Where are the libraries and bindings folder
     SCIPION_LIBS = os.path.join(SCIPION_SOFTWARE, 'lib')
     SCIPION_BINDINGS = os.path.join(SCIPION_SOFTWARE, 'bindings')
+
+    # Where is the input data for tests...also where it will be downloaded
+    SCIPION_TESTS = __get('SCIPION_TESTS',
+                          os.path.join(SCIPION_HOME, 'data', 'tests'))
 
     # User dependent paths
     # Location for scipion projects
