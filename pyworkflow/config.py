@@ -6,7 +6,7 @@ import types
 
 from pyworkflow import (SCIPION_TESTS_CMD, getTestsScript, SCIPION_HOME,
                         SCIPION_NOTES_FILE, SCIPION_NOTES_PROGRAM, SCIPION_NOTES_ARGS,
-                        SCIPION_DOMAIN, SCIPION_DEBUG)
+                        SCIPION_DOMAIN, SCIPION_DEBUG, SCIPION_DEBUG_NOCLEAN)
 
 
 class Config:
@@ -34,12 +34,12 @@ class Config:
 
     # User dependent paths
     # Location for scipion projects
-    SCIPION_USER_DATA = __get('SCIPION_USER_DATA',
-                              os.path.expanduser('~/ScipionUserData'))
+    SCIPION_USER_DATA = os.path.expanduser(__get('SCIPION_USER_DATA',
+                                                 '~/ScipionUserData'))
 
     # General purpose scipion tmp folder
     SCIPION_TMP = __get('SCIPION_TMP',
-                            os.path.join(SCIPION_USER_DATA, 'tmp'))
+                        os.path.join(SCIPION_USER_DATA, 'tmp'))
     # LOGS PATHS
     # Path for Scipion logs
     SCIPION_LOGS = __get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs'))
@@ -143,6 +143,6 @@ class Config:
 
     @staticmethod
     def toggleDebug():
-
         newValue = not Config.debugOn()
         os.environ[SCIPION_DEBUG] = str(newValue)
+        os.environ[SCIPION_DEBUG_NOCLEAN] = str(newValue)
