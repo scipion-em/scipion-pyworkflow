@@ -40,7 +40,6 @@ from abc import ABCMeta, abstractmethod
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
-import sys
 
 class Domain:
     """ Class to represent the application domain.
@@ -609,17 +608,18 @@ class TemplateDirData():
 
 
 class Template():
-    def __init__(self, pluginName, tempPath, description=None):
+    def __init__(self, pluginName, tempPath, description="Description not provided"):
         self.pluginName = pluginName
         self.templateName = os.path.basename(tempPath).replace(".json.template", "")
         self.templateDir = os.path.abspath(tempPath)
         self.description = description
 
     def getObjId(self):
-        return self.get()
-
-    def get(self):
+        # return self.get()
         return self.pluginName + '-' + self.templateName
+
+    # def get(self):
+    #     return self.pluginName + '-' + self.templateName
 
 
 class TemplateList():
@@ -648,7 +648,7 @@ def getTemplates():
         If more than one template is found or passed, a dialog is raised
         to choose one.
     """
-    templateFolder = pw.getExternalJsonTemplates()
+    templateFolder = pw.Config.getExternalJsonTemplates()
     # Check if other plugins have json.templates
     domain = pw.Config.getDomain()
     tempList = TemplateList()
