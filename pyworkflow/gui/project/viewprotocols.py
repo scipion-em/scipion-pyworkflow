@@ -31,7 +31,6 @@ INIT_REFRESH_SECONDS = 3
 View with the protocols inside the main project window.
 """
 import os
-import pickle
 import json
 import re
 import tempfile
@@ -216,11 +215,11 @@ class StepsTreeProvider(pwgui.tree.TreeProvider):
     @staticmethod
     def getObjectPreview(obj):
 
-        args = pickle.loads(obj.argsStr.get())
+        args = json.loads(obj.argsStr.get())
         msg = "*Prerequisites*: %s \n" % str(obj._prerequisites)
         msg += "*Arguments*: " + '\n  '.join([str(a) for a in args])
         if hasattr(obj, 'resultFiles'):
-            results = pickle.loads(obj.resultFiles.get())
+            results = json.loads(obj.resultFiles.get())
             if len(results):
                 msg += "\n*Result files:* " + '\n  '.join(results)
 

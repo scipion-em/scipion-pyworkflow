@@ -31,20 +31,18 @@ import tkinter as tk
 import matplotlib
 import numpy as np
 
+from pyworkflow import TK_GRAY_DEFAULT
+
 try:
     matplotlib.use('TkAgg')
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
     import matplotlib.pyplot as plt
 except ImportError:
-    # matplotlib.use('Agg')
     plt = None
 
 from matplotlib.figure import Figure
 import matplotlib.cm as cm
 from matplotlib.patches import Wedge
-
-# import xmippLib
-# import pyworkflow.gui as pwgui
 
 
 class FigureFrame(tk.Frame):
@@ -71,7 +69,7 @@ class FigureFrame(tk.Frame):
     
 class Preview(tk.Frame):
     # def __init__(self, parent, dim, dpi=36, label=None):
-    def __init__(self, parent, dim, dpi=36, label=None, col=0, row=0):
+    def __init__(self, parent, dim, dpi=36, label=None, col=0, row=0, listenersDict=None):
         tk.Frame.__init__(self, parent)
         self.dim = dim
         self.bg = np.zeros((int(dim), int(dim)), float)
@@ -79,10 +77,15 @@ class Preview(tk.Frame):
         self.figure = Figure(figsize=(ddim, ddim), dpi=dpi, frameon=False)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self)
         self.canvas.get_tk_widget().grid(column=0, row=0)  # , sticky=(N, W, E, S))
+        self.canvas.get_tk_widget().config(bg=TK_GRAY_DEFAULT)
         if label:
             tk.Label(self, text=label).grid(column=0, row=1)
         self._createAxes()
-        
+
+        if listenersDict is not None:
+            for bindingKey, callback in listenersDict.items():
+                self.canvas.get_tk_widget().bind(bindingKey, callback)
+
     def setWindowTitle(self, title):
         """ Set window title"""
         self.canvas.set_window_title(title)
@@ -104,8 +107,8 @@ class Preview(tk.Frame):
     
     
 class ImagePreview(Preview):
-    def __init__(self, parent, dim, dpi=36, label=None, col=0):
-        Preview.__init__(self, parent, dim, dpi, label, col)
+    def __init__(self, parent, dim, dpi=36, label=None, col=0, listenersDict=None):
+        Preview.__init__(self, parent, dim, dpi, label, col, listenersDict=listenersDict)
             
     def _createAxes(self):
         ax = self.figure.add_axes([0, 0, 1, 1], frameon=False)
@@ -121,8 +124,8 @@ class ImagePreview(Preview):
         
         
 class PsdPreview(Preview):
-    def __init__(self, master, dim, lf, hf, dpi=72, label="PSD", Z=None):
-        Preview.__init__(self, master, dim, dpi, label)
+    def __init__(self, master, dim, lf, hf, dpi=72, label="PSD", listenersDict=None):
+        Preview.__init__(self, master, dim, dpi, label, listenersDict=listenersDict)
         self.lf = lf
         self.hf = hf
         if self.ring:
@@ -131,23 +134,21 @@ class PsdPreview(Preview):
             self.canvas.draw()
                             
     def _createAxes(self):
-        # axdef = SubplotZero(self.figure, 111)
-        # ax = self.figure.add_subplot(axdef)
-        ax = self.figure.add_axes([0.1, 0.1, 0.8, 0.8], frameon=False)
-        # ax.xaxis.set_offset_position(0.5)
-        # ax.set_position([0, 0, 1, 1])
+        ax = self.figure.add_axes([0, 0, 1, 1], frameon=False)
         h = 0.5
         ax.set_xlim(-h, h)
         ax.set_ylim(-h, h)
+        ax.tick_params(axis="x", direction="in", pad=-15)
+        ax.tick_params(axis="y", direction="in", pad=-22)
         ax.grid(True)
         self.ring = None
         self.img = ax.imshow(self.bg, cmap=cm.gray, extent=[-h, h, -h, h])
         self.ax = ax
         
-    def createRing(self):
+    def createRing(self, fc=None):
         radius = float(self.hf)
         width = radius - float(self.lf)
-        self.ring = Wedge((0, 0), radius, 0, 360, width=width, alpha=0.15)  # Full ring
+        self.ring = Wedge((0, 0), radius, 0, 360, width=width, alpha=0.15, fc=fc)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         
@@ -172,19 +173,16 @@ class PsdPreview(Preview):
         
         
 class MaskPreview(ImagePreview):
-    def __init__(self, parent, dim, dpi=36, label=None, col=0, outerRadius=None, innerRadius=0):
-        ImagePreview.__init__(self, parent, dim, dpi, label, col)
-        if outerRadius is None:
-            outerRadius = dim / 2
+    def __init__(self, parent, dim, dpi=36, label=None, col=0, listenersDict=None):
+        ImagePreview.__init__(self, parent, dim, dpi, label, col, listenersDict)
         self.ring = None
-        self.updateMask(outerRadius, innerRadius)
             
-    def updateMask(self, outerRadius, innerRadius=0):
+    def updateMask(self, outerRadius, innerRadius=0, fc=None):
         if self.ring is not None:
             self.ring.remove()
         center = self.dim / 2
         width = outerRadius - innerRadius
-        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, alpha=0.15)  # Full ring
+        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, alpha=0.15, fc=fc)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         

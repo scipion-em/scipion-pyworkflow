@@ -42,8 +42,7 @@ from pyworkflow.gui.text import TaggedText
 from pyworkflow.gui import Canvas, RoundedTextBox
 from pyworkflow.gui.graph import LevelTree
 from pyworkflow.gui.form import getObjectLabel
-
-DATA_TAG = 'data'
+from pyworkflow.constants import DATA_TAG
 
 ACTION_EDIT = pwutils.Message.LABEL_EDIT
 ACTION_COPY = pwutils.Message.LABEL_COPY

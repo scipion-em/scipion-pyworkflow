@@ -33,6 +33,9 @@ elements.
 import tkinter as tk
 import tkinter.ttk as ttk
 
+from math import ceil
+
+from pyworkflow import TK_GRAY_DEFAULT
 from . import gui
 from .tooltip import ToolTip
 
@@ -144,26 +147,56 @@ class Scrollable(object):
         widget.bind("<MouseWheel>", self.scroll)
         # with Linux OS
         widget.bind("<Button-4>", self.scroll)
-        widget.bind("<Button-5>", self.scroll) 
-        
+        widget.bind("<Button-5>", self.scroll)
+
+
+class ExplanationText(tk.Text):
+    """Create an explanation text box"""
+
+    def __init__(self, frame, text='', bg=TK_GRAY_DEFAULT, border=0, wrap='word'):
+        self.text = tk.Text(frame, bg=bg, wrap=wrap, border=border)
+        self.updateExpText(text)
+
+    def updateExpText(self, text, width=50):
+        # Adapt textbox height to text length (width is in characters)
+        n_lines = ceil(len(text)/width)
+
+        self.text.config(state='normal', height=n_lines)  # Make it editable
+        self.text.insert(tk.END, text)
+        self.text.config(state='disabled')  # Disable text edit
+
             
 class LabelSlider(ttk.Frame):
     """ Create a personalized frame that contains label, slider and label value
         it also keeps a variable with the value """
 
-    def __init__(self, master, label, from_=0, to=100, value=50, callback=None, step=0.01):
+    def __init__(self, master, label, from_=0, to=100, value=50, callback=None, step=0.01, length=None,
+                 labelWidth=None, tickinterval=None, showvalue=None):
+        self.selectedLabelText = '=> {}'.format(label)
+        self.labelText = '   {}'.format(label)
         self.var = tk.DoubleVar()
         self.var.set(float(value))
         ttk.Frame.__init__(self, master)
-        ttk.Label(self, text=label).pack(side=tk.LEFT, padx=2, pady=2, anchor='s')
-        self.slider = tk.Scale(self, from_=from_, to=to, variable=self.var, 
-                               bigincrement=step, resolution=step, orient=tk.HORIZONTAL)
+        self.labelWidget = ttk.Label(self, text=self.labelText, width=labelWidth)
+        self.slider = tk.Scale(self, from_=from_, to=to, variable=self.var,
+                               bigincrement=step, resolution=step, orient=tk.HORIZONTAL, length=length,
+                               tickinterval=tickinterval, showvalue=showvalue)
         if callback:
             self.var.trace('w', callback)
-        self.slider.pack(side=tk.LEFT, padx=2)
+
+        self.labelWidget.grid(row=0, column=0, sticky='nes', padx=5, pady=5)
+        self.slider.grid(row=0, column=1, sticky='news', padx=5, pady=5)
+        self.columnconfigure(1, weight=3)
         
     def get(self):
         return self.var.get()
+
+    def highlightLabel(self):
+        self.labelWidget.config(text=self.selectedLabelText)
+
+    def removeHighlightFromLabel(self):
+        self.labelWidget.config(text=self.labelText)
+
     
     
 class ComboBox(ttk.Combobox):

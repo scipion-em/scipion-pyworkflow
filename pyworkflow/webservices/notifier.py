@@ -89,7 +89,8 @@ class ProjectWorkflowNotifier(object):
             now = time.time()
             os.utime(self._getUuidFileName(), (now, now))
         except Exception:
-            print("Could not notify, maybe there is not internet connection.")
+            pass
+            #print("Could not notify, maybe there is not internet connection.")
 
     def _dataModified(self, projectWorfklow):
         try:
