@@ -615,11 +615,7 @@ class Template():
         self.description = description
 
     def getObjId(self):
-        # return self.get()
         return self.pluginName + '-' + self.templateName
-
-    # def get(self):
-    #     return self.pluginName + '-' + self.templateName
 
 
 class TemplateList():
@@ -628,13 +624,6 @@ class TemplateList():
 
     def addTemplate(self, t):
         self.templates.append(t)
-
-    # def getList(self, ids = True):
-    #     if ids:
-    #         objList = [t.id for t in self.templates]
-    #     else:
-    #         objList = [t.templateDir for t in self.templates]
-    #     return objList
 
     def genFromStrList(self, templateList):
         for t in templateList:
