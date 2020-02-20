@@ -188,6 +188,11 @@ class Config:
 
         os.environ["SCIPION_DEBUG"] = str(newValue)
 
+    @classmethod
+    def getExternalJsonTemplates(cls):
+        return os.path.dirname(cls.SCIPION_CONFIG)
+
+
 def join(*paths):
     """ join paths from HOME . """
     return os.path.join(HOME, *paths)

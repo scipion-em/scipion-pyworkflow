@@ -26,9 +26,9 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import glob
 import os
 import importlib
-import pkgutil
 import inspect
 import traceback
 import types
@@ -40,7 +40,7 @@ from abc import ABCMeta, abstractmethod
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
-
+import sys
 
 class Domain:
     """ Class to represent the application domain.
@@ -588,3 +588,80 @@ class PluginInfo:
     def getKeywords(self):
         return self._metadata.get('Keywords', '')
 
+class TemplateDirData():
+    def __init__(self, plugin):
+        self.path = self.getPath(plugin)
+        self.fileList = self.fillFileList()
+
+    def getPath(self, plugin):
+        path = os.path.join(os.path.dirname(plugin.__file__), "templates")
+        if os.path.exists(path):
+            return path
+        else:
+            return ""
+
+    def fillFileList(self):
+        fileList = []
+        if self.path:
+            for file in glob.glob1(self.path, "*.json.template"):
+                fileList.append(file)
+            return fileList
+
+
+class Template():
+    def __init__(self, pluginName, tempPath, description=None):
+        self.pluginName = pluginName
+        self.templateName = os.path.basename(tempPath).replace(".json.template", "")
+        self.templateDir = os.path.abspath(tempPath)
+        self.description = description
+
+    def getObjId(self):
+        return self.get()
+
+    def get(self):
+        return self.pluginName + '-' + self.templateName
+
+
+class TemplateList():
+    def __init__(self, templates=[]):
+        self.templates = templates
+
+    def addTemplate(self, t):
+        self.templates.append(t)
+
+    # def getList(self, ids = True):
+    #     if ids:
+    #         objList = [t.id for t in self.templates]
+    #     else:
+    #         objList = [t.templateDir for t in self.templates]
+    #     return objList
+
+    def genFromStrList(self, templateList):
+        for t in templateList:
+            parsedPath = t.split(os.path.sep)
+            pluginName = parsedPath[parsedPath.index('templates') - 1]
+            self.addTemplate(Template(pluginName, t))
+
+
+def getTemplates():
+    """ Get the plugin templates from the templates directory.
+        If more than one template is found or passed, a dialog is raised
+        to choose one.
+    """
+    templateFolder = pw.getExternalJsonTemplates()
+    # Check if other plugins have json.templates
+    domain = pw.Config.getDomain()
+    tempList = TemplateList()
+    for pluginName, plugin in domain.getPlugins().items():
+        tDir = TemplateDirData(plugin)
+        if tDir.path:
+            for templateName in tDir.fileList:
+                t = Template(pluginName, os.path.join(tDir.path, templateName))
+                tempList.addTemplate(t)
+
+    # Check if there is any .json.template in the template folder
+    # get the template folder
+    for templateName in glob.glob1(templateFolder, "*.json.template"):
+        t = Template("user templates", os.path.join(templateFolder, templateName))
+        tempList.addTemplate(t)
+    return tempList.templates
