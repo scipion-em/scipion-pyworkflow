@@ -551,6 +551,22 @@ class Plugin:
 
         return (["Missing variables:"] + missing) if missing else []
 
+    @staticmethod
+    def getTemplates(tempList, tDir, pluginName, templateFolder):
+        """ Get the plugin templates from the templates directory.
+            If more than one template is found or passed, a dialog is raised
+            to choose one.
+        """
+        for templateName in tDir.fileList:
+            t = Template(pluginName, os.path.join(tDir.path, templateName))
+            tempList.addTemplate(t)
+
+        # Check if there is any .json.template in the template folder
+        # get the template folder (we only want it to be included once)
+        if len(tempList.templates) == 0:
+            for templateName in glob.glob1(templateFolder, "*.json.template"):
+                t = Template("user templates", os.path.join(templateFolder, templateName))
+                tempList.addTemplate(t)
 
 class PluginInfo:
     """
@@ -632,25 +648,25 @@ class TemplateList():
             self.addTemplate(Template(pluginName, t))
 
 
-def getTemplates():
-    """ Get the plugin templates from the templates directory.
-        If more than one template is found or passed, a dialog is raised
-        to choose one.
-    """
-    templateFolder = pw.Config.getExternalJsonTemplates()
-    # Check if other plugins have json.templates
-    domain = pw.Config.getDomain()
-    tempList = TemplateList()
-    for pluginName, plugin in domain.getPlugins().items():
-        tDir = TemplateDirData(plugin)
-        if tDir.path:
-            for templateName in tDir.fileList:
-                t = Template(pluginName, os.path.join(tDir.path, templateName))
-                tempList.addTemplate(t)
-
-    # Check if there is any .json.template in the template folder
-    # get the template folder
-    for templateName in glob.glob1(templateFolder, "*.json.template"):
-        t = Template("user templates", os.path.join(templateFolder, templateName))
-        tempList.addTemplate(t)
-    return tempList.templates
+# def getTemplates():
+#     """ Get the plugin templates from the templates directory.
+#         If more than one template is found or passed, a dialog is raised
+#         to choose one.
+#     """
+#     templateFolder = pw.Config.getExternalJsonTemplates()
+#     # Check if other plugins have json.templates
+#     domain = pw.Config.getDomain()
+#     tempList = TemplateList()
+#     for pluginName, plugin in domain.getPlugins().items():
+#         tDir = TemplateDirData(plugin)
+#         if tDir.path:
+#             for templateName in tDir.fileList:
+#                 t = Template(pluginName, os.path.join(tDir.path, templateName))
+#                 tempList.addTemplate(t)
+#
+#     # Check if there is any .json.template in the template folder
+#     # get the template folder
+#     for templateName in glob.glob1(templateFolder, "*.json.template"):
+#         t = Template("user templates", os.path.join(templateFolder, templateName))
+#         tempList.addTemplate(t)
+#     return tempList.templates
