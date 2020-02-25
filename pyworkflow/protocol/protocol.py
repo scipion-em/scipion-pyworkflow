@@ -768,6 +768,7 @@ class Protocol(Step):
         for key, attr in self.getAttributes():
             if isinstance(attr, domain._objectClass):
                 yield key, attr
+                return
 
     def isInStreaming(self):
         # For the moment let's assume a protocol is in streaming

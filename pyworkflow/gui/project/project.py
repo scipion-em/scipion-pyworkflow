@@ -466,13 +466,13 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
                 # to be run in the same GUI thread and avoid concurrent
                 # access to the project sqlite database
                 window.getViewWidget().executeProtocol(protocol)
-            if msg.startswith('run function'):
+            elif msg.startswith('run function'):
                 functionName = tokens[2]
                 functionPointer = getattr(window, functionName)
                 functionPointer(*tokens[3:])
             else:
-                answer = 'no answer available'
-                self.request.sendall(answer + '\n')
+                answer = b'no answer available\n'
+                self.request.sendall(answer)
         except Exception as e:
             print(e)
             import traceback

@@ -28,8 +28,11 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
+import os
 from collections import OrderedDict
 import datetime as dt
+
+from pyworkflow import utils
 from pyworkflow.utils.reflection import getSubclasses
 
 
@@ -298,7 +301,7 @@ class Object(object):
         # Issue found in scipion-em-xmipp/xmipp3/protocols/protocol_extract_particles_pairs.py (_setupBasicProperties)
         # TypeError: unhashable type: 'Micrograph'
         # Solution: Hashability makes an object usable as a dictionary key and a set member, because these data
-        # structures use the hash value internally. All of Python’s immutable built-in objects are hashable, while no
+        # structures use the hash value internally. All of Python’s immutable built_in objects are hashable, while no
         # mutable containers (such as lists or dictionaries) are. Objects which are instances of user-defined classes
         # are hashable by default; they all compare unequal, and their hash value is their id().
         # https://docs.python.org/3.1/glossary.html
@@ -1065,6 +1068,9 @@ class Set(OrderedObject):
     # This will be used for stream Set where data is populated on the fly
     STREAM_OPEN = 1
     STREAM_CLOSED = 2
+
+    FILE_TEMPLATE_NAME = 'set%s.sqlite'
+    indexes = ['_index']
     
     def __init__(self, filename=None, prefix='', 
                  mapperClass=None, classesDict=None, **kwargs):
@@ -1319,6 +1325,22 @@ class Set(OrderedObject):
         """
         self._getMapper().enableAppend()
 
+    @classmethod
+    def create(cls, path, template=None, suffix='', **kwargs):
+        """ Create a set and set the filename using the suffix.
+        If the file exists, it will be delete. """
+
+        if template is None:
+            template = cls.FILE_TEMPLATE_NAME
+
+        setFn = os.path.join(path, template % suffix)
+        # Close the connection to the database if
+        # it is open before deleting the file
+        utils.cleanPath(setFn)
+        import pyworkflow.mapper as pwmapper
+        pwmapper.SqliteDb.closeConnection(setFn)
+        setObj = cls(filename=setFn, **kwargs)
+        return setObj
 
 def ObjectWrap(value):
     """This function will act as a simple Factory
