@@ -146,3 +146,7 @@ class Config:
         newValue = not Config.debugOn()
         os.environ[SCIPION_DEBUG] = str(newValue)
         os.environ[SCIPION_DEBUG_NOCLEAN] = str(newValue)
+
+    @classmethod
+    def getExternalJsonTemplates(cls):
+        return dirname(cls.SCIPION_CONFIG)

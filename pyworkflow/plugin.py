@@ -26,9 +26,9 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import glob
 import os
 import importlib
-import pkgutil
 import inspect
 import traceback
 import types
@@ -40,7 +40,7 @@ from abc import ABCMeta, abstractmethod
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
-
+from .constants import *
 
 class Domain:
     """ Class to represent the application domain.
@@ -470,6 +470,8 @@ class Plugin:
     _homeVar = ''  # Change in subclasses to define the "home" variable
     _pathVars = []
     _supportedVersions = []
+    _name = ""
+    _templateDir = None
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
@@ -540,6 +542,10 @@ class Plugin:
         return ''
 
     @classmethod
+    def getName(cls):
+        return cls.__module__
+
+    @classmethod
     def validateInstallation(cls):
         """
         Check if the binaries are properly installed and if not, return
@@ -551,6 +557,27 @@ class Plugin:
                    for var in cls._pathVars if not os.path.exists(cls.getVar(var))]
 
         return (["Missing variables:"] + missing) if missing else []
+
+    @classmethod
+    def getPluginTemplateDir(cls):
+        return os.path.join(pw.getModuleFolder(cls.getName()), 'templates')
+
+
+    @classmethod
+    def getTemplates(cls):
+        """ Get the plugin templates from the templates directory.
+            If more than one template is found or passed, a dialog is raised
+            to choose one.
+        """
+        tempList = []
+        pluginName = cls.getName()
+        tDir = cls.getPluginTemplateDir()
+        if os.path.exists(tDir):
+            for file in glob.glob1(tDir, "*" + SCIPION_JSON_TEMPLATES):
+                t = Template(pluginName, os.path.join(tDir, file))
+                tempList.append(t)
+
+        return tempList
 
 
 class PluginInfo:
@@ -587,4 +614,15 @@ class PluginInfo:
 
     def getKeywords(self):
         return self._metadata.get('Keywords', '')
+
+
+class Template:
+    def __init__(self, pluginName, tempPath, description="Description not provided"):
+        self.pluginName = pluginName
+        self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "")
+        self.templatePath = os.path.abspath(tempPath)
+        self.description = description
+
+    def getObjId(self):
+        return self.pluginName + '-' + self.templateName
 

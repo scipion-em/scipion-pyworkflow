@@ -41,29 +41,33 @@ PYTHON = os.environ.get(SCIPION_PYTHON, SCIPION_PYTHON_DEFAULT)
 def getPWPath(*paths):
     return os.path.join(os.path.dirname(__file__), *paths)
 
-
 def getAppsPath():
     return os.path.join(getPWPath(), APPS)
-
 
 def getSyncDataScript():
     return os.path.join(getAppsPath(), PW_SYNC_DATA)
 
-
 def getScheduleScript():
     return os.path.join(getAppsPath(), PW_SCHEDULE_RUN)
-
 
 def getPwProtMpiRunScript():
     return os.path.join(getAppsPath(), PW_PROTOCOL_MPIRUN)
 
-
 def getTestsScript():
     return os.path.join(getAppsPath(), PW_RUN_TESTS)
 
-
 def getViewerScript():
     return os.path.join(getAppsPath(), PW_VIEWER)
+
+def getPyworkflowPath():
+    """ Returns the path where pyworkflow is"""
+    return dirname(__file__)
+
+def getModuleFolder(moduleName):
+    """ Returns the path of a module without importing it"""
+
+    spec = importlib.util.find_spec(moduleName)
+    return dirname(spec.origin)
 
 def join(*paths):
     """ join paths from HOME . """
@@ -78,6 +82,5 @@ def findResource(filename):
 
 def genNotesHeading():
     return SCIPION_NOTES_HEADING_MSG
-
 
 from .config import Config
