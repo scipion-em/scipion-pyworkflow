@@ -26,6 +26,8 @@ import os
 import sys
 import importlib
 import types
+from os.path import dirname
+
 from .constants import *
 
 # For a new release, define a new constant and assign it to LAST_VERSION
@@ -157,6 +159,22 @@ class Config:
         newValue = not Config.debugOn()
 
         os.environ[SCIPION_DEBUG] = str(newValue)
+
+    @classmethod
+    def getExternalJsonTemplates(cls):
+        return dirname(cls.SCIPION_CONFIG)
+
+    @staticmethod
+    def getPyworkflowPath():
+        return dirname(__file__)
+
+
+def getModuleFolder(moduleName):
+    """ Returns the path of a module without importing it"""
+
+    spec = importlib.util.find_spec(moduleName)
+    return dirname(spec.origin)
+
 
 def join(*paths):
     """ join paths from HOME . """
