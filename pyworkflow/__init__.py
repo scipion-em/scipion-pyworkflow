@@ -26,6 +26,8 @@ import os
 import sys
 import importlib
 import types
+from os.path import dirname
+
 from .constants import *
 
 # For a new release, define a new constant and assign it to LAST_VERSION
@@ -160,7 +162,18 @@ class Config:
 
     @classmethod
     def getExternalJsonTemplates(cls):
-        return os.path.dirname(cls.SCIPION_CONFIG)
+        return dirname(cls.SCIPION_CONFIG)
+
+    @staticmethod
+    def getPyworkflowPath():
+        return dirname(__file__)
+
+
+def getModuleFolder(moduleName):
+    """ Returns the path of a module without importing it"""
+
+    spec = importlib.util.find_spec(moduleName)
+    return dirname(spec.origin)
 
 
 def join(*paths):
