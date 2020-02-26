@@ -18,11 +18,11 @@ class Config:
     __get = os.environ.get  # shortcut
 
     # SCIPION PATHS
-    SCIPION_HOME = __get(SCIPION_HOME, '') # Home for scipion
+    SCIPION_HOME = os.path.abspath(__get(SCIPION_HOME, '')) # Home for scipion
 
     # Where to install software
-    SCIPION_SOFTWARE = __get('SCIPION_SOFTWARE',
-                            os.path.join(SCIPION_HOME, 'software'))
+    SCIPION_SOFTWARE = os.path.abspath(__get('SCIPION_SOFTWARE',
+                            os.path.join(SCIPION_HOME, 'software')))
 
     # Where are the libraries and bindings folder
     SCIPION_LIBS = os.path.join(SCIPION_SOFTWARE, 'lib')
@@ -42,7 +42,7 @@ class Config:
                         os.path.join(SCIPION_USER_DATA, 'tmp'))
     # LOGS PATHS
     # Path for Scipion logs
-    SCIPION_LOGS = __get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs'))
+    SCIPION_LOGS = os.path.expanduser(__get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs')))
 
     # Get general log file path
     LOG_FILE = os.path.join(SCIPION_LOGS, 'scipion.log')
