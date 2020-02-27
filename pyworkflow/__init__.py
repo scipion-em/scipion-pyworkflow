@@ -22,6 +22,7 @@
 # *
 # **************************************************************************
 import os
+import importlib
 from .constants import *
 
 # For a new release, define a new constant and assign it to LAST_VERSION
@@ -61,13 +62,13 @@ def getViewerScript():
 
 def getPyworkflowPath():
     """ Returns the path where pyworkflow is"""
-    return dirname(__file__)
+    return os.path.dirname(__file__)
 
 def getModuleFolder(moduleName):
     """ Returns the path of a module without importing it"""
 
     spec = importlib.util.find_spec(moduleName)
-    return dirname(spec.origin)
+    return os.path.dirname(spec.origin)
 
 def join(*paths):
     """ join paths from HOME . """

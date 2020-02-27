@@ -151,4 +151,4 @@ class Config:
 
     @classmethod
     def getExternalJsonTemplates(cls):
-        return dirname(cls.SCIPION_CONFIG)
+        return os.path.dirname(cls.SCIPION_CONFIG)
