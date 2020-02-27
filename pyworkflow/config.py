@@ -20,17 +20,19 @@ class Config:
     # SCIPION PATHS
     SCIPION_HOME = os.path.abspath(__get(SCIPION_HOME, '')) # Home for scipion
 
+    # This will prepend SCIPION_HOME in case the variable is not absolute
+    __prefixHome = lambda path: path if os.path.isabs(path) else os.path.join(SCIPION_HOME, path)
+
     # Where to install software
-    SCIPION_SOFTWARE = os.path.abspath(__get('SCIPION_SOFTWARE',
-                            os.path.join(SCIPION_HOME, 'software')))
+    SCIPION_SOFTWARE = __prefixHome(__get('SCIPION_SOFTWARE','software'))
 
     # Where are the libraries and bindings folder
     SCIPION_LIBS = os.path.join(SCIPION_SOFTWARE, 'lib')
     SCIPION_BINDINGS = os.path.join(SCIPION_SOFTWARE, 'bindings')
 
     # Where is the input data for tests...also where it will be downloaded
-    SCIPION_TESTS = __get('SCIPION_TESTS',
-                          os.path.join(SCIPION_HOME, 'data', 'tests'))
+    SCIPION_TESTS = __prefixHome(__get('SCIPION_TESTS',
+                          os.path.join('data', 'tests')))
 
     # User dependent paths
     # Location for scipion projects
