@@ -186,7 +186,7 @@ class HostConfig(OrderedObject):
 
                     return od
 
-                host.setScipionHome(get(pw.SCIPION_HOME, pw.Config.SCIPION_HOME))
+                host.setScipionHome(get(pw.SCIPION_HOME_VAR, pw.Config.SCIPION_HOME))
                 host.setScipionConfig(pw.Config.SCIPION_CONFIG)
                 # Read the address of the remote hosts,
                 # using 'localhost' as default for backward compatibility

@@ -4,10 +4,14 @@ import os
 import sys
 import types
 
-from pyworkflow import (SCIPION_TESTS_CMD, getTestsScript, SCIPION_HOME,
+from pyworkflow import (SCIPION_TESTS_CMD, getTestsScript, SCIPION_HOME_VAR,
                         SCIPION_NOTES_FILE, SCIPION_NOTES_PROGRAM, SCIPION_NOTES_ARGS,
                         SCIPION_DOMAIN, SCIPION_DEBUG, SCIPION_DEBUG_NOCLEAN)
 
+
+_get = os.environ.get  # shortcut
+
+_scipionHome = os.path.abspath(_get(SCIPION_HOME_VAR, ''))  # Home for scipion
 
 class Config:
     """ Main Config for pyworkflow. It contains the main configuration values
@@ -15,85 +19,83 @@ class Config:
     It has SCIPION_HOME, SCIPION_USER_DATA ...
     Necessary value is SCIPION_HOME and has to be present in the environment"""
 
-    __get = os.environ.get  # shortcut
-
     # SCIPION PATHS
-    SCIPION_HOME = os.path.abspath(__get(SCIPION_HOME, '')) # Home for scipion
+    SCIPION_HOME = _scipionHome
 
     # This will prepend SCIPION_HOME in case the variable is not absolute
-    __prefixHome = lambda path: path if os.path.isabs(path) else os.path.join(SCIPION_HOME, path)
+    __prefixHome = lambda path: path if os.path.isabs(path) else os.path.join(_scipionHome, path)
 
     # Where to install software
-    SCIPION_SOFTWARE = __prefixHome(__get('SCIPION_SOFTWARE','software'))
+    SCIPION_SOFTWARE = __prefixHome(_get('SCIPION_SOFTWARE','software'))
 
     # Where are the libraries and bindings folder
     SCIPION_LIBS = os.path.join(SCIPION_SOFTWARE, 'lib')
     SCIPION_BINDINGS = os.path.join(SCIPION_SOFTWARE, 'bindings')
 
     # Where is the input data for tests...also where it will be downloaded
-    SCIPION_TESTS = __prefixHome(__get('SCIPION_TESTS',
+    SCIPION_TESTS = __prefixHome(_get('SCIPION_TESTS',
                           os.path.join('data', 'tests')))
 
     # User dependent paths
     # Location for scipion projects
-    SCIPION_USER_DATA = os.path.expanduser(__get('SCIPION_USER_DATA',
+    SCIPION_USER_DATA = os.path.expanduser(_get('SCIPION_USER_DATA',
                                                  '~/ScipionUserData'))
 
     # General purpose scipion tmp folder
-    SCIPION_TMP = __get('SCIPION_TMP',
+    SCIPION_TMP = _get('SCIPION_TMP',
                         os.path.join(SCIPION_USER_DATA, 'tmp'))
     # LOGS PATHS
     # Path for Scipion logs
-    SCIPION_LOGS = os.path.expanduser(__get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs')))
+    SCIPION_LOGS = os.path.expanduser(_get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs')))
 
     # Get general log file path
     LOG_FILE = os.path.join(SCIPION_LOGS, 'scipion.log')
 
     # Where the output of the tests will be stored
-    SCIPION_TESTS_OUTPUT = __get('SCIPION_TESTS_OUTPUT',
+    SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT',
                                  os.path.join(SCIPION_USER_DATA, 'Tests'))
 
-    SCIPION_SUPPORT_EMAIL = __get('SCIPION_SUPPORT_EMAIL',
+    SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL',
                                   'scipion@cnb.csic.es')
-    SCIPION_LOGO = __get('SCIPION_LOGO',
+    SCIPION_LOGO = _get('SCIPION_LOGO',
                          'scipion_logo.gif')
 
     # Config folders
-    SCIPION_CONFIG = __get('SCIPION_CONFIG', 'scipion.conf')
-    SCIPION_LOCAL_CONFIG = __get('SCIPION_LOCAL_CONFIG', SCIPION_CONFIG)
-    SCIPION_HOSTS = __get('SCIPION_HOSTS', 'hosts.conf')
-    SCIPION_PROTOCOLS = __get('SCIPION_PROTOCOLS', 'protocols.conf')
+    SCIPION_CONFIG = _get('SCIPION_CONFIG', 'scipion.conf')
+    SCIPION_LOCAL_CONFIG = _get('SCIPION_LOCAL_CONFIG', SCIPION_CONFIG)
+    SCIPION_HOSTS = _get('SCIPION_HOSTS', 'hosts.conf')
+    SCIPION_PROTOCOLS = _get('SCIPION_PROTOCOLS', 'protocols.conf')
 
-    SCIPION_PLUGIN_JSON = __get('SCIPION_PLUGIN_JSON', None)
-    SCIPION_PLUGIN_REPO_URL = __get('SCIPION_PLUGIN_REPO_URL',
+    SCIPION_PLUGIN_JSON = _get('SCIPION_PLUGIN_JSON', None)
+    SCIPION_PLUGIN_REPO_URL = _get('SCIPION_PLUGIN_REPO_URL',
                                     'http://scipion.i2pc.es/getplugins/')
 
     # REMOTE Section
-    SCIPION_URL = __get('SCIPION_URL' , 'http://scipion.cnb.csic.es/downloads/scipion')
-    SCIPION_URL_SOFTWARE = __get('SCIPION_URL_SOFTWARE', SCIPION_URL + '/software')
-    SCIPION_URL_TESTDATA = __get('SCIPION_URL_TESTDATA', SCIPION_URL + '/data/tests')
+    SCIPION_URL = _get('SCIPION_URL' , 'http://scipion.cnb.csic.es/downloads/scipion')
+    SCIPION_URL_SOFTWARE = _get('SCIPION_URL_SOFTWARE', SCIPION_URL + '/software')
+    SCIPION_URL_TESTDATA = _get('SCIPION_URL_TESTDATA', SCIPION_URL + '/data/tests')
 
     # Scipion Notes
-    SCIPION_NOTES_FILE = __get(SCIPION_NOTES_FILE, 'notes.txt')
-    SCIPION_NOTES_PROGRAM = __get(SCIPION_NOTES_PROGRAM, None)
-    SCIPION_NOTES_ARGS = __get(SCIPION_NOTES_ARGS, None)
+    SCIPION_NOTES_FILE = _get(SCIPION_NOTES_FILE, 'notes.txt')
+    SCIPION_NOTES_PROGRAM = _get(SCIPION_NOTES_PROGRAM, None)
+    SCIPION_NOTES_ARGS = _get(SCIPION_NOTES_ARGS, None)
 
     # Aspect
-    SCIPION_FONT_NAME = __get('SCIPION_FONT_NAME', "Helvetica")
-    SCIPION_FONT_SIZE = int(__get('SCIPION_FONT_SIZE', 10))
+    SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica")
+    SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', 10))
 
     # Notification
-    SCIPION_NOTIFY = __get('SCIPION_NOTIFY', 'True')
+    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
 
     try:
-        VIEWERS = ast.literal_eval(__get('VIEWERS', "{}"))
+        VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:
         VIEWERS = {}
         print("ERROR loading preferred viewers, VIEWERS variable will be ignored")
         print(e)
 
-    SCIPION_DOMAIN = __get(SCIPION_DOMAIN, None)
-    SCIPION_TESTS_CMD = __get(SCIPION_TESTS_CMD, getTestsScript())
+    SCIPION_DOMAIN = _get(SCIPION_DOMAIN, None)
+    SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript())
 
     @classmethod
     def getVariableDict(cls):
