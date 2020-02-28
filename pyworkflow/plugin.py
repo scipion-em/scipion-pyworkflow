@@ -475,9 +475,13 @@ class Plugin:
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
-        """ Internal method to define variables from the environment. """
-        cls._vars[varName] = os.environ.get(varName, defaultValue)
+        """ Internal method to define variables trying to get it from the environment first. """
+        cls._addVar(varName, os.environ.get(varName, defaultValue))
 
+    @classmethod
+    def _addVar(cls, varName, value):
+        """ Adds a variable to the local variable dictionary directly. Avoiding the environment"""
+        cls._vars[varName] = value
 
     @classmethod
     @abstractmethod
@@ -578,7 +582,6 @@ class Plugin:
                 tempList.append(t)
 
         return tempList
-
 
 class PluginInfo:
     """

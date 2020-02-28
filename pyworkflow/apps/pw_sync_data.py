@@ -133,11 +133,11 @@ def get_parser():
     g.add_argument(
         '--upload', action='store_true',
         help=("Upload local dataset to the server. The dataset name must be "
-              "the name of its folder relative to the $SCIPION_TESTS folder."))
+              "the name of its folder relative to the $%s folder." % pw.SCIPION_TESTS))
     g.add_argument(
         '--list', action='store_true',
-        help=('List local datasets (from $SCIPION_TESTS) and remote ones '
-              '(remote url can be specified with --url).'))
+        help=('List local datasets (from $%s) and remote ones '
+              '(remote url can be specified with --url).' % pw.SCIPION_TESTS))
     g.add_argument(
         '--format', action='store_true',
         help='Create a MANIFEST file with checksums in the datasets folders.')
@@ -147,7 +147,7 @@ def get_parser():
         help=('When uploading, delete any remote files in the dataset not '
               'present in local. It leaves the remote scipion data directory '
               'as it is in the local one. Dangerous, use with caution.'))
-    add('-u', '--url', default=os.environ['SCIPION_URL_TESTDATA'],
+    add('-u', '--url', default=pw.Config.SCIPION_URL_TESTDATA,
         help='URL where remote datasets will be looked for.')
     add('--check-all', action='store_true',
         help='See if there is any remote dataset not in sync with locals.')
@@ -162,7 +162,7 @@ def get_parser():
 def listDatasets(url):
     """ Print a list of local and remote datasets """
 
-    tdir = os.environ['SCIPION_TESTS']
+    tdir = pw.Config.SCIPION_TESTS
     print("Local datasets in %s" % yellow(tdir))
     for folder in sorted(os.listdir(tdir)):
         if isdir(join(tdir, folder)):
@@ -188,7 +188,7 @@ def check(dataset, url, verbose=False, updateMANIFEST=False):
     vlog("Checking dataset %s ... " % dataset)
 
     if updateMANIFEST:
-        createMANIFEST(join(os.environ['SCIPION_TESTS'], dataset))
+        createMANIFEST(join(pw.Config.SCIPION_TESTS, dataset))
     else:
         vlog("(not updating local MANIFEST) ")
 
@@ -198,7 +198,7 @@ def check(dataset, url, verbose=False, updateMANIFEST=False):
 
         md5sLocal = dict(x.split() for x in
                          open('%s/MANIFEST' %
-                              join(os.environ['SCIPION_TESTS'], dataset)))
+                              join(pw.Config.SCIPION_TESTS, dataset)))
         if md5sRemote == md5sLocal:
             vlog("\tlooks up-to-date\n")
             return True
@@ -223,7 +223,7 @@ def check(dataset, url, verbose=False, updateMANIFEST=False):
 def download(dataset, destination=None, url=None, verbose=False):
     """ Download all the data files mentioned in url/dataset/MANIFEST """
     # Get default values for variables if we got None.
-    destination = destination or os.environ['SCIPION_TESTS']
+    destination = destination or pw.Config.SCIPION_TESTS
 
     # First make sure that we ask for a known dataset.
     if dataset not in [x.decode('utf-8').strip('./\n') for x in urlopen('%s/MANIFEST' % url)]:
@@ -284,7 +284,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
     ones in workingCopy/dataset/MANIFEST, and downloads only when necessary.
     """
     # Get default values for variables if we got None.
-    workingCopy = workingCopy or os.environ['SCIPION_TESTS']
+    workingCopy = workingCopy or pw.Config.SCIPION_TESTS
 
     # Verbose log
     def vlog(txt): sys.stdout.write(txt) if verbose else None
@@ -345,7 +345,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 def upload(dataset, login, remoteFolder, delete=False):
     """ Upload a dataset to our repository """
 
-    localFolder = join(os.environ['SCIPION_TESTS'], dataset)
+    localFolder = join(pw.Config.SCIPION_TESTS, dataset)
 
     if not exists(localFolder):
         sys.exit("ERROR: local folder %s does not exist." % localFolder)

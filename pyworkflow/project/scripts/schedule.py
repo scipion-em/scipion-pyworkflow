@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # **************************************************************************
 # *
 # * Authors:     Pablo Conesa (pconesa@cnb.csic.es)
@@ -60,8 +59,11 @@ elif n > 2 and sys.argv[2] != '--ignore':
 
 projName = sys.argv[1]
 
-path = pw.join('gui', 'no-tkinter')
-sys.path.insert(1, path)
+# This fails, since it is triggering matplotlib.pyplot and then import error happens:
+# ... pyworkflow/gui/no-tkinter/_tkinter.py: invalid ELF header. If we want this back we migt need to
+# invest some time "faking" tkinter again for python3.
+#path = pw.join('gui', 'no-tkinter')
+#sys.path.insert(1, path)
 
 # Create a new project
 manager = Manager()

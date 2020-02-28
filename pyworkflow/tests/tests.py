@@ -140,13 +140,13 @@ class BaseTest(unittest.TestCase):
 
         def _loadProt():
             # Load the last version of the protocol from its own database
-            prot2 = getProtocolFromDb(prot.getProject().path,
+            loadedProt = getProtocolFromDb(prot.getProject().path,
                                       prot.getDbPath(),
                                       prot.getObjId())
             # Close DB connections
-            prot2.getProject().closeMapper()
-            prot2.closeMappers()
-            return prot2
+            loadedProt.getProject().closeMapper()
+            loadedProt.closeMappers()
+            return loadedProt
 
         counter = 1
         prot2 = _loadProt()
@@ -190,21 +190,21 @@ class BaseTest(unittest.TestCase):
                 item2.printAll()
             test.assertTrue(areEqual)
 
-    def assertSetSize(self, object, size=None, msg=None):
+    def assertSetSize(self, setObject, size=None, msg=None):
         """ Check if a pyworkflow Set is not None nor is empty"""
-        self.assertIsNotNone(object, msg)
+        self.assertIsNotNone(setObject, msg)
 
         if size is None:
             # Test is not empty
-            self.assertNotEqual(object.getSize(), 0, msg)
+            self.assertNotEqual(setObject.getSize(), 0, msg)
         else:
-            self.assertEqual(object.getSize(), size)
+            self.assertEqual(setObject.getSize(), size)
 
-    def assertIsNotEmpty(self, object, msg=None):
-        """ Check if the pworkflow object is not None nor is empty"""
-        self.assertIsNotNone(object, msg)
+    def assertIsNotEmpty(self, setObject, msg=None):
+        """ Check if the pyworkflow object is not None nor is empty"""
+        self.assertIsNotNone(setObject, msg)
 
-        self.assertIsNotNone(object.get(), msg)
+        self.assertIsNotNone(setObject.get(), msg)
 
 
 def setupTestOutput(cls):
@@ -276,7 +276,8 @@ class GTestResult(unittest.TestResult):
         self.tic()
         self.numberTests += 1         
     
-    def getTestName(self, test):
+    @staticmethod
+    def getTestName(test):
         parts = str(test).split()
         name = parts[0]
         parts = parts[1].split('.')

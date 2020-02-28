@@ -36,59 +36,52 @@ from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
 
 
+def openProject(projectName):
+    """ Opens a scipion project:
+
+    :param projectName: Name of a existing project to open,
+            or "here" to create a project in the current working dir,
+            or "last" to open the most recent project
+
+    """
+    manager = Manager()
+    projName = os.path.basename(projectName)
+
+    # Handle special name 'here' to create a project
+    # from the current directory
+    if projName == 'here':
+        cwd = os.environ['SCIPION_CWD']
+        print("\nYou are trying to create a project here:",
+              pwutils.cyan(cwd))
+
+        if os.listdir(cwd):
+            print(pwutils.red('\nWARNING: this folder is not empty!!!'))
+        key = input("\nDo you want to create a project here? [y/N]?")
+
+        if key.lower().strip() != 'y':
+            print("\nAborting...")
+            sys.exit(0)
+        else:
+            print("\nCreating project....")
+            projName = os.path.basename(cwd)
+            projDir = os.path.dirname(cwd)
+            proj = manager.createProject(projName, location=projDir)
+
+    elif projName == 'last':  # Get last project
+        projects = manager.listProjects()
+        if not projects:
+            sys.exit("No projects yet, cannot open the last one.")
+        projName = projects[0].projName
+
+    projPath = manager.getProjectPath(projName)
+    projWindow = ProjectWindow(projPath)
+
+    projWindow.show()
+
+
 if __name__ == '__main__':
 
-    # Add callback for remote debugging if available.
-    try:
-        from rpdb2 import start_embedded_debugger
-        from signal import signal, SIGUSR2
-        signal(SIGUSR2, lambda sig, frame: start_embedded_debugger('a'))
-    except ImportError:
-        pass
-
     if len(sys.argv) > 1:
-        manager = Manager()
-        projName = os.path.basename(sys.argv[1])
-
-        # Handle special name 'here' to create a project
-        # from the current directory
-        if projName == 'here':
-            cwd = os.environ['SCIPION_CWD']
-            print("\nYou are trying to create a project here:",
-                  pwutils.cyan(cwd))
-
-            if os.listdir(cwd):
-                print(pwutils.red('\nWARNING: this folder is not empty!!!'))
-            key = input("\nDo you want to create a project here? [y/N]?")
-
-            if key.lower().strip() != 'y':
-                print("\nAborting...")
-                sys.exit(0)
-            else:
-                print("\nCreating project....")
-                projName = os.path.basename(cwd)
-                projDir = os.path.dirname(cwd)
-                proj = manager.createProject(projName, location=projDir)
-
-        elif projName == 'last':  # Get last project
-            projects = manager.listProjects()
-            if not projects:
-                sys.exit("No projects yet, cannot open the last one.")
-            projName = projects[0].projName
-            
-        projPath = manager.getProjectPath(projName)
-        # try:
-        projWindow = ProjectWindow(projPath)
-        # except Exception as e:
-        #     # Print any exception
-        #     print("ERROR: At pw_project.py loading Project %s.\n"
-        #           "       Message: %s\n" % (projPath, e))
-        #
-        #     import traceback
-        #     traceback.print_exc(file=sys.stderr)
-        #
-        #     sys.exit(e)
-
-        projWindow.show()
+        openProject(sys.argv[1])
     else:
-        print("usage: pw_project.py PROJECT_NAME")
+        print("usage: pw_project.py PROJECT_NAME or here or last")

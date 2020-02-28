@@ -1,0 +1,11 @@
+dist: trusty
+env: TRAVIS=1
+language: python
+addons:
+  sonarcloud:
+# See https://docs.travis-ci.com/user/sonarcloud/
+    organization: "scipion-em"
+    token:
+        secure: $SONAR_TOKEN
+script:
+ - sonar-scanner

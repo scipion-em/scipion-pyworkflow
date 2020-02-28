@@ -56,52 +56,39 @@ PW_VIEWER = 'pw_viewer.py'
 # PW Config
 SCIPION_PYTHON = 'SCIPION_PYTHON'
 SCIPION_PYTHON_DEFAULT = 'python3'
-SCIPION_HOME = 'SCIPION_HOME'
-SCIPION_USER_DATA = 'SCIPION_USER_DATA'
-SCIPION_USER_DATA_DEFAULT = '~/ScipionUserData'
-SCIPION_SUPPORT_EMAIL = 'SCIPION_SUPPORT_EMAIL'
-SCIPION_SUPPORT_EMAIL_DEFAULT = 'scipion@cnb.csic.es'
-SCIPION_LOGO = 'SCIPION_LOGO'
-SCIPION_LOGO_DEFAULT = 'scipion_logo.gif'
+SCIPION_HOME_VAR = 'SCIPION_HOME'
 SCIPION_TESTS = 'SCIPION_TESTS'
-SCIPION_TESTS_OUTPUT = 'SCIPION_TESTS_OUTPUT'
-SCIPION_CONFIG = 'SCIPION_CONFIG'
-SCIPION_CONFIG_DEFAULT = 'scipion.conf'
-SCIPION_LOCAL_CONFIG = 'SCIPION_LOCAL_CONFIG'
-SCIPION_HOSTS = 'SCIPION_HOSTS'
-SCIPION_HOSTS_DEFAULT = 'hosts.conf'
-SCIPION_PROTOCOLS = 'SCIPION_PROTOCOLS'
-SCIPION_PROTOCOLS_DEFAULT = 'protocols.conf'
-SCIPION_PLUGIN_JSON = 'SCIPION_PLUGIN_JSON'
-SCIPION_PLUGIN_REPO_URL = 'SCIPION_PLUGIN_REPO_URL'
-SCIPION_PLUGIN_REPO_URL_DEFAULT = 'http://scipion.i2pc.es/getplugins/'
-SCIPION_LOGS = 'SCIPION_LOGS'
-SCIPION_LOGS_DEFAULT = 'scipion.log'
-SCIPION_URL_SOFTWARE = 'SCIPION_URL_SOFTWARE'
+
+# NOTES CONSTANTS
 SCIPION_NOTES_FILE = 'SCIPION_NOTES_FILE'
 SCIPION_NOTES_FILE_DEFAULT = 'notes.txt'
 SCIPION_NOTES_PROGRAM = 'SCIPION_NOTES_PROGRAM'
 SCIPION_NOTES_ARGS = 'SCIPION_NOTES_ARGS'
 SCIPION_NOTES_HEADING_MSG = \
-     '############################################  SCIPION NOTES  ##############################################' + \
-     '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' + \
-     'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they\n' + \
-     'already exist, the following variables:\n\n' + \
-     '\t-SCIPION_NOTES_FILE is used to store the file name (default is {})\n' + \
-     '\t-SCIPION_NOTES_PROGRAM is used to select the program which will be used to open the notes file. If \n' + \
-     '\t empty, it will use the default program used by your OS to open that type of file.\n' + \
-     '\t-SCIPION_NOTES_ARGS is used to add input arguments that will be used in the calling of the program\n' + \
-     '\t specified in SCIPION_NOTES_PROGRAM.\n\n' + \
-     'These lines can be removed if desired.\n\n' + \
-     '###########################################################################################################' + \
-     '\n\nPROJECT NOTES:'
+     '############################################  SCIPION NOTES  ##############################################' \
+     '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' \
+     'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they\n' \
+     'already exist, the following variables:\n\n' \
+     '\t-%s is used to store the file name (default is %s)\n' \
+     '\t-%s is used to select the program which will be used to open the notes file. If \n' \
+     '\t empty, it will use the default program used by your OS to open that type of file.\n' \
+     '\t-%s is used to add input arguments that will be used in the calling of the program\n' \
+     '\t specified in %s.\n\n' \
+     'These lines can be removed if desired.\n\n' \
+     '###########################################################################################################' \
+     '\n\nPROJECT NOTES:' % (SCIPION_NOTES_FILE, SCIPION_NOTES_FILE_DEFAULT,SCIPION_NOTES_PROGRAM, SCIPION_NOTES_ARGS, SCIPION_NOTES_PROGRAM)
+
 SCIPION_DOMAIN = 'SCIPION_DOMAIN'
+
+# Debug constants
 SCIPION_DEBUG = 'SCIPION_DEBUG'
 SCIPION_JSON_TEMPLATES = '.json.template'
+SCIPION_DEBUG_NOCLEAN = 'SCIPION_DEBUG_NOCLEAN'
+SCIPION_DEBUG_SQLITE = 'SCIPION_DEBUG_SQLITE'
 
 # Color and appearance contants
 TK_GRAY_DEFAULT = '#d9d9d9'
 
 # Other
-PW_ALT_TESTS_CMD = 'PW_ALT_TESTS_CMD'
+SCIPION_TESTS_CMD = 'SCIPION_TESTS_CMD'
 VIEWERS = 'VIEWERS'

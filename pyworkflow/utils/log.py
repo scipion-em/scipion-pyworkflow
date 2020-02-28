@@ -29,11 +29,12 @@ import sys
 import logging
 import logging.config
 
-from pyworkflow import Config
+
 from pyworkflow.utils import makeFilePath
 
 
 def getLogConfiguration():
+    from pyworkflow import Config
     # Log configuration
     config = {
         'version': 1,

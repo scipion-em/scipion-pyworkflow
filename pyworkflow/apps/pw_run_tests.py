@@ -35,7 +35,7 @@ import argparse
 from collections import OrderedDict
 
 import pyworkflow.tests as pwtests
-from pyworkflow import getTestsScript, PW_ALT_TESTS_CMD
+from pyworkflow import getTestsScript, SCIPION_TESTS_CMD
 
 from pyworkflow.tests import *
 
@@ -46,8 +46,8 @@ TEST = 2
 
 
 class Tester:
-    def main(self):
-
+    def main(self, args=None):
+        print("Running tests....")
         parser = argparse.ArgumentParser(prog= self.getTestsCommand(), description=__doc__)
         g = parser.add_mutually_exclusive_group()
         g.add_argument('--run', action='store_true', help='run the selected tests')
@@ -68,7 +68,7 @@ class Tester:
             help='how much detail to give in show mode')
         add('tests', metavar='TEST', nargs='*',
             help='test case from string identifier (module, class or callable)')
-        args = parser.parse_args()
+        args = parser.parse_args(args)
 
         if not args.run and not args.show and not args.tests:
             sys.exit(parser.format_help())
@@ -85,7 +85,8 @@ class Tester:
                     testsDict['tests'].addTests(testLoader.loadTestsFromName(t))
                 except Exception as e:
                     print('Cannot load test %s -- skipping' % t)
-                    print('error: ', e)
+                    import traceback
+                    traceback.print_exc()
         else:
             # In this other case, we will load the test available
             # from pyworkflow and the other plugins
@@ -204,7 +205,7 @@ class Tester:
             print("%s %s %s" % (spaces, self.getTestsCommand(), itemName))
 
     def getTestsCommand(self):
-        return os.environ.get(PW_ALT_TESTS_CMD, getTestsScript())
+        return os.environ.get(SCIPION_TESTS_CMD, getTestsScript())
 
     def printTests(self, moduleName, tests):
         self._visitTests(moduleName, tests, self._printNewItem)
@@ -302,5 +303,4 @@ class Tester:
 
 
 if __name__ == '__main__':
-    print("Running tests....")
     Tester().main()
