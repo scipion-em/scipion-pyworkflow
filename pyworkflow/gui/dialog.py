@@ -28,9 +28,15 @@
 Module to handling Dialogs
 some code was taken from tkSimpleDialog
 """
+import math
 import tkinter as tk
+from tkinter import ttk
 from tkinter.colorchooser import askcolor as _askColor
+from tkinter.ttk import Style
 
+from future.moves.tkinter import font
+from pyworkflow.gui import getDefaultFont
+from pyworkflow.plugin import Template, TEMPLATE_DESC_NUM_CHARS
 from pyworkflow.utils import Message, Icon
 from . import gui
 from .tree import BoundTree
@@ -489,10 +495,25 @@ class ListDialog(Dialog):
         self.initial_focus = self.tree
         
     def _createTree(self, parent):
-        self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode)
+        self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode, style=self.genBoundTreeStyle(self))
         if self._selectOnDoubleClick:
             self.tree.itemDoubleClick = lambda obj: self._handleResult(RESULT_YES)
         self.tree.grid(row=1, column=0)
+
+    @staticmethod
+    def genBoundTreeStyle(listDlg):
+        styleName = None
+        if listDlg.provider.objList:
+            if isinstance(listDlg.provider.objList[0], Template):
+                descLen = max([len(x.description) for x in listDlg.provider.objList])
+                maxChPerLine = TEMPLATE_DESC_NUM_CHARS
+                if descLen > maxChPerLine:
+                    fontheight = getDefaultFont().metrics()['linespace']
+                    rowHeight = math.ceil(1.1 * fontheight * math.ceil(descLen / maxChPerLine))
+                    styleName = 'Templates.Treeview'
+                    ttk.Style().configure(styleName, rowheight=rowHeight)
+
+        return styleName
 
     def _createFilterBox(self, content):
         """ Create the Frame with Filter widgets """
