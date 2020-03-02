@@ -84,11 +84,11 @@ class ProjectWorkflowNotifier(object):
             # then connect to webserver a send json
             # set debuglevel=0 for no messages
             opener = build_opener(HTTPHandler(debuglevel=0))
-            data = urlencode(dataDict)
+            data = urlencode(dataDict).encode()
             content = opener.open(url, data=data).read()
             now = time.time()
             os.utime(self._getUuidFileName(), (now, now))
-        except Exception:
+        except Exception as e:
             pass
             #print("Could not notify, maybe there is not internet connection.")
 
