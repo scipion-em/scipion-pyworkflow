@@ -624,7 +624,7 @@ class Template:
         self.pluginName = pluginName
         self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "")
         self.templatePath = os.path.abspath(tempPath)
-        self.description, self.content = self._parseTemplate(self.templatePath)
+        self.description, self.content = self._parseTemplate()
 
     def getObjId(self):
         return self.pluginName + '-' + self.templateName
