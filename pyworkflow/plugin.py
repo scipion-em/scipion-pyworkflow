@@ -625,9 +625,6 @@ class Template:
         self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "")
         self.templatePath = os.path.abspath(tempPath)
         self.description, self.content = self.parseTemplate(self.templatePath)
-        self.projectTemplate = os.environ.get("SCIPION_PROJECT_NAME",
-                                              self.pluginName + '-' + self.templateName + '-' +
-                                              datetime.now().strftime("%y/%m/%d-%H:%M:%S"))
 
     def getObjId(self):
         return self.pluginName + '-' + self.templateName
@@ -674,15 +671,7 @@ class Template:
                     description.append(currentLine)
             counter += 1
 
-        return Template.processDescription(''.join(description)), counter
+        return ''.join(description), counter
 
-    @staticmethod
-    def processDescription(description):
-        split_strings = []
-        n = TEMPLATE_DESC_NUM_CHARS
-        for index in range(0, len(description), n):
-            split_strings.append(description[index: index + n])
-
-        return '\n'.join(split_strings)
 
 
