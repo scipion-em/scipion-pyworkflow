@@ -42,6 +42,7 @@ import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 from .constants import *
 
+
 class Domain:
     """ Class to represent the application domain.
     It will allow to specify new objects, protocols, viewers and wizards
@@ -566,7 +567,6 @@ class Plugin:
     def getPluginTemplateDir(cls):
         return os.path.join(pw.getModuleFolder(cls.getName()), 'templates')
 
-
     @classmethod
     def getTemplates(cls):
         """ Get the plugin templates from the templates directory.
@@ -582,6 +582,7 @@ class Plugin:
                 tempList.append(t)
 
         return tempList
+
 
 class PluginInfo:
     """
