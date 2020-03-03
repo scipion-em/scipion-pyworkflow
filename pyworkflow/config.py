@@ -7,17 +7,29 @@ import types
 
 from .constants import *
 
-_get = os.environ.get  # shortcut
+HOME = os.path.abspath(os.path.dirname(__file__))
+PYTHON = os.environ.get(SCIPION_PYTHON, SCIPION_PYTHON_DEFAULT)
 
 
-# Following are a set of functions to centralize the way to get
-# files from several scipion folder such as: config or apps
-def getPWPath(*paths):
-    return os.path.join(os.path.dirname(__file__), *paths)
+def join(*paths):
+    """ join paths from HOME . """
+    return os.path.join(HOME, *paths)
+
+
+__resourcesPath = [join('resources')]
+
+
+def findResource(filename):
+    from .utils.path import findFile
+    return findFile(filename, *__resourcesPath)
+
+
+def genNotesHeading():
+    return SCIPION_NOTES_HEADING_MSG
 
 
 def getAppsPath(*paths):
-    return getPWPath(APPS, *paths)
+    return join(APPS, *paths)
 
 
 def getSyncDataScript():
@@ -75,11 +87,10 @@ class Config:
             return os.path.join(self._root, *paths)
 
     # Home for scipion
+    _get = __get.__func__
     SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
     _root = Root(SCIPION_HOME)
-
     _join = _root.join
-    _get = __get.__func__
 
     # SCIPION PATHS
     # Where to install software

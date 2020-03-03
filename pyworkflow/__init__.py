@@ -29,23 +29,5 @@ from .config import *
 # https://www.python.org/dev/peps/pep-0396/
 __version__ = LAST_VERSION + 'a1'
 
-HOME = os.path.abspath(os.path.dirname(__file__))
-PYTHON = os.environ.get(SCIPION_PYTHON, SCIPION_PYTHON_DEFAULT)
 
-
-def join(*paths):
-    """ join paths from HOME . """
-    return os.path.join(HOME, *paths)
-
-
-__resourcesPath = [join('resources')]
-
-
-def findResource(filename):
-    from .utils.path import findFile
-    return findFile(filename, *__resourcesPath)
-
-
-def genNotesHeading():
-    return SCIPION_NOTES_HEADING_MSG
 
