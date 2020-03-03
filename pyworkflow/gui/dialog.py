@@ -28,15 +28,8 @@
 Module to handling Dialogs
 some code was taken from tkSimpleDialog
 """
-import math
 import tkinter as tk
-from tkinter import ttk
 from tkinter.colorchooser import askcolor as _askColor
-from tkinter.ttk import Style
-
-from future.moves.tkinter import font
-from pyworkflow.gui import getDefaultFont
-from pyworkflow.plugin import Template, TEMPLATE_DESC_NUM_CHARS
 from pyworkflow.utils import Message, Icon
 from . import gui
 from .tree import BoundTree

@@ -624,14 +624,13 @@ class Template:
         self.pluginName = pluginName
         self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "")
         self.templatePath = os.path.abspath(tempPath)
-        self.description, self.content = self.parseTemplate(self.templatePath)
+        self.description, self.content = self._parseTemplate(self.templatePath)
 
     def getObjId(self):
         return self.pluginName + '-' + self.templateName
 
-    @staticmethod
-    def parseTemplate(templatePath):
-        with open(templatePath, 'r') as myFile:
+    def _parseTemplate(self):
+        with open(self.templatePath, 'r') as myFile:
             allContents = myFile.read().splitlines()
             description, index = Template.getDescription(allContents)
 
