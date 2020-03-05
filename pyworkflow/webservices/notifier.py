@@ -84,11 +84,11 @@ class ProjectWorkflowNotifier(object):
             # then connect to webserver a send json
             # set debuglevel=0 for no messages
             opener = build_opener(HTTPHandler(debuglevel=0))
-            data = urlencode(dataDict)
+            data = urlencode(dataDict).encode()
             content = opener.open(url, data=data).read()
             now = time.time()
             os.utime(self._getUuidFileName(), (now, now))
-        except Exception:
+        except Exception as e:
             pass
             #print("Could not notify, maybe there is not internet connection.")
 
@@ -109,6 +109,9 @@ class ProjectWorkflowNotifier(object):
             if not pwutils.envVarOn('SCIPION_NOTIFY'):
                 return
 
+            # if project specifies not to send stats
+            if self._isProjectMuted():
+                return
             # Check the seconds range of the notify, by default one day
             seconds = int(os.environ.get('SCIPION_NOTIFY_SECONDS', '86400'))
 
@@ -142,7 +145,13 @@ class ProjectWorkflowNotifier(object):
             t.start()  # will execute function in a separate thread
         except Exception as e:
             print("Can't report usage: ", e)
-            
+
+    def _isProjectMuted(self):
+        """ Projects are muted if they come from tests, Since there is no flag for it
+        we will assume that if the project name starts with Test it will be considered
+        a test and therefore no statistics will be sent"""
+        return os.path.basename(self.project.name).startswith("Test")
+
     def getEntryFromWebservice(self, uuid):
         if not pwutils.envVarOn('SCIPION_NOTIFY'):
             return
