@@ -403,7 +403,7 @@ class FileBrowser(ObjectBrowser):
         pathLabel = tk.Label(pathFrame, text='Path')
         pathLabel.grid(row=0, column=0, padx=0, pady=3)
         pathEntry = tk.Entry(pathFrame, bg='white', width=65,
-                             textvariable=self.pathVar)
+                             textvariable=self.pathVar, font=gui.getDefaultFont())
         pathEntry.grid(row=0, column=1, sticky='new', pady=3)
         pathEntry.bind("<Return>", self._onEnterPath)
         pathEntry.bind("<KP_Enter>", self._onEnterPath)
