@@ -1,17 +1,67 @@
 import ast
 import importlib
+import inspect
 import os
 import sys
 import types
 
-from pyworkflow import (SCIPION_TESTS_CMD, getTestsScript, SCIPION_HOME_VAR,
-                        SCIPION_NOTES_FILE, SCIPION_NOTES_PROGRAM, SCIPION_NOTES_ARGS,
-                        SCIPION_DOMAIN, SCIPION_DEBUG, SCIPION_DEBUG_NOCLEAN)
+from .constants import *
+
+HOME = os.path.abspath(os.path.dirname(__file__))
+PYTHON = os.environ.get(SCIPION_PYTHON, SCIPION_PYTHON_DEFAULT)
 
 
-_get = os.environ.get  # shortcut
+def join(*paths):
+    """ join paths from HOME . """
+    return os.path.join(HOME, *paths)
 
-_scipionHome = os.path.abspath(_get(SCIPION_HOME_VAR, ''))  # Home for scipion
+
+__resourcesPath = [join('resources')]
+
+
+def findResource(filename):
+    from .utils.path import findFile
+    return findFile(filename, *__resourcesPath)
+
+
+def genNotesHeading():
+    return SCIPION_NOTES_HEADING_MSG
+
+
+def getAppsPath(*paths):
+    return join(APPS, *paths)
+
+
+def getSyncDataScript():
+    return getAppsPath(PW_SYNC_DATA)
+
+
+def getScheduleScript():
+    return getAppsPath(PW_SCHEDULE_RUN)
+
+
+def getPwProtMpiRunScript():
+    return getAppsPath(PW_PROTOCOL_MPIRUN)
+
+
+def getTestsScript():
+    return getAppsPath(PW_RUN_TESTS)
+
+
+def getViewerScript():
+    return getAppsPath(PW_VIEWER)
+
+
+def getPyworkflowPath():
+    """ Returns the path where pyworkflow is"""
+    return os.path.dirname(__file__)
+
+
+def getModuleFolder(moduleName):
+    """ Returns the path of a module without importing it"""
+    spec = importlib.util.find_spec(moduleName)
+    return os.path.dirname(spec.origin)
+
 
 class Config:
     """ Main Config for pyworkflow. It contains the main configuration values
@@ -19,46 +69,60 @@ class Config:
     It has SCIPION_HOME, SCIPION_USER_DATA ...
     Necessary value is SCIPION_HOME and has to be present in the environment"""
 
+    @staticmethod
+    def __get(key, default):
+        value = os.environ.get(key, default)
+        # Expand user and variables if string value
+        if isinstance(value, str):
+            value = os.path.expandvars(os.path.expanduser(value))
+
+        return value
+
+    class Root:
+        """ Simple helper to return path from a root. """
+        def __init__(self, root):
+            self._root = root
+
+        def join(self, *paths):
+            return os.path.join(self._root, *paths)
+
+    # Home for scipion
+    _get = __get.__func__
+    SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
+    _root = Root(SCIPION_HOME)
+    _join = _root.join
+
     # SCIPION PATHS
-    SCIPION_HOME = _scipionHome
-
-    # This will prepend SCIPION_HOME in case the variable is not absolute
-    __prefixHome = lambda path: path if os.path.isabs(path) else os.path.join(_scipionHome, path)
-
     # Where to install software
-    SCIPION_SOFTWARE = __prefixHome(_get('SCIPION_SOFTWARE','software'))
+    SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
 
     # Where are the libraries and bindings folder
-    SCIPION_LIBS = os.path.join(SCIPION_SOFTWARE, 'lib')
-    SCIPION_BINDINGS = os.path.join(SCIPION_SOFTWARE, 'bindings')
+    SCIPION_LIBS = _join(SCIPION_SOFTWARE, 'lib')
+
+    SCIPION_BINDINGS = _join(SCIPION_SOFTWARE, 'bindings')
 
     # Where is the input data for tests...also where it will be downloaded
-    SCIPION_TESTS = __prefixHome(_get('SCIPION_TESTS',
-                          os.path.join('data', 'tests')))
+    SCIPION_TESTS = _join(_get('SCIPION_TESTS', os.path.join('data', 'tests')))
 
     # User dependent paths
     # Location for scipion projects
-    SCIPION_USER_DATA = os.path.expanduser(_get('SCIPION_USER_DATA',
-                                                 '~/ScipionUserData'))
+    SCIPION_USER_DATA = _get('SCIPION_USER_DATA', '~/ScipionUserData')
 
     # General purpose scipion tmp folder
-    SCIPION_TMP = _get('SCIPION_TMP',
-                        os.path.join(SCIPION_USER_DATA, 'tmp'))
+    SCIPION_TMP = _get('SCIPION_TMP', _join(SCIPION_USER_DATA, 'tmp'))
     # LOGS PATHS
     # Path for Scipion logs
-    SCIPION_LOGS = os.path.expanduser(_get('SCIPION_LOGS', os.path.join(SCIPION_USER_DATA,'logs')))
+    SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA,'logs'))
 
     # Get general log file path
-    LOG_FILE = os.path.join(SCIPION_LOGS, 'scipion.log')
+    LOG_FILE = _join(SCIPION_LOGS, 'scipion.log')
 
     # Where the output of the tests will be stored
-    SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT',
-                                 os.path.join(SCIPION_USER_DATA, 'Tests'))
+    SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
 
-    SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL',
-                                  'scipion@cnb.csic.es')
-    SCIPION_LOGO = _get('SCIPION_LOGO',
-                         'scipion_logo.gif')
+    SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL', 'scipion@cnb.csic.es')
+
+    SCIPION_LOGO = _get('SCIPION_LOGO', 'scipion_logo.gif')
 
     # Config folders
     SCIPION_CONFIG = _get('SCIPION_CONFIG', 'scipion.conf')
@@ -68,7 +132,7 @@ class Config:
 
     SCIPION_PLUGIN_JSON = _get('SCIPION_PLUGIN_JSON', None)
     SCIPION_PLUGIN_REPO_URL = _get('SCIPION_PLUGIN_REPO_URL',
-                                    'http://scipion.i2pc.es/getplugins/')
+                                   'http://scipion.i2pc.es/getplugins/')
 
     # REMOTE Section
     SCIPION_URL = _get('SCIPION_URL' , 'http://scipion.cnb.csic.es/downloads/scipion')
@@ -98,23 +162,30 @@ class Config:
     SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript())
 
     @classmethod
-    def getVariableDict(cls):
-        """ fill environment with own values"""
-        myDict = dict()
-        # For each attribute
-        for name, value in vars(cls).items():
-            # Skip methods, only str objects
-            if isinstance(value, str):
-                # Skip starting with __ : __doc__, __module__
-                if not name.startswith("__"):
-                    # Update environment
-                    myDict[name] =value
+    def getVars(cls):
+        """ Return a dictionary with all variables defined
+        in this Config.
+        """
+        configVars = dict()
+        # For each variable, also in base classes
+        for baseCls in inspect.getmro(cls):
+            for name, value in vars(baseCls).items():
+                # Skip methods and internal attributes starting with __
+                # (e.g __doc__, __module__, etc)
+                if isinstance(value, str) and not name.startswith('__'):
+                    configVars[name] = value
+        return configVars
 
-        return myDict
+    @classmethod
+    def printVars(cls):
+        """ Print the variables dict, mostly for debugging. """
+        from .utils import prettyDict
+        prettyDict(cls.getVars())
 
     @classmethod
     def getDomain(cls):
-        """ Import domain module from path or name defined in SCIPION_DOMAIN. """
+        """ Import domain module from path or name defined in SCIPION_DOMAIN.
+        """
         value = cls.SCIPION_DOMAIN
 
         if not value:
@@ -142,7 +213,7 @@ class Config:
 
     @staticmethod
     def debugOn(*args):
-        from pyworkflow.utils import envVarOn
+        from .utils import envVarOn
         return bool(envVarOn(SCIPION_DEBUG, *args))
 
     @staticmethod
