@@ -471,7 +471,7 @@ class Plugin:
     _pathVars = []
     _supportedVersions = []
     _name = ""
-    _templateDir = None
+    _url = "" # For the plugin
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
@@ -582,6 +582,11 @@ class Plugin:
                 tempList.append(t)
 
         return tempList
+
+    @classmethod
+    def getUrl(cls, prot=None):
+        """ Url for the plugin to point users to it"""
+        return cls._url
 
 class PluginInfo:
     """
