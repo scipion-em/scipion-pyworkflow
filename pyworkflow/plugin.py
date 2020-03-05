@@ -26,6 +26,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from datetime import datetime
 import glob
 import os
 import importlib
@@ -471,7 +472,6 @@ class Plugin:
     _pathVars = []
     _supportedVersions = []
     _name = ""
-    _templateDir = None
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
@@ -620,12 +620,57 @@ class PluginInfo:
 
 
 class Template:
-    def __init__(self, pluginName, tempPath, description="Description not provided"):
+    def __init__(self, pluginName, tempPath):
         self.pluginName = pluginName
         self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "")
         self.templatePath = os.path.abspath(tempPath)
-        self.description = description
+        self.description, self.content = self._parseTemplate()
 
     def getObjId(self):
         return self.pluginName + '-' + self.templateName
+
+    def _parseTemplate(self):
+        with open(self.templatePath, 'r') as myFile:
+            allContents = myFile.read().splitlines()
+            description, index = Template.getDescription(allContents)
+
+        if not description:
+            description = 'Not provided'
+        content = ''.join(allContents[index:])
+        return description, content
+
+    @staticmethod
+    def getDescription(strList):
+        # Example of json.template file with description:
+        # -----------------------------------------------
+        # Here goes the description
+        # Description
+        # Another description line...
+        # [
+        #    {
+        #       "object.className": "ProtImportMovies",
+        #       "object.id": "2",...
+        # -----------------------------------------------
+
+        contents_start_1 = '['
+        contents_start_2 = '{'
+        description = []
+        counter = 0
+        nLines = len(strList)
+
+        while counter + 1 < nLines:
+            currentLine = strList[counter]
+            nextLine = strList[counter + 1]
+            if contents_start_1 not in currentLine:
+                description.append(currentLine)
+            else:
+                if contents_start_2 in nextLine:
+                    break
+                else:
+                    description.append(currentLine)
+            counter += 1
+
+        return ''.join(description), counter
+
+
 

@@ -30,7 +30,6 @@ some code was taken from tkSimpleDialog
 """
 import tkinter as tk
 from tkinter.colorchooser import askcolor as _askColor
-
 from pyworkflow.utils import Message, Icon
 from . import gui
 from .tree import BoundTree
