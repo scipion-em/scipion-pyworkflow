@@ -118,7 +118,6 @@ class Message:
     NO_SAVE_SETTINGS = 'Error trying to save settings.'
     
     # ------- Protocol Form messages ----------
-    LABEL_URL = "Url"
     LABEL_CITE = 'Cite'
     LABEL_HELP = 'Help'
     TEXT_HELP = 'The file selected will be uploaded to the project folder. If the file was uploaded before, It will be replaced.'
