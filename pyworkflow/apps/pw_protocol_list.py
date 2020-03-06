@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
 
     def iterGroups(protDict):
-        groups = protDict.keys()
+        groups = list(protDict.keys())
         groups.sort(key=lambda x: 1000-len(protDict[x]))
 
         for g in groups:

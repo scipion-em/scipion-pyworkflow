@@ -1655,15 +1655,6 @@ class FormWindow(Window):
         _addButton(pwutils.Message.LABEL_HELP,
                    pwutils.Icon.ACTION_HELP, self._showHelp, 3)
 
-        # Add protocol url
-        url = plugin.getClassPlugin().getUrl(prot)
-        # If not empty...
-        if url:
-            # add a icon button that launches the browser
-            _addButton(pwutils.Message.LABEL_URL,
-                       pwutils.Icon.LINK,
-                       lambda e: webbrowser.open_new_tab(url), 4)
-
         return headerFrame
         
     def _showReferences(self, e=None):
@@ -1672,7 +1663,17 @@ class FormWindow(Window):
         
     def _showHelp(self, e=None):
         """ Show the protocol help. """
-        self.showInfo(self.protocol.getHelpText(), "Help")
+        prot = self.protocol
+        text = prot.getHelpText()
+
+        # Add protocol url
+        plugin = prot.getClassPlugin()
+        url = "" if plugin is None else plugin.getUrl(prot)
+        # If not empty...
+        if url:
+            text += "\nDocumentation or forum url for this protocol:\n" +url
+
+        self.showInfo(text, "Help")
         
     def _createParallel(self, runFrame, r):
         """ Create the section for MPI, threads and GPU. """

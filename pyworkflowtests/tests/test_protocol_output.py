@@ -34,16 +34,15 @@ import pyworkflow.protocol as pwprot
 from pyworkflowtests.protocols import ProtOutputTest
 from pyworkflowtests import Domain, MockObject
 
-# Set the application domain
-pw.Config.setDomain("pyworkflowtests")
-
-
 # Protocol to output of basic scipion objects
 class TestProtocolOutputs(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
         pwtests.setupTestProject(cls, writeLocalConfig=True)
         pwtests.setupTestOutput(cls)
+
+        # Set the application domain
+        pw.Config.setDomain("pyworkflowtests")
 
     def test_basicObjectOutput(self):
         """Test the list with several Complex"""

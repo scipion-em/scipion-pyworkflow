@@ -30,6 +30,7 @@ import traceback
 import numpy as np
 import math
 
+
 def prettyDate(time=False):
     """
     Get a datetime object or a int() Epoch timestamp and return a
@@ -464,6 +465,7 @@ def isPower2(num):
     """ Return True if 'num' is a power of 2. """
     return num != 0 and ((num & (num - 1)) == 0)
 
+
 # ---------------------------------------------------------------------------
 # Parsing of arguments
 # ---------------------------------------------------------------------------
@@ -709,7 +711,8 @@ def lighter(color, percent):
 def formatExceptionInfo(level=6):
     error_type, error_value, trbk = sys.exc_info()
     tb_list = traceback.format_tb(trbk, level)
-    s = "Error: %s \nDescription: %s \nTraceback:" % (error_type.__name__, error_value)
+    s = "Error: %s \nDescription: %s \nTraceback:" % (error_type.__name__,
+                                                      error_value)
     for i in tb_list:
         s += "\n" + i
     return s
@@ -725,8 +728,9 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
     value = os.getenv(variableName)
 
     if exceptionMsg is None:
-        exceptionMsg = "Environment variable %s not found. Please check scipion configuration. Try running : scipion " \
-                       "config." % variableName
+        exceptionMsg = ("Environment variable %s not found. "
+                        "Please check scipion configuration. "
+                        "Try running : scipion config." % variableName)
 
     if value is None:
         if default is None:

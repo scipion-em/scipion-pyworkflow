@@ -30,7 +30,6 @@ some code was taken from tkSimpleDialog
 """
 import tkinter as tk
 from tkinter.colorchooser import askcolor as _askColor
-
 from pyworkflow.utils import Message, Icon
 from . import gui
 from .tree import BoundTree
@@ -368,7 +367,7 @@ class EditObjectDialog(Dialog):
         # Label box
         var = tk.StringVar()
         var.set(self.valueText)
-        self.textLabel = tk.Entry(bodyFrame, width=self.textWidth, textvariable=var)
+        self.textLabel = tk.Entry(bodyFrame, width=self.textWidth, textvariable=var, font= gui.getDefaultFont())
         self.textLabel.grid(row=0, column=1, sticky='news', padx=5, pady=5)
         
         # Comment
@@ -532,7 +531,8 @@ class ListDialog(Dialog):
         label.grid(row=0, column=0, sticky='nw')
         self._searchVar = tk.StringVar(value='')
         self.entry = tk.Entry(self.searchBoxframe, bg='white',
-                              textvariable=self._searchVar, width=40)
+                              textvariable=self._searchVar, width=40,
+                              font= gui.getDefaultFont())
 
         self.entry.bind('<KeyRelease>', _onSearch)
         self.entry.focus_set()
