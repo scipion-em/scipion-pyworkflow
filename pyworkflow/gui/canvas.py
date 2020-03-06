@@ -218,7 +218,8 @@ class Canvas(tk.Canvas, Scrollable):
                     if len(a) > 2:  # image for the action
                         img = self.getImage(a[2])
                     self._menu.add_command(label=a[0], command=a[1], 
-                                           image=img, compound=tk.LEFT)
+                                           image=img, compound=tk.LEFT,
+                                           font = gui.getDefaultFont())
             self._menu.post(e.x_root, e.y_root)
             unpost = False
         if unpost:
