@@ -15,6 +15,9 @@ class Template:
         self.params = None
         self.projectName = None
 
+    def __str__(self):
+        return self.templatePath
+
     def getObjId(self):
         return self.pluginName + '-' + self.templateName
 
@@ -184,3 +187,25 @@ class Validations:
     @staticmethod
     def validBoolean(value):
         return value is True or value is False
+
+
+class TemplateList:
+    def __init__(self, templates=None):
+        self.templates = templates if templates else []
+
+    def addTemplate(self, t):
+        self.templates.append(t)
+
+    def genFromStrList(self, templateList):
+        for t in templateList:
+            parsedPath = t.split(os.path.sep)
+            pluginName = parsedPath[parsedPath.index('templates') - 1]
+            self.addTemplate(Template(pluginName, t))
+
+    def sortListByPluginName(self):
+        # Create a identifier with both plugin and template names to sort by both
+        self.templates = sorted(self.templates, key=lambda template: '.' + template.getObjId()
+                                if template.getObjId().startswith('local') else template.getObjId())
+
+        return self
+
