@@ -475,6 +475,7 @@ class Plugin:
     _pathVars = []
     _supportedVersions = []
     _name = ""
+    _condaActivationCmd = None
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
@@ -491,6 +492,22 @@ class Plugin:
     def getEnviron(cls):
         """ Setup the environment variables needed to launch programs. """
         pass
+
+    @classmethod
+    def getCondaActivationCmd(cls):
+
+        if cls._condaActivationCmd is None:
+            condaActivationCmd = os.environ.get(CONDA_ACTIVATION_CMD_VAR, "")
+            correctCondaActivationCmd = condaActivationCmd.replace(pw.Config.SCIPION_HOME + "/", "")
+            if not correctCondaActivationCmd:
+                print("WARNING!!: %s variable not defined. "
+                      "Relying on conda being in the PATH" % CONDA_ACTIVATION_CMD_VAR)
+            elif correctCondaActivationCmd[-1] not in [";", "&"]:
+                correctCondaActivationCmd += "&&"
+
+            cls._condaActivationCmd = correctCondaActivationCmd
+
+        return cls._condaActivationCmd
 
     @classmethod
     @abstractmethod
