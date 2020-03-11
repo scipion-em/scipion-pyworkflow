@@ -96,10 +96,11 @@ class ProjectWindow(ProjectBaseWindow):
                             icon='fa-download.gif')
         projMenu.addSubMenu('Search workflow', 'search_workflow',
                             icon='fa-search.gif')
-        projMenu.addSubMenu('Export tree graph', 'export_tree')
+        if pw.Config.debugOn():
+            projMenu.addSubMenu('Export tree graph', 'export_tree')
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Debug Mode', 'debug mode',
-                            shortCut="Ctrl+d")
+                            shortCut="Ctrl+d", icon='debug.gif')
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Notes', 'notes', icon='fa-pencil.gif')
         projMenu.addSubMenu('', '')  # add separator
@@ -249,7 +250,7 @@ class ProjectWindow(ProjectBaseWindow):
         runsGraph = self.project.getRunsGraph(refresh=True)
         useId = not pwutils.envVarOn('SCIPION_TREE_NAME')
         dotStr = runsGraph.printDot(useId=useId)
-        with tempfile.NamedTemporaryFile(suffix='.gv') as dotFile:
+        with tempfile.NamedTemporaryFile(suffix='.gv', mode="w") as dotFile:
             dotFile.write(dotStr)
             dotFile.flush()
             openTextFileEditor(dotFile.name)
