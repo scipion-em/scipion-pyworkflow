@@ -475,6 +475,7 @@ class Plugin:
     _pathVars = []
     _supportedVersions = []
     _name = ""
+    _condaActivationCmd = None
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
