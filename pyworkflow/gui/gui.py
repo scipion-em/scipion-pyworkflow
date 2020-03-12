@@ -262,15 +262,24 @@ class Window:
 
         if masterWindow is None:
             Window._root = self
-            self.root = tk.Tk()
             self._images = {}
+            # If a window which isn't the main Scipion window is generated from another main window, e. g. with Scipion
+            # template after the refactoring of the kickoff, in which a dialog is launched and then a form, being it
+            # called from the command line, so there's no Scipion main window. In that case, a tk.Tk() exists because if
+            # a tk.TopLevel(), as the dialog, is directly launched, it automatically generates a main tk.Tk(). Thus,
+            # after that first auto-tk.Tk(), another tk.Tk() was created here, and so the previous information was lost.
+            # Solution proposed is to generate the root as an invisible window if it doesn't exist previously, and make
+            # he first window generated a tk.Toplevel. After that, all steps executed later will go through the else
+            # statement, being that way each new tk.Toplevel() correctly referenced.
+            tk.Tk().withdraw()  # Main window, invisible
+            self.root = tk.Toplevel()  # Toplevel of main window
         else:
             self.root = tk.Toplevel(masterWindow.root)
             self._images = masterWindow._images
-            
+
         self.root.withdraw()
         self.root.title(title)
-        
+
         if weight:
             configureWeigths(self.root)
         if minsize is not None:
