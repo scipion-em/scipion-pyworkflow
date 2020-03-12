@@ -22,7 +22,7 @@ class TestLogs(BaseTest):
         import random
         logTestCode = random.randint(1, 100000)
 
-        genLogFn = Config.LOG_FILE
+        genLogFn = Config.SCIPION_LOG
         getLogConfiguration()
         log1 = logging.getLogger('pyworkflow.test.log.test_scipon_log')
         genInfoTest = 'Testing general info [%d]' % logTestCode

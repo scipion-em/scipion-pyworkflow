@@ -83,8 +83,12 @@ class Config:
         def __init__(self, root):
             self._root = root
 
-        def join(self, *paths):
-            return os.path.join(self._root, *paths)
+        def join(self, *path):
+            # We need to consider variable in the config with ~
+            expanded = os.path.expanduser(os.path.join(*path))
+
+            # join will not join if expanded is absolute
+            return os.path.join(self._root, expanded)
 
     # Home for scipion
     _get = __get.__func__
@@ -110,7 +114,7 @@ class Config:
     SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA,'logs'))
 
     # Get general log file path
-    LOG_FILE = _join(SCIPION_LOGS, 'scipion.log')
+    SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
 
     # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
