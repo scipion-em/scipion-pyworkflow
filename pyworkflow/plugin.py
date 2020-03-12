@@ -584,7 +584,7 @@ class Plugin:
         return tempList
 
     @classmethod
-    def getUrl(cls, prot=None):
+    def getUrl(cls, protClass=None):
         """ Url for the plugin to point users to it"""
         return cls._url
 

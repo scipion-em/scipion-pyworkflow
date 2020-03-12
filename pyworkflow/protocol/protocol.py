@@ -1783,6 +1783,9 @@ class Protocol(Step):
         Used from the public validate function.
         """
         return []
+    @classmethod
+    def getUrl(cls):
+        return cls.getClassPlugin().getUrl(cls)
 
     @classmethod
     def isInstalled(cls):
