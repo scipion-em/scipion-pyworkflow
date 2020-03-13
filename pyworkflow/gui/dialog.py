@@ -39,6 +39,8 @@ from .text import Text, TaggedText
 RESULT_YES = 0
 RESULT_NO = 1
 RESULT_CANCEL = 2
+RESULT_RUN_SINGLE = 3
+RESULT_RUN_ALL = 4
 
 
 class Dialog(tk.Toplevel):
@@ -89,7 +91,9 @@ class Dialog(tk.Toplevel):
 
         self.icons = {RESULT_YES: Icon.BUTTON_SELECT, 
                       RESULT_NO: Icon.BUTTON_CLOSE,
-                      RESULT_CANCEL: Icon.BUTTON_CANCEL}
+                      RESULT_CANCEL: Icon.BUTTON_CANCEL,
+                      RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
+                      RESULT_RUN_ALL: Icon.ACTION_EXECUTE}
         
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
@@ -296,7 +300,22 @@ class YesNoDialog(MessageDialog):
             
         MessageDialog.__init__(self, master, title, msg, 
                                'fa-exclamation-triangle_alert.gif', default='No',
-                               buttons=buttonList)        
+                               buttons=buttonList)
+
+
+class SingleAllDialog(MessageDialog):
+    """Ask a question with Single/All run protocol(s) answer"""
+
+    def __init__(self, master, title, msg, **kwargs):
+        buttonList = [('Single', RESULT_RUN_SINGLE), ('All', RESULT_RUN_ALL)]
+
+        if kwargs.get('showCancel', False):
+            buttonList.append(('Cancel', RESULT_CANCEL))
+
+        MessageDialog.__init__(self, master, title, msg,
+                               'fa-exclamation-triangle_alert.gif',
+                               default='Single',
+                               buttons=buttonList)
 
 
 class EntryDialog(Dialog):
@@ -415,6 +434,11 @@ def askYesNo(title, msg, parent):
 
 def askYesNoCancel(title, msg, parent):
     d = YesNoDialog(parent, title, msg, showCancel=True)
+    return d.result
+
+
+def askSingleAllCancel(title, msg, parent):
+    d = SingleAllDialog(parent, title, msg, showCancel=True)
     return d.result
 
 
@@ -647,7 +671,7 @@ class FlashMessage:
         
 
 class FloatingMessage:
-    def __init__(self, master, msg, xPos=750, yPos=80, textWidth=260,
+    def __init__(self, master, msg, xPos=750, yPos=80, textWidth=280,
                  font='Helvetica', size=12, bd=1, bg='#6E6E6E', fg='white'):
 
         self.floatingMessage = tk.Label(master, text="   %s   " % msg,

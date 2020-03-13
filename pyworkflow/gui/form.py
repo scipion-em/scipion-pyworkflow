@@ -40,6 +40,7 @@ import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 from pyworkflow.mapper import Mapper
 from pyworkflow.viewer import DESKTOP_TKINTER
+from pyworkflow.protocol.constants import MODE_RESTART
 
 from . import gui
 from pyworkflow.gui.project.utils import getStatusColorFromRun
@@ -47,11 +48,13 @@ from .gui import configureWeigths, Window
 from .browser import FileBrowserWindow
 from .widgets import Button, HotButton, IconButton
 from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
-                     ListDialog, askYesNo, Dialog)
+                     ListDialog, askYesNo, askYesNoCancel, Dialog, RESULT_YES,
+                     RESULT_NO, RESULT_CANCEL, askSingleAllCancel,
+                     RESULT_RUN_ALL, RESULT_RUN_SINGLE)
 from .canvas import Canvas
 from .tree import TreeProvider, BoundTree
 from .text import Text
-
+from ..project.project import ModificationNotAllowedException
 
 THREADS = 'Threads'
 MPI = 'MPI'
@@ -1837,20 +1840,24 @@ class FormWindow(Window):
         self.updateLabelAndCommentVars()
 
         r = 1  # Execution
-        self._createHeaderLabel(runFrame, pwutils.Message.LABEL_EXECUTION, bold=True,
-                                sticky='e', row=r, pady=0)
+
         modeFrame = tk.Frame(runFrame, bg='white')
 
-        runMode = self._createBoundOptions(modeFrame, pwutils.Message.VAR_RUN_MODE,
-                                           pwprot.MODE_CHOICES,
-                                           self.protocol.runMode.get(),
-                                           self._onRunModeChanged, 
-                                           bg='white', font=self.font)   
-        runMode.grid(row=0, column=0, sticky='e', padx=(0, 5), pady=5)
-        btnHelp = IconButton(modeFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
-                             highlightthickness=0,
-                             command=self._createHelpCommand(pwutils.Message.HELP_RUNMODE))
-        btnHelp.grid(row=0, column=2, padx=(5, 0), pady=2, sticky='e')
+        if not self.protocol.isSaved():
+            self._createHeaderLabel(runFrame, pwutils.Message.LABEL_EXECUTION,
+                                    bold=True,
+                                    sticky='e', row=r, pady=0)
+
+            runMode = self._createBoundOptions(modeFrame, pwutils.Message.VAR_RUN_MODE,
+                                               pwprot.MODE_CHOICES,
+                                               self.protocol.runMode.get(),
+                                               self._onRunModeChanged,
+                                               bg='white', font=self.font)
+            runMode.grid(row=0, column=0, sticky='e', padx=(0, 5), pady=5)
+            btnHelp = IconButton(modeFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
+                                 highlightthickness=0,
+                                 command=self._createHelpCommand(pwutils.Message.HELP_RUNMODE))
+            btnHelp.grid(row=0, column=2, padx=(5, 0), pady=2, sticky='e')
         modeFrame.columnconfigure(0, weight=1)
         modeFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
         
@@ -2133,6 +2140,8 @@ class FormWindow(Window):
 
     def execute(self, e=None):
 
+        # import time
+        # time.sleep(15)
         if self.protocol.useQueue():
             if not self._editQueueParams():
                 return
@@ -2147,13 +2156,30 @@ class FormWindow(Window):
                                  "*Note*: Your system is configured with MANDATORY = %d.\n"  
                                  "        This value can be changed in Scipion/config/hosts.conf" % (cores, mandatory))
                 return
-        
-        if (self.protocol.getRunMode() == pwprot.MODE_RESTART and 
-            not askYesNo(pwutils.Message.TITLE_RESTART_FORM, 
-                         pwutils.Message.LABEL_RESTART_FORM % ('*%s*' % self.protocol.getRunName()), 
-                         self.root)):
-            return
-            
+        if self.protocol.getRunMode() == MODE_RESTART:
+            protocolList = ""
+            if self.protocol.getObjId():
+                project = self.protocol.getProject()
+                _, workflowProtocolList = self.protocol.getProject()._checkWorkflowErrors(self.protocol)
+                for prot in workflowProtocolList:
+                    protocolList += ("\n* " + self.protocol.getProject().getProtocol(prot).getRunName())
+                if len(workflowProtocolList) > 1:
+                    result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
+                                 pwutils.Message.LABEL_RESTART_FORM % ('%s\n' % protocolList),
+                                 self.root)
+                    if result == RESULT_RUN_ALL:
+                        project.launchWorkflow(self.protocol, mode=MODE_RESTART)
+                        self.close()
+                    elif result == RESULT_RUN_SINGLE:
+                         project.resetWorkFlow(self.protocol)
+                    else:
+                        return
+                elif not askYesNo(pwutils.Message.TITLE_RESTART_FORM,
+                             pwutils.Message.LABEL_RESTART_FORM % (
+                                         '*%s*' % self.protocol.getRunName()),
+                             self.root):
+                    return
+
         errors = self.protocol.validate()
         
         if errors:
@@ -2176,6 +2202,10 @@ class FormWindow(Window):
                     self.showInfo(message, "Protocol action")
                 if not onlySave:
                     self.close()
+        except ModificationNotAllowedException as ex:
+            self.showInfo("Save not allowed. There are protocols executed "
+                          "hanging from this one. Modifying values will break"
+                          " traceability.\n\n %s\n" % ex)
         except Exception as ex:
             import traceback
             traceStr = traceback.format_exc()
