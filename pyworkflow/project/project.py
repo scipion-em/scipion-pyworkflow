@@ -852,8 +852,7 @@ class Project(object):
             while auxProList:
                 protocol = self.getProtocol(auxProList.pop(0))
                 if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                    errorsList.append("The protocol: %s  is active\n" %
-                                      (protocol.getObjLabel()))
+                    errorsList.append(protocol.getObjId())
                 node = self.getRunsGraph().getNode(protocol.strId())
                 if node:
                     dependencies = [node.run for node in node.getChilds()]

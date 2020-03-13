@@ -284,7 +284,6 @@ Do you really want to continue?'
     LABEL_RESTART_FORM = """
 You are going to *RESTART* the run: 
   %s
-*ALL DATA* related will be permanently removed.
 
 Do you really want to restart?'
 """

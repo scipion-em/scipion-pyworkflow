@@ -1903,8 +1903,10 @@ class ProtocolsView(tk.Frame):
             message.close()
         if errorList:
             msg = ''
-            for error in errorList:
-                msg = msg + str(error)
+            for errorProt in errorList:
+                error = ("The protocol: %s  is active\n" %
+                         (self.project.getProtocol(errorProt).getRunName()))
+                msg += str(error)
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_STOPPED_WORKFLOW_FAILED,
                 Message.TITLE_STOPPED_WORKFLOW_FAILED + msg,
@@ -1924,8 +1926,10 @@ class ProtocolsView(tk.Frame):
             message.close()
         if errorList:
             msg = ''
-            for error in errorList:
-                msg = msg + str(error)
+            for errorProt in errorList:
+                error = ("The protocol: %s  is active\n" %
+                         (self.project.getProtocol(errorProt).getRunName()))
+                msg += str(error)
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_RESETED_WORKFLOW_FAILED,
                 Message.TITLE_RESETED_WORKFLOW_FAILED + msg,
@@ -1963,11 +1967,13 @@ class ProtocolsView(tk.Frame):
 
         if errorList:
             msg = ''
-            for error in errorList:
+            for errorProt in errorList:
+                error = ("The protocol: %s  is active\n" %
+                         (self.project.getProtocol(errorProt).getRunName()))
                 msg += str(error)
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
-                Message.TITLE_LAUNCHED_WORKFLOW_FAILED + msg,
+                Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" + msg,
                 'fa-times-circle_alert.gif')
 
     def _selectLabels(self):
