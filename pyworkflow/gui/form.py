@@ -2168,6 +2168,7 @@ class FormWindow(Window):
                     if result == RESULT_RUN_ALL:
                         project.launchWorkflow(self.protocol, mode=MODE_RESTART)
                         self.close()
+                        return
                     elif result == RESULT_RUN_SINGLE and not self.protocol.isSaved():
                          project.resetWorkFlow(self.protocol)
                     elif result == RESULT_CANCEL:

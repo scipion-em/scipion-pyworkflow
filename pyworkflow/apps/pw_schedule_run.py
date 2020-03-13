@@ -26,6 +26,7 @@
 # **************************************************************************
 
 import os
+import sys
 import time
 import argparse
 
@@ -218,5 +219,9 @@ class RunScheduler:
 
 
 if __name__ == '__main__':
-    scheduler = RunScheduler()
-    scheduler.main()
+    try:
+        scheduler = RunScheduler()
+        scheduler.main()
+    except Exception as ex:
+        print(ex)
+        print("Schedule fail with this parameters: ", sys.argv)

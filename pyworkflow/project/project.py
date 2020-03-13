@@ -771,22 +771,13 @@ class Project(object):
         except Exception:
             raise
         finally:
-            protocol.setStatus(pwprot.STATUS_SAVED)
-            self._storeProtocol(protocol)
+            protocol.setSaved()
             protocol.runMode.set(MODE_RESTART)
             protocol._store()
-            self.mapper.store(protocol)
-            self.mapper.commit()
-            self._setupProtocol(protocol)
+            self._storeProtocol(protocol)
             protocol.makePathsAndClean()  # Create working dir if necessary
             protocol._store()
             self._storeProtocol(protocol)
-            # Delete the relations created by this protocol
-            self.mapper.deleteRelations(self)
-            self.mapper.commit()
-            protocol._store()
-            self.mapper.store(protocol)
-            self.mapper.commit()
 
 
     def continueProtocol(self, protocol):
