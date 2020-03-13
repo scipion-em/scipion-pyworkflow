@@ -2140,8 +2140,6 @@ class FormWindow(Window):
 
     def execute(self, e=None):
 
-        # import time
-        # time.sleep(15)
         if self.protocol.useQueue():
             if not self._editQueueParams():
                 return
@@ -2170,9 +2168,9 @@ class FormWindow(Window):
                     if result == RESULT_RUN_ALL:
                         project.launchWorkflow(self.protocol, mode=MODE_RESTART)
                         self.close()
-                    elif result == RESULT_RUN_SINGLE:
+                    elif result == RESULT_RUN_SINGLE and not self.protocol.isSaved():
                          project.resetWorkFlow(self.protocol)
-                    else:
+                    elif result == RESULT_CANCEL:
                         return
                 elif not askYesNo(pwutils.Message.TITLE_RESTART_FORM,
                              pwutils.Message.LABEL_RESTART_FORM % (

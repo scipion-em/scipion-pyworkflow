@@ -775,15 +775,18 @@ class Project(object):
             self._storeProtocol(protocol)
             protocol.runMode.set(MODE_RESTART)
             protocol._store()
+            self.mapper.store(protocol)
+            self.mapper.commit()
             self._setupProtocol(protocol)
             protocol.makePathsAndClean()  # Create working dir if necessary
+            protocol._store()
             self._storeProtocol(protocol)
             # Delete the relations created by this protocol
             self.mapper.deleteRelations(self)
             self.mapper.commit()
+            protocol._store()
             self.mapper.store(protocol)
             self.mapper.commit()
-            protocol._store()
 
 
     def continueProtocol(self, protocol):
