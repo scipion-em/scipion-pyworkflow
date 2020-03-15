@@ -1667,8 +1667,8 @@ class FormWindow(Window):
         text = prot.getHelpText()
 
         # Add protocol url
-        plugin = prot.getClassPlugin()
-        url = "" if plugin is None else plugin.getUrl(prot)
+        url = prot.getUrl()
+
         # If not empty...
         if url:
             text += "\nDocumentation or forum url for this protocol:\n" +url
