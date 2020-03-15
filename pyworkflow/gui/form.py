@@ -1668,6 +1668,7 @@ class FormWindow(Window):
 
         # Add protocol url
         url = prot.getUrl()
+
         # If not empty...
         if url:
             text += "\nDocumentation or forum url for this protocol:\n" +url

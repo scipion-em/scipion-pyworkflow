@@ -53,7 +53,7 @@ def getLogConfiguration():
                 'level': 'NOTSET',
                 'class': 'logging.handlers.RotatingFileHandler',
                 'formatter': 'standard',
-                'filename': Config.LOG_FILE,
+                'filename': Config.SCIPION_LOG,
                 'maxBytes': 100000,
             },
             'consoleHandler': {

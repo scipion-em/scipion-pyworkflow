@@ -476,6 +476,7 @@ class Plugin:
     _name = ""
     _url = "" # For the plugin
     _condaActivationCmd = None
+    _url = "" # For the plugin
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
