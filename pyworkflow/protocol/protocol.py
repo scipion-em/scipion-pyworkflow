@@ -1603,7 +1603,7 @@ class Protocol(Step):
     @classmethod
     def getClassPlugin(cls):
         package = cls.getClassPackage()
-        return getattr(package, '_plugin', None)
+        return getattr(package, 'Plugin', None)
 
     @classmethod
     def getClassPackageName(cls):
@@ -1617,8 +1617,7 @@ class Protocol(Step):
     @classmethod
     def getPluginLogoPath(cls):
         package = cls.getClassPackage()
-        plugin = cls.getClassPlugin()
-        logo = plugin.logo if plugin else getattr(package, '_logo', None)
+        logo = getattr(package, '_logo', None)
         if logo:
             logoPath = (pw.findResource(logo) or
                         os.path.join(os.path.abspath(os.path.dirname(package.__file__)), logo))
@@ -1784,6 +1783,9 @@ class Protocol(Step):
         Used from the public validate function.
         """
         return []
+    @classmethod
+    def getUrl(cls):
+        return cls.getClassPlugin().getUrl(cls)
 
     @classmethod
     def isInstalled(cls):
@@ -1929,7 +1931,7 @@ class Protocol(Step):
 
     def __getPluginBibTex(self):
         """ Return the _bibtex from the package """
-        return getattr(self.getClassPlugin(), 'bibtex', {}) or getattr(self.getClassPackage(), "_bibtex", {})
+        return getattr(self.getClassPackage(), "_bibtex", {})
 
     def _getCite(self, citeStr):
         bibtex = self.__getPluginBibTex()

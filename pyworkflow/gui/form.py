@@ -31,6 +31,7 @@ params definition.
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
+import webbrowser
 from collections import OrderedDict
 from datetime import datetime
 
@@ -965,7 +966,7 @@ class ParamWidget:
     A Frame(buttons): a container for available actions buttons
     It will also have a Variable that should be set when creating 
       the specific components"""
-    def __init__(self, row, paramName, param, window, parent, value, 
+    def __init__(self, row, paramName, param, window, parent, value,
                  callback=None, visualizeCallback=None, column=0,
                  showButtons=True):
         self.window = window
@@ -981,23 +982,23 @@ class ParamWidget:
         self.parent = parent
         self.visualizeCallback = visualizeCallback
         self.var = None
-        
+
         self._btnCol = 0
         self._labelFont = self.window.font
 
         self._initialize(showButtons)
         self._createLabel()  # self.label should be set after this
         self._createContent()  # self.content and self.var should be set after this
-        
+
         if self.var:  # Groups have not self.var
             self.set(value)
             self.callback = callback
             self.var.trace('w', self._onVarChanged)
-        
+
     def _initialize(self, showButtons):
         # Show buttons = False means the widget is inside a Line group
         # then, some of the properties change accordingly
-        if showButtons: 
+        if showButtons:
             self._labelSticky = 'ne'
             self._padx, self._pady = 2, 2
             self._entryWidth = 10
@@ -1013,25 +1014,25 @@ class ParamWidget:
             self._labelFont = self.window.fontItalic
             self._entryWidth = 8
         self._onlyLabel = False
-        
+
     def _getParamLabel(self):
         return self.param.label.get()
-        
+
     def _createLabel(self):
         bgColor = 'white'
-        
+
         if self.param.isExpert():
             bgColor = 'lightgrey'
-        
-        self.label = tk.Label(self.parent, text=self._getParamLabel(), 
+
+        self.label = tk.Label(self.parent, text=self._getParamLabel(),
                               bg=bgColor, font=self._labelFont, wraplength=500)
-               
+
     def _createContent(self):
         self.content = tk.Frame(self.parent, bg='white')
         gui.configureWeigths(self.content)
         # self.var should be set after this
         self._createContentWidgets(self.param, self.content)
-        
+
     def _addButton(self, text, imgPath, cmd):
         if self.btnFrame:
             btn = IconButton(self.btnFrame, text, imgPath,
@@ -1039,10 +1040,10 @@ class ParamWidget:
             btn.grid(row=0, column=self._btnCol, sticky='nes', padx=1, pady=4)
             self.btnFrame.columnconfigure(self._btnCol, weight=1)
             self._btnCol += 1
-        
+
     def _showHelpMessage(self, e=None):
         showInfo("Help", self.param.help.get(), self.parent)
-        
+
     def _showInfo(self, msg):
         showInfo("Info", msg, self.parent)
 
@@ -1051,12 +1052,12 @@ class ParamWidget:
 
     def _showWarning(self, msg):
         showWarning("Warning", msg, self.parent)
-        
+
     def _showWizard(self, e=None):
         wizClass = self.window.wizards[self.wizParamName]
         wizard = wizClass()
         wizard.show(self.window)
-        
+
     def _findParamWizard(self):
         """ Search if there are registered wizards for this param
         or any of its subparams (for the case of Line groups)
@@ -1064,7 +1065,7 @@ class ParamWidget:
         if self.paramName in self.window.wizards:
             self.wizParamName = self.paramName
             return True
-        
+
         if isinstance(self.param, pwprot.Line):
             for name, _ in self.param.iterParams():
                 if name in self.window.wizards:
@@ -1072,10 +1073,10 @@ class ParamWidget:
                     return True
         # Search in sub-params
         return False
-               
+
     @staticmethod
     def createBoolWidget(parent, **args):
-        """ Return a BoolVar associated with a yes/no selection. 
+        """ Return a BoolVar associated with a yes/no selection.
         **args: extra arguments passed to tk.Radiobutton and tk.Frame
             constructors.
         """
@@ -1089,10 +1090,10 @@ class ParamWidget:
         rb1.grid(row=0, column=0, padx=2, sticky='w')
         rb2 = tk.Radiobutton(frame, text='No', variable=var.tkVar,
                              highlightthickness=0, value=0, **args)
-        rb2.grid(row=0, column=1, padx=2, sticky='w') 
-        
+        rb2.grid(row=0, column=1, padx=2, sticky='w')
+
         return var, frame
-    
+
     def _createContentWidgets(self, param, content):
         """Create the specific widgets inside the content frame"""
         # Create widgets for each type of param
@@ -1106,37 +1107,37 @@ class ParamWidget:
 
         if t is pwprot.HiddenBooleanParam:
             var = 0
-        
+
         elif t is pwprot.BooleanParam:
-            var, frame = ParamWidget.createBoolWidget(content, bg='white', 
+            var, frame = ParamWidget.createBoolWidget(content, bg='white',
                                                       font=self.window.font)
             frame.grid(row=0, column=0, sticky='w')
-        
+
         elif t is pwprot.EnumParam:
             var = ComboVar(param)
             if param.display == pwprot.EnumParam.DISPLAY_COMBO:
-                combo = ttk.Combobox(content, textvariable=var.tkVar, 
+                combo = ttk.Combobox(content, textvariable=var.tkVar,
                                      state='readonly', font=self.window.font)
                 combo['values'] = param.choices
                 combo.grid(row=0, column=0, sticky='we')
             elif param.display == pwprot.EnumParam.DISPLAY_LIST:
                 for i, opt in enumerate(param.choices):
-                    rb = tk.Radiobutton(content, text=opt, variable=var.tkVar, 
+                    rb = tk.Radiobutton(content, text=opt, variable=var.tkVar,
                                         value=opt, font=self.window.font,
                                         bg='white', highlightthickness=0)
                     rb.grid(row=i, column=0, sticky='w')
             elif param.display == pwprot.EnumParam.DISPLAY_HLIST:
                 rbFrame = tk.Frame(content, bg='white')
                 rbFrame.grid(row=0, column=0, sticky='w')
-                for i, opt in enumerate(param.choices):                    
-                    rb = tk.Radiobutton(rbFrame, text=opt, variable=var.tkVar, 
+                for i, opt in enumerate(param.choices):
+                    rb = tk.Radiobutton(rbFrame, text=opt, variable=var.tkVar,
                                         value=opt, font=self.window.font,
                                         bg='white')
-                    rb.grid(row=0, column=i, sticky='w', padx=(0, 5))                
+                    rb.grid(row=0, column=i, sticky='w', padx=(0, 5))
             else:
                 raise Exception("Invalid display value '%s' for EnumParam"
                                 % str(param.display))
-        
+
         elif t is pwprot.MultiPointerParam:
             tp = MultiPointerTreeProvider(self._protocol.mapper)
             tree = BoundTree(content, tp, height=5)
@@ -1146,21 +1147,21 @@ class ParamWidget:
             self._addButton("Remove", pwutils.Icon.ACTION_DELETE, self._removeObject)
             self._selectmode = 'extended'  # allows multiple object selection
             self.visualizeCallback = self._visualizeMultiPointerParam
-        
+
         elif t is pwprot.PointerParam or t is pwprot.RelationParam:
             var = PointerVar(self._protocol)
             var.trace('w', self.window._onPointerChanged)
             entry = tk.Label(content, textvariable=var.tkVar,
                              font=self.window.font, anchor="w")
             entry.grid(row=0, column=0, sticky='we')
-            
+
             if t is pwprot.RelationParam:
                 selectFunc = self._browseRelation
                 removeFunc = self._removeRelation
             else:
                 selectFunc = self._browseObject
                 removeFunc = self._removeObject
-                
+
                 self.visualizeCallback = self._visualizePointerParam
             self._selectmode = 'browse'  # single object selection
 
@@ -1171,24 +1172,24 @@ class ParamWidget:
             entry.grid(row=0, column=0, sticky='we')
 
             protClassName = self.param.protocolClassName.get()
-            
+
             if self.param.allowSubclasses:
                 classes = pw.Config.getDomain().findSubClasses(
                     pw.Config.getDomain().getProtocols(), protClassName).keys()
             else:
                 classes = [protClassName]
-            
+
             if len(classes) > 1:
                 self._addButton("Select", pwutils.Icon.ACTION_SEARCH,
                                 self._browseProtocolClass)
             else:
                 var.set(classes[0])
-            
+
             self._addButton("Edit", pwutils.Icon.ACTION_EDIT, self._openProtocolForm)
 
         elif t is pwprot.Line:
             var = None
-            
+
         elif t is pwprot.LabelParam:
             var = None
             self._onlyLabel = True
@@ -1217,7 +1218,7 @@ class ParamWidget:
                 self._selectmode = 'browse'
                 sticky = 'ew'
 
-            entry = tk.Entry(content, width=entryWidth, textvariable=var, 
+            entry = tk.Entry(content, width=entryWidth, textvariable=var,
                              font=self.window.font)
 
             # Select all content on focus
@@ -1241,12 +1242,12 @@ class ParamWidget:
             self._addButton(pwutils.Message.LABEL_BUTTON_VIS,
                             pwutils.Icon.ACTION_VISUALIZE,
                             self._visualizeVar)
-        
+
         if self._findParamWizard():
             self._addButton(pwutils.Message.LABEL_BUTTON_WIZ,
                             pwutils.Icon.ACTION_WIZ,
                             self._showWizard)
-        
+
         if param.help.hasValue():
             self._addButton(pwutils.Message.LABEL_BUTTON_HELP,
                             pwutils.Icon.ACTION_HELP,
@@ -1257,10 +1258,10 @@ class ParamWidget:
     def _visualizeVar(self, e=None):
         """ Visualize specific variable. """
         self.visualizeCallback(self.paramName)
-        
+
     def _visualizePointer(self, pointer):
         obj = pointer.get()
-        
+
         if obj is None:
             label, _ = getPointerLabelAndInfo(pointer, self._protocol.getMapper())
             self._showInfo('*%s* points to *None*' % label)
@@ -1276,19 +1277,19 @@ class ParamWidget:
             else:
                 self._showInfo("There is no viewer registered for "
                                "*%s* object class." % obj.getClassName())
-    
+
     def _visualizePointerParam(self, paramName):
         pointer = self.var.get()
         if pointer.hasValue():
             self._visualizePointer(pointer)
         else:
             self._showInfo("Select input first.")
-    
+
     def _visualizeMultiPointerParam(self, paramName):
         selection = self.var.getSelectedObjects()
         for pointer in selection:
             self._visualizePointer(pointer)
-        
+
     def _browseObject(self, e=None):
         """Select an object from DB
         This function is suppose to be used only for PointerParam"""
@@ -1300,7 +1301,7 @@ class ParamWidget:
             selected = [value]
         tp = SubclassesTreeProvider(self._protocol, self.param,
                                     selected=selected)
-        
+
         def validateSelected(selectedItems):
             for item in selectedItems:
                 if not getattr(item, '_allowsSelection', True):
@@ -1313,7 +1314,7 @@ class ParamWidget:
 
         if pointerCond:
             title += " (condition: %s)" % pointerCond
-                                            
+
         dlg = ListDialog(self.parent, title, tp,
                          "Double click selects the item, right-click allows "
                          "you to visualize it",
@@ -1365,7 +1366,7 @@ class ParamWidget:
     def _removeObject(self, e=None):
         """ Remove an object from a MultiPointer param. """
         self.var.remove()
-                        
+
     def _browseRelation(self, e=None):
         """Select a relation from DB
         This function is suppose to be used only for RelationParam. """
@@ -1384,10 +1385,10 @@ class ParamWidget:
                             "This usually happens because the parameter "
                             "needs info from other parameters... are "
                             "previous mandatory parameters set?")
-            
+
     def _removeRelation(self, e=None):
         self.var.remove()
-            
+
     def _browseProtocolClass(self, e=None):
         tp = ProtocolClassTreeProvider(self.param.protocolClassName.get())
         dlg = ListDialog(self.parent, "Select protocol", tp,
@@ -1395,7 +1396,7 @@ class ParamWidget:
         if dlg.value is not None:
             self.set(dlg.value)
             self._openProtocolForm()
-            
+
     def _browsePath(self, e=None):
         def onSelect(obj):
             self.set(obj.getPath())
@@ -1405,13 +1406,13 @@ class ParamWidget:
         if v:
             v = os.path.dirname(v)
             if os.path.exists(v):
-                path = v        
+                path = v
         if not path:
             path = pwutils.getHomePath()
         browser = FileBrowserWindow("Browsing", self.window, path=path,
                                     onSelect=onSelect)
         browser.show()
-            
+
     def _openProtocolForm(self, e=None):
         className = self.get().strip()
         if len(className):
@@ -1422,9 +1423,9 @@ class ParamWidget:
             if not hasattr(protocol, instanceName):
                 cls = pw.Config.getDomain().findClass(className)
                 protocol._insertChild(instanceName, cls())
-            
+
             prot = getattr(protocol, instanceName)
-                
+
             prot.allowHeader.set(False)
             f = FormWindow("Sub-Protocol: " + instanceName, prot,
                            self._protocolFormCallback, self.window,
@@ -1432,20 +1433,20 @@ class ParamWidget:
             f.show()
         else:
             self._showInfo("Select the protocol class first")
-        
+
     def _protocolFormCallback(self, e=None):
         pass
-    
+
     def _onVarChanged(self, *args):
         if self.callback is not None:
             self.callback(self.paramName)
-        
+
     def show(self):
         """Grid the label and content in the specified row"""
         c = self.column
         if self._onlyLabel:
             # Use two columns for this case since we are only displaying a label
-            self.label.grid(row=self.row, column=c, sticky=self._labelSticky, 
+            self.label.grid(row=self.row, column=c, sticky=self._labelSticky,
                             padx=self._padx, pady=self._pady, columnspan=2)
         else:
             self.label.grid(row=self.row, column=c, sticky=self._labelSticky,
@@ -1462,27 +1463,27 @@ class ParamWidget:
         if self.btnFrame:
             self.btnFrame.grid(row=self.row, column=c+2, padx=self._padx,
                                pady=self._pady, sticky='nsew')
-        
+
     def hide(self):
         self.label.grid_remove()
         self.content.grid_remove()
         if self.btnFrame:
             self.btnFrame.grid_remove()
-            
+
     def display(self, condition):
         """ show or hide depending on the condition. """
         if condition:
             self.show()
         else:
             self.hide()
-        
+
     def set(self, value):
         if value is not None:
             self.var.set(value)
-            
+
         if hasattr(self, '_entryPath'):
             self._entryPath.xview_moveto(1)
-        
+
     def get(self):
         return self.var.get()
 
@@ -1647,13 +1648,13 @@ class FormWindow(Window):
                            compound=tk.LEFT, cursor='hand2', name=text.lower())
             btn.bind('<Button-1>', command)
             btn.grid(row=0, column=col, padx=5, sticky='e')
-        
+
         _addButton(pwutils.Message.LABEL_CITE,
                    pwutils.Icon.ACTION_REFERENCES,
                    self._showReferences, 2)
         _addButton(pwutils.Message.LABEL_HELP,
                    pwutils.Icon.ACTION_HELP, self._showHelp, 3)
-        
+
         return headerFrame
         
     def _showReferences(self, e=None):
@@ -1662,7 +1663,16 @@ class FormWindow(Window):
         
     def _showHelp(self, e=None):
         """ Show the protocol help. """
-        self.showInfo(self.protocol.getHelpText(), "Help")
+        prot = self.protocol
+        text = prot.getHelpText()
+
+        # Add protocol url
+        url = prot.getUrl()
+        # If not empty...
+        if url:
+            text += "\nDocumentation or forum url for this protocol:\n" +url
+
+        self.showInfo(text, "Help")
         
     def _createParallel(self, runFrame, r):
         """ Create the section for MPI, threads and GPU. """
