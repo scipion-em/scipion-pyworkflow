@@ -89,11 +89,12 @@ class Dialog(tk.Toplevel):
         bodyFrame.grid(row=0, column=0, sticky='news',
                        padx=5, pady=5)
 
-        self.icons = {RESULT_YES: Icon.BUTTON_SELECT, 
-                      RESULT_NO: Icon.BUTTON_CLOSE,
-                      RESULT_CANCEL: Icon.BUTTON_CANCEL,
-                      RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
-                      RESULT_RUN_ALL: Icon.ACTION_EXECUTE}
+        self.icons = kwargs.get('icons',
+                                {RESULT_YES: Icon.BUTTON_SELECT,
+                                 RESULT_NO: Icon.BUTTON_CLOSE,
+                                 RESULT_CANCEL: Icon.BUTTON_CANCEL,
+                                 RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
+                                 RESULT_RUN_ALL: Icon.ACTION_EXECUTE})
         
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
@@ -142,8 +143,10 @@ class Dialog(tk.Toplevel):
         pass
 
     def _createButton(self, frame, text, result):
-        icon = self.icons[result]
-        return tk.Button(frame, text=text, image=self.getImage(icon),
+        icon = None
+        if result in self.icons.keys():
+            icon = self.getImage(self.icons[result])
+        return tk.Button(frame, text=text, image=icon,
                          compound=tk.LEFT,
                          command=lambda: self._handleResult(result))
         
@@ -303,19 +306,38 @@ class YesNoDialog(MessageDialog):
                                buttons=buttonList)
 
 
-class SingleAllDialog(MessageDialog):
-    """Ask a question with Single/All run protocol(s) answer"""
+class GenericDialog(Dialog):
+    """
+    Create a dialog with many buttons
+    Arguments:
+            parent -- a parent window (the application window)
+            title -- the dialog title
+            msg  -- message to display into the dialog
+            iconPath -- path of the image to show into the dialog
 
-    def __init__(self, master, title, msg, **kwargs):
-        buttonList = [('Single', RESULT_RUN_SINGLE), ('All', RESULT_RUN_ALL)]
+        **args accepts:
+            buttons -- list of buttons tuples containing which buttons to display and theirs values
+            icons -- list of icons for all buttons
+            default -- button default
 
-        if kwargs.get('showCancel', False):
-            buttonList.append(('Cancel', RESULT_CANCEL))
+            Example:
+                buttons=[('Single', RESULT_RUN_SINGLE),
+                         ('All', RESULT_RUN_ALL),
+                         ('Cancel', RESULT_CANCEL)],
+                default='Cancel',
+                icons={RESULT_CANCEL: Icon.BUTTON_CANCEL,
+                       RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
+                       RESULT_RUN_ALL: Icon.ACTION_EXECUTE})
+    """
 
-        MessageDialog.__init__(self, master, title, msg,
-                               'fa-exclamation-triangle_alert.gif',
-                               default='Single',
-                               buttons=buttonList)
+    def __init__(self, master, title, msg, iconPath, **kwargs):
+        self.msg = msg
+        self.iconPath = iconPath
+        Dialog.__init__(self, master, title, **kwargs)
+
+    def body(self, bodyFrame):
+        self.image = gui.getImage(self.iconPath)
+        createMessageBody(bodyFrame, self.msg, self.image)
 
 
 class EntryDialog(Dialog):
@@ -438,7 +460,16 @@ def askYesNoCancel(title, msg, parent):
 
 
 def askSingleAllCancel(title, msg, parent):
-    d = SingleAllDialog(parent, title, msg, showCancel=True)
+    d = GenericDialog(parent, title, msg,
+                      'fa-exclamation-triangle_alert.gif',
+                      buttons=[('Single', RESULT_RUN_SINGLE),
+                               ('All', RESULT_RUN_ALL),
+                               ('Cancel', RESULT_CANCEL)],
+                      default='Single',
+                      icons={RESULT_CANCEL: Icon.BUTTON_CANCEL,
+                             RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
+                             RESULT_RUN_ALL: Icon.ACTION_EXECUTE})
+
     return d.result
 
 
