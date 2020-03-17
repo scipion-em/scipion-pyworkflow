@@ -2166,6 +2166,8 @@ class FormWindow(Window):
                                  pwutils.Message.LABEL_RESTART_FORM % ('%s\n' % protocolList),
                                  self.root)
                     if result == RESULT_RUN_ALL:
+                        self.protocol._store()
+                        self.protocol.getProject()._storeProtocol(self.protocol)
                         project.launchWorkflow(self.protocol, mode=MODE_RESTART)
                         self.close()
                         return
