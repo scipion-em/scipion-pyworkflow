@@ -92,9 +92,7 @@ class Dialog(tk.Toplevel):
         self.icons = kwargs.get('icons',
                                 {RESULT_YES: Icon.BUTTON_SELECT,
                                  RESULT_NO: Icon.BUTTON_CLOSE,
-                                 RESULT_CANCEL: Icon.BUTTON_CANCEL,
-                                 RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
-                                 RESULT_RUN_ALL: Icon.ACTION_EXECUTE})
+                                 RESULT_CANCEL: Icon.BUTTON_CANCEL})
         
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
