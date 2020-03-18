@@ -41,7 +41,8 @@ import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
-                                           STATUS_INTERACTIVE, ACTIVE_STATUS)
+                                           STATUS_INTERACTIVE, ACTIVE_STATUS,
+                                           STATUS_SAVED)
 
 from . import config
 
@@ -560,6 +561,20 @@ class Project(object):
                     except Exception as err:
                         print(err)
 
+    def resetWorkFlow(self, initialProtocol):
+        """
+        This function can reset a workflow from a selected protocol
+        :param initialProtocol: selected protocol
+        """
+        if initialProtocol:
+            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
+            for protocolId in workflowProtocolList:
+                protocol = self.getProtocol(protocolId)
+                try:
+                    self.resetProtocol(protocol)
+                except Exception as err:
+                    print(err)
+
     def launchWorkflow(self, initialProtocol, mode=MODE_CONTINUE):
         """
         This function can launch a workflow from a selected protocol in two
@@ -748,6 +763,23 @@ class Project(object):
             protocol._store()
             self._storeProtocol(protocol)
 
+    def resetProtocol(self, protocol):
+        """ Stop a running protocol """
+        try:
+            if protocol.getStatus() in ACTIVE_STATUS:
+                pwprot.stop(protocol)
+        except Exception:
+            raise
+        finally:
+            protocol.setSaved()
+            protocol.runMode.set(MODE_RESTART)
+            protocol._store()
+            self._storeProtocol(protocol)
+            protocol.makePathsAndClean()  # Create working dir if necessary
+            protocol._store()
+            self._storeProtocol(protocol)
+
+
     def continueProtocol(self, protocol):
         """ This function should be called 
         to mark a protocol that have an interactive step
@@ -784,7 +816,7 @@ class Project(object):
         return error
 
     def _checkProtocolsDependencies(self, protocols, msg):
-        """ Check if the protocols have depencies.
+        """ Check if the protocols have dependencies.
         This method is used before delete or save protocols to be sure
         it is not referenced from other runs. (an Exception is raised)
         Params:
@@ -794,7 +826,7 @@ class Project(object):
         # Check if the protocol have any dependencies
         error = self._getProtocolsDependencies(protocols)
         if error:
-            raise Exception(msg + error)
+            raise ModificationNotAllowedException(msg + error)
 
     def _checkModificationAllowed(self, protocols, msg):
         """ Check if any modification operation is allowed for
@@ -820,8 +852,7 @@ class Project(object):
             while auxProList:
                 protocol = self.getProtocol(auxProList.pop(0))
                 if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                    errorsList.append("The protocol: %s  is active\n" %
-                                      (protocol.getObjLabel()))
+                    errorsList.append(protocol.getObjId())
                 node = self.getRunsGraph().getNode(protocol.strId())
                 if node:
                     dependencies = [node.run for node in node.getChilds()]
@@ -1627,4 +1658,8 @@ class Project(object):
 
 
 class MissingProjectDbException(Exception):
+    pass
+
+
+class ModificationNotAllowedException(Exception):
     pass

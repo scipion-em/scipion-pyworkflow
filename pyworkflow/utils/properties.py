@@ -92,6 +92,7 @@ class Message:
     LABEL_RESTART_WORKFLOW = 'Restart workflow'
     LABEL_CONTINUE_WORKFLOW = 'Continue workflow'
     LABEL_STOP_WORKFLOW = 'Stop from here'
+    LABEL_RESET_WORKFLOW = 'Reset from here'
 
     # -- Tabs --
     LABEL_DATA = 'Data'
@@ -282,11 +283,16 @@ Do you really want to continue?'
 """
     LABEL_RESTART_FORM = """
 You are going to *RESTART* the run: 
-  - %s
-*ALL DATA* related will be permanently removed.
+  %s
 
-Do you really want to continue?'
-"""    
+Do you really want to restart?'
+"""
+    LABEL_RESTART_PROTOCOL = """
+    Do you want to *RESTART* ONLY the run: 
+      %s 
+    *ALL DATA* related with the rest of protocols that depends on this, 
+    will be permanently removed.  
+    """
     TITLE_STOP_FORM = 'Confirm STOP'
     LABEL_STOP_FORM = 'Do you really want to *STOP* this run?'
     
@@ -297,10 +303,13 @@ Do you really want to continue?'
 
     TITLE_RESTART_WORKFLOW_FORM = 'Confirm RESTART'
     TITLE_STOP_WORKFLOW_FORM = 'Confirm STOP'
+    TITLE_RESET_WORKFLOW_FORM = 'Confirm RESET'
     TITLE_RESTART_WORKFLOW = 'Do you really want to *RESTART* this Workflow? All previous results will be deleted'
     TITLE_STOP_WORKFLOW = 'Do you really want to *STOP* this Workflow?'
+    TITLE_RESET_WORKFLOW = 'Do you really want to *RESET* this Workflow?'
     TITLE_LAUNCHED_WORKFLOW_FAILED_FORM = 'Error while launching the workflow'
     TITLE_STOPPED_WORKFLOW_FAILED = 'Error while stopping the workflow'
+    TITLE_RESETED_WORKFLOW_FAILED = 'Error while resetting the workflow'
     TITLE_LAUNCHED_WORKFLOW_FAILED = 'The workflow can not be relaunch from this protocol.\n'
     
     # SHOWJ_WEB

@@ -117,6 +117,13 @@ class Step(OrderedObject):
         self._error.set("Aborted by user.")
         self.status.set(STATUS_ABORTED)
 
+    def setSaved(self):
+        """ Set the status to saved and updated the endTime. """
+        self.initTime.set(None)
+        self.endTime.set(None)
+        self.status.set(STATUS_SAVED)
+        self._error.set(None)  # Clean previous error message
+
     def getStatus(self):
         return self.status.get(STATUS_NEW)
 

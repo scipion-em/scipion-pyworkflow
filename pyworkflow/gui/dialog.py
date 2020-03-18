@@ -39,6 +39,8 @@ from .text import Text, TaggedText
 RESULT_YES = 0
 RESULT_NO = 1
 RESULT_CANCEL = 2
+RESULT_RUN_SINGLE = 3
+RESULT_RUN_ALL = 4
 
 
 class Dialog(tk.Toplevel):
@@ -87,9 +89,10 @@ class Dialog(tk.Toplevel):
         bodyFrame.grid(row=0, column=0, sticky='news',
                        padx=5, pady=5)
 
-        self.icons = {RESULT_YES: Icon.BUTTON_SELECT, 
-                      RESULT_NO: Icon.BUTTON_CLOSE,
-                      RESULT_CANCEL: Icon.BUTTON_CANCEL}
+        self.icons = kwargs.get('icons',
+                                {RESULT_YES: Icon.BUTTON_SELECT,
+                                 RESULT_NO: Icon.BUTTON_CLOSE,
+                                 RESULT_CANCEL: Icon.BUTTON_CANCEL})
         
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
@@ -138,8 +141,10 @@ class Dialog(tk.Toplevel):
         pass
 
     def _createButton(self, frame, text, result):
-        icon = self.icons[result]
-        return tk.Button(frame, text=text, image=self.getImage(icon),
+        icon = None
+        if result in self.icons.keys():
+            icon = self.getImage(self.icons[result])
+        return tk.Button(frame, text=text, image=icon,
                          compound=tk.LEFT,
                          command=lambda: self._handleResult(result))
         
@@ -296,7 +301,41 @@ class YesNoDialog(MessageDialog):
             
         MessageDialog.__init__(self, master, title, msg, 
                                'fa-exclamation-triangle_alert.gif', default='No',
-                               buttons=buttonList)        
+                               buttons=buttonList)
+
+
+class GenericDialog(Dialog):
+    """
+    Create a dialog with many buttons
+    Arguments:
+            parent -- a parent window (the application window)
+            title -- the dialog title
+            msg  -- message to display into the dialog
+            iconPath -- path of the image to show into the dialog
+
+        **args accepts:
+            buttons -- list of buttons tuples containing which buttons to display and theirs values
+            icons -- list of icons for all buttons
+            default -- button default
+
+            Example:
+                buttons=[('Single', RESULT_RUN_SINGLE),
+                         ('All', RESULT_RUN_ALL),
+                         ('Cancel', RESULT_CANCEL)],
+                default='Cancel',
+                icons={RESULT_CANCEL: Icon.BUTTON_CANCEL,
+                       RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
+                       RESULT_RUN_ALL: Icon.ACTION_EXECUTE})
+    """
+
+    def __init__(self, master, title, msg, iconPath, **kwargs):
+        self.msg = msg
+        self.iconPath = iconPath
+        Dialog.__init__(self, master, title, **kwargs)
+
+    def body(self, bodyFrame):
+        self.image = gui.getImage(self.iconPath)
+        createMessageBody(bodyFrame, self.msg, self.image)
 
 
 class EntryDialog(Dialog):
@@ -415,6 +454,20 @@ def askYesNo(title, msg, parent):
 
 def askYesNoCancel(title, msg, parent):
     d = YesNoDialog(parent, title, msg, showCancel=True)
+    return d.result
+
+
+def askSingleAllCancel(title, msg, parent):
+    d = GenericDialog(parent, title, msg,
+                      'fa-exclamation-triangle_alert.gif',
+                      buttons=[('Single', RESULT_RUN_SINGLE),
+                               ('All', RESULT_RUN_ALL),
+                               ('Cancel', RESULT_CANCEL)],
+                      default='Single',
+                      icons={RESULT_CANCEL: Icon.BUTTON_CANCEL,
+                             RESULT_RUN_SINGLE: Icon.BUTTON_SELECT,
+                             RESULT_RUN_ALL: Icon.ACTION_EXECUTE})
+
     return d.result
 
 
@@ -647,7 +700,7 @@ class FlashMessage:
         
 
 class FloatingMessage:
-    def __init__(self, master, msg, xPos=750, yPos=80, textWidth=260,
+    def __init__(self, master, msg, xPos=750, yPos=80, textWidth=280,
                  font='Helvetica', size=12, bd=1, bg='#6E6E6E', fg='white'):
 
         self.floatingMessage = tk.Label(master, text="   %s   " % msg,

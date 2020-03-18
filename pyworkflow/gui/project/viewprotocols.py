@@ -77,6 +77,7 @@ ACTION_LABELS = 'Labels'
 ACTION_RESTART_WORKFLOW = Message.LABEL_RESTART_WORKFLOW
 ACTION_CONTINUE_WORKFLOW = Message.LABEL_CONTINUE_WORKFLOW
 ACTION_STOP_WORKFLOW = Message.LABEL_STOP_WORKFLOW
+ACTION_RESET_WORKFLOW = Message.LABEL_RESET_WORKFLOW
 
 RUNS_TREE = Icon.RUNS_TREE
 RUNS_LIST = Icon.RUNS_LIST
@@ -107,7 +108,8 @@ ActionIcons = {
     ACTION_LABELS: Icon.TAGS,
     ACTION_RESTART_WORKFLOW: Icon.ACTION_EXECUTE,
     ACTION_CONTINUE_WORKFLOW: Icon.ACTION_CONTINUE,
-    ACTION_STOP_WORKFLOW: Icon.ACTION_STOP_WORKFLOW
+    ACTION_STOP_WORKFLOW: Icon.ACTION_STOP_WORKFLOW,
+    ACTION_RESET_WORKFLOW: Icon.ACTION_REFRESH
 }
 
 
@@ -150,7 +152,8 @@ class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
                 (ACTION_SELECT_TO, True),
                 (ACTION_RESTART_WORKFLOW, single),
                 (ACTION_CONTINUE_WORKFLOW, single),
-                (ACTION_STOP_WORKFLOW, single)
+                (ACTION_STOP_WORKFLOW, single),
+                (ACTION_RESET_WORKFLOW, single)
                 ]
 
     def getObjectActions(self, obj):
@@ -1900,11 +1903,36 @@ class ProtocolsView(tk.Frame):
             message.close()
         if errorList:
             msg = ''
-            for error in errorList:
-                msg = msg + str(error)
+            for errorProt in errorList:
+                error = ("The protocol: %s  is active\n" %
+                         (self.project.getProtocol(errorProt).getRunName()))
+                msg += str(error)
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_STOPPED_WORKFLOW_FAILED,
                 Message.TITLE_STOPPED_WORKFLOW_FAILED + msg,
+                'fa-times-circle_alert.gif')
+
+    def _resetWorkFlow(self, action):
+
+        protocols = self._getSelectedProtocols()
+        errorList = []
+        if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
+                                 Message.TITLE_RESET_WORKFLOW, self.root):
+            defaultModeMessage = 'Resetting the workflow...'
+            message = FloatingMessage(self.root, defaultModeMessage)
+            message.show()
+            errorList = self.project.resetWorkFlow(protocols[0])
+            self.refreshRuns()
+            message.close()
+        if errorList:
+            msg = ''
+            for errorProt in errorList:
+                error = ("The protocol: %s  is active\n" %
+                         (self.project.getProtocol(errorProt).getRunName()))
+                msg += str(error)
+            pwgui.dialog.MessageDialog(
+                self, Message.TITLE_RESETED_WORKFLOW_FAILED,
+                Message.TITLE_RESETED_WORKFLOW_FAILED + msg,
                 'fa-times-circle_alert.gif')
 
     def _launchWorkFlow(self, action):
@@ -1939,11 +1967,13 @@ class ProtocolsView(tk.Frame):
 
         if errorList:
             msg = ''
-            for error in errorList:
+            for errorProt in errorList:
+                error = ("The protocol: %s  is active\n" %
+                         (self.project.getProtocol(errorProt).getRunName()))
                 msg += str(error)
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
-                Message.TITLE_LAUNCHED_WORKFLOW_FAILED + msg,
+                Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" + msg,
                 'fa-times-circle_alert.gif')
 
     def _selectLabels(self):
@@ -2168,6 +2198,8 @@ class ProtocolsView(tk.Frame):
                     self._launchWorkFlow(action)
                 elif action == ACTION_STOP_WORKFLOW:
                     self._stopWorkFlow(action)
+                elif action == ACTION_RESET_WORKFLOW:
+                    self._resetWorkFlow(action)
 
             except Exception as ex:
                 self.windows.showError(str(ex))
