@@ -83,8 +83,12 @@ class Config:
         def __init__(self, root):
             self._root = root
 
-        def join(self, *paths):
-            return os.path.join(self._root, *paths)
+        def join(self, *path):
+            # We need to consider variable in the config with ~
+            expanded = os.path.expanduser(os.path.join(*path))
+
+            # join will not join if expanded is absolute
+            return os.path.join(self._root, expanded)
 
     # Home for scipion
     _get = __get.__func__
@@ -95,11 +99,6 @@ class Config:
     # SCIPION PATHS
     # Where to install software
     SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
-
-    # Where are the libraries and bindings folder
-    SCIPION_LIBS = _join(SCIPION_SOFTWARE, 'lib')
-
-    SCIPION_BINDINGS = _join(SCIPION_SOFTWARE, 'bindings')
 
     # Where is the input data for tests...also where it will be downloaded
     SCIPION_TESTS = _join(_get('SCIPION_TESTS', os.path.join('data', 'tests')))
@@ -115,7 +114,7 @@ class Config:
     SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA,'logs'))
 
     # Get general log file path
-    LOG_FILE = _join(SCIPION_LOGS, 'scipion.log')
+    SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
 
     # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
@@ -160,6 +159,28 @@ class Config:
 
     SCIPION_DOMAIN = _get(SCIPION_DOMAIN, None)
     SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript())
+
+    # ---- Getters ---- #
+    # Getters are alternatives to offer a variable, but preventing it to be stored in the config
+    @classmethod
+    def getLibFolder(cls):
+        """
+        :return: Folder where libraries must be placed in case a binding needs them
+        """
+        lib = cls._join(cls.SCIPION_SOFTWARE, 'lib')
+        os.makedirs(lib, exist_ok=True)
+        return lib
+
+    @classmethod
+    def getBindingsFolder(cls):
+        """
+        Folder where bindings must be placed. This folder is added to sys.path at launching time.
+        If the binding depends on a dynamic libraries, those must be placed at cls.getLibFolder()
+        :return:   The bindings folder
+        """
+        bindings = cls._join(cls.SCIPION_SOFTWARE, 'bindings')
+        os.makedirs(bindings, exist_ok=True)
+        return bindings
 
     @classmethod
     def getVars(cls):
@@ -225,3 +246,7 @@ class Config:
     @classmethod
     def getExternalJsonTemplates(cls):
         return os.path.dirname(cls.SCIPION_CONFIG)
+
+
+# Add bindings folder to sys.path
+sys.path.append(Config.getBindingsFolder())

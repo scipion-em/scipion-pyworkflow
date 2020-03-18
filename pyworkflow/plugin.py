@@ -26,7 +26,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from datetime import datetime
 import glob
 import os
 import importlib
@@ -41,6 +40,8 @@ from abc import ABCMeta, abstractmethod
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
+from pyworkflow.template import Template
+
 from .constants import *
 
 
@@ -473,6 +474,9 @@ class Plugin:
     _pathVars = []
     _supportedVersions = []
     _name = ""
+    _url = "" # For the plugin
+    _condaActivationCmd = None
+    _url = "" # For the plugin
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
@@ -489,6 +493,22 @@ class Plugin:
     def getEnviron(cls):
         """ Setup the environment variables needed to launch programs. """
         pass
+
+    @classmethod
+    def getCondaActivationCmd(cls):
+
+        if cls._condaActivationCmd is None:
+            condaActivationCmd = os.environ.get(CONDA_ACTIVATION_CMD_VAR, "")
+            correctCondaActivationCmd = condaActivationCmd.replace(pw.Config.SCIPION_HOME + "/", "")
+            if not correctCondaActivationCmd:
+                print("WARNING!!: %s variable not defined. "
+                      "Relying on conda being in the PATH" % CONDA_ACTIVATION_CMD_VAR)
+            elif correctCondaActivationCmd[-1] not in [";", "&"]:
+                correctCondaActivationCmd += "&&"
+
+            cls._condaActivationCmd = correctCondaActivationCmd
+
+        return cls._condaActivationCmd
 
     @classmethod
     @abstractmethod
@@ -583,6 +603,11 @@ class Plugin:
 
         return tempList
 
+    @classmethod
+    def getUrl(cls, protClass=None):
+        """ Url for the plugin to point users to it"""
+        return cls._url
+
 
 class PluginInfo:
     """
@@ -618,60 +643,6 @@ class PluginInfo:
 
     def getKeywords(self):
         return self._metadata.get('Keywords', '')
-
-
-class Template:
-    def __init__(self, pluginName, tempPath):
-        self.pluginName = pluginName
-        self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "")
-        self.templatePath = os.path.abspath(tempPath)
-        self.description, self.content = self._parseTemplate()
-
-    def getObjId(self):
-        return self.pluginName + '-' + self.templateName
-
-    def _parseTemplate(self):
-        with open(self.templatePath, 'r') as myFile:
-            allContents = myFile.read().splitlines()
-            description, index = Template.getDescription(allContents)
-
-        if not description:
-            description = 'Not provided'
-        content = ''.join(allContents[index:])
-        return description, content
-
-    @staticmethod
-    def getDescription(strList):
-        # Example of json.template file with description:
-        # -----------------------------------------------
-        # Here goes the description
-        # Description
-        # Another description line...
-        # [
-        #    {
-        #       "object.className": "ProtImportMovies",
-        #       "object.id": "2",...
-        # -----------------------------------------------
-
-        contents_start_1 = '['
-        contents_start_2 = '{'
-        description = []
-        counter = 0
-        nLines = len(strList)
-
-        while counter + 1 < nLines:
-            currentLine = strList[counter]
-            nextLine = strList[counter + 1]
-            if contents_start_1 not in currentLine:
-                description.append(currentLine)
-            else:
-                if contents_start_2 in nextLine:
-                    break
-                else:
-                    description.append(currentLine)
-            counter += 1
-
-        return ''.join(description), counter
 
 
 
