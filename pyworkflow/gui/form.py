@@ -1956,7 +1956,7 @@ class FormWindow(Window):
         # have not been set in the protocol
         hostConfig = self._getHostConfig()
         queues = OrderedDict(sorted(hostConfig.queueSystem.queues.items()))
-        # If there is only one Queue and it has not parameters
+        # If there is only one Queue and it has no parameters
         # don't bother to showing the QueueDialog
         noQueueChoices = len(queues) == 1 and len(list(queues.values())[0]) == 0
         if noQueueChoices:
@@ -1970,7 +1970,7 @@ class FormWindow(Window):
         
         self.protocol.setQueueParams(result)
         return True
-        
+
     def _createParams(self, parent):
         paramsFrame = tk.Frame(parent, name="params")
         configureWeigths(paramsFrame, row=1, column=0)
@@ -2520,10 +2520,10 @@ class QueueDialog(Dialog):
         self.queueName, queueParams = window.protocol.getQueueParams()
         # If there is only one queue and not one selected, use the first one
         if not self.queueName and len(queueDict.keys()) == 1:
-            self.queueName = queueDict.keys()[0]
+            self.queueName = list(queueDict.keys())[0]
             queueParams = {}
         # Store all selected queue parameters to 
-        # preserve values when temporarly changed
+        # preserve values when temporarily changed
         # from one queue to another    
         self.allQueueParams = {self.queueName: queueParams}
         

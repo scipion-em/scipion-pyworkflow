@@ -221,19 +221,19 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     # "qsub %(JOB_SCRIPT)s"
     command = hostConfig.getSubmitCommand() % submitDict
     gcmd = greenStr(command)
-    print("** Submiting to queue: '%s'" % gcmd)
+    print("** Submitting to queue: '%s'" % gcmd)
 
     p = Popen(command, shell=True, stdout=PIPE, cwd=cwd, env=env)
     out = p.communicate()[0]
     # Try to parse the result of qsub, searching for a number (jobId)
     # REview this, seems to exclusive to torque batch system
-    s = re.search('(\d+)', out)
+    s = re.search('(\d+)', str(out))
     if s:
         job = int(s.group(0))
         print("launched job with id %s" % job)
         return job
     else:
-        print("Couldn't submit to queue for reason %s " % redStr(out))
+        print("Couldn't submit to queue for reason %s " % redStr(str(out)))
         return UNKNOWN_JOBID
 
     
