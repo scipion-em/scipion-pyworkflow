@@ -190,15 +190,20 @@ class BaseTest(unittest.TestCase):
                 item2.printAll()
             test.assertTrue(areEqual)
 
-    def assertSetSize(self, setObject, size=None, msg=None):
-        """ Check if a pyworkflow Set is not None nor is empty"""
+    def assertSetSize(self, setObject, size=None, msg=None, diffDelta=None):
+        """ Check if a pyworkflow Set is not None nor is empty, or of a determined size or
+        of a determined size with a percentage (base 1) of difference"""
         self.assertIsNotNone(setObject, msg)
+        setObjSize = setObject.getSize()
 
         if size is None:
             # Test is not empty
-            self.assertNotEqual(setObject.getSize(), 0, msg)
+            self.assertNotEqual(setObjSize, 0, msg)
         else:
-            self.assertEqual(setObject.getSize(), size)
+            if diffDelta:
+                self.assertLessEqual(abs(setObjSize - size), round(diffDelta*size), msg)
+            else:
+                self.assertEqual(setObjSize, size)
 
     def assertIsNotEmpty(self, setObject, msg=None):
         """ Check if the pyworkflow object is not None nor is empty"""
