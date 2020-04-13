@@ -381,8 +381,8 @@ class SearchProtocolWindow(pwgui.Window):
                 if line[5] != 0:
                     protList.append(line)
 
-        # Sort by label
-        protList.sort(reverse=True, key=lambda x: x[5])  # sort by weight
+        # Sort by protocol name
+        protList.sort(reverse=False, key=lambda x: x[1])  # sort by name
 
         for key, label, installed, help, streamified, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed')
