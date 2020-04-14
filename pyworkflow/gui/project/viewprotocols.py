@@ -539,7 +539,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
                     extendedValue = obj.getExtended()
                     if obj.hasExtended():
                         suffix = '[%s]' % extendedValue
-                    elif obj.hasExtended():
+                    else:
                         suffix = '[Item %s]' % extendedValue
 
                     # Tolerate loading projects:
