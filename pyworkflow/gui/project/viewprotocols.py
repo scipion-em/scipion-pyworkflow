@@ -536,11 +536,12 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
 
                 suffix = ''
                 if obj.hasExtended():
+                    # getExtended method remove old attributes conventions.
                     extendedValue = obj.getExtended()
                     if obj.hasExtended():
                         suffix = '[%s]' % extendedValue
-                    else:
-                        suffix = '[Item %s]' % extendedValue
+                    # else:
+                    #     suffix = '[Item %s]' % extendedValue
 
                     # Tolerate loading projects:
                     # When having only the project sqlite..an obj.get() will

@@ -39,7 +39,7 @@ from . import gui
 from .tree import BoundTree, TreeProvider
 from .text import TaggedText, openTextFileEditor
 from .widgets import Button, HotButton
-
+from .. import Config
 
 PARENT_FOLDER = ".."
 
@@ -504,9 +504,7 @@ class FileBrowser(ObjectBrowser):
         self._goDir("/")
 
     def _actionLaunchFolder(self, e=None):
-        launchFolder = os.getenv("SCIPION_CWD")
-        if launchFolder is None:
-            launchFolder = os.getenv("SCIPION_HOME")
+        launchFolder = Config.SCIPION_CWD
         self._goDir(launchFolder)
 
     def _actionWorkingDir(self, e=None):

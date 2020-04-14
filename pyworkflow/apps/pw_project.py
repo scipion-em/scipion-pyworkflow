@@ -31,6 +31,7 @@ Launch main project window
 import sys
 import os
 
+from pyworkflow import Config
 from pyworkflow.project import Manager
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
@@ -50,7 +51,7 @@ def openProject(projectName):
     # Handle special name 'here' to create a project
     # from the current directory
     if projName == 'here':
-        cwd = os.environ['SCIPION_CWD']
+        cwd = Config.SCIPION_CWD
         if cwd is None:
             cwd = os.path.abspath(os.getcwd())
         print("\nYou are trying to create a project here:",

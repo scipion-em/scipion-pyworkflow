@@ -150,6 +150,8 @@ class Config:
     # Notification
     SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
 
+    SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:
