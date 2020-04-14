@@ -297,7 +297,7 @@ def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
       lineNo: lines will be numbered from this value on
       numberLines: whether to prepend the line numbers
     """
-    textfile = open(fname)
+    textfile = open(fname, encoding='utf-8')
     size = (os.stat(fname).st_size - offset) / 1024  # in kB
 
     for line in iterBigFile(textfile, offset, size,
