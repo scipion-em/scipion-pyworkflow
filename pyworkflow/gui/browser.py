@@ -1,4 +1,4 @@
-# **************************************************************************
+    # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es) [1]
 # *              Jose Gutierrez (jose.gutierrez@cnb.csic.es) [2]
@@ -505,6 +505,8 @@ class FileBrowser(ObjectBrowser):
 
     def _actionLaunchFolder(self, e=None):
         launchFolder = os.getenv("SCIPION_CWD")
+        if launchFolder is None:
+            launchFolder = os.getenv("SCIPION_HOME")
         self._goDir(launchFolder)
 
     def _actionWorkingDir(self, e=None):
