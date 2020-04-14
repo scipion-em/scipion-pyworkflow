@@ -2542,7 +2542,7 @@ class QueueDialog(Dialog):
         combo = ttk.Combobox(self.content, textvariable=self.queueVar, 
                              state='readonly', width=14)
         combo.grid(row=0, column=1, sticky='nw', padx=5, pady=5)
-        queueKeys = self.queueDict.keys()
+        queueKeys = list(self.queueDict.keys())
         combo['values'] = queueKeys
         self.queueVar.set(self.queueName)  # This will trigger queue params setup
         self.initial_focus = combo
