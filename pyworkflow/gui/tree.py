@@ -630,4 +630,4 @@ class ListTreeProviderTemplate(ListTreeProviderString):
         return obj.pluginName
 
     def getValues(self, obj):
-        return (obj.templateName, obj.description)
+        return obj.templateName, obj.description

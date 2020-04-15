@@ -49,9 +49,8 @@ from .gui import configureWeigths, Window
 from .browser import FileBrowserWindow
 from .widgets import Button, HotButton, IconButton
 from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
-                     ListDialog, askYesNo, askYesNoCancel, Dialog, RESULT_YES,
-                     RESULT_NO, RESULT_CANCEL, askSingleAllCancel,
-                     RESULT_RUN_ALL, RESULT_RUN_SINGLE)
+                     ListDialog, askYesNo, Dialog,RESULT_CANCEL,
+                     askSingleAllCancel, RESULT_RUN_ALL, RESULT_RUN_SINGLE)
 from .canvas import Canvas
 from .tree import TreeProvider, BoundTree
 from .text import Text
