@@ -52,8 +52,6 @@ def openProject(projectName):
     # from the current directory
     if projName == 'here':
         cwd = Config.SCIPION_CWD
-        if cwd is None:
-            cwd = os.path.abspath(os.getcwd())
         print("\nYou are trying to create a project here:",
               pwutils.cyan(cwd))
 

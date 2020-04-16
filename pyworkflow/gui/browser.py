@@ -504,8 +504,7 @@ class FileBrowser(ObjectBrowser):
         self._goDir("/")
 
     def _actionLaunchFolder(self, e=None):
-        launchFolder = Config.SCIPION_CWD
-        self._goDir(launchFolder)
+        self._goDir(Config.SCIPION_CWD)
 
     def _actionWorkingDir(self, e=None):
         self._goDir(os.getcwd())
