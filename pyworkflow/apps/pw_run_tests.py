@@ -35,7 +35,7 @@ import argparse
 from collections import OrderedDict
 
 import pyworkflow.tests as pwtests
-from pyworkflow import getTestsScript, SCIPION_TESTS_CMD
+from pyworkflow import getTestsScript, SCIPION_TESTS_CMD, Config
 
 from pyworkflow.tests import *
 
@@ -48,6 +48,10 @@ TEST = 2
 class Tester:
     def main(self, args=None):
         print("Running tests....")
+
+        # Trigger plugin's variable definition
+        Config.getDomain().getPlugins()
+
         parser = argparse.ArgumentParser(prog= self.getTestsCommand(), description=__doc__)
         g = parser.add_mutually_exclusive_group()
         g.add_argument('--run', action='store_true', help='run the selected tests')
