@@ -167,18 +167,18 @@ class ProjectBaseWindow(Window):
         self.showInfo(
             "[[http://scipion.i2pc.es/][Scipion]] is an image processing "
             "framework to obtain 3D models of macromolecular complexes using "
-            "Electron Microscopy\n\n."
+            "Electron Microscopy.\n\n"
             "It integrates several software packages with a unified interface. "
             "This way you can combine them in a single workflow, while all the "
             "formats and conversions are taken care of automatically.\n\n"
-            "*Scipion * is developed by a multidisciplinary group of engineers, "
+            "*Scipion* is developed by a multidisciplinary group of engineers, "
             "physicists, mathematicians, biologists and computer scientists. "
             "It is produced mainly by people at the "
-            "[[http://biocomputingunit.es//][Biocomputing Unit]], "
+            "[[http://biocomputingunit.es//][CNB Biocomputing Unit]], "
             "[[https://www.scilifelab.se/][SciLifeLab]], "
-            "[[https://www2.mrc-lmb.cam.ac.uk/][MRC]] and "
-            "[[https://www.mcgill.ca/][McGill university]],"
-            "but with many contributions accross the globe.")
+            "[[https://www2.mrc-lmb.cam.ac.uk/][MRC LMB]] and "
+            "[[https://www.mcgill.ca/][McGill university]], "
+            "but with many contributions across the globe.")
 
     def onContactSupport(self):
         # Help -> Contact support

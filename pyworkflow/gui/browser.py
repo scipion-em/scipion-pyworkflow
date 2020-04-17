@@ -1,4 +1,4 @@
-# **************************************************************************
+    # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es) [1]
 # *              Jose Gutierrez (jose.gutierrez@cnb.csic.es) [2]
@@ -39,7 +39,7 @@ from . import gui
 from .tree import BoundTree, TreeProvider
 from .text import TaggedText, openTextFileEditor
 from .widgets import Button, HotButton
-
+from .. import Config
 
 PARENT_FOLDER = ".."
 
@@ -504,8 +504,7 @@ class FileBrowser(ObjectBrowser):
         self._goDir("/")
 
     def _actionLaunchFolder(self, e=None):
-        launchFolder = os.getenv("SCIPION_CWD")
-        self._goDir(launchFolder)
+        self._goDir(Config.SCIPION_CWD)
 
     def _actionWorkingDir(self, e=None):
         self._goDir(os.getcwd())
