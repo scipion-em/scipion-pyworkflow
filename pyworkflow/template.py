@@ -238,16 +238,21 @@ class TemplateList:
 
         return self
 
-    def addScipionTemplates(self):
+    def addScipionTemplates(self, tempId=None):
         # Check if there is any .json.template in the template folder
         # get the template folder (we only want it to be included once)
         templateFolder = Config.getExternalJsonTemplates()
         for templateName in glob.glob1(templateFolder,
                                        "*" + SCIPION_JSON_TEMPLATES):
             t = Template("local", os.path.join(templateFolder, templateName))
-            self.addTemplate(t)
+            if tempId is not None:
+                if t.getObjId() == tempId:
+                    self.addTemplate(t)
+                    break
+            else:
+                self.addTemplate(t)
 
-    def addPluginTemplates(self):
+    def addPluginTemplates(self, tempId=None):
         """
         Get the templates provided by all plugins.
         :return: a list of templates
@@ -259,5 +264,10 @@ class TemplateList:
         for pluginName, pluginModule in domain.getPlugins().items():
             tempListPlugin = pluginModule.Plugin.getTemplates()
             for t in tempListPlugin:
-                self.addTemplate(t)
+                if tempId is not None:
+                    if t.getObjId() == tempId:
+                        self.addTemplate(t)
+                        break
+                else:
+                    self.addTemplate(t)
 
