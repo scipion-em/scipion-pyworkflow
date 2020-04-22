@@ -617,12 +617,13 @@ class ListTreeProviderTemplate(ListTreeProviderString):
     def __init__(self, objList=None):
         TreeProvider.__init__(self)
         self.objList = objList
-        self.getColumns = lambda: [('Template Name', 250),
+        self.getColumns = lambda: [('Plugin', 150),
+                                   ('Template', 250),
                                    ('Description', 800)]
         self.getObjects = lambda: self.objList
 
     def getObjectInfo(self, obj):
-        info = {'key': obj.getObjId(), 'values': self.getValues(obj)}
+        info = {'key': obj.getObjId(), 'text': self.getText(obj), 'values': self.getValues(obj)}
         return info
 
     def getText(self, obj):
