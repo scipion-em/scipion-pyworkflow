@@ -122,12 +122,11 @@ class Template:
                 field.setValue(newValue)
                 if field.validate():
                     paramsSetted += 1
-                    print(greenStr("Parameter (%s) was set to: %s") %
+                    print(greenStr("%s set to %s") %
                           (field.getTitle(), str(newValue)))
                 else:
                     field.setValue(oldValue)
-                    raise Exception("Value (%s) for the parameter (%s) is "
-                                    "not correct." % (newValue, field.getTitle()))
+                    raise Exception("%s is not compatible with %s(%s) parameter." % (newValue, field.getTitle(), alias))
         if not paramsSetted:
             raise Exception("Alias %s not recognized." %
                             (alias))
