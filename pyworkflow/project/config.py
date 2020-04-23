@@ -467,7 +467,7 @@ class ProtocolTreeConfig:
         """
         for ch in subMenu:
             if child['tag'] == cls.TAG_PROTOCOL:
-                if ch.value == child['value']:
+                if not ch.value.empty() and ch.value == child['value']:
                     return ch
             elif ch.text == child['text']:
                 return ch
