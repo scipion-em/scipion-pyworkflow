@@ -1,9 +1,11 @@
 """ Module to host templates classes"""
 import collections
+import glob
 import os
 import tempfile
 from datetime import datetime
-from pyworkflow import SCIPION_JSON_TEMPLATES
+from pyworkflow import SCIPION_JSON_TEMPLATES, Config
+from pyworkflow.utils import greenStr
 
 
 class Template:
@@ -78,8 +80,9 @@ class Template:
             title = fieldLst[0]
             defaultValue = fieldLst[1] if len(fieldLst) >= 2 else None
             varType = fieldLst[2] if len(fieldLst) >= 3 else None
+            alias = fieldLst[3] if len(fieldLst) >= 4 else None
 
-            return TemplateParam(fieldIndex, title, defaultValue, varType)
+            return TemplateParam(fieldIndex, title, defaultValue, varType, alias)
 
         # Fill each field in the template in order to prevent spreading in the form
         self.params = collections.OrderedDict()
@@ -108,13 +111,35 @@ class Template:
         for field in self.params.values():
             self.content[field.getIndex()] = field.getValue()
 
+    def getParams(self):
+        return self.params
+
+    def setParamValue(self, alias, newValue):
+        paramsSetted = 0
+        for field in self.params.values():
+            if field.getAlias() == alias:
+                oldValue = field.getValue()
+                field.setValue(newValue)
+                if field.validate():
+                    paramsSetted += 1
+                    print(greenStr("%s set to %s") %
+                          (field.getTitle(), str(newValue)))
+                else:
+                    field.setValue(oldValue)
+                    raise Exception("%s is not compatible with %s(%s) parameter." % (newValue, field.getTitle(), alias))
+        if not paramsSetted:
+            raise Exception("Alias %s not recognized." %
+                            (alias))
+        return paramsSetted
+
 
 class TemplateParam(object):
-    def __init__(self, index, title, value=None, varType=None):
+    def __init__(self, index, title, value=None, varType=None, alias=None):
         self._index = index
         self._title = title
         self._value = value
         self._type = varType
+        self._alias = alias
 
     def getTitle(self):
         return self._title
@@ -130,6 +155,9 @@ class TemplateParam(object):
 
     def setValue(self, value):
         self._value = value
+
+    def getAlias(self):
+        return self._alias
 
     def validate(self):
         return Validations.check(self._value, self._type)
@@ -208,4 +236,37 @@ class TemplateList:
                                 if template.getObjId().startswith('local') else template.getObjId())
 
         return self
+
+    def addScipionTemplates(self, tempId=None):
+        # Check if there is any .json.template in the template folder
+        # get the template folder (we only want it to be included once)
+        templateFolder = Config.getExternalJsonTemplates()
+        for templateName in glob.glob1(templateFolder,
+                                       "*" + SCIPION_JSON_TEMPLATES):
+            t = Template("local", os.path.join(templateFolder, templateName))
+            if tempId is not None:
+                if t.getObjId() == tempId:
+                    self.addTemplate(t)
+                    break
+            else:
+                self.addTemplate(t)
+
+    def addPluginTemplates(self, tempId=None):
+        """
+        Get the templates provided by all plugins.
+        :return: a list of templates
+        """
+        # Check if other plugins have json.templates
+        domain = Config.getDomain()
+        # Check if there is any .json.template in the template folder
+        # get the template folder (we only want it to be included once)
+        for pluginName, pluginModule in domain.getPlugins().items():
+            tempListPlugin = pluginModule.Plugin.getTemplates()
+            for t in tempListPlugin:
+                if tempId is not None:
+                    if t.getObjId() == tempId:
+                        self.addTemplate(t)
+                        break
+                else:
+                    self.addTemplate(t)
 
