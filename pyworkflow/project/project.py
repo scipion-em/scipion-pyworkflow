@@ -25,8 +25,6 @@
 # *
 # **************************************************************************
 
-
-
 import datetime as dt
 import json
 import os
@@ -41,8 +39,7 @@ import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
-                                           STATUS_INTERACTIVE, ACTIVE_STATUS,
-                                           STATUS_SAVED)
+                                           STATUS_INTERACTIVE, ACTIVE_STATUS)
 
 from . import config
 

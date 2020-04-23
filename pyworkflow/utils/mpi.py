@@ -37,7 +37,7 @@ from pyworkflow import Config
 
 from .process import buildRunCommand, runCommand
 
-from pyworkflow.utils.utils import envVarOn, getLocalHostName
+from pyworkflow.utils.utils import getLocalHostName
 
 TIMEOUT = 60  # seconds trying to send/receive data through a socket
 
