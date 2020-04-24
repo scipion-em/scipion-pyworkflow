@@ -72,6 +72,9 @@ def getLogConfiguration():
         }
     }
 
+    # Create the log folder
+    os.makedirs(Config.SCIPION_LOGS, exist_ok=True)
+
     logging.config.dictConfig(config)
 
     return config
