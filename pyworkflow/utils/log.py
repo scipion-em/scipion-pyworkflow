@@ -24,7 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import os
 import sys
 import logging
 import logging.config
