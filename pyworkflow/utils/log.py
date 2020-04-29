@@ -24,7 +24,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import os
 import sys
 import logging
 import logging.config
@@ -71,6 +71,9 @@ def getLogConfiguration():
             },
         }
     }
+
+    # Create the log folder
+    os.makedirs(Config.SCIPION_LOGS, exist_ok=True)
 
     logging.config.dictConfig(config)
 
