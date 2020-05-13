@@ -33,7 +33,7 @@ execution hosts.
 import os
 import sys
 import json
-from configparser import ConfigParser
+from configparser import RawConfigParser
 from collections import OrderedDict
 
 import pyworkflow as pw
@@ -158,8 +158,8 @@ class HostConfig(OrderedObject):
         """ Load several hosts from a configuration file.
         Return an dictionary with hostName -> hostConfig pairs.
         """
-        # Read from users' config file.
-        cp = ConfigParser()
+        # Read from users' config file. Raw to avoid interpolation of %: we expect %_
+        cp = RawConfigParser(comment_prefixes=";")
         cp.optionxform = str  # keep case (stackoverflow.com/questions/1611799)
         hosts = OrderedDict()
 
@@ -173,7 +173,16 @@ class HostConfig(OrderedObject):
                 # Helper functions (to write less)
                 def get(var, default=None):
                     if cp.has_option(hostName, var):
-                        return cp.get(hostName, var)  # .replace('%_(', '%(')
+
+                        value = cp.get(hostName, var)
+                        # Rescue python2.7 behaviour: ## at the beginning of a line, means a single #.
+                        # https://github.com/scipion-em/scipion-pyworkflow/issues/70
+                        value = value.replace("\n##", "\n#")
+
+                        # Keep compatibility: %_ --> %%
+                        value = value.replace('%_(', '%(')
+
+                        return value
                     else:
                         return default
 
