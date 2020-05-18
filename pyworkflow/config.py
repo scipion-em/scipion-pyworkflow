@@ -185,6 +185,15 @@ class Config:
         return bindings
 
     @classmethod
+    def getLogsFolder(cls):
+        """
+        Folder where scipion logs must be placed. The folder is created         
+        """
+        logsFolder = cls.SCIPION_LOGS
+        os.makedirs(logsFolder, exist_ok=True)
+        return logsFolder
+
+    @classmethod
     def getVars(cls):
         """ Return a dictionary with all variables defined
         in this Config.
