@@ -240,8 +240,8 @@ class Tester:
             spaces = (itemType * 2) * ' '
             script = getTestsScript()
             cmd = "%s %s %s" % (script, spaces, itemName)
-            run = ((itemType == MODULE and self.mode == 'module') or
-                   (itemType == CLASS and self.mode == 'classes') or
+            run = ((itemType == MODULE and self.mode == 'modules') or
+                   (itemType == CLASS and self.mode in ('classes', 'onlyclasses')) or
                    (itemType == TEST and self.mode == 'all'))
             if run:
                 if self.log:
