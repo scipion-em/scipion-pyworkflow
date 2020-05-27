@@ -25,11 +25,12 @@
 # **************************************************************************
 
 
+import pyworkflow as pw
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
 import pyworkflow.mapper as pwmapper
 from pyworkflowtests.objects import Complex, MockImage
-from pyworkflowtests import Domain
+import pyworkflowtests
 
 
 class TestSqliteMapper(pwtests.BaseTest):
@@ -111,7 +112,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         db.close()
 
         # Reading test
-        mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
         print("Checking that Relations table is updated and version to 1")
         self.assertEqual(1, mapper2.db.getVersion())
         # Check that the new column is properly added after updated to version 1
@@ -186,7 +187,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper.store(p1)
         mapper.commit()
 
-        mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
         p2 = mapper2.selectByClass('Pointer')[0]
 
         # Check the mapper was properly stored when
@@ -201,7 +202,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         print(">>> Using db: ", fn)
 
         # Let's create a Mapper to store a simple List containing two integers
-        mapper = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
+        mapper = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
         iList = pwobj.List()
         i1 = pwobj.Integer(4)
         i2 = pwobj.Integer(3)
@@ -214,7 +215,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         # Now let's open again the db with a different connection
         # and load the previously stored list
-        mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
         iList2 = mapper2.selectByClass('List')[0]
         # Let's do some basic checks
         self.assertEqual(iList2.getSize(), 2)
@@ -233,7 +234,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper2.close()
 
         # Open the db and load the list once again
-        mapper3 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
+        mapper3 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
         iList3 = mapper3.selectByClass('List')[0]
         # Check the same consistency before it was stored
         self.assertEqual(iList3.getSize(), 1)
@@ -248,42 +249,16 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
         pwtests.setupTestOutput(cls)
-        # cls.dataset = DataSet.getDataSet('xmipp_tutorial')
-        # cls.modelGoldSqlite = cls.dataset.getFile('micsGoldSqlite')
+
+        # This isSet the application domain
+        pyworkflowtests.Domain = pyworkflowtests.TestDomain
+        pw.Config.setDomain("pyworkflowtests")
 
     # TODO: Maybe some mapper test for backward compatibility can be
-    # include in scipion-em, where we already have defined datasets
-    # and reference old sqlite files
-
-    # def test_SqliteFlatDb(self):
-    #     """ Create a SqliteDataset """
-    #     print ">>> test_SqliteFlatDb: dbName = '%s'" % self.modelGoldSqlite
-    #     db = pwmapper.SqliteFlatDb(self.modelGoldSqlite)
-    #     # Old db version 0
-    #     self.assertEqual(0, db.getVersion())
-    #     # Test the 'self' class name is correctly retrieved
-    #     self.assertEqual('Micrograph', db.getSelfClassName())
-    #     # Check the count is equal to 3
-    #     self.assertEqual(3, db.count())
-    #
-    #     # Check select all with limits
-    #     items = db.selectAll(iterate=False, limit=2)
-    #     self.assertEqual(2, len(items), "Select all with limits is not working.")
-    #     firstItem = items[0]
-    #     self.assertEqual(1, firstItem[0], "First object unexpected")
-    #
-    #     # Check select all with limit and skipping rows
-    #     items = db.selectAll(iterate=False, limit=(1, 1))
-    #     self.assertEqual(1, len(items))
-    #     firstItem = items[0]
-    #     self.assertEqual(2, firstItem[0], "First object using skipRows unexpected")
-    #
-    #     db.close()
-
     def test_insertObjects(self):
         dbName = self.getOutputPath('images.sqlite')
         print(">>> test_insertObjects: dbName = '%s'" % dbName)
-        mapper = pwmapper.SqliteFlatMapper(dbName, Domain.getMapperDict())
+        mapper = pwmapper.SqliteFlatMapper(dbName, pw.Config.getDomain().getMapperDict())
         self.assertEqual(0, mapper.count())
         self.assertEqual(0, mapper.maxId())
         n = 10
@@ -321,7 +296,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         mapper.close()
 
         # Test that values where stored properly
-        mapper2 = pwmapper.SqliteFlatMapper(dbName, Domain.getMapperDict())
+        mapper2 = pwmapper.SqliteFlatMapper(dbName, pw.Config.getDomain().getMapperDict())
         indexes.extend([bigId, bigId + 1])
         for i, obj in enumerate(mapper2.selectAll(iterate=True)):
             self.assertEqual(obj.getIndex(), i + 1)

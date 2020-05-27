@@ -29,12 +29,11 @@ Mock Domain definition that will be used by basic tests.
 from pyworkflow.protocol import Protocol
 from pyworkflow.wizard import Wizard
 from pyworkflow.viewer import Viewer
-import pyworkflow.plugin as pwplugin
+from pyworkflow.plugin import Domain as pwDomain, Plugin as pwPlugin
 
 from .objects import MockObject
 
-
-class Domain(pwplugin.Domain):
+class TestDomain(pwDomain):
     _name = __name__
     _objectClass = MockObject
     _protocolClass = Protocol
@@ -42,9 +41,7 @@ class Domain(pwplugin.Domain):
     _wizardClass = Wizard
     _baseClasses = globals()
 
+Domain = TestDomain
 
-class Plugin(pwplugin.Plugin):
+class Plugin(pwPlugin):
     pass
-
-
-Domain.registerPlugin(__name__)
