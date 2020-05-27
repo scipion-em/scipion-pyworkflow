@@ -39,28 +39,32 @@ class TestSqliteMapper(pwtests.BaseTest):
 
     def test_SqliteMapper(self):
         fn = self.getOutputPath("basic.sqlite")
-
         mapper = pwmapper.SqliteMapper(fn)
-        # Insert a Complex
-        c = Complex.createComplex()  # real = 1, imag = 1
-        mapper.insert(c)
+
+        # Insert a Float
+        f = pwobj.Float(5.4)
+        mapper.insert(f)
+
         # Insert an pwobj.Integer
         i = pwobj.Integer(1)
         mapper.insert(i)
+
         # Insert two pwobj.Boolean
         b = pwobj.Boolean(False)
         b2 = pwobj.Boolean(True)
         mapper.insert(b)
         mapper.insert(b2)
+
         # Test storing pointers
-        p = pwobj.Pointer()
-        p.set(c)
+        p = pwobj.Pointer(b)
         mapper.insert(p)
+
         # Store csv list
         strList = ['1', '2', '3']
         csv = pwobj.CsvList()
         csv += strList
         mapper.insert(csv)
+
         # Test normal List
         iList = pwobj.List()
         mapper.insert(iList)  # Insert the list when empty
@@ -69,26 +73,25 @@ class TestSqliteMapper(pwtests.BaseTest):
         iList.append(i1)
         iList.append(i2)
         mapper.update(iList)  # now update with some items inside
-        
+
         pList = pwobj.PointerList()
-        p1 = pwobj.Pointer()
-        p1.set(b)
-        p2 = pwobj.Pointer()
-        p2.set(b2)
+        p1 = pwobj.Pointer(b)
+        # p1.set(b)
+        p2 = pwobj.Pointer(b2)
+        # p2.set(b2)
         pList.append(p1)
         pList.append(p2)
-        
         mapper.store(pList)
-        
+
         # Test to add relations
         relName = 'testRelation'
-        creator = c
+        creator = f
         mapper.insertRelation(relName, creator, i, b)
         mapper.insertRelation(relName, creator, i, b2)
-        
+
         mapper.insertRelation(relName, creator, b, p)
-        mapper.insertRelation(relName, creator, b2, p)        
-        
+        mapper.insertRelation(relName, creator, b2, p)
+
         # Save changes to file
         mapper.commit()
         self.assertEqual(1, mapper.db.getVersion())
@@ -118,22 +121,22 @@ class TestSqliteMapper(pwtests.BaseTest):
                         u'object_parent_extended', u'object_child_extended']
         colNames = [col[1] for col in mapper2.db.getTableColumns('Relations')]
         self.assertEqual(colNamesGold, colNames)
-        
+
         l = mapper2.selectByClass('Integer')[0]
         self.assertEqual(l.get(), 1)
 
-        c2 = mapper2.selectByClass('Complex')[0]
-        self.assertTrue(c.equalAttributes(c2))
-        
+        f2 = mapper2.selectByClass('Float')[0]
+        self.assertEqual(f, f2.get())
+
         b = mapper2.selectByClass('Boolean')[0]
         self.assertTrue(not b.get())
 
         p = mapper2.selectByClass('Pointer')[0]
-        self.assertEqual(c, p.get())
-        
+        self.assertEqual(b.get(), p.get())
+
         csv2 = mapper2.selectByClass('CsvList')[0]
         self.assertTrue(list.__eq__(csv2, strList))
-        
+
         # Iterate over all objects
         allObj = mapper2.selectAll()
         iterAllObj = mapper2.selectAll(iterate=True)
@@ -142,6 +145,7 @@ class TestSqliteMapper(pwtests.BaseTest):
             # Note compare the scalar objects, which have a well-defined comparison
             if isinstance(a1, pwobj.Scalar):
                 self.assertEqual(a1, a2)
+
         # Test select all batch approach
         allBatch = mapper2.selectAllBatch()
 
@@ -156,11 +160,11 @@ class TestSqliteMapper(pwtests.BaseTest):
         relations = mapper2.getRelationsByCreator(creator)
         for row in relations:
             print(dict(row))
-            
+
     def test_StorePointers(self):
         """ Check that pointers are correctly stored. """
         fn = self.getOutputPath("pointers.sqlite")
-        
+
         print(">>> Using db: ", fn)
 
         mapper = pwmapper.SqliteMapper(fn)
@@ -168,24 +172,23 @@ class TestSqliteMapper(pwtests.BaseTest):
         c = Complex.createComplex()  # real = 1, imag = 1
         mapper.insert(c)
         # Insert an pwobj.Integer
-        p1 = pwobj.Pointer()
-        p1.set(c)
+        p1 = pwobj.Pointer(c)
         p1.setExtended('real')
-        
+
         mapper.store(c)
         mapper.store(p1)
-        
+
         self.assertAlmostEqual(c.real.get(), p1.get().get())
-        
+
         p1.set(None)  # Reset value and check that is stored properly
-        
+
         self.assertIsNone(p1._extended.get())
         mapper.store(p1)
         mapper.commit()
-        
+
         mapper2 = pwmapper.SqliteMapper(fn, Domain.getMapperDict())
         p2 = mapper2.selectByClass('Pointer')[0]
-        
+
         # Check the mapper was properly stored when
         # set to None and the _extended property cleanned
         self.assertIsNone(p2.get())
@@ -237,7 +240,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         self.assertTrue(pwobj.Integer(4) not in iList3)
         self.assertTrue(pwobj.Integer(3) in iList3)
 
-        
+
 class TestSqliteFlatMapper(pwtests.BaseTest):
     """ Some tests for DataSet implementation. """
     _labels = [pwtests.SMALL]
@@ -285,7 +288,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         self.assertEqual(0, mapper.maxId())
         n = 10
 
-        indexes = list(range(1, n+1))
+        indexes = list(range(1, n + 1))
         for i in indexes:
             img = MockImage()
             img.setLocation(i, 'images.stk')
@@ -297,16 +300,16 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         # Store one more image with bigger id
         img = MockImage()
         bigId = 1000
-        img.setLocation(i+1, 'images.stk')
+        img.setLocation(i + 1, 'images.stk')
         img.setObjId(bigId)
         mapper.insert(img)
         self.assertEqual(bigId, mapper.maxId())
 
         # Insert another image with None as id, it should take bigId + 1
-        img.setLocation(i+2, 'images.stk')
+        img.setLocation(i + 2, 'images.stk')
         img.setObjId(None)
         mapper.insert(img)
-        self.assertEqual(bigId+1, mapper.maxId())
+        self.assertEqual(bigId + 1, mapper.maxId())
 
         mapper.setProperty('samplingRate', '3.0')
         mapper.setProperty('defocusU', 1000)
@@ -319,28 +322,28 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
 
         # Test that values where stored properly
         mapper2 = pwmapper.SqliteFlatMapper(dbName, Domain.getMapperDict())
-        indexes.extend([bigId, bigId+1])
+        indexes.extend([bigId, bigId + 1])
         for i, obj in enumerate(mapper2.selectAll(iterate=True)):
-            self.assertEqual(obj.getIndex(), i+1)
+            self.assertEqual(obj.getIndex(), i + 1)
             self.assertEqual(obj.getObjId(), indexes[i])
 
         self.assertTrue(mapper2.hasProperty('samplingRate'))
         self.assertTrue(mapper2.hasProperty('defocusU'))
         self.assertFalse(mapper2.hasProperty('defocusV'))
-        
+
         self.assertEqual(mapper2.getProperty('samplingRate'), '3.0')
         self.assertEqual(mapper2.getProperty('defocusU'), '2000')
 
         # Make sure that maxId() returns the proper value after loading db
-        self.assertEqual(bigId+1, mapper2.maxId())
-        
+        self.assertEqual(bigId + 1, mapper2.maxId())
+
     def test_emtpySet(self):
         dbName = self.getOutputPath('empty.sqlite')
         print(">>> test empty set: dbName = '%s'" % dbName)
         # Check that writing an emtpy set do not fail
         objSet = pwobj.Set(filename=dbName)
         objSet.write()
-        objSet.close()       
+        objSet.close()
         # Now let's try to open an empty set
         objSet = pwobj.Set(filename=dbName)
         self.assertEqual(objSet.getSize(), 0)
@@ -349,7 +352,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
 
 
 class TestXmlMapper(pwtests.BaseTest):
-    
+
     @classmethod
     def setUpClass(cls):
         pwtests.setupTestOutput(cls)
@@ -376,10 +379,11 @@ class TestXmlMapper(pwtests.BaseTest):
         # mapper2 = XmlMapper(fnGold, mod.Domain.getMapperDict())
         # c2 = mapper2.selectFirst()
         # self.assertEquals(c.imag.get(), c2.imag.get())
-        
+
 
 class TestDataSet(pwtests.BaseTest):
     """ Some tests for DataSet implementation. """
+
     @classmethod
     def setUpClass(cls):
         pwtests.setupTestOutput(cls)
@@ -389,7 +393,7 @@ class TestDataSet(pwtests.BaseTest):
         table = Table(Column('x', int, 5),
                       Column('y', float, 0.0),
                       Column('name', str))
-        
+
         # Add a row to the table
         table.addRow(1, x=12, y=11.0, name='jose')
         table.addRow(2, x=22, y=21.0, name='juan')
@@ -399,9 +403,9 @@ class TestDataSet(pwtests.BaseTest):
         row = table.getRow(1)
         print(row)
         self.assertEqual(table.getSize(), 3, "Bad table size")
-        
+
         # Update a value of a row
-        table.updateRow(1, name='pepe')        
+        table.updateRow(1, name='pepe')
         row = table.getRow(1)
         print(row)
         self.assertEqual(row.name, 'pepe', "Error updating name in row")
