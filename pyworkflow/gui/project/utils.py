@@ -105,4 +105,7 @@ class OS:
 
         return cls._handler
 
+    @classmethod
+    def getDistro(cls):
+        return platform.os.uname().version
 
