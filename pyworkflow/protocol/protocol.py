@@ -225,7 +225,7 @@ class FunctionStep(Step):
         self._func = func  # Function should be set before run
         self._args = funcArgs
         self.funcName = String(funcName)
-        self.argsStr = String(json.dumps(funcArgs))
+        self.argsStr = String(json.dumps(funcArgs, default=lambda x: None))
         self.setInteractive(kwargs.get('interactive', False))
         if kwargs.get('wait', False):
             self.setStatus(STATUS_WAITING)
