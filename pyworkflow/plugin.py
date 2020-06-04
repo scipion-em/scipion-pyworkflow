@@ -347,26 +347,31 @@ class Domain:
     def findViewers(cls, className, environment):
         """ Find the available viewers in this Domain for this class. """
         viewers = []
-        clazz = cls.findClass(className)
-        baseClasses = clazz.mro()
-        preferredViewers = cls.getPreferredViewers(className)
-        preferedFlag = 0
+        try:
+            clazz = cls.findClass(className)
+            baseClasses = clazz.mro()
+            preferredViewers = cls.getPreferredViewers(className)
+            preferedFlag = 0
 
-        for viewer in cls.getViewers().values():
-            if environment in viewer._environments:
-                for t in viewer._targets:
-                    if t in baseClasses:
-                        for prefViewer in preferredViewers:
-                            if viewer is prefViewer:
-                                viewers.insert(0, viewer)
-                                preferedFlag = 1
-                                break
-                        else:
-                            if t == clazz:
-                                viewers.insert(preferedFlag, viewer)
+            for viewer in cls.getViewers().values():
+                if environment in viewer._environments:
+                    for t in viewer._targets:
+                        if t in baseClasses:
+                            for prefViewer in preferredViewers:
+                                if viewer is prefViewer:
+                                    viewers.insert(0, viewer)
+                                    preferedFlag = 1
+                                    break
                             else:
-                                viewers.append(viewer)
-                            break
+                                if t == clazz:
+                                    viewers.insert(preferedFlag, viewer)
+                                else:
+                                    viewers.append(viewer)
+                                break
+        except Exception as e:
+            # Catch if there is a missing plugin, we will get Legacy which triggers and Exception
+            pass
+
         return viewers
 
     @classmethod
