@@ -83,7 +83,7 @@ def schedule(protocol, wait=False):
     """ Use this function to schedule protocols that are not ready to
     run yet. Right now it only make sense to schedule jobs locally.
     """
-    cmd = pw.getScheduleScript()
+    cmd = '%s %s' % (pw.PYTHON ,pw.getScheduleScript())
     cmd += ' "%s" "%s" %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
                               protocol.strId())
@@ -118,8 +118,8 @@ def _getAppsProgram(prog):
 
 def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
     # Check first if we need to launch with MPI or not
-    command = ('%s "%s" "%s" %s'
-               % (pw.join(pw.APPS, 'pw_protocol_run.py'),
+    command = ('%s %s "%s" "%s" %s'
+               % (pw.PYTHON, pw.join(pw.APPS, 'pw_protocol_run.py'),
                   protocol.getProject().path, protocol.getDbPath(),
                   protocol.strId()))
     hostConfig = protocol.getHostConfig()
