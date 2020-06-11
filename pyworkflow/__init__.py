@@ -27,7 +27,7 @@ from .config import *
 
 # Define pyworkflow version in a standard way, as proposed by:
 # https://www.python.org/dev/peps/pep-0396/
-__version__ = LAST_VERSION + 'a9'
+__version__ = LAST_VERSION + 'a10'
 
 
 
