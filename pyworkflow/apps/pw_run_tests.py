@@ -239,7 +239,7 @@ class Tester:
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
             script = getTestsScript()
-            cmd = "%s %s %s" % (script, spaces, itemName)
+            cmd = "%s %s %s %s" % (pw.PYTHON, script, spaces, itemName)
             run = ((itemType == MODULE and self.mode == 'modules') or
                    (itemType == CLASS and self.mode in ('classes', 'onlyclasses')) or
                    (itemType == TEST and self.mode == 'all'))
