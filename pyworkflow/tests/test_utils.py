@@ -6,6 +6,8 @@ Created on Mar 25, 2014
 @author: airen
 @author: roberto.marabini
 """
+import time
+
 def wait(condition, timeout=30):
     """ Wait until "condition" returns False or return after timeout (seconds)
     param"""
