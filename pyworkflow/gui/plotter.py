@@ -184,6 +184,7 @@ class Plotter(View):
         self.tightLayoutOn = False
         cax = self.figure.add_axes([0.9, 0.1, 0.03, 0.8])
         cbar = self.figure.colorbar(plot, cax=cax)
+        cbar.set_ticks(cbar.get_ticks())
         cbar.ax.invert_yaxis()
 
     def tightLayout(self):

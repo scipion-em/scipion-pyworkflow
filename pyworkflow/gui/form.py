@@ -312,7 +312,9 @@ class ComboVar:
     def set(self, value):
         self.value = value
         if isinstance(value, int):
-            self.tkVar.set(self.enum.choices[value])
+            # self.enum.choices is an object of type odict_values, which
+            # cannot be indexed, so a type cast to list is required
+            self.tkVar.set(list(self.enum.choices)[value])
         else:
             self.tkVar.set(value)  # also support string values
                     
