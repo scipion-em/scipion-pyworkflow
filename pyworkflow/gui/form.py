@@ -321,7 +321,7 @@ class ComboVar:
     def get(self):
         v = self.tkVar.get()
         self.value = None
-        for i, c in enumerate(self.enum.choices):
+        for i, c in enumerate(list(self.enum.choices)):
             if c == v:
                 self.value = i
             
