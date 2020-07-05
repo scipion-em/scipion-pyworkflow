@@ -233,7 +233,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
         print("Launched job with id %s" % job)
         return job
     else:
-        print("Couldn't submit to queue for reason %s " % redStr(out.decode()))
+        print("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
         return UNKNOWN_JOBID
 
     

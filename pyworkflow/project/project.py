@@ -634,7 +634,9 @@ class Project(object):
             pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
 
         # Launch the protocol, the jobId should be set after this call
-        pwprot.launch(protocol, wait)
+        jobId = pwprot.launch(protocol, wait)
+        if jobId is None or jobId == -1:
+            protocol.setStatus(pwprot.STATUS_FAILED)
 
         # Commit changes
         if wait:  # This is only useful for launching tests...
