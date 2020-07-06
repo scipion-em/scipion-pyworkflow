@@ -47,8 +47,7 @@ from subprocess import Popen, PIPE
 import pyworkflow as pw
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
-
-UNKNOWN_JOBID = -1
+from pyworkflow.protocol.constants import UNKNOWN_JOBID
 LOCALHOST = 'localhost'
 
 

@@ -39,7 +39,7 @@ import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
-                                           STATUS_INTERACTIVE, ACTIVE_STATUS)
+                                           STATUS_INTERACTIVE, ACTIVE_STATUS, UNKNOWN_JOBID)
 from pyworkflow.protocol.protocol import ProtImportBase
 
 from . import config
@@ -58,9 +58,6 @@ PROJECT_CREATION_TIME = 'CreationTime'
 # Regex to get numbering suffix and automatically propose runName
 REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
 REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
-
-UNKNOWN_JOBID = -1
-
 
 class Project(object):
     """This class will handle all information 
