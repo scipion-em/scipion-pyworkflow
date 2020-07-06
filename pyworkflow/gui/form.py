@@ -1339,7 +1339,7 @@ class ParamWidget:
         selected = []
         if isinstance(value, list):
             selected = value
-        elif selected is not None:
+        else:
             selected = [value]
         tp = ScalarTreeProvider(self._protocol, self.param,
                                 selected=selected)
