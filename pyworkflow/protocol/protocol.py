@@ -2233,14 +2233,12 @@ def getProtocolFromDb(projectPath, protDbPath, protId, chdir=False):
     if not os.path.exists(projectPath):
         raise Exception("ERROR: project path '%s' does not exist. "
                         % projectPath)
-        sys.exit(1)
 
     fullDbPath = os.path.join(projectPath, protDbPath)
 
     if not os.path.exists(fullDbPath):
         raise Exception("ERROR: protocol database '%s' does not exist. "
                         % fullDbPath)
-        sys.exit(1)
 
     # We need this import here because from Project is imported
     # all from protocol indirectly, so if move this to the top
