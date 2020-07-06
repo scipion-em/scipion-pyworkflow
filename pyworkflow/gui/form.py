@@ -1299,7 +1299,7 @@ class ParamWidget:
         selected = []
         if isinstance(value, list):
             selected = value
-        elif selected is not None:
+        else:
             selected = [value]
         tp = SubclassesTreeProvider(self._protocol, self.param,
                                     selected=selected)
