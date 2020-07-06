@@ -1382,7 +1382,7 @@ class ParamWidget:
                              selectOnDoubleClick=True)
             if dlg.values:
                 self.set(dlg.values[0])
-        except AttributeError as e:
+        except AttributeError:
             self._showError("Error loading possible inputs. "
                             "This usually happens because the parameter "
                             "needs info from other parameters... are "
