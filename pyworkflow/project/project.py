@@ -59,6 +59,8 @@ PROJECT_CREATION_TIME = 'CreationTime'
 REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
 REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
 
+UNKNOWN_JOBID = -1
+
 
 class Project(object):
     """This class will handle all information 
@@ -636,7 +638,7 @@ class Project(object):
 
         # Launch the protocol, the jobId should be set after this call
         jobId = pwprot.launch(protocol, wait)
-        if jobId is None or jobId == -1:
+        if jobId is None or jobId == UNKNOWN_JOBID:
             protocol.setStatus(pwprot.STATUS_FAILED)
 
         # Commit changes
