@@ -40,6 +40,7 @@ import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS)
+from pyworkflow.protocol.protocol import ProtImportBase
 
 from . import config
 
@@ -1630,9 +1631,7 @@ class Project(object):
 
         for prot in runs:
             broken = False
-            # FIXME: Remove the em.ProtImport here
-            # FIXME (maybe create a base import class?)
-            if isinstance(prot, pwem.protocols.ProtImport):
+            if isinstance(prot, ProtImportBase):
                 for _, attr in prot.iterOutputAttributes():
                     fn = attr.getFiles()
                     for f in attr.getFiles():

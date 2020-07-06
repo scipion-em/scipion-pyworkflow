@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 # **************************************************************************
 # *
-# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
+# * Authors:     Pablo Conesa (pconesa@cnb.csic.es) [1]
 # *
-# * [1] SciLifeLab, Stockholm University
+# * [1] Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
 # *
 # * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -22,12 +23,18 @@
 # *
 # **************************************************************************
 
-from .constants import *
-from .config import *
-
-# Define pyworkflow version in a standard way, as proposed by:
-# https://www.python.org/dev/peps/pep-0396/
-__version__ = LAST_VERSION + 'a11'
+from pyworkflow.project.project import Project
+from unittest import TestCase
+from unittest.mock import patch
 
 
+class TestProject(TestCase):
 
+    def test_fixlinks(self):
+        """ Test fixlinks call."""
+
+        with patch("pyworkflow.project.Project.getRuns") as getruns:
+
+            getruns.return_value = [1]
+            proj = Project("domain", "path")
+            proj.fixLinks("foo")

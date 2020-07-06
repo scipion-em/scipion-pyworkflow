@@ -152,7 +152,7 @@ def get_parser():
     add('--check-all', action='store_true',
         help='See if there is any remote dataset not in sync with locals.')
     add('-l', '--login', default='scipion@scipion.cnb.csic.es', help='ssh login string. For upload')
-    add('-rf', '--remotefolder', default='/services/scipion/data/downloads/scipion/data/tests',
+    add('-rf', '--remotefolder', default='scipionfiles/downloads/scipion/data/tests',
         help='remote folder to put the dataset there. For upload.')
     add('-v', '--verbose', action='store_true', help='Print more details.')
 

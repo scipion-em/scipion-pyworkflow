@@ -1299,7 +1299,7 @@ class ParamWidget:
         selected = []
         if isinstance(value, list):
             selected = value
-        elif selected is not None:
+        else:
             selected = [value]
         tp = SubclassesTreeProvider(self._protocol, self.param,
                                     selected=selected)
@@ -1339,7 +1339,7 @@ class ParamWidget:
         selected = []
         if isinstance(value, list):
             selected = value
-        elif selected is not None:
+        else:
             selected = [value]
         tp = ScalarTreeProvider(self._protocol, self.param,
                                 selected=selected)
@@ -1382,7 +1382,7 @@ class ParamWidget:
                              selectOnDoubleClick=True)
             if dlg.values:
                 self.set(dlg.values[0])
-        except AttributeError as e:
+        except AttributeError:
             self._showError("Error loading possible inputs. "
                             "This usually happens because the parameter "
                             "needs info from other parameters... are "

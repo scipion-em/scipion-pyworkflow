@@ -140,7 +140,7 @@ class Mapper:
         """Return True if the id is in the database"""
         pass
 
-    def selectAll(self):
+    def selectAll(self, iterate=False):
         """Return all object from storage"""
         pass
     
