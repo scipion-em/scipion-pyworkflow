@@ -1301,7 +1301,7 @@ class ParamWidget:
         selected = []
         if isinstance(value, list):
             selected = value
-        elif selected is not None:
+        elif selected:
             selected = [value]
         tp = SubclassesTreeProvider(self._protocol, self.param,
                                     selected=selected)
@@ -1341,7 +1341,7 @@ class ParamWidget:
         selected = []
         if isinstance(value, list):
             selected = value
-        elif selected is not None:
+        elif selected:
             selected = [value]
         tp = ScalarTreeProvider(self._protocol, self.param,
                                 selected=selected)
