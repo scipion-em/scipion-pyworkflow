@@ -1206,9 +1206,9 @@ class Protocol(Step):
         self._outputs.clear()
         self.mapper.store(self._outputs)
 
-    def findAttributeName(self, attr):
+    def findAttributeName(self, attr2Find):
         for attrName, attr in self.iterOutputAttributes():
-            if attr.getObjId() == attr.getObjId():
+            if attr.getObjId() == attr2Find.getObjId():
                 return attrName
         return None
 
@@ -2233,14 +2233,12 @@ def getProtocolFromDb(projectPath, protDbPath, protId, chdir=False):
     if not os.path.exists(projectPath):
         raise Exception("ERROR: project path '%s' does not exist. "
                         % projectPath)
-        sys.exit(1)
 
     fullDbPath = os.path.join(projectPath, protDbPath)
 
     if not os.path.exists(fullDbPath):
         raise Exception("ERROR: protocol database '%s' does not exist. "
                         % fullDbPath)
-        sys.exit(1)
 
     # We need this import here because from Project is imported
     # all from protocol indirectly, so if move this to the top
@@ -2291,3 +2289,6 @@ def isProtocolUpToDate(protocol):
 
 class ValidationException(Exception):
     pass
+
+class ProtImportBase(Protocol):
+    """ Base Import protocol"""
