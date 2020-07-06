@@ -2291,3 +2291,6 @@ def isProtocolUpToDate(protocol):
 
 class ValidationException(Exception):
     pass
+
+class ProtImportBase(Protocol):
+    """ Base Import protocol"""
