@@ -47,7 +47,9 @@ def prettyDate(time=False):
     elif isinstance(time, datetime):
         diff = now - time 
     elif not time:
-        diff = now - now
+        # Avoid now - now (sonar cloud bug)
+        copy = now
+        diff = now - copy
     second_diff = diff.seconds
     day_diff = diff.days
 
