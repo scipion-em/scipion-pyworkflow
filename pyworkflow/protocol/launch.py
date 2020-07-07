@@ -47,8 +47,7 @@ from subprocess import Popen, PIPE
 import pyworkflow as pw
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
-
-UNKNOWN_JOBID = -1
+from pyworkflow.protocol.constants import UNKNOWN_JOBID
 LOCALHOST = 'localhost'
 
 
@@ -228,12 +227,12 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     # Try to parse the result of qsub, searching for a number (jobId)
     # REview this, seems to exclusive to torque batch system
     s = re.search('(\d+)', str(out))
-    if s:
+    if p.returncode == 0 and s:
         job = int(s.group(0))
-        print("launched job with id %s" % job)
+        print("Launched job with id %s" % job)
         return job
     else:
-        print("Couldn't submit to queue for reason %s " % redStr(str(out)))
+        print("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
         return UNKNOWN_JOBID
 
     
