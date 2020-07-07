@@ -39,7 +39,8 @@ import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
-                                           STATUS_INTERACTIVE, ACTIVE_STATUS)
+                                           STATUS_INTERACTIVE, ACTIVE_STATUS, UNKNOWN_JOBID)
+from pyworkflow.protocol.protocol import ProtImportBase
 
 from . import config
 
@@ -57,7 +58,6 @@ PROJECT_CREATION_TIME = 'CreationTime'
 # Regex to get numbering suffix and automatically propose runName
 REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
 REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
-
 
 class Project(object):
     """This class will handle all information 
@@ -634,7 +634,9 @@ class Project(object):
             pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
 
         # Launch the protocol, the jobId should be set after this call
-        pwprot.launch(protocol, wait)
+        jobId = pwprot.launch(protocol, wait)
+        if jobId is None or jobId == UNKNOWN_JOBID:
+            protocol.setStatus(pwprot.STATUS_FAILED)
 
         # Commit changes
         if wait:  # This is only useful for launching tests...
@@ -1628,9 +1630,7 @@ class Project(object):
 
         for prot in runs:
             broken = False
-            # FIXME: Remove the em.ProtImport here
-            # FIXME (maybe create a base import class?)
-            if isinstance(prot, pwem.protocols.ProtImport):
+            if isinstance(prot, ProtImportBase):
                 for _, attr in prot.iterOutputAttributes():
                     fn = attr.getFiles()
                     for f in attr.getFiles():
