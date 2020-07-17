@@ -43,6 +43,7 @@ except ImportError:
 from matplotlib.figure import Figure
 import matplotlib.cm as cm
 from matplotlib.patches import Wedge
+import copy
 
 
 class FigureFrame(tk.Frame):
@@ -145,10 +146,11 @@ class PsdPreview(Preview):
         self.img = ax.imshow(self.bg, cmap=cm.gray, extent=[-h, h, -h, h])
         self.ax = ax
         
-    def createRing(self, fc=pw.Config.WIZARD_MASK_COLOR):
+    def createRing(self):
         radius = float(self.hf)
         width = radius - float(self.lf)
-        self.ring = Wedge((0, 0), radius, 0, 360, width=width, alpha=0.15, fc=fc)  # Full ring
+        styleArgs = getWedgeExtraParams(self.dim / 2)
+        self.ring = Wedge((0, 0), radius, 0, 360, width=width, **styleArgs)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         
@@ -177,12 +179,13 @@ class MaskPreview(ImagePreview):
         ImagePreview.__init__(self, parent, dim, dpi, label, col, listenersDict)
         self.ring = None
             
-    def updateMask(self, outerRadius, innerRadius=0, fc=pw.Config.WIZARD_MASK_COLOR):
+    def updateMask(self, outerRadius, innerRadius=0):
         if self.ring is not None:
             self.ring.remove()
         center = self.dim / 2
         width = outerRadius - innerRadius
-        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, alpha=0.15, fc=fc)  # Full ring
+        styleArgs = getWedgeExtraParams(center)
+        self.ring = Wedge((center, center), outerRadius, 0, 360, width=width, **styleArgs)  # Full ring
         self.ax.add_patch(self.ring)
         self.canvas.draw()
         
@@ -194,3 +197,20 @@ def getPngData(filename):
 
 def createBgImage(dim):
     return np.ones((dim, dim, 3))
+
+
+def getWedgeExtraParams(maxRad):
+    color = pw.Config.getWizardMaskColor()
+    # Face color
+    fcolor = copy.deepcopy(color)  # Normalized RGB
+    fca = 0.15  # alpha
+    fcolor.append(fca)
+    # Edge color
+    ecolor = copy.deepcopy(color)
+    eca = 1
+    ecolor.append(eca)
+    return {'linewidth': 0.02 * maxRad,  # 2% of the max radius
+            'facecolor': fcolor,
+            'edgecolor': ecolor,
+            'linestyle': '-'}
+
