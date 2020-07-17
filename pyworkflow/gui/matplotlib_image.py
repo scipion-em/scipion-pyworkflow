@@ -30,7 +30,7 @@ Several Image tools using Matplotlib.
 import tkinter as tk
 import matplotlib
 import numpy as np
-
+import pyworkflow as pw
 from pyworkflow import TK_GRAY_DEFAULT
 
 try:
@@ -145,7 +145,7 @@ class PsdPreview(Preview):
         self.img = ax.imshow(self.bg, cmap=cm.gray, extent=[-h, h, -h, h])
         self.ax = ax
         
-    def createRing(self, fc=None):
+    def createRing(self, fc=pw.Config.WIZARD_MASK_COLOR):
         radius = float(self.hf)
         width = radius - float(self.lf)
         self.ring = Wedge((0, 0), radius, 0, 360, width=width, alpha=0.15, fc=fc)  # Full ring
@@ -177,7 +177,7 @@ class MaskPreview(ImagePreview):
         ImagePreview.__init__(self, parent, dim, dpi, label, col, listenersDict)
         self.ring = None
             
-    def updateMask(self, outerRadius, innerRadius=0, fc=None):
+    def updateMask(self, outerRadius, innerRadius=0, fc=pw.Config.WIZARD_MASK_COLOR):
         if self.ring is not None:
             self.ring.remove()
         center = self.dim / 2
