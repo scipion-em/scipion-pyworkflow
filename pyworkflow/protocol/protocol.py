@@ -1079,7 +1079,7 @@ class Protocol(Step):
         self._prevSteps = self.loadSteps()
 
         n = min(len(self._steps), len(self._prevSteps))
-        self.info("len(steps) %s len(prevSteps) %s "
+        self.debug("len(steps) %s len(prevSteps) %s "
                   % (len(self._steps), len(self._prevSteps)))
 
         for i in range(n):
@@ -1130,9 +1130,8 @@ class Protocol(Step):
         """This function will be called whenever an step
         has started running.
         """
-        self.info(pwutils.magentaStr("STARTED") + ": %s, step %d" %
-                  (step.funcName.get(), step._index))
-        self.info("  %s" % step.initTime.datetime())
+        self.info(pwutils.magentaStr("STARTED") + ": %s, step %d, time %s" %
+                  (step.funcName.get(), step._index, step.initTime.datetime()))
         self.__updateStep(step)
 
     def _stepFinished(self, step):
@@ -1154,9 +1153,8 @@ class Protocol(Step):
         self._stepsDone.increment()
         self._store(self._stepsDone)
 
-        self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d"
-                  % (step.funcName.get(), step._index))
-        self.info("  %s" % step.endTime.datetime())
+        self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
+                  % (step.funcName.get(), step._index, step.endTime.datetime()))
         if step.isFailed() and self.stepsExecutionMode == STEPS_PARALLEL:
             # In parallel mode the executor will exit to close
             # all working threads, so we need to close
@@ -1351,12 +1349,15 @@ class Protocol(Step):
         self.setPid(os.getpid())
         self.setHostFullName(pwutils.getHostFullName())
 
-        self.info('     HostName: %s' % self.getHostFullName())
-        self.info('          PID: %s' % self.getPid())
-        self.info('   pyworkflow: %s' % pw.__version__)
-        self.info('   currentDir: %s' % os.getcwd())
-        self.info('   workingDir: %s' % self.workingDir)
-        self.info('      runMode: %s' % MODE_CHOICES[self.runMode.get()])
+        self.info('Hostname: %s' % self.getHostFullName())
+        self.info('PID: %s' % self.getPid())
+        self.info('pyworkflow: %s' % pw.__version__)
+        self.info('plugin: %s' % self.getClassPackageName())
+        if hasattr(self.getClassPackage(), "__version__"):
+            self.info('plugin v: %s' % self.getClassPackage().__version__)
+        self.info('currentDir: %s' % os.getcwd())
+        self.info('workingDir: %s' % self.workingDir)
+        self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
         try:
             self.info('          MPI: %d' % self.numberOfMpi)
             self.info('      threads: %d' % self.numberOfThreads)
