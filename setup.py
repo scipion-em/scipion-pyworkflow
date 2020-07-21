@@ -181,7 +181,7 @@ setup(
     # MANIFEST.in as well.
     # include_package_data=True,
     package_data={
-      'pyworkflow':['resources/*']
+      'pyworkflow':['resources/*', "project/scripts/*"]
     },
 
     # Although 'package_data' is the preferred approach, in some case you may

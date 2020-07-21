@@ -367,11 +367,12 @@ class ProjectManagerWindow(ProjectBaseWindow):
         fileMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
 
         confMenu = menu.addSubMenu('Configuration')
-        confMenu.addSubMenu('General', 'general')
+        if os.path.exists(pw.Config.SCIPION_CONFIG):
+            confMenu.addSubMenu('General', 'general')
         confMenu.addSubMenu('Hosts', 'hosts')
         confMenu.addSubMenu('Protocols', 'protocols')
-        # Moved to scipion app: confMenu.addSubMenu('Plugins', 'plugins')
-        confMenu.addSubMenu('User', 'user')
+        if os.path.exists(pw.Config.SCIPION_LOCAL_CONFIG):
+            confMenu.addSubMenu('User', 'user')
 
         helpMenu = menu.addSubMenu('Help')
         helpMenu.addSubMenu('Online help', 'online_help', icon='fa-external-link.gif')

@@ -29,6 +29,7 @@ import os
 import sys
 
 from pwem.viewers import DataView
+from pyworkflow import Config
 from pyworkflow.gui.browser import FileBrowserWindow
 
     
@@ -44,7 +45,7 @@ def showFile(path, viewParams):
 if __name__ == '__main__':    
     
     if '-h' in sys.argv or '--help' in sys.argv:
-        print("usage: scipion view [file1 file2 file3 ... fileN]")
+        print("usage: scipion3 view [file1 file2 file3 ... fileN]")
         
     else:
         if len(sys.argv) == 1:  # no extra arguments, show current directory
@@ -66,7 +67,10 @@ if __name__ == '__main__':
             viewParams = {}
             for k, v in args.items():
                 viewParams[k.replace('-', '')] = ' '.join(v)
-            
+
+            # Trigger plugin initialization
+            Config.getDomain().getPlugins()
+
             for fn in inputFiles:
                 if os.path.isdir(fn):
                     showDir(fn)

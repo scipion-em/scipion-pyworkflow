@@ -582,11 +582,13 @@ class Plugin:
 
         The default implementation will check if the _pathVars exists.
         """
-        missing = ["%s: %s" % (var, cls.getVar(var))
-                   for var in cls._pathVars if not os.path.exists(cls.getVar(var))]
+        try:
+            missing = ["%s: %s" % (var, cls.getVar(var))
+                       for var in cls._pathVars if not os.path.exists(cls.getVar(var))]
 
-        return (["Missing variables:"] + missing) if missing else []
-
+            return (["Missing variables:"] + missing) if missing else []
+        except Exception as e:
+            return ["validateInstallation fails: %s" % e]
     @classmethod
     def getPluginTemplateDir(cls):
         return os.path.join(pw.getModuleFolder(cls.getName()), 'templates')

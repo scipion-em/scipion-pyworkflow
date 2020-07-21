@@ -1,6 +1,7 @@
 import ast
 import importlib
 import inspect
+import json
 import os
 import sys
 import types
@@ -146,6 +147,7 @@ class Config:
     # Aspect
     SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica")
     SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', 10))
+    WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
 
     # Notification
     SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
@@ -257,6 +259,10 @@ class Config:
     @classmethod
     def getExternalJsonTemplates(cls):
         return os.path.dirname(cls.SCIPION_CONFIG)
+
+    @classmethod
+    def getWizardMaskColor(cls):
+        return json.loads(cls.WIZARD_MASK_COLOR)
 
 
 # Add bindings folder to sys.path
