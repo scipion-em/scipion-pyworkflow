@@ -1951,15 +1951,17 @@ class Protocol(Step):
 
     def _getCiteText(self, cite, useKeyLabel=False):
         try:
+
+            journal = cite.get("journal", cite.get("booktitle", ""))
+            doi = cite.get("doi", "")
             # Get the first author surname
             if useKeyLabel:
                 label = cite['ID']
             else:
                 label = cite['author'].split(' and ')[0].split(',')[0].strip()
-                label += ' et al., %s, %s' % (cite['journal'], cite['year'])
-
-            if len(cite['doi'].strip()) > 0:
-                text = '[[%s][%s]] ' % (cite['doi'].strip(), label)
+                label += ' et al., %s, %s' % (journal, cite['year'])
+            if len(doi.strip()) > 0:
+                text = '[[%s][%s]] ' % (doi.strip(), label)
             else:
                 text = label.strip()
             return text
