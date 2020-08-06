@@ -115,19 +115,31 @@ class BaseTest(unittest.TestCase):
         if prot.isFailed():
             print("\n>>> ERROR running protocol %s" % prot.getRunName())
             print("    FAILED with error: %s\n" % prot.getErrorMessage())
-            logLines = prot.getLogsLastLines()
-            for i in range(0, len(logLines)):
-                print(logLines[i])
+
+            BaseTest.printLastLogLines(prot)
+
             raise Exception("ERROR launching protocol.")
 
         if not prot.isFinished() and not prot.useQueue():  # when queued is not finished yet
             print("\n>>> ERROR running protocol %s" % prot.getRunName())
-            logLines = prot.getLogsLastLines()
-            for i in range(0, len(logLines)):
-                print(logLines[i])
+
+            BaseTest.printLastLogLines(prot)
+
             raise Exception("ERROR: Protocol not finished")
 
         return prot
+
+    @staticmethod
+    def printLastLogLines(prot):
+
+        lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 50))
+        print(pwutils.cyanStr("\n*************** LAST %s LINES OF THE LOG *********************\n" % lastLines))
+        logLines = prot.getLogsLastLines(lastLines)
+        for i in range(0, len(logLines)):
+            print(logLines[i])
+        print(pwutils.cyanStr("\n*************** END OF THE LOG *********************\n"))
+
+        sys.stdout.flush()
     
     @classmethod    
     def saveProtocol(cls, prot):
