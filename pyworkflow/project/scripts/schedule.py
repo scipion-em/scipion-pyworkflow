@@ -92,5 +92,5 @@ for prot in runs:
         protLabelName not in sys.argv[3:]):
         project.scheduleProtocol(prot)
     else:
-        print(pwutils.getColorStr("\nNot scheduling '%s' protocol named '%s'.\n"
-                                  % (protClassName, protLabelName), 'blue'))
+        print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
+                                  % (protClassName, protLabelName)))
