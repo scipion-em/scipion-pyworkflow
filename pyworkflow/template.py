@@ -11,7 +11,8 @@ from pyworkflow.utils import greenStr
 class Template:
     def __init__(self, pluginName, tempPath):
         self.pluginName = pluginName
-        self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "")
+        # Tidy up templates names: removing .json.template and .json (when passed as parameter)
+        self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "").replace(".json","")
         self.templatePath = os.path.abspath(tempPath)
         self.description, self.content = self._parseTemplate()
         self.params = None
