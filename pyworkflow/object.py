@@ -887,7 +887,7 @@ class Pointer(Object):
             return []
     
     def setExtendedParts(self, parts):
-        """ Set the extedend attribute but using 
+        """ Set the extended attribute but using
         a list as input. 
         """
         self.setExtended('.'.join(parts))
@@ -1116,7 +1116,9 @@ class Set(OrderedObject):
         
     def __getitem__(self, itemId):
         """ Get the image with the given id. """
-        return self._getMapper().selectById(itemId)
+        item = self._getMapper().selectById(itemId)
+        self.close()
+        return item
 
     def __contains__(self, itemId):
         """ element in Set """
