@@ -218,15 +218,15 @@ class Plotter(View):
         plt.close(self.figure)
         
 
-def getHexColorList(stepColors, colorName='jet'):
+def getHexColorList(numberOfColors, colorName='jet'):
     """ Returns a list of hexColor """
     from matplotlib import cm, colors
     
     colorsList = []
     colorMap = cm.get_cmap(colorName)
-    ratio = 255.0 / (len(stepColors))
-    for index in range(len(stepColors)):
-        colorPosition = int(round((index+1) * ratio))
+    ratio = colorMap.N / numberOfColors
+    for index in range(numberOfColors):
+        colorPosition = int(round((index * ratio)))
         rgb = colorMap(colorPosition)[:3]
         rgbColor = colors.rgb2hex(rgb)
         colorsList.append(rgbColor)
