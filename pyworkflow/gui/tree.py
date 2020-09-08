@@ -630,3 +630,24 @@ class ListTreeProviderTemplate(ListTreeProviderString):
 
     def getValues(self, obj):
         return (obj.description, )
+
+# From: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort
+def treeview_sort_column(tv, col, reverse, casting=str):
+    """
+    Function to sort a treeview
+    :param tv: treview
+    :param col:  column to apply the sorting on
+    :param reverse: sorting direction
+    :param casting: optional - casting operation to apply on the column value: str is default. int, float are other options
+    :return:
+    """
+    l = [(casting(tv.set(k, col)), k) for k in tv.get_children('')]
+    l.sort(reverse=reverse)
+
+    # rearrange items in sorted positions
+    for index, (val, k) in enumerate(l):
+        tv.move(k, '', index)
+
+    # reverse sort next time
+    tv.heading(col, command=lambda: \
+        treeview_sort_column(tv, col, not reverse, casting))
