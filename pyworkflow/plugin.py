@@ -500,17 +500,15 @@ class Plugin:
 
     @classmethod
     def getCondaActivationCmd(cls):
-
         if cls._condaActivationCmd is None:
             condaActivationCmd = os.environ.get(CONDA_ACTIVATION_CMD_VAR, "")
-            correctCondaActivationCmd = condaActivationCmd.replace(pw.Config.SCIPION_HOME + "/", "")
-            if not correctCondaActivationCmd:
-                print("WARNING!!: %s variable not defined. "
+            if not condaActivationCmd:
+                print("WARNING!!_condaActivationCmd: %s variable not defined. "
                       "Relying on conda being in the PATH" % CONDA_ACTIVATION_CMD_VAR)
-            elif correctCondaActivationCmd[-1] not in [";", "&"]:
-                correctCondaActivationCmd += "&&"
+            elif condaActivationCmd[-1] not in [";", "&"]:
+                condaActivationCmd += "&&"
 
-            cls._condaActivationCmd = correctCondaActivationCmd
+            cls._condaActivationCmd = condaActivationCmd
 
         return cls._condaActivationCmd
 
