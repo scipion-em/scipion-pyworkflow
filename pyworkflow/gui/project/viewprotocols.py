@@ -336,11 +336,11 @@ class SearchProtocolWindow(pwgui.Window):
         self._resultsTree.column('installed', width=110, stretch=tk.FALSE)
         self._resultsTree.column('help', minwidth=300, stretch=tk.YES)
         self._resultsTree.column('score', width=50, stretch=tk.FALSE)
-        self._resultsTree.heading('protocol', text='Protocol', command=lambda: pwgui.treeview_sort_column(self._resultsTree, "protocol", False))
-        self._resultsTree.heading('streaming', text='Streamified', command=lambda: pwgui.treeview_sort_column(self._resultsTree, "streaming", False))
-        self._resultsTree.heading('installed', text='Installation', command=lambda: pwgui.treeview_sort_column(self._resultsTree, "installed", False))
-        self._resultsTree.heading('help', text='Help', command=lambda: pwgui.treeview_sort_column(self._resultsTree, "help", False))
-        self._resultsTree.heading('score', text='Score', command=lambda: pwgui.treeview_sort_column(self._resultsTree, "score", False, casting=int))
+        self._resultsTree.heading('protocol', text='Protocol', command=lambda: self._resultsTree.sortByColumn("protocol", False))
+        self._resultsTree.heading('streaming', text='Streamified', command=lambda: self._resultsTree.sortByColumn("streaming", False))
+        self._resultsTree.heading('installed', text='Installation', command=lambda: self._resultsTree.sortByColumn("installed", False))
+        self._resultsTree.heading('help', text='Help', command=lambda: self._resultsTree.sortByColumn("help", False))
+        self._resultsTree.heading('score', text='Score', command=lambda: self._resultsTree.sortByColumn("score", False, casting=int))
 
     def _onSearchClick(self, e=None):
         self._resultsTree.clear()
