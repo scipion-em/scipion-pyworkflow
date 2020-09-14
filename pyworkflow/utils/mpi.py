@@ -37,7 +37,7 @@ from pyworkflow import Config
 
 from .process import buildRunCommand, runCommand
 
-from pyworkflow.utils.utils import getLocalHostName
+from pyworkflow.utils.utils import getLocalHostName, redStr
 
 TIMEOUT = 60  # seconds trying to send/receive data through a socket
 
@@ -57,13 +57,13 @@ def send(command, comm, dest, tag):
         print("Sending command to %d: %s" % (dest, command))
 
     # Send command with isend()
-    req_send = comm.isend(command, dest=dest, tag=tag)
+    req_send = comm.isend(dumps(command), dest=dest, tag=tag)
     t0 = time()
     while not req_send.test()[0]:
         sleep(1)
         if time() - t0 > TIMEOUT:
             raise Exception("Timeout in process %d, cannot send command "
-                            "to slave." % os.getpid())
+                            "to worker %d." % (os.getpid(), dest))
 
     # Receive the result in a non-blocking way too (with irecv())
     req_recv = comm.irecv(source=dest, tag=tag)
@@ -74,6 +74,8 @@ def send(command, comm, dest, tag):
         sleep(1)
 
     if result != 0:  # result will then be a string with the error
+        print(redStr("Worker process %d has failed. Please check the terminal "
+                     "for details." % dest))
         raise Exception(str(result))
 
 
@@ -87,7 +89,7 @@ def runJobMPI(programname, params, mpiComm, mpiDest,
     if cwd is not None:
         send("cwd=%s" % cwd, mpiComm, mpiDest, TAG_RUN_JOB+mpiDest)
     if env is not None:
-        send("env=%s" % dumps(env), mpiComm, mpiDest, TAG_RUN_JOB+mpiDest)
+        send("env=%s" % env, mpiComm, mpiDest, TAG_RUN_JOB+mpiDest)
 
     send(command, mpiComm, mpiDest, TAG_RUN_JOB+mpiDest)
 
@@ -98,10 +100,9 @@ def runJobMPISlave(mpiComm):
     """
     rank = mpiComm.Get_rank()
     hostname = getLocalHostName()
-    print("Running runJobMPISlave: ", rank)
+    print("  Running MPIWorker: ", rank)
 
     exitResult = 0
-    msg = "Timeout in process %d, cannot send result to master."
 
     # Listen for commands until we get 'None'
     cwd = None  # We run without changing directory by default
@@ -116,10 +117,13 @@ def runJobMPISlave(mpiComm):
                 break
             sleep(1)
 
-        print("Slave %s(rank %d) received command." % (hostname, rank))
+        print("  Worker %s(rank %d) received command." % (hostname, rank))
+        # We need to convert to string because req_recv.test() returns bytes or None
         if command == 'None':
             print("  Stopping...")
             return
+        else:
+            command = loads(command)
 
         # Run the command and get the result (exit code or exception)
         try:
@@ -127,17 +131,19 @@ def runJobMPISlave(mpiComm):
                 cwd = command.split("=", 1)[-1]
                 print("  Changing to dir %s ..." % cwd)
             elif command.startswith("env="):
-                env = loads(command.split("=", 1)[-1])
+                env = command.split("=", 1)[-1]
+                env = eval(env)
                 print("  Setting the environment...")
                 if Config.debugOn():
                     print(env)
             else:
-                print("  %s" % command)
                 runCommand(command, cwd=cwd, env=env)
                 cwd = None  # unset directory
                 env = None  # unset environment
         except Exception as e:
-            msg = "Timeout in process %d, cannot send error message to master."
+            print("  Error in process %d (rank %d)" % (os.getpid(), rank))
+            import traceback
+            traceback.print_exc()
             exitResult = str(e)
 
         # Communicate to master, either error os success
@@ -146,5 +152,6 @@ def runJobMPISlave(mpiComm):
         while not req_send.test()[0]:
             sleep(1)
             if time() - t0 > TIMEOUT:
+                msg = "  Error in process %d, cannot send error message to master."
                 print(msg % os.getpid())
                 break
