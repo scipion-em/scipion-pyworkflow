@@ -941,18 +941,18 @@ class Edge:
                 self.canvas.delete(self.id)
 
             lineColor = '#ccc'
-            lineWidth = 1.
+            lineWidth = 1
             if not self.canvas.multipleItemsSelected():
                 if self.dest.getSelected():
                     lineColor = '#000'
-                    lineWidth = 2.
+                    lineWidth = 2
                 elif self.source.getSelected():
                     lineColor = '#b22222'
-                    lineWidth = 2.
+                    lineWidth = 2
             else:
                 if self.dest.getSelected() and self.source.getSelected():
                     lineColor = '#000'
-                    lineWidth = 2.
+                    lineWidth = 2
     
             self.id = self.canvas.create_line(c1Coords[0], c1Coords[1], 
                                               c2Coords[0], c2Coords[1],

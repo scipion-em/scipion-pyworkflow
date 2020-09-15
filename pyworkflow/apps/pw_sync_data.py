@@ -309,15 +309,18 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     filesUpdated = 0  # number of files that have been updated
     taintedMANIFEST = False  # can MANIFEST be out of sync?
-
+    downloadingPrinted = False
     for fname in md5sRemote:
-        vlog("  %s" % fname)
         fpath = join(datasetFolder, fname)
         try:
             if exists(fpath) and md5sLocal[fname] == md5sRemote[fname]:
                 vlog("\r  %s  %s\n" % (green("OK"), fname))
                 pass  # just to emphasize that we do nothing in this case
             else:
+                if not downloadingPrinted:
+                    verboseMsg = " Next time use -v for more details." if not verbose else ""
+                    print("Differences detected. Downloading data.%s" % verboseMsg)
+
                 vlog("\r  %s  %s  (downloading... " % (red("XX"), fname))
                 if not isdir(dirname(fpath)):
                     os.makedirs(dirname(fpath))

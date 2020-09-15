@@ -27,6 +27,8 @@ import os
 import re
 from datetime import datetime
 import traceback
+from enum import Enum
+
 import numpy as np
 import math
 
@@ -333,6 +335,16 @@ def getLineInFile(text, fileName):
 
 
 # ------------- Colored message strings -----------------------------
+
+class StrColors(Enum):
+    gray = 30
+    red = 31
+    green = 32
+    yellow = 33
+    blue = 34
+    magenta = 35
+    cyan = 36
+
 def getColorStr(text, color, bold=False):
     """ Add ANSI color codes to the string if there is a terminal sys.stdout.
     Params:
@@ -343,28 +355,34 @@ def getColorStr(text, color, bold=False):
     if envVarOn('SCIPION_SAFE_COLORS') and not sys.stdout.isatty():
         return text
     
-    colors = {'gray': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34, 'magenta': 35, 'cyan': 36}
-    attr = [str(colors[color])]
+
+    attr = [str(color.value)]
     
     if bold:
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), text)
 
 
-def yellowStr(text):
-    return getColorStr(text, color='yellow')
-
-
-def greenStr(text):
-    return getColorStr(text, color='green')
-
+def grayStr(text):
+    return getColorStr(text, color=StrColors.gray)
 
 def redStr(text):
-    return getColorStr(text, color='red')
+    return getColorStr(text, color=StrColors.red)
 
+def greenStr(text):
+    return getColorStr(text, color=StrColors.green)
+
+def yellowStr(text):
+    return getColorStr(text, color=StrColors.yellow)
+
+def blueStr(text):
+    return getColorStr(text, color=StrColors.blue)
 
 def magentaStr(text):
-    return getColorStr(text, color='magenta')
+    return getColorStr(text, color=StrColors.magenta)
+
+def cyanStr(text):
+    return getColorStr(text, color=StrColors.cyan)
 
 
 def ansi(n, bold=False):

@@ -472,8 +472,6 @@ class SubclassesTreeProvider(TreeProvider):
                     paramName = None  
                     attr = None
                     for paramName, attr in prot.iterOutputAttributes():
-                        print(paramName)
-                        print(attr.getObjCreation())
                         def _checkParam(paramName, attr):
                             # If attr is a sub-classes of any desired one, add it to the list
                             # we should also check if there is a condition, the object
@@ -1815,7 +1813,7 @@ class FormWindow(Window):
                 self.useGpuVar.trace('w', self._setGpu)
                 self.gpuListVar.trace('w', self._setGpu)
         except Exception as e:
-            print("Parallel section couldn't be created. %s" % e.message)
+            print("Parallel section couldn't be created. %s" % e)
 
     def _createCommon(self, parent):
         """ Create the second section with some common parameters. """

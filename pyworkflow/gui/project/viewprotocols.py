@@ -324,22 +324,23 @@ class SearchProtocolWindow(pwgui.Window):
         frame = tk.Frame(content, bg=Color.LIGHT_GREY_COLOR, padx=5, pady=5)
         pwgui.configureWeigths(frame)
         self._resultsTree = self.master.getViewWidget()._createProtocolsTree(
-            frame, show=None, columns=("streaming", "installed", "help", "score"))
+            frame, show=None, columns=("protocol", "streaming", "installed", "help", "score"))
         self._configureTreeColumns()
         self._resultsTree.grid(row=0, column=0, sticky='news')
         frame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
 
     def _configureTreeColumns(self):
-        self._resultsTree.column('#0', width=300, stretch=tk.FALSE)
+        self._resultsTree.column('#0', width=0, stretch=tk.FALSE)
+        self._resultsTree.column('protocol', width=300, stretch=tk.FALSE)
         self._resultsTree.column('streaming', width=100, stretch=tk.FALSE)
         self._resultsTree.column('installed', width=110, stretch=tk.FALSE)
         self._resultsTree.column('help', minwidth=300, stretch=tk.YES)
         self._resultsTree.column('score', width=50, stretch=tk.FALSE)
-        self._resultsTree.heading('#0', text='Protocol')
-        self._resultsTree.heading('streaming', text='Streamified')
-        self._resultsTree.heading('installed', text='Installation')
-        self._resultsTree.heading('help', text='Help')
-        self._resultsTree.heading('score', text='Score')
+        self._resultsTree.heading('protocol', text='Protocol', command=lambda: self._resultsTree.sortByColumn("protocol", False))
+        self._resultsTree.heading('streaming', text='Streamified', command=lambda: self._resultsTree.sortByColumn("streaming", False))
+        self._resultsTree.heading('installed', text='Installation', command=lambda: self._resultsTree.sortByColumn("installed", False))
+        self._resultsTree.heading('help', text='Help', command=lambda: self._resultsTree.sortByColumn("help", False))
+        self._resultsTree.heading('score', text='Score', command=lambda: self._resultsTree.sortByColumn("score", False, casting=int))
 
     def _onSearchClick(self, e=None):
         self._resultsTree.clear()
@@ -381,14 +382,14 @@ class SearchProtocolWindow(pwgui.Window):
                 if line[5] != 0:
                     protList.append(line)
 
-        # Sort by protocol name
-        protList.sort(reverse=False, key=lambda x: x[1])  # sort by name
+        # Sort by weight
+        protList.sort(reverse=True, key=lambda x: x[5])
 
         for key, label, installed, help, streamified, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed')
             self._resultsTree.insert(
-                '', 'end', key, text=label, tags=tag,
-                values=(streamified, installed, help, weight, weight))
+                '', 'end', key, text="", tags=tag,
+                values=(label, streamified, installed, help, weight))
 
 
 class RunIOTreeProvider(pwgui.tree.TreeProvider):
