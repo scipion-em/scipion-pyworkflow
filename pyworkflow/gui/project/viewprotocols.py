@@ -2119,17 +2119,24 @@ class ProtocolsView(tk.Frame):
             if bibTexCites:
                 with tempfile.NamedTemporaryFile(suffix='.bib') as bibFile:
                     for refId, refDict in bibTexCites.items():
-                        refType = refDict['ENTRYTYPE']
-                        # remove 'type' and 'id' keys
-                        refDict = {k: v for k, v in refDict.items()
-                                   if k not in ['ENTRYTYPE', 'ID']}
-                        jsonStr = json.dumps(refDict, indent=4,
-                                             ensure_ascii=False)[1:]
-                        jsonStr = jsonStr.replace('": "', '"= "')
-                        jsonStr = re.sub('(?<!= )"(\S*?)"', '\\1', jsonStr)
-                        jsonStr = jsonStr.replace('= "', ' = "')
-                        refStr = '@%s{%s,%s\n\n' % (refType, refId, jsonStr)
-                        bibFile.write(refStr.encode('utf-8'))
+                        # getCitations does not always return a dictionary
+                        # if the citation is not found in the bibtex file it adds just
+                        # the refId: like "Ramirez-Aportela-2019"
+                        # we need to exclude this
+                        if isinstance(refDict, dict):
+                            refType = refDict['ENTRYTYPE']
+                            # remove 'type' and 'id' keys
+                            refDict = {k: v for k, v in refDict.items()
+                                       if k not in ['ENTRYTYPE', 'ID']}
+                            jsonStr = json.dumps(refDict, indent=4,
+                                                 ensure_ascii=False)[1:]
+                            jsonStr = jsonStr.replace('": "', '"= "')
+                            jsonStr = re.sub('(?<!= )"(\S*?)"', '\\1', jsonStr)
+                            jsonStr = jsonStr.replace('= "', ' = "')
+                            refStr = '@%s{%s,%s\n\n' % (refType, refId, jsonStr)
+                            bibFile.write(refStr.encode('utf-8'))
+                        else:
+                            print("WARNING: reference %s not properly defined or unpublished." % refId)
                     # flush so we can see content when opening
                     bibFile.flush()
                     pwgui.text.openTextFileEditor(bibFile.name)
