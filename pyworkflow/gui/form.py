@@ -31,7 +31,6 @@ params definition.
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
-import webbrowser
 from collections import OrderedDict
 from datetime import datetime
 
@@ -49,7 +48,7 @@ from .gui import configureWeigths, Window
 from .browser import FileBrowserWindow
 from .widgets import Button, HotButton, IconButton
 from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
-                     ListDialog, askYesNo, Dialog,RESULT_CANCEL,
+                     ListDialog, askYesNo, Dialog, RESULT_CANCEL,
                      askSingleAllCancel, RESULT_RUN_ALL, RESULT_RUN_SINGLE)
 from .canvas import Canvas
 from .tree import TreeProvider, BoundTree
@@ -1891,13 +1890,17 @@ class FormWindow(Window):
         self._createParallel(runFrame, r)
 
         # ---- QUEUE ----
-
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_QUEUE, row=r,
                                 sticky='e',
                                 column=c)
 
         var, frame = ParamWidget.createBoolWidget(runFrame, bg='white',
                                                   font=self.font)
+        btn = IconButton(frame, pwutils.Message.LABEL_BUTTON_WIZ, pwutils.Icon.ACTION_WIZ,
+                         highlightthickness=0, command=self._editQueueParams)
+        btn.grid(row=0, column=2, sticky='nes', padx=1, pady=4)
+        frame.columnconfigure(2, weight=1)
+
         self._addVarBinding(pwutils.Message.VAR_QUEUE, var)
         frame.grid(row=r, column=c + 1, pady=5, sticky='ew')
 
@@ -2146,16 +2149,18 @@ class FormWindow(Window):
 
     def schedule(self):
         if self.protocol.useQueue():
-            if not self._editQueueParams():
-                return
+            if not self.protocol.getQueueParams()[0]:
+                if not self._editQueueParams():
+                    return
 
         self._close(doSchedule=True)
 
     def execute(self, e=None):
 
         if self.protocol.useQueue():
-            if not self._editQueueParams():
-                return
+            if not self.protocol.getQueueParams()[0]:
+                if not self._editQueueParams():
+                    return
         else:  # use queue = No
             hostConfig = self._getHostConfig()
             cores = self.protocol.numberOfMpi.get(1) * self.protocol.numberOfThreads.get(1)
