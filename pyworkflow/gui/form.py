@@ -1896,8 +1896,8 @@ class FormWindow(Window):
 
         var, frame = ParamWidget.createBoolWidget(runFrame, bg='white',
                                                   font=self.font)
-        btn = IconButton(frame, pwutils.Message.LABEL_BUTTON_WIZ, pwutils.Icon.ACTION_WIZ,
-                         highlightthickness=0, command=self._editQueueParams)
+        btn = IconButton(frame, pwutils.Message.LABEL_BUTTON_WIZ, pwutils.Icon.ACTION_EDIT,
+                         highlightthickness=0, command=self._editQueueParams, tooltip="Edit queue parameters")
         btn.grid(row=0, column=2, sticky='nes', padx=1, pady=4)
         frame.columnconfigure(2, weight=1)
 
@@ -1906,7 +1906,7 @@ class FormWindow(Window):
 
         btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
                              highlightthickness=0,
-                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE))
+                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE % pw.Config.SCIPION_HOSTS))
 
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=5, sticky='w')
 
