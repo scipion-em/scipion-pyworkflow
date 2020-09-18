@@ -2148,19 +2148,22 @@ class FormWindow(Window):
         self._close(onlySave=True)
 
     def schedule(self):
-        if self.protocol.useQueue():
-            if not self.protocol.getQueueParams()[0]:
-                if not self._editQueueParams():
-                    return
+        if not self._getQueueReady():
+            return
 
         self._close(doSchedule=True)
 
+    def _getQueueReady(self):
+        """ Check if queue is active, if so ask for params if missing"""
+        if self.protocol.useQueue() and not self.protocol.hasQueueParams():
+            return self._editQueueParams()
+
+        return True
+
     def execute(self, e=None):
 
-        if self.protocol.useQueue():
-            if not self.protocol.getQueueParams()[0]:
-                if not self._editQueueParams():
-                    return
+        if not self._getQueueReady():
+            return
         else:  # use queue = No
             hostConfig = self._getHostConfig()
             cores = self.protocol.numberOfMpi.get(1) * self.protocol.numberOfThreads.get(1)
