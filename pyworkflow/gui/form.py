@@ -31,7 +31,6 @@ params definition.
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
-import webbrowser
 from collections import OrderedDict
 from datetime import datetime
 
@@ -49,7 +48,7 @@ from .gui import configureWeigths, Window
 from .browser import FileBrowserWindow
 from .widgets import Button, HotButton, IconButton
 from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
-                     ListDialog, askYesNo, Dialog,RESULT_CANCEL,
+                     ListDialog, askYesNo, Dialog, RESULT_CANCEL,
                      askSingleAllCancel, RESULT_RUN_ALL, RESULT_RUN_SINGLE)
 from .canvas import Canvas
 from .tree import TreeProvider, BoundTree
@@ -1891,19 +1890,23 @@ class FormWindow(Window):
         self._createParallel(runFrame, r)
 
         # ---- QUEUE ----
-
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_QUEUE, row=r,
                                 sticky='e',
                                 column=c)
 
         var, frame = ParamWidget.createBoolWidget(runFrame, bg='white',
                                                   font=self.font)
+        btn = IconButton(frame, pwutils.Message.LABEL_BUTTON_WIZ, pwutils.Icon.ACTION_EDIT,
+                         highlightthickness=0, command=self._editQueueParams, tooltip="Edit queue parameters")
+        btn.grid(row=0, column=2, sticky='nes', padx=1, pady=4)
+        frame.columnconfigure(2, weight=1)
+
         self._addVarBinding(pwutils.Message.VAR_QUEUE, var)
         frame.grid(row=r, column=c + 1, pady=5, sticky='ew')
 
         btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
                              highlightthickness=0,
-                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE))
+                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE % pw.Config.SCIPION_HOSTS))
 
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=5, sticky='w')
 
@@ -2145,17 +2148,22 @@ class FormWindow(Window):
         self._close(onlySave=True)
 
     def schedule(self):
-        if self.protocol.useQueue():
-            if not self._editQueueParams():
-                return
+        if not self._getQueueReady():
+            return
 
         self._close(doSchedule=True)
 
+    def _getQueueReady(self):
+        """ Check if queue is active, if so ask for params if missing"""
+        if self.protocol.useQueue() and not self.protocol.hasQueueParams():
+            return self._editQueueParams()
+
+        return True
+
     def execute(self, e=None):
 
-        if self.protocol.useQueue():
-            if not self._editQueueParams():
-                return
+        if not self._getQueueReady():
+            return
         else:  # use queue = No
             hostConfig = self._getHostConfig()
             cores = self.protocol.numberOfMpi.get(1) * self.protocol.numberOfThreads.get(1)

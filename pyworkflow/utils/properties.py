@@ -158,12 +158,12 @@ Define the number of processors to be used in the execution.
     """
 
     HELP_USEQUEUE = """
-    Select *Yes* if you want to submit a single job per protocol to a Queue system.
+    Click *Yes* if you want to submit a single job per protocol to a Queue system.
     The queue commands for launch and stop jobs should be configured
-    for the current host in the _hosts.conf_ file.
+    for the current host in the _%s_ file.
         """
     HELP_USEQUEUEPERJOB = """
-    Select *Yes* if you want to submit the multiple jobs per protocol to a Queue system.
+    Click *Yes* if you want to submit the multiple jobs per protocol to a Queue system.
     The queue commands for launch and stop jobs should be configured
     for the current host in the _hosts.conf_ file.
     """
