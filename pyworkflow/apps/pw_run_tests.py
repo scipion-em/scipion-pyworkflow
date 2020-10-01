@@ -206,7 +206,7 @@ class Tester:
     def _printNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
-            print("%s %s %s" % (spaces, self.getTestsCommand(), itemName))
+            print("%s scipion test %s" % (spaces, itemName))
 
     def getTestsCommand(self):
         return os.environ.get(SCIPION_TESTS_CMD, getTestsScript())
