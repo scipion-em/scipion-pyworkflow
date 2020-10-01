@@ -443,19 +443,17 @@ class PointerParam(Param):
     def __init__(self,  paramClass=Pointer, **args):
         Param.__init__(self, paramClass=paramClass, **args)
         # This will be the class to be pointed
-        pointerClass = args.get('pointerClass')
-        if ',' in pointerClass:
-            self.pointerClass = CsvList()
-            self.pointerClass.set(pointerClass)
-        else:
-            self.pointerClass = String(pointerClass) 
-
+        self.setPointerClass(args['pointerClass'])
         # Some conditions on the pointed candidates
         self.pointerCondition = String(args.get('pointerCondition', None))
         self.allowsNull = Boolean(args.get('allowsNull', False))
         
     def setPointerClass(self, newPointerClass):
-        self.pointerClass.set(newPointerClass)
+        if ',' in newPointerClass:
+            self.pointerClass = CsvList()
+            self.pointerClass.set(newPointerClass)
+        else:
+            self.pointerClass = String(newPointerClass)
 
 
 class MultiPointerParam(PointerParam):
