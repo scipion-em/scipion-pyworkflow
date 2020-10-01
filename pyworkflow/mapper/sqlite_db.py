@@ -39,7 +39,7 @@ class SqliteDb:
     """Class to handle a Sqlite database.
     It will create connection, execute queries and commands.
     """
-    OPEN_CONNECTIONS = {}  # Store all conections made
+    OPEN_CONNECTIONS = {}  # Store all connections made
     
     def __init__(self):
         self._reuseConnections = False
@@ -50,6 +50,7 @@ class SqliteDb:
         if self._reuseConnections and dbName in self.OPEN_CONNECTIONS:
             self.connection = self.OPEN_CONNECTIONS[dbName]
         else:
+            self.closeConnection(dbName)  # Close the connect if exists for this db
             self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
             self.connection.row_factory = sqlite.Row
             self.OPEN_CONNECTIONS[dbName] = self.connection
