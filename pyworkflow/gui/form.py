@@ -1974,6 +1974,7 @@ class FormWindow(Window):
             result = dlg.value
         
         self.protocol.setQueueParams(result)
+        self.protocol.queueShown = True
         return True
 
     def _createParams(self, parent):
@@ -2156,7 +2157,7 @@ class FormWindow(Window):
 
     def _getQueueReady(self):
         """ Check if queue is active, if so ask for params if missing"""
-        if self.protocol.hasQueueParams():
+        if self.protocol.hasQueueParams() and self.protocol.queueShown:
             return True
         else:
             return self._editQueueParams()
