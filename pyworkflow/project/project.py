@@ -1167,7 +1167,7 @@ class Project(object):
 
                 prot._useQueue.set(protDict.get('_useQueue', False))
                 prot._queueParams.set(protDict.get('_queueParams', None))
-
+                prot._prerequisites.set(protDict.get('_prerequisites', None))
                 newDict[protId] = prot
                 self.saveProtocol(prot)
 
@@ -1181,11 +1181,24 @@ class Project(object):
             if not pointer.pointsNone():
                 pointer.setExtendedParts(parts[1:])
 
+        def _setPrerequisites(prot):
+            prerequisites = prot.getPrerequisites()
+            if prerequisites:
+                newPrerequisites = []
+                for prerequisite in prerequisites:
+                    if prerequisite in newDict:
+                        newProtId = newDict[prerequisite].getObjId()
+                        newPrerequisites.append(newProtId)
+                    else:
+                        print('Wait for id %s missing: ignored' % prerequisite)
+                prot._prerequisites.set(newPrerequisites)
+
         for protDict in protocolsList:
             protId = protDict['object.id']
 
             if protId in newDict:
                 prot = newDict[protId]
+                _setPrerequisites(prot)
                 for paramName, attr in prot.iterDefinitionAttributes():
                     if paramName in protDict:
                         # If the attribute is a pointer, we should look
