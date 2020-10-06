@@ -390,6 +390,7 @@ class Protocol(Step):
         # Store a json string with queue name
         # and queue parameters (only meaningful if _useQueue=True)
         self._queueParams = String()
+        self.queueShown = False
         self._jobId = String()  # Store queue job id
         self._pid = Integer()
         self._stepsExecutor = None
