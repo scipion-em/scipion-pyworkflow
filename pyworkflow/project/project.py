@@ -1231,7 +1231,7 @@ class Project(object):
 
         if (protocol.isRunning() or protocol.isFinished()
                 or protocol.isLaunched()):
-            raise Exception('Cannot SAVE a protocol that is %s. '
+            raise ModificationNotAllowedException('Cannot SAVE a protocol that is %s. '
                             'Copy it instead.' % protocol.getStatus())
 
         protocol.setStatus(pwprot.STATUS_SAVED)
