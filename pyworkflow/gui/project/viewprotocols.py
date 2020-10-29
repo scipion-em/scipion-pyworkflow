@@ -30,6 +30,7 @@ INIT_REFRESH_SECONDS = 3
 """
 View with the protocols inside the main project window.
 """
+
 import os
 import json
 import re
@@ -714,12 +715,12 @@ class ProtocolsView(tk.Frame):
         infoFrame.rowconfigure(1, weight=1)
         # Create the Analyze results button
         self.btnAnalyze = pwgui.Button(infoFrame, text=Message.LABEL_ANALYZE,
-                                  fg='white', bg=Color.RED_COLOR,
-                                  image=self.getImage(Icon.ACTION_VISUALIZE),
-                                  compound=tk.LEFT,
-                                  activeforeground='white',
-                                  activebackground='#A60C0C',
-                                  command=self._analyzeResultsClicked)
+                                       fg='white', bg=Color.RED_COLOR,
+                                       image=self.getImage(Icon.ACTION_VISUALIZE),
+                                       compound=tk.LEFT,
+                                       activeforeground='white',
+                                       activebackground='#A60C0C',
+                                       command=self._analyzeResultsClicked)
         self.btnAnalyze.grid(row=0, column=0, sticky='ne', padx=15)
         # self.style.configure("W.TNotebook")#, background='white')
         tab = ttk.Notebook(infoFrame)  # , style='W.TNotebook')
@@ -932,12 +933,9 @@ class ProtocolsView(tk.Frame):
         viewChoices = ['List', 'Tree', 'Tree - small']
         self.switchCombo = pwgui.widgets.ComboBox(parent, width=10,
                                                   choices=viewChoices,
-                                                  values=[VIEW_LIST, VIEW_TREE,
-                                                          VIEW_TREE_SMALL],
-                                                  initial=viewChoices[
-                                                      self.runsView],
-                                                  onChange=lambda
-                                                      e: self._runActionClicked(
+                                                  values=[VIEW_LIST, VIEW_TREE, VIEW_TREE_SMALL],
+                                                  initial=viewChoices[self.runsView],
+                                                  onChange=lambda e: self._runActionClicked(
                                                       ACTION_SWITCH_VIEW))
         self.switchCombo.grid(row=0, column=1)
 
@@ -2071,7 +2069,7 @@ class ProtocolsView(tk.Frame):
     def _analyzeResults(self, prot):
         viewers = self.domain.findViewers(prot.getClassName(), DESKTOP_TKINTER)
         if len(viewers):
-            # Instanciate the first available viewer
+            # Instantiate the first available viewer
             # TODO: If there are more than one viewer we should display
             # TODO: a selection menu
             firstViewer = viewers[0](project=self.project, protocol=prot,
@@ -2085,7 +2083,7 @@ class ProtocolsView(tk.Frame):
             for _, output in prot.iterOutputAttributes():
                 viewers = self.domain.findViewers(output.getClassName(), DESKTOP_TKINTER)
                 if len(viewers):
-                    # Instanciate the first available viewer
+                    # Instantiate the first available viewer
                     # TODO: If there are more than one viewer we should display
                     # TODO: a selection menu
                     viewerclass = viewers[0]
@@ -2247,20 +2245,20 @@ class RunBox(pwgui.TextBox):
 
 def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=None):
     """ Creates a .CSV file in the filename path with
-        all its members and recursibely with a certain maxDeep,
-        if maxDeep=0 means no maxDeep (untils all members are inspected).
+        all its members and recursively with a certain maxDeep,
+        if maxDeep=0 means no maxDeep (until all members are inspected).
         
         inspectDetail can be:
          - 1: All attributes are shown
          - 2: All attributes are shown and iterable values are also inspected
 
-        prefix and memoryDict will be updated in the recursibe entries:
-         - prefix is to compond the two first columns (DEEP and Tree)
-         - memoryDict is a dictionary with the memory adress and an identifier
+        prefix and memoryDict will be updated in the recursive entries:
+         - prefix is a compound of the two first columns (DEEP and Tree)
+         - memoryDict is a dictionary with the memory address and an identifier
     """
     END_LINE = '\n'  # end of line char
     COL_DELIM = '\t'  # column delimiter
-    INDENT_COUNTER = '/'  # character append in each indention (it's not writed)
+    INDENT_COUNTER = '/'  # character append in each indention (it's not written)
 
     NEW_CHILD = '  |------>  '  # new item indention
     BAR_CHILD = '  | ' + INDENT_COUNTER  # bar indention
@@ -2281,7 +2279,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         """ Writes a row item. """
         # we will avoid to recursively print the items wrote before 
         #  (ie. with the same memory address), thus we store a dict with the
-        #  addresses and the flag isNew is propertly set
+        #  addresses and the flag isNew is properly set
         if str(hex(id(value))) in memoryDict:
             memorySTR = memoryDict[str(hex(id(value)))]
             isNew = False
@@ -2303,7 +2301,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             # else, we print the value avoiding the EndOfLine char (// instead)
             thirdCol = str(value).replace(END_LINE, ' // ')
 
-        # we will print the indetion deep number in the first row
+        # we will print the indentation deep number in the first row
         indentionDeep = prefix.count(INDENT_COUNTER)
         deepStr = str(indentionDeep) + COL_DELIM
 
@@ -2337,7 +2335,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         if isFirstOrLast == IS_FIRST:
             deepStr = str(indentionDeep) + COL_DELIM
         else:
-            # When it was not the first item, the deep is encreased 
+            # When it was not the first item, the deep is increased
             #   to improve the readability when filter 
             deepStr = str(indentionDeep+1) + COL_DELIM
 
@@ -2354,7 +2352,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         file.close()
 
     def isIterable(obj):
-        """ Returns true if obj is a tuple, list, dict or calss. """
+        """ Returns true if obj is a tuple, list, dict or calls. """
         isTupleListDict = (isinstance(obj, tuple) or
                            isinstance(obj, dict) or
                            isinstance(obj, list)) and len(value) > 1
@@ -2381,12 +2379,12 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         col1 = '    - Name - (value for Lists and Tuples)' + COL_DELIM
         col3 = '    - Value - (Pos./Len for Lists and Tuples) ' + COL_DELIM
 
-        #  writting the header row
+        #  writing the header row
         file = open(filename, 'w')
         file.write(prefixHeader + col1 + column2 + col3 + column4 + END_LINE)
         file.close()
 
-        #  writting the root object
+        #  writing the root object
         writeRow(obj.__class__.__name__, obj, prefix)
         #  adding the child bar to the prefix
         prefix = '  ' + BAR_CHILD
@@ -2430,7 +2428,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             # write the variable
             isNew = writeRow(key, value, prefixToWrite)
 
-            # managing the extrems of the loop
+            # managing the extremes of the loop
             if counter == 1:
                 isFirstOrLast = IS_FIRST
             elif counter == len(obj_dict):
@@ -2447,7 +2445,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             isNew = writeRow(obj[i], obj[i], prefixToWrite, 
                              str(i+1)+'/'+str(len(obj)))
 
-            # managing the extrems of the loop
+            # managing the extremes of the loop
             if i == 0:
                 isFirstOrLast = IS_FIRST
             elif len(obj) == i+1:

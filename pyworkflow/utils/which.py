@@ -33,6 +33,7 @@ class WhichError(Exception):
 
 # ---- internal support stuff
 
+
 def _getRegisteredExecutable(exeName):
     """Windows allow application paths to be registered in the registry."""
     registered = None

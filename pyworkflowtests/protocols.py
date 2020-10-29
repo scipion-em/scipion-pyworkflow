@@ -47,7 +47,7 @@ class SleepingProtocol(pwprot.Protocol):
                 % pwutils.dateStr(datetime.datetime.now(), True))
         time.sleep(t)
         f.write("  Slept: %d seconds\n" % t)
-        f.write("Awaked at %s\n"
+        f.write("Awakened at %s\n"
                 % pwutils.dateStr(datetime.datetime.now(), True))
         f.close()
         return [log]

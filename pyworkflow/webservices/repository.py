@@ -21,7 +21,7 @@ class WorkflowRepository(object):
         self._uploadMdUrl = repositoryUrl + uploadMdSuffix
 
     def search(self):
-        """ Open the repository URL in a webbrowser. """
+        """ Open the repository URL in a web browser. """
         webbrowser.open(self._url)
 
     def upload(self, jsonFileName):
@@ -29,8 +29,8 @@ class WorkflowRepository(object):
 
         First the file is uploaded, then the metadata is uploaded.
         The script uploads the file and then opens a browser for the metadata
-        Note that the two steps are needed since noinitial value can be passed
-        to a file field. poster module is needed. Poster is pure python
+        Note that the two steps are needed since no initial value can be passed
+        to a file field. poster3 module is needed. Poster3 is pure python
         so it may be added to the directory rather than installed if needed.
 
         The server is django a uses filefield and csrf_exempt.
@@ -41,9 +41,9 @@ class WorkflowRepository(object):
 
         # we are going to upload a file so this is a multipart
         # connection
-        import poster.streaminghttp
-        datagen, headers = poster.encode.multipart_encode(params)
-        opener = poster.streaminghttp.register_openers()
+        import poster3.streaminghttp
+        datagen, headers = poster3.encode.multipart_encode(params)
+        opener = poster3.streaminghttp.register_openers()
 
         # create request and connect to server
         response = opener.open(Request(self._uploadFileUrl, datagen, headers))

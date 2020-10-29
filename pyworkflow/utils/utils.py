@@ -47,7 +47,7 @@ def prettyDate(time=False):
     elif type(time) is float:
         diff = now - datetime.fromtimestamp(int(time))
     elif isinstance(time, datetime):
-        diff = now - time 
+        diff = now - time
     elif not time:
         # Avoid now - now (sonar cloud bug)
         copy = now
@@ -66,20 +66,20 @@ def prettyDate(time=False):
         if second_diff < 120:
             return "a minute ago"
         if second_diff < 3600:
-            return str(int(second_diff/60)) + " minutes ago"
+            return str(int(second_diff / 60)) + " minutes ago"
         if second_diff < 7200:
             return "an hour ago"
         if second_diff < 86400:
-            return str(int(second_diff/3600)) + " hours ago"
+            return str(int(second_diff / 3600)) + " hours ago"
     if day_diff == 1:
         return "Yesterday"
     if day_diff < 7:
         return str(day_diff) + " days ago"
     if day_diff < 31:
-        return str(int(day_diff/7)) + " weeks ago"
+        return str(int(day_diff / 7)) + " weeks ago"
     if day_diff < 365:
-        return str(int(day_diff/30)) + " months ago"
-    return str(int(day_diff/365)) + " years ago"
+        return str(int(day_diff / 30)) + " months ago"
+    return str(int(day_diff / 365)) + " years ago"
 
 
 def dateStr(dt=None, time=True, secs=False, dateFormat=None):
@@ -117,7 +117,7 @@ def prettySize(size):
                          [0, 0, 1, 2, 2, 2]))
     if size > 1:
         exponent = min(int(math.log(size, 1024)), len(unit_list) - 1)
-        quotient = float(size) / 1024**exponent
+        quotient = float(size) / 1024 ** exponent
         unit, num_decimals = unit_list[exponent]
         format_string = '{:.%sf} {}' % num_decimals
         return format_string.format(quotient, unit)
@@ -125,7 +125,7 @@ def prettySize(size):
         return '0 bytes'
     if size == 1:
         return '1 byte'
-    
+
 
 def prettyDelta(timedelta):
     """ Remove the milliseconds of the timedelta. """
@@ -138,15 +138,16 @@ def prettyLog(msg):
 
 class Timer(object):
     """ Simple Timer base in datetime.now and timedelta. """
+
     def tic(self):
         self._dt = datetime.now()
-        
+
     def getToc(self):
-        return prettyDelta(datetime.now()-self._dt)
-        
+        return prettyDelta(datetime.now() - self._dt)
+
     def toc(self, message='Elapsed:'):
         print(message, self.getToc())
-        
+
 
 def timeit(func):
     """ Decorator function to have a simple measurement
@@ -157,14 +158,15 @@ def timeit(func):
         ...
     to use it.
     """
+
     def timedFunc(*args, **kwargs):
         t = Timer()
         t.tic()
         result = func(*args, **kwargs)
         t.toc("Function '%s' took" % func)
-        
+
         return result
-        
+
     return timedFunc
 
 
@@ -178,17 +180,19 @@ def trace(nlevels, separator=' --> ', stream=sys.stdout):
     def realTrace(f):
         """ Decorator function to print stack call in a human-readable way.
         """
+
         def tracedFunc(*args, **kwargs):
-            stack = traceback.extract_stack()[-nlevels-1:-1]
+            stack = traceback.extract_stack()[-nlevels - 1:-1]
             fmt = lambda x: '%s:%d %s' % (os.path.basename(x[0]), x[1], x[2])
             stList = list(map(fmt, stack))
             stream.write(separator.join(stList + [f.__name__]) + '\n')
             return f(*args, **kwargs)
 
         return tracedFunc
+
     return realTrace
 
-    
+
 def prettyDict(d):
     print("{")
     for k, v in d.items():
@@ -198,23 +202,23 @@ def prettyDict(d):
 
 def prettyXml(elem, level=0):
     """ Add indentation for XML elements for more human readable text. """
-    i = "\n" + level*"  "
+    i = "\n" + level * "  "
     if len(elem):
         if not elem.text or not elem.text.strip():
             elem.text = i + "  "
         if not elem.tail or not elem.tail.strip():
             elem.tail = i
         for _elem in elem:
-            prettyXml(_elem, level+1)
+            prettyXml(_elem, level + 1)
         if not _elem.tail or not _elem.tail.strip():
             _elem.tail = i
-    
-    
+
+
 def getUniqueItems(originalList):
     """ Method to remove repeated items from one list 
     originalList -- Original list with repeated items, or not.
     returns -- New list with the content of original list without repeated items
-    """  
+    """
     auxDict = {}
     resultList = [auxDict.setdefault(x, x) for x in originalList if x not in auxDict]
     return resultList
@@ -256,8 +260,8 @@ def executeRemote(command, hostName, userName, password):
     stdin, stdout, stderr = ssh.exec_command(command)
     ssh.close()
     return stdin, stdout, stderr
-    
-    
+
+
 def executeLongRemote(command, hostName, userName, password):
     """ Execute a remote command.
     Params:
@@ -345,6 +349,7 @@ class StrColors(Enum):
     magenta = 35
     cyan = 36
 
+
 def getColorStr(text, color, bold=False):
     """ Add ANSI color codes to the string if there is a terminal sys.stdout.
     Params:
@@ -354,10 +359,9 @@ def getColorStr(text, color, bold=False):
     """
     if envVarOn('SCIPION_SAFE_COLORS') and not sys.stdout.isatty():
         return text
-    
 
     attr = [str(color.value)]
-    
+
     if bold:
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), text)
@@ -366,20 +370,26 @@ def getColorStr(text, color, bold=False):
 def grayStr(text):
     return getColorStr(text, color=StrColors.gray)
 
+
 def redStr(text):
     return getColorStr(text, color=StrColors.red)
+
 
 def greenStr(text):
     return getColorStr(text, color=StrColors.green)
 
+
 def yellowStr(text):
     return getColorStr(text, color=StrColors.yellow)
+
 
 def blueStr(text):
     return getColorStr(text, color=StrColors.blue)
 
+
 def magentaStr(text):
     return getColorStr(text, color=StrColors.magenta)
+
 
 def cyanStr(text):
     return getColorStr(text, color=StrColors.cyan)
@@ -393,7 +403,6 @@ def ansi(n, bold=False):
 black, red, green, yellow, blue, magenta, cyan, white = map(ansi, range(30, 38))
 blackB, redB, greenB, yellowB, blueB, magentaB, cyanB, whiteB = [
     ansi(i, bold=True) for i in range(30, 38)]
-
 
 # -------------- Hyper text highlighting ----------------------------
 """
@@ -442,6 +451,7 @@ def parseHyperText(text, matchCallback):
     Return:
         The input text with the replacements made by matchCallback
     """
+
     def _match(match):
         """ Call the proper matchCallback with some extra info. """
         m = match.group().strip()
@@ -456,8 +466,10 @@ def parseHyperText(text, matchCallback):
         else:
             raise Exception("Bad prefix for HyperText match")
         return matchCallback(match, tag)
-        
+
     return HYPER_ALL_RE.sub(_match, text)
+
+
 #    for hyperMode, hyperRegex in HYPER_REGEX.iteritems():
 #        text = hyperRegex.sub(lambda match: matchCallback(match, hyperMode), text)
 #
@@ -505,7 +517,7 @@ def getListFromRangeString(rangeStr):
     for e in elements:
         if '-' in e:
             limits = e.split('-')
-            values += range(int(limits[0]), int(limits[1])+1)
+            values += range(int(limits[0]), int(limits[1]) + 1)
         else:
             # If values are separated by comma also splitted 
             values += map(int, e.split())
@@ -522,7 +534,7 @@ def getRangeStringFromList(list):
             ranges.append("%d" % right)
         else:
             ranges.append("%(left)d-%(right)d" % locals())
-    
+
     for item in list:
         if right is None:
             left = right = item
@@ -546,7 +558,7 @@ def getListFromValues(valuesStr, length=None):
     '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']
     """
     result = []
-    
+
     for chunk in valuesStr.split():
         values = chunk.split('x')
         n = len(values)
@@ -556,16 +568,16 @@ def getListFromValues(valuesStr, length=None):
             result += [values[1]] * int(values[0])
         else:
             raise Exception("More than one 'x' is not allowed in list string value.")
-            
+
     # If length is passed, we fill the list with 
     # the last element until length is reached
     if length is not None and length > len(result):
         item = result[-1]
         result += [item] * (length - len(result))
-        
+
     return result
-        
-    
+
+
 def getFloatListFromValues(valuesStr, length=None):
     """ Convert a string to a list of floats"""
     return [float(v) for v in getListFromValues(valuesStr, length)]
@@ -621,7 +633,7 @@ class Environ(dict):
                 self[varName] = self[varName] + os.pathsep + varValue
         else:
             self[varName] = varValue
-            
+
     def update(self, valuesDict, position=REPLACE):
         """ Use set for each key, value pair in valuesDict. """
         for k, v in valuesDict.items():
@@ -668,12 +680,13 @@ def envVarOn(varName, env=None):
 def getMemoryAvailable():
     """ Return the total memory of the system in MB """
     from psutil import virtual_memory
-    return virtual_memory().total // 1024**2
+    return virtual_memory().total // 1024 ** 2
 
 
 def startDebugger(password='a'):
     if Config.debugOn():
         try:
+            # FIXME: rpdb2 does not support python 3
             from rpdb2 import start_embedded_debugger
             print("Starting debugger...")
             start_embedded_debugger(password)
@@ -693,19 +706,19 @@ def getFreePort(basePort=0, host=''):
         print(e)
         return 0
     return port
-    
-    
+
+
 def readProperties(propsFile):
     myprops = {}
     with open(propsFile, 'r') as f:
         for line in f:
             line = line.rstrip()  # removes trailing whitespace and '\n' chars
-    
+
             if "=" not in line:
                 continue  # skips blanks and comments w/o =
             if line.startswith("#"):
                 continue  # skips comments which contain =
-    
+
             k, v = line.split("=", 1)
             myprops[k] = v
     return myprops
@@ -761,5 +774,3 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
             return default
     else:
         return value
-
-

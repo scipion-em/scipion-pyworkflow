@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -29,13 +29,13 @@ level by level, using only Tkinter.
 """
 
 
-
-# TODO: all LevelTree code is DEPRECATED...remove it after cleanning
+# TODO: all LevelTree code is DEPRECATED...remove it after cleaning
 # and include all code from graph_layout
 
 
 class LevelTree(object):
     """ Class to render the Graph in a Canvas. """
+
     def __init__(self, graph):
         self.DY = 65
         self.DX = 15
@@ -43,10 +43,10 @@ class LevelTree(object):
         self.FONTSIZE = 9
         self.graph = graph
         self.canvas = None
-        
+
     def setCanvas(self, canvas):
         self.canvas = canvas
-        
+
     def paint(self, createNode=None, createEdge=None, maxLevel=9999, usePositions=False):
         """ Paint the Graph, nodes will be positioned by levels.
         Params:
@@ -66,18 +66,18 @@ class LevelTree(object):
         self.createEdge = createEdge or self._defaultCreateEdge
         self.maxLevel = maxLevel
         rootNode = self.graph.getRoot()
-        
+
         if usePositions:
             self._paintNodeWithPosition(rootNode)
             self._paintEdges(rootNode)
-        else:            
+        else:
             self._setLevel(rootNode, 0, None)
             self._paintNodeWithChilds(rootNode, 1)
             m = 9999
             for left, right in rootNode.hLimits:
                 m = min(m, left)
             self._createEdges(rootNode, -m + self.DY)
-        
+
     def _setLevel(self, node, level, parent):
         """ Set the level of the nodes. """
         node.level = level
@@ -88,15 +88,15 @@ class LevelTree(object):
         for child in node.getChilds():
             if nextLevel > getattr(child, 'level', 0):
                 self._setLevel(child, nextLevel, node)
-                 
+
     def _paintNodeWithChilds(self, node, level):
         y = level * self.DY
-        
+
         self._paintNode(node, y)
-        
+
         if level > self.maxLevel:
             return
-        
+
         childs = [c for c in node.getChilds() if c.parent is node]
         n = len(childs)
 
@@ -104,24 +104,24 @@ class LevelTree(object):
             # width = (xmax - xmin) / n
             for c in childs:
                 self._paintNodeWithChilds(c, level + 1)
-                
+
             if n > 1:
                 offset = 0
-                for i in range(n-1):
-                    sep = self._getChildsSeparation(childs[i], childs[i+1])
+                for i in range(n - 1):
+                    sep = self._getChildsSeparation(childs[i], childs[i + 1])
                     offset += sep
-                    c = childs[i+1]
+                    c = childs[i + 1]
                     c.offset = offset
-                
+
                 total = childs[0].half + offset + childs[-1].half
-                half = total/2
+                half = total / 2
                 for c in childs:
                     c.offset -= half - childs[0].half
-                
+
             else:
                 childs[0].offset = 0
             self._getHLimits(node)
-        
+
     def _defaultCreateNode(self, canvas, node, y):
         """ If not createNode is specified, this one will be used
         by default. 
@@ -132,14 +132,14 @@ class LevelTree(object):
         textColor = 'black'
         if nodeText.startswith('Project'):
             textColor = 'white'
-        
+
         return canvas.createTextbox(nodeText, 100, y, bgColor='light blue', textColor=textColor, margin=0)
-        
+
     def _defaultCreateEdge(self, srcItem, dstItem):
         if self.canvas is None:
             raise Exception("method setCanvas should be called before using _defaultCreateEdge")
         self.canvas.createEdge(srcItem, dstItem)
-        
+
     def _paintNode(self, node, y):
         """ Paint a node of the graph.
         Params:
@@ -156,11 +156,11 @@ class LevelTree(object):
         node.y = item.y
         node.offset = 0
         # Create link from both sides to reach
-        node.item = item 
+        node.item = item
         item.node = node
-        
+
         return item
-    
+
     def _printHLimits(self, node, msg):
         print("\n=====%s========" % msg)
         print(" dd: %s" % node.t.text.replace('\n', '_'))
@@ -168,7 +168,7 @@ class LevelTree(object):
         print("  hlimits:")
         for l, r in node.hLimits:
             print("   [%d, %d]" % (l, r))
-            
+
     def _getHLimits(self, node):
         """
         This function will traverse the tree
@@ -182,7 +182,7 @@ class LevelTree(object):
             if not hasattr(child, 'hLimits'):
                 print("node %s has no hLimits" % child.label)
                 raise Exception()
-            
+
             for l, r in child.hLimits:
                 l += child.offset
                 r += child.offset
@@ -194,58 +194,56 @@ class LevelTree(object):
                 else:
                     node.hLimits.append([l, r])
                 count += 1
-                
+
     def _getChildsSeparation(self, child1, child2):
-        """ Calcualte separation between siblings
+        """ Calculate separation between siblings
         at each height level. """
-        sep = 0 
+        sep = 0
         hL1 = child1.hLimits
         hL2 = child2.hLimits
         n1 = len(hL1)
         n2 = len(hL2)
         h = min(n1, n2)
-            
+
         for i in range(h):
             right = hL1[i][1]
-            left = hL2[i][0]            
+            left = hL2[i][0]
             if left + sep < right:
-                sep = right - left                
-  
+                sep = right - left
+
         return sep + self.DX
-    
+
     def _createEdges(self, node, x):
         """ Adjust the position of the nodes
         and create the edges between them.
         """
         nx = x + node.offset
         node.item.moveTo(nx, node.y)
-        
+
         if node.level == self.maxLevel:
-            return 
-        
+            return
+
         for c in node.getChilds():
             if c.parent is node:
                 self._createEdges(c, nx)
             self.createEdge(node.item, c.item)
-            
+
     def _paintNodeWithPosition(self, node):
         """ Paint nodes using its position. """
         self._paintNode(node, None)
-        
+
         for child in node.getChilds():
             # parent = None for nodes that have been not traversed
             parent = getattr(child, 'parent', None)
             if parent is None:
                 child.parent = node
                 self._paintNodeWithPosition(child)
-                
+
     def _paintEdges(self, node):
-        """ Paint only the edges between nodes, asumming they are 
+        """ Paint only the edges between nodes, assuming they are
         already well positioned. 
         """
         for child in node.getChilds():
             if child.parent is node:
-                self._paintEdges(child)        
+                self._paintEdges(child)
             self.createEdge(node.item, child.item)
-
-

@@ -23,7 +23,6 @@
 # **************************************************************************
 
 
-
 import os
 import tkinter as tk
 import tkinter.font as tkFont
@@ -43,7 +42,7 @@ from pyworkflow.gui.browser import FileBrowserWindow
 from pyworkflow.gui.widgets import IconButton, HotButton, Button
 from pyworkflow.utils.properties import Icon
 
-            
+
 class ProjectsView(tk.Frame):
     def __init__(self, parent, windows, **args):
         tk.Frame.__init__(self, parent, bg='white', **args)
@@ -143,7 +142,7 @@ class ProjectsView(tk.Frame):
         # Project name
         label = tk.Label(frame, text=projInfo.projName, anchor='nw', bg=color,
                          justify=tk.LEFT, font=self.projNameFont, cursor='hand1', width=50)
-        label.grid(row=0, column=0,  padx=2, pady=2, sticky='nw')
+        label.grid(row=0, column=0, padx=2, pady=2, sticky='nw')
         label.bind('<Button-1>', lambda e: self.openProject(projInfo.projName))
 
         # ROW2
@@ -197,7 +196,6 @@ class ProjectsView(tk.Frame):
 
         return self.filter.get().lower() in searchString
 
-
     def importProject(self, projLocation, copyFiles, projName, searchLocation):
 
         self.manager.importProject(projLocation, copyFiles, projName, searchLocation)
@@ -229,6 +227,7 @@ class ProjectsView(tk.Frame):
 
 class ProjectCreateWindow(Window):
     """ Windows to create a project. """
+
     def __init__(self, title, parent=None, weight=True, minsize=(400, 110),
                  icon=Icon.SCIPION_ICON, **args):
         """
@@ -314,7 +313,7 @@ class ProjectCreateWindow(Window):
         # Validate that project location is a directory
         elif not os.path.isdir(projLocation):
             showError("Validation error", "Project location is not a directory", self.root)
-        # Validate that project path (location + name) ddoes not exists
+        # Validate that project path (location + name) does not exists
         elif os.path.exists(os.path.join(projLocation, projName)):
             showError("Validation error", "Project path already exists", self.root)
         else:
@@ -324,6 +323,7 @@ class ProjectCreateWindow(Window):
 
 class ProjectImportWindow(Window):
     """ Windows to import a project. """
+
     def __init__(self, title, parent=None, weight=True, minsize=(400, 150),
                  icon=Icon.SCIPION_ICON, **args):
         """
@@ -334,7 +334,7 @@ class ProjectImportWindow(Window):
         self.root['background'] = 'white'
         self.parent = parent
         # Dirty hack, need to add a slash for the explorer to pick up the right default path.
-        self.projectsPath = getHomePath()+"/"
+        self.projectsPath = getHomePath() + "/"
         self.projLocation = tk.StringVar()
         self.projLocation.set(self.projectsPath)
 
@@ -372,7 +372,8 @@ class ProjectImportWindow(Window):
         btnCheck.grid(row=1, column=1, sticky='nw', padx=0, pady=5)
 
         btnCopyHelp = IconButton(content, Message.LABEL_BUTTON_HELP, Icon.ACTION_HELP, highlightthickness=0,
-                                 command=lambda: self.showInfo('If checked, \"Project location\" will be copied. Otherwise a soft link to it will be created.'))
+                                 command=lambda: self.showInfo(
+                                     'If checked, \"Project location\" will be copied. Otherwise a soft link to it will be created.'))
         btnCopyHelp.grid(row=1, column=3, sticky='e', padx=2, pady=2)
 
         # Project name
@@ -392,7 +393,8 @@ class ProjectImportWindow(Window):
                                     highlightthickness=0, command=self._browseSearchLocation)
         self.btnSearch.grid(row=3, column=2, sticky='e', padx=5, pady=5)
         btnSearchHelp = IconButton(content, Message.LABEL_BUTTON_HELP, Icon.ACTION_HELP, highlightthickness=0,
-                                   command=lambda: self.showInfo('Optional: Folder where raw files, binaries (movies, micrographs,..) can be found. Used to repair broken links.'))
+                                   command=lambda: self.showInfo(
+                                       'Optional: Folder where raw files, binaries (movies, micrographs,..) can be found. Used to repair broken links.'))
         btnSearchHelp.grid(row=3, column=3, sticky='e', padx=2, pady=2)
 
         self.initial_focus = entryName

@@ -26,7 +26,6 @@ Text based widgets.
 """
 
 
-
 import os
 import sys
 import time

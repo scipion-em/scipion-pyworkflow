@@ -31,7 +31,6 @@ It is composed by three panels:
 """
 
 
-
 import os
 import threading
 import shlex

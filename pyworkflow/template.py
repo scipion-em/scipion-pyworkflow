@@ -12,7 +12,7 @@ class Template:
     def __init__(self, pluginName, tempPath):
         self.pluginName = pluginName
         # Tidy up templates names: removing .json.template and .json (when passed as parameter)
-        self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "").replace(".json","")
+        self.templateName = os.path.basename(tempPath).replace(SCIPION_JSON_TEMPLATES, "").replace(".json", "")
         self.templatePath = os.path.abspath(tempPath)
         self.description, self.content = self._parseTemplate()
         self.params = None
@@ -129,8 +129,7 @@ class Template:
                     field.setValue(oldValue)
                     raise Exception("%s is not compatible with %s(%s) parameter." % (newValue, field.getTitle(), alias))
         if not paramsSetted:
-            raise Exception("Alias %s not recognized." %
-                            (alias))
+            raise Exception("Alias %s not recognized." % alias)
         return paramsSetted
 
 

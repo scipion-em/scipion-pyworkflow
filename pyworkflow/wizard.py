@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -40,7 +40,7 @@ class Wizard(object):
     parameters the Wizard is defined, it will be a list of tuples such as:
     _targets = [(DefImportMicrographs, ['voltage', sphericalAberration']),
                 (DefCTFMicrographs, ['lowRes', 'highRes'])]
-    The _environmets will serve to define when this wizard can be used.
+    The _environments will serve to define when this wizard can be used.
     For example>
     _environments = [DESKTOP_TKINTER, WEB_DJANGO]
     """
@@ -51,7 +51,7 @@ class Wizard(object):
         """ This will show up the wizard to select parameters.
         Params:
             form: the protocol form, given access to to all parameters.
-                Some times the same wizard will modifify several elements
+                Some times the same wizard will modify several elements
                 in the form.
             *params: a list of params to modify, sometimes the wizard can 
                 be generic and can be used for different parameters in the

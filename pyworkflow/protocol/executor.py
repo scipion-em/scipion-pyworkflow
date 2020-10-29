@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -29,7 +29,6 @@ The basic one will run steps, one by one, after completion.
 There is one based on threads to execute steps in parallel
 using different threads and the last one with MPI processes.
 """
-
 
 
 import time
@@ -96,7 +95,7 @@ class StepExecutor:
         # Even if this will run the steps in a single thread
         # let's follow a similar approach than the parallel one
         # In this way we can take into account the steps graph
-        # dependency and also the case when using streamming
+        # dependency and also the case when using streaming
 
         delta = datetime.timedelta(seconds=stepsCheckSecs)
         lastCheck = datetime.datetime.now()

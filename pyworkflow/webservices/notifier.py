@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -24,7 +24,6 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
 
 
 import os
@@ -90,7 +89,7 @@ class ProjectWorkflowNotifier(object):
             os.utime(self._getUuidFileName(), (now, now))
         except Exception as e:
             pass
-            #print("Could not notify, maybe there is not internet connection.")
+            # print("Could not notify, maybe there is not internet connection.")
 
     def _dataModified(self, projectWorfklow):
         try:
@@ -105,7 +104,7 @@ class ProjectWorkflowNotifier(object):
     def notifyWorkflow(self):
 
         try:
-            # check if enviroment exists otherwise abort
+            # check if environment exists otherwise abort
             if not pwutils.envVarOn('SCIPION_NOTIFY'):
                 return
 

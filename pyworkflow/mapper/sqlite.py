@@ -24,7 +24,6 @@
 # **************************************************************************
 
 
-
 from pyworkflow.utils import replaceExt, joinExt
 from .mapper import Mapper
 from .sqlite_db import SqliteDb
@@ -523,9 +522,9 @@ class SqliteObjectsDb(SqliteDb):
         
     def __createTables(self):
         """Create required tables if don't exists"""
-        # Enable foreings keys
+        # Enable foreign keys
         self.setVersion(self.VERSION)
-        self._pragmas['foreing_keys'] = "ON"
+        self._pragmas['foreign_keys'] = "ON"
         for pragma in self._pragmas.items():
             self.executeCommand("PRAGMA %s=%s" % pragma)
         # Create the Objects table
@@ -1163,7 +1162,7 @@ class SqliteFlatDb(SqliteDb):
 
     def getClassRows(self):
         """ Create a dictionary with names of the attributes
-        of the colums. """
+        of the columns. """
         self.executeCommand(self.SELECT_CLASS)
         return self._results(iterate=False)
 
@@ -1255,7 +1254,7 @@ class SqliteFlatDb(SqliteDb):
         # let us count for testing
         selectStr = 'SELECT '
         separator = ' '
-        # This cannot be like the following line should be expresed in terms
+        # This cannot be like the following line should be expressed in terms
         # of C1, C2 etc....
         for operation in operations:
             selectStr += "%s %s(%s) AS %s" % (separator, operation,
@@ -1297,7 +1296,7 @@ class SqliteFlatDb(SqliteDb):
         return self._results(iterate)
 
     # FIXME: Seems to be duplicated and a subset of selectAll
-    # Moreover, it does not translate between "user colums" and
+    # Moreover, it does not translate between "user columns" and
     # "internal" Objects table columns
     def selectObjectsWhere(self, whereStr, iterate=False):
         self.executeCommand(self.selectCmd(whereStr))
