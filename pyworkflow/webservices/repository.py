@@ -1,8 +1,9 @@
 import os
-from urllib.request import Request
 import webbrowser
 import json
+import requests
 
+from pyworkflow import CORE_VERSION
 from . import config
 
 
@@ -36,37 +37,24 @@ class WorkflowRepository(object):
         The server is django a uses filefield and csrf_exempt.
         csrf_exempt disable csrf checking. filefield
         """
-        # json file to upload
-        params = dict(json=open(jsonFileName, 'rb'))
 
         # we are going to upload a file so this is a multipart
         # connection
-        import poster3.streaminghttp
-        datagen, headers = poster3.encode.multipart_encode(params)
-        opener = poster3.streaminghttp.register_openers()
+        with open(jsonFileName, "rb") as workflowFile:
+            file_dict = {"json": workflowFile}
+            response = requests.post(self._uploadFileUrl, files=file_dict)
 
-        # create request and connect to server
-        response = opener.open(Request(self._uploadFileUrl, datagen, headers))
-        # server returns dictionary as json with remote name of the saved file
-        _dict = json.loads(response.read())
+        # server returns  a json stored as text at response.text
+        _dict = json.loads(response.text)
 
-        version = os.environ['SCIPION_VERSION']
+        version = CORE_VERSION
         # version hack end
 
         fnUrl = "?jsonFileName=%s&versionInit=%s" % (_dict['jsonFileName'],
                                                      version)  # use GET
-        # open browser to fill metadata, fileNAme will be saved as session
-        # variable. Note that I cannot save the file nave in the
+        # open browser to fill metadata, fileName will be saved as session
+        # variable. Note that I cannot save the file never in the
         # session in the first connection because the browser changes
         # from urlib2 to an actual browser
         # so sessions are different
         webbrowser.open(self._uploadMdUrl + fnUrl)
-
-    # try:
-    #     jsonFileName = os.path.join(tempfile.mkdtemp(), 'workflow.json')
-    #     project.exportProtocols(protocols, jsonFileName)
-    #     uploadWorkflow(upload_file_url, upload_metadata_url, jsonFileName)
-    #     return 0
-    # except Exception as ex:
-    #     #self.windows.showError(str(ex))
-    #     return(ex)

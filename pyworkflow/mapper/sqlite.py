@@ -524,7 +524,7 @@ class SqliteObjectsDb(SqliteDb):
         """Create required tables if don't exists"""
         # Enable foreign keys
         self.setVersion(self.VERSION)
-        self._pragmas['foreign_keys'] = "ON"
+        self._pragmas['foreing_keys'] = "ON"
         for pragma in self._pragmas.items():
             self.executeCommand("PRAGMA %s=%s" % pragma)
         # Create the Objects table
