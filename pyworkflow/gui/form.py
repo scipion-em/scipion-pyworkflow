@@ -2243,9 +2243,7 @@ class FormWindow(Window):
                 if not onlySave:
                     self.close()
         except ModificationNotAllowedException as ex:
-            self.showInfo("Save not allowed. There are protocols executed "
-                          "hanging from this one. Modifying values will break"
-                          " traceability.\n\n %s\n" % ex)
+            self.showInfo("Modification not allowed.\n\n %s\n" % ex)
         except Exception as ex:
             import traceback
             traceStr = traceback.format_exc()
