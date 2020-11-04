@@ -218,7 +218,7 @@ class ProjectDataView(tk.Frame):
         # a Action Buttons TOOLBAR in the top
         # and another vertical Pane with:
         # Runs History (at Top)
-        # Sectected run info (at Bottom)
+        # Selected run info (at Bottom)
         """
         # Create the Action Buttons TOOLBAR
         toolbar = tk.Frame(parent, bg='white')

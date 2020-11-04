@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -99,7 +99,7 @@ def sshConnectFromHost(host):
 
 class RemotePath(object):
     """ This class will server as a Wrapper to the
-    paramiko sftp protocol througth a ssh connection.
+    paramiko sftp protocol through a ssh connection.
     This class will implement useful methods for remote
     path handling such as: creating files, deleting folders...
     """
@@ -140,7 +140,7 @@ class RemotePath(object):
         if len(remoteFolder) and not self.exists(remoteFolder):
             log.info('RemotePath.makedirs, path: %s' % remoteFolder)
             parent = os.path.dirname(remoteFolder)
-            # if have parent and it doen't exist, create it recursively
+            # if have parent and it doesn't exist, create it recursively
             if len(parent) and not self.exists(parent):
                 self.makedirs(parent)
             self.sftp.mkdir(remoteFolder)

@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -51,7 +51,7 @@ class Dialog(tk.Toplevel):
     The buttons(and theirs order) can be changed.
     An image name can be passed to display left to the message.
     """
-    
+
     def __init__(self, parent, title, **kwargs):
         """Initialize a dialog.
         Arguments:
@@ -60,14 +60,14 @@ class Dialog(tk.Toplevel):
         **args accepts:
             buttons -- list of buttons tuples containing which buttons to display
         """
-        
+
         if parent is None:
             parent = tk.Tk()
             parent.withdraw()
             gui.setCommonFonts()
-    
+
         tk.Toplevel.__init__(self, parent)
-        
+
         self.withdraw()  # remain invisible for now
         # If the master is not viewable, don't
         # make the child transient, or else it
@@ -93,7 +93,7 @@ class Dialog(tk.Toplevel):
                                 {RESULT_YES: Icon.BUTTON_SELECT,
                                  RESULT_NO: Icon.BUTTON_CLOSE,
                                  RESULT_CANCEL: Icon.BUTTON_CANCEL})
-        
+
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
         self.defaultButton = kwargs.get('default', 'OK')
@@ -102,7 +102,7 @@ class Dialog(tk.Toplevel):
         self.buttonbox(btnFrame)
         btnFrame.grid(row=1, column=0, sticky='sew',
                       padx=5, pady=(0, 5))
-        
+
         gui.configureWeigths(self)
 
         if self.initial_focus is None:
@@ -147,7 +147,7 @@ class Dialog(tk.Toplevel):
         return tk.Button(frame, text=text, image=icon,
                          compound=tk.LEFT,
                          command=lambda: self._handleResult(result))
-        
+
     def buttonbox(self, btnFrame):
         frame = tk.Frame(btnFrame)
         btnFrame.columnconfigure(0, weight=1)
@@ -156,7 +156,7 @@ class Dialog(tk.Toplevel):
         for btnLabel, btnResult in self.buttons:
             btn = self._createButton(frame, btnLabel, btnResult)
             btn.grid(row=0, column=col, padx=5, pady=5)
-            if (btnLabel == self.defaultButton and 
+            if (btnLabel == self.defaultButton and
                     self.initial_focus is None):
                 self.initial_focus = btn
             col += 1
@@ -170,11 +170,11 @@ class Dialog(tk.Toplevel):
         and close the Dialog"""
         self.result = resultValue
         noCancel = self.result != RESULT_CANCEL
-        
+
         if noCancel and not self.validate():
             self.initial_focus.focus_set()  # put focus back
             return
-        
+
         self.withdraw()
         self.update_idletasks()
 
@@ -183,7 +183,7 @@ class Dialog(tk.Toplevel):
                 self.apply()
         finally:
             self.cancel()
-            
+
     def _handleReturn(self, e=None):
         """Handle press return key"""
         # Check which of the buttons is the default
@@ -213,24 +213,24 @@ class Dialog(tk.Toplevel):
         the dialog is destroyed. By default, it does nothing.
         """
         pass  # override
-    
+
     def getImage(self, imgName):
         """A shortcut to get an image from its name"""
         return gui.getImage(imgName, self._images)
-    
+
     def getResult(self):
         return self.result
-    
+
     def resultYes(self):
         return self.result == RESULT_YES
-    
+
     def resultNo(self):
         return self.result == RESULT_NO
-    
+
     def resultCancel(self):
         return self.result == RESULT_CANCEL
 
- 
+
 def fillMessageText(text, message):
     # Insert lines of text
     if isinstance(message, list):
@@ -244,13 +244,13 @@ def fillMessageText(text, message):
         m = max(m, len(l))
         text.addLine(l)
     m = min(m + 5, 80)
-    h = min(len(lines)+3, 30)
+    h = min(len(lines) + 3, 30)
     text.config(height=h, width=m)
     text.addNewline()
     text.setReadOnly(True)
-    
-    
-def createMessageBody(bodyFrame, message, image, 
+
+
+def createMessageBody(bodyFrame, message, image,
                       frameBg='white',
                       textBg='white',
                       textPad=5):
@@ -265,19 +265,20 @@ def createMessageBody(bodyFrame, message, image,
     if image:
         label = tk.Label(bodyFrame, image=image, bg=textBg, bd=0)
         label.grid(row=0, column=0, sticky='nw')
-        
-    text.frame.grid(row=0, column=1, sticky='news', 
+
+    text.frame.grid(row=0, column=1, sticky='news',
                     padx=textPad, pady=textPad)
     fillMessageText(text, message)
     bodyFrame.rowconfigure(0, weight=1)
-    bodyFrame.columnconfigure(1, weight=1)  
-    
-    return text  
-        
-           
+    bodyFrame.columnconfigure(1, weight=1)
+
+    return text
+
+
 class MessageDialog(Dialog):
     """Dialog subclasses to show message info, questions or errors.
     It can display an icon with the message"""
+
     def __init__(self, parent, title, msg, iconPath, **args):
         self.msg = msg
         self.iconPath = iconPath
@@ -285,7 +286,7 @@ class MessageDialog(Dialog):
             args['buttons'] = [('OK', RESULT_YES)]
             args['default'] = 'OK'
         Dialog.__init__(self, parent, title, **args)
-        
+
     def body(self, bodyFrame):
         self.image = gui.getImage(self.iconPath)
         createMessageBody(bodyFrame, self.msg, self.image)
@@ -293,13 +294,14 @@ class MessageDialog(Dialog):
 
 class YesNoDialog(MessageDialog):
     """Ask a question with YES/NO answer"""
+
     def __init__(self, master, title, msg, **kwargs):
         buttonList = [('Yes', RESULT_YES), ('No', RESULT_NO)]
-        
+
         if kwargs.get('showCancel', False):
             buttonList.append(('Cancel', RESULT_CANCEL))
-            
-        MessageDialog.__init__(self, master, title, msg, 
+
+        MessageDialog.__init__(self, master, title, msg,
                                'fa-exclamation-triangle_alert.gif', default='No',
                                buttons=buttonList)
 
@@ -340,6 +342,7 @@ class GenericDialog(Dialog):
 
 class EntryDialog(Dialog):
     """Dialog to ask some entry"""
+
     def __init__(self, parent, title, entryLabel, entryWidth=20,
                  defaultValue='', headerLabel=None):
         self.entryLabel = entryLabel
@@ -349,7 +352,7 @@ class EntryDialog(Dialog):
         self.tkvalue.set(defaultValue)
         self.value = None
         Dialog.__init__(self, parent, title)
-        
+
     def body(self, bodyFrame):
         bodyFrame.config(bg='white')
         frame = tk.Frame(bodyFrame, bg='white')
@@ -365,10 +368,10 @@ class EntryDialog(Dialog):
                               width=self.entryWidth, textvariable=self.tkvalue)
         self.entry.grid(row=row, column=1, sticky='new', padx=(0, 15), pady=15)
         self.initial_focus = self.entry
-        
+
     def apply(self):
         self.value = self.entry.get()
-        
+
     def validate(self):
         if len(self.entry.get().strip()) == 0:
             showError("Validation error", "Value is empty", self)
@@ -378,37 +381,37 @@ class EntryDialog(Dialog):
 
 class EditObjectDialog(Dialog):
     """Dialog to edit some text"""
+
     def __init__(self, parent, title, obj, mapper, **kwargs):
-        
         self.obj = obj
         self.mapper = mapper
-        
+
         self.textWidth = 5
         self.textHeight = 1
         self.labelText = kwargs.get('labelText', Message.TITLE_LABEL)
         self.valueText = self.obj.getObjLabel()
-        
+
         self.commentLabel = Message.TITLE_COMMENT
         self.commentWidth = 50
         self.commentHeight = 15
         self.valueComment = self.obj.getObjComment()
-        
+
         Dialog.__init__(self, parent, title, **kwargs)
-        
+
     def body(self, bodyFrame):
         bodyFrame.config(bg='white')
         frame = tk.Frame(bodyFrame, bg='white')
         frame.grid(row=0, column=0, padx=20, pady=20)
-        
+
         # Label
         label_text = tk.Label(bodyFrame, text=self.labelText, bg='white', bd=0)
         label_text.grid(row=0, column=0, sticky='nw', padx=(15, 10), pady=15)
         # Label box
         var = tk.StringVar()
         var.set(self.valueText)
-        self.textLabel = tk.Entry(bodyFrame, width=self.textWidth, textvariable=var, font= gui.getDefaultFont())
+        self.textLabel = tk.Entry(bodyFrame, width=self.textWidth, textvariable=var, font=gui.getDefaultFont())
         self.textLabel.grid(row=0, column=1, sticky='news', padx=5, pady=5)
-        
+
         # Comment
         label_comment = tk.Label(bodyFrame, text=self.commentLabel, bg='white', bd=0)
         label_comment.grid(row=1, column=0, sticky='nw', padx=(15, 10), pady=15)
@@ -422,24 +425,24 @@ class EditObjectDialog(Dialog):
 
     def getLabel(self):
         return self.textLabel.get()
-    
+
     def getComment(self):
         return self.textComment.getText()
-    
+
     def apply(self):
         self.obj.setObjLabel(self.getLabel())
         self.obj.setObjComment(self.getComment())
-        
+
         if self.obj.hasObjId():
             self.mapper.store(self.obj)
             self.mapper.commit()
-        
+
     def buttonbox(self, btnFrame):
         # Cancel the binding of <Return> key
         Dialog.buttonbox(self, btnFrame)
         # self.bind("<Return>", self._noReturn)
         self.unbind("<Return>")
-        
+
     def _noReturn(self, e):
         pass
 
@@ -492,12 +495,13 @@ def askColor(defaultColor='black'):
     (rgbcolor, hexcolor) = _askColor(defaultColor)
     return hexcolor
 
-                
+
 class ListDialog(Dialog):
     """
     Dialog to select an element from a list.
     It is implemented using the Tree widget.
     """
+
     def __init__(self, parent, title, provider, message=None, **kwargs):
         """ From kwargs:
                 message: message tooltip to show when browsing.
@@ -524,7 +528,7 @@ class ListDialog(Dialog):
         buttons.append(('Cancel', RESULT_CANCEL))
 
         Dialog.__init__(self, parent, title, buttons=buttons, **kwargs)
-        
+
     def body(self, bodyFrame):
         bodyFrame.config()
         gui.configureWeigths(bodyFrame)
@@ -539,7 +543,7 @@ class ListDialog(Dialog):
                              image=self.getImage(Icon.LIGHTBULB))
             label.grid(row=2, column=0, sticky='nw', padx=5, pady=5)
         self.initial_focus = self.tree
-        
+
     def _createTree(self, parent):
         self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode)
         if self._selectOnDoubleClick:
@@ -585,7 +589,7 @@ class ListDialog(Dialog):
         self._searchVar = tk.StringVar(value='')
         self.entry = tk.Entry(self.searchBoxframe, bg='white',
                               textvariable=self._searchVar, width=40,
-                              font= gui.getDefaultFont())
+                              font=gui.getDefaultFont())
 
         self.entry.bind('<KeyRelease>', _onSearch)
         self.entry.focus_set()
@@ -595,22 +599,22 @@ class ListDialog(Dialog):
 
     def apply(self):
         self.values = self.tree.getSelectedObjects()
-    
+
     def validate(self):
         self.apply()  # load self.values with selected items
         err = ''
-        
+
         if self.values:
             if self.validateSelectionCallback:
                 err = self.validateSelectionCallback(self.values)
         else:
             if not self._allowsEmptySelection:
                 err = "Please select an element"
-            
+
         if err:
             showError("Validation error", err, self)
             return False
-        
+
         return True
 
 
@@ -618,6 +622,7 @@ class ToolbarButton:
     """
     Store information about the buttons that will be added to the toolbar.
     """
+
     def __init__(self, text, command, icon=None, tooltip=None):
         self.text = text
         self.command = command
@@ -631,6 +636,7 @@ class ToolbarListDialog(ListDialog):
     extra toolbar to handle operations over the elements
     in the list (e.g. Edit, New, Delete).
     """
+
     def __init__(self, parent, title, provider,
                  message=None, toolbarButtons=None, **kwargs):
         """ From kwargs:
@@ -688,21 +694,20 @@ class FlashMessage:
             self.root.update_idletasks()
             self.root.after(10, self.process, func)
         else:
-            self.root.after(int(delay*1000), self.close)
+            self.root.after(int(delay * 1000), self.close)
         self.root.wait_window(self.root)
-        
+
     def process(self, func):
         func()
         self.root.destroy()
-        
+
     def close(self):
         self.root.destroy()
-        
+
 
 class FloatingMessage:
     def __init__(self, master, msg, xPos=750, yPos=80, textWidth=280,
                  font='Helvetica', size=12, bd=1, bg='#6E6E6E', fg='white'):
-
         self.floatingMessage = tk.Label(master, text="   %s   " % msg,
                                         bd=bd, bg=bg, fg=fg)
         self.floatingMessage.place(x=xPos, y=yPos, width=textWidth)
@@ -714,9 +719,10 @@ class FloatingMessage:
     def close(self):
         self.floatingMessage.destroy()
 
-        
+
 class FileBrowseDialog(Dialog):
     """Dialog to select files from the filesystem."""
+
     def __init__(self, parent, title, provider, message=None, **args):
         """ From args:
                 message: message tooltip to show when browsing.
@@ -727,7 +733,7 @@ class FileBrowseDialog(Dialog):
         self.message = args.get('message', None)
         Dialog.__init__(self, parent, title,
                         buttons=[('Select', RESULT_YES), ('Cancel', RESULT_CANCEL)])
-        
+
     def body(self, bodyFrame):
         bodyFrame.config(bg='white')
         gui.configureWeigths(bodyFrame)
@@ -737,14 +743,14 @@ class FileBrowseDialog(Dialog):
                              image=self.getImage('fa-lightbulb-o.gif'), compound=tk.LEFT)
             label.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
         self.initial_focus = self.tree
-        
+
     def _createTree(self, parent):
         self.tree = BoundTree(parent, self.provider)
-        
+
     def apply(self):
         index = self.tree.index(self.tree.getFirst())
         self.value = self.tree._objects[index]
-    
+
     def validate(self):
         if self.tree.getFirst() is None:
             showError("Validation error", "Please select an element", self)

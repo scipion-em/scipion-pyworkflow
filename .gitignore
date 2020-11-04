@@ -24,9 +24,6 @@
 #### Java
 *.class
 
-#### Python
-*.pyc
-
 #### Eclipse and so on
 .project
 .cproject

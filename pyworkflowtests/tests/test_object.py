@@ -113,7 +113,7 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(obj.get(), 20, "Integer.get() fails with a pointer.")
 
     def test_String(self):
-        value = 'thisisanstring'
+        value = 'thisisastring'
         s = pwobj.String(value)
         self.assertEqual(value, s.get())
         self.assertEqual(s.hasValue(), True)
@@ -196,7 +196,7 @@ class TestObject(pwtests.BaseTest):
         # retrieved by the pointer after setting the extended to 7
         self.assertEqual(imgSet[7], o.pointer.get())
 
-        # Test the keyword arguments of Pointer contructor
+        # Test the keyword arguments of Pointer constructor
         # repeat above tests with new pointer
         ptr = pwobj.Pointer(value=imgSet, extended=7)
         self.assertTrue(ptr.hasExtended())

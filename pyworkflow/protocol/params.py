@@ -23,7 +23,6 @@
 # **************************************************************************
 
 
-
 import re
 import collections
 
@@ -344,7 +343,7 @@ class Form(object):
             self.addParam('numberOfMpi', IntParam, default=mpi,
                           label='MPI processes',
                           help='This option provides the number of independent processes spawned'
-                                'in parallel by <mpirun> command in a cluster, usually throught'
+                                'in parallel by <mpirun> command in a cluster, usually through'
                                 'a queue system. This will require that you have compile <Xmipp>'
                                 'with <mpi> support.')
         if jobsize > 0:
@@ -537,7 +536,7 @@ class NumericRangeParam(StringParam):
         
 class TupleParam(Param):
     """ This class will condense a tuple of several
-    other params of the same type and related concenpt.
+    other params of the same type and related concept.
     For example: min and max, low and high.
     """
     def __init__(self, **args):
@@ -611,7 +610,7 @@ class GT(Conditional):
 
 
 class GE(Conditional):
-    def __init__(self, thresold, error='Value should be greater or equal than the thresold'):
+    def __init__(self, thresold, error='Value should be greater or equal than the threshold'):
         Conditional.__init__(self, error)
         self._condition = lambda value: value >= thresold               
 
@@ -648,8 +647,8 @@ class NonEmptyBoolCondition(Conditional):
 
 Positive = GT(0.0, error='Value should be greater than zero')
 
-FreqValidator = Range(0., 0.5, 
-                      error="Digital frequencies should be between 0. and 0.5")
+FreqValidator = Range(0.001, 0.5,
+                      error="Digital frequencies should be between 0.001 and 0.5")
 
 NonEmpty = NonEmptyCondition()
 NonEmptyBool = NonEmptyBoolCondition()
