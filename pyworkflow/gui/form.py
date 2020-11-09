@@ -870,7 +870,7 @@ class SectionFrame(tk.Frame):
         canvasFrame = tk.Frame(self, name="sectioncontentframe")
         configureWeigths(canvasFrame)
         self.canvas = Canvas(canvasFrame, width=625, height=self.height,
-                             name="sectioncanvas")
+                             highlightthickness=0, name="sectioncanvas")
         self.canvas.grid(row=0, column=0, sticky='news')
         canvasFrame.grid(row=1, column=0, sticky='news')
 
@@ -911,7 +911,7 @@ class SectionFrame(tk.Frame):
         csize = self._getSize(self.canvas)
         if fsize != csize:
             # update the inner frame's width to fill the canvas
-            self.canvas.itemconfigure(self.contentId, width=csize[0])
+            self.canvas.itemconfigure(self.contentId, width=csize[0], height=csize[1])
             if csize[1] < fsize[1]:
                 self.canvas.itemconfigure(self.contentId, height=fsize[1])
                 self.canvas.config(scrollregion="0 0 %s %s" % csize)
