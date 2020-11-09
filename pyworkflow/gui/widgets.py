@@ -131,7 +131,7 @@ class Scrollable(object):
         self.bindWidget(self)
 
     def scroll(self, event):
-        # print "scrolling, event.num", event.num, "deltha", event.delta
+        # print "scrolling, event.num", event.num, "delta", event.delta
         if event.num == 5 or event.delta < 0:
             count = 1
         if event.num == 4 or event.delta > 0:
