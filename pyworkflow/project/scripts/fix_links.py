@@ -29,10 +29,10 @@ searchDir = os.path.abspath(sys.argv[2])
 manager = Manager()
 
 if not manager.hasProject(projName):
-    usage("Unexistent project: %s" % pwutils.red(projName))
+    usage("Nonexistent project: %s" % pwutils.red(projName))
     
 if not os.path.exists(searchDir):
-    usage("Unexistent SEARCH_DIR: %s" % pwutils.red(searchDir))
+    usage("Nonexistent SEARCH_DIR: %s" % pwutils.red(searchDir))
     
 project = manager.loadProject(projName)
 

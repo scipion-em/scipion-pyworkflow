@@ -26,7 +26,6 @@ This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
 
-import os
 import sys
 import json
 import time
@@ -286,7 +285,7 @@ class RunJobStep(FunctionStep):
         # We know that:
         #  _func: is the runJob function
         #  _args[0]: is the program name
-        #  _args[1]: is the argumets to the program
+        #  _args[1]: is the arguments to the program
         return self._func(None, self._args[0], self._args[1],
                           numberOfMpi=self.mpi, numberOfThreads=self.threads)
         # TODO: Add the option to return resultFiles
@@ -463,7 +462,7 @@ class Protocol(Step):
                 # Here the defineOutputs function will call the write() method
                 self._defineOutputs(**{outputName: outputSet})
                 self._store(outputSet)
-            # Close set databaset to avoid locking it
+            # Close set database to avoid locking it
             outputSet.close()
 
         except Exception as ex:
@@ -533,7 +532,7 @@ class Protocol(Step):
 
     def evalParamCondition(self, paramName):
         """ Eval if the condition of paramName in _definition
-        is satified with the current values of the protocol attributes.
+        is satisfied with the current values of the protocol attributes.
         """
         return self._definition.evalParamCondition(paramName)
 
@@ -753,7 +752,7 @@ class Protocol(Step):
             # FIX: When deleting manually an output, specially for interactive protocols.
             # The _outputs is properly deleted in projects.sqlite, not it's run.db remains.
             # When the protocol is updated from run.db it brings the outputs that were deleted
-            if hasattr(self,attrName):
+            if hasattr(self, attrName):
                 # Get it from the protocol
                 attr = getattr(self, attrName)
 
@@ -1007,7 +1006,7 @@ class Protocol(Step):
     def _enterDir(self, path):
         """ Enter into a new directory path and store the current path.
         The current path will be used in _leaveDir, but nested _enterDir
-        are not allowed since self._currentDir is overriden.
+        are not allowed since self._currentDir is overwritten.
         """
         self._currentDir = os.getcwd()
         os.chdir(path)
@@ -1027,7 +1026,7 @@ class Protocol(Step):
         self._enterDir(self.workingDir.get())
 
     def _leaveWorkingDir(self):
-        """ This funcion make sense to use in conjunction
+        """ This function make sense to use in conjunction
         with _enterWorkingDir to go back to execution path.
         """
         self._leaveDir()
@@ -1082,13 +1081,13 @@ class Protocol(Step):
 
         n = min(len(self._steps), len(self._prevSteps))
         self.debug("len(steps) %s len(prevSteps) %s "
-                  % (len(self._steps), len(self._prevSteps)))
+                   % (len(self._steps), len(self._prevSteps)))
 
         for i in range(n):
             newStep = self._steps[i]
             oldStep = self._prevSteps[i]
             if (not oldStep.isFinished() or newStep != oldStep
-                or not oldStep._postconditions()):
+                    or not oldStep._postconditions()):
                 if pw.Config.debugOn():
                     self.info("Starting at step %d" % i)
                     self.info("     Old step: %s, args: %s"
@@ -1720,7 +1719,7 @@ class Protocol(Step):
 
     def useQueueForSteps(self):
         """ This function will return True if the protocol has been set
-        to be launched thorugh a queue by steps """
+        to be launched through a queue by steps """
         return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "Y")
 
     def getQueueParams(self):
@@ -1796,6 +1795,7 @@ class Protocol(Step):
         Used from the public validate function.
         """
         return []
+
     @classmethod
     def getUrl(cls):
         return cls.getClassPlugin().getUrl(cls)
@@ -2096,7 +2096,7 @@ class Protocol(Step):
         root.label = 'Protocol'
 
         steps = self.loadSteps()
-        stepsDict = {str(i+1): steps[i] for i in range(0, len(steps))}
+        stepsDict = {str(i + 1): steps[i] for i in range(0, len(steps))}
         stepsDone = {}
 
         def addStep(i, step):
@@ -2159,6 +2159,7 @@ class LegacyProtocol(Protocol):
     def getClassDomain(cls):
         return pw.Config.getDomain()
 
+
 # ---------- Helper functions related to Protocols --------------------
 
 def runProtocolMain(projectPath, protDbPath, protId):
@@ -2198,10 +2199,10 @@ def runProtocolMain(projectPath, protDbPath, protId):
             if protocol.useQueueForSteps():
                 executor = QueueStepExecutor(hostConfig,
                                              protocol.getSubmitDict(),
-                                             nThreads-1,
+                                             nThreads - 1,
                                              gpuList=protocol.getGpuList())
             else:
-                executor = ThreadStepExecutor(hostConfig, nThreads-1,
+                executor = ThreadStepExecutor(hostConfig, nThreads - 1,
                                               gpuList=protocol.getGpuList())
 
     if executor is None and protocol.useQueueForSteps():
@@ -2225,7 +2226,7 @@ def runProtocolMainMPI(projectPath, protDbPath, protId, mpiComm):
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
     hostConfig = protocol.getHostConfig()
     # Create the steps executor
-    executor = MPIStepExecutor(hostConfig, protocol.numberOfMpi.get()-1,
+    executor = MPIStepExecutor(hostConfig, protocol.numberOfMpi.get() - 1,
                                mpiComm, gpuList=protocol.getGpuList())
 
     protocol.setStepsExecutor(executor)
@@ -2297,6 +2298,7 @@ def isProtocolUpToDate(protocol):
 
 class ValidationException(Exception):
     pass
+
 
 class ProtImportBase(Protocol):
     """ Base Import protocol"""

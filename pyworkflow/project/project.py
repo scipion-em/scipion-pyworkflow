@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -58,6 +58,7 @@ PROJECT_CREATION_TIME = 'CreationTime'
 # Regex to get numbering suffix and automatically propose runName
 REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
 REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
+
 
 class Project(object):
     """This class will handle all information 
@@ -602,7 +603,7 @@ class Project(object):
            mpi, thread, queue,
         and also take care if the execution is remotely.
 
-        If the protocol has some prerequisited (other protocols that
+        If the protocol has some prerequisites (other protocols that
         needs to be finished first), it will be scheduled.
         """
         if protocol.getPrerequisites() and not scheduled:
@@ -647,7 +648,7 @@ class Project(object):
 
     def scheduleProtocol(self, protocol, prerequisites=[]):
         """ Schedule a new protocol that will run when the input data
-        is available and the prerequisited finished.
+        is available and the prerequisites are finished.
         Params:
             protocol: the protocol that will be scheduled.
             prerequisites: a list with protocols ids that the scheduled
@@ -718,7 +719,7 @@ class Project(object):
             # merge outputs: This is necessary when outputs are added from the GUI
             # e.g.: adding coordinates from analyze result and protocol is active (interactive).
             for attr in localOutputs:
-                if not attr in protocol._outputs:
+                if attr not in protocol._outputs:
                     protocol._outputs.append(attr)
 
             # Restore backup values
@@ -777,7 +778,6 @@ class Project(object):
             protocol.makePathsAndClean()  # Create working dir if necessary
             protocol._store()
             self._storeProtocol(protocol)
-
 
     def continueProtocol(self, protocol):
         """ This function should be called 
@@ -839,7 +839,7 @@ class Project(object):
     def _checkWorkflowErrors(self, protocol):
         """
         This function checks if there are active protocols excluding
-        interactives protocols. Also, save the workflow from "protocol"
+        interactive protocols. Also, save the workflow from "protocol"
         If there are no errors, the function return None
         """
         errorsList = []
@@ -913,7 +913,7 @@ class Project(object):
     def __setProtocolLabel(self, newProt):
         """ Set a readable label to a newly created protocol.
         We will try to find another existing protocol with the default label
-        and then use an incremental labeling in parethesis (<number>++)
+        and then use an incremental labeling in parenthesis (<number>++)
         """
         defaultLabel = newProt.getClassLabel()
         maxSuffix = 0
@@ -979,7 +979,7 @@ class Project(object):
         maxSuffix = 0
 
         # if '(copy...' suffix is not in the old name, we add it in the new name
-        # and seting the newnumber 
+        # and setting the newnumber
         mOld = REGEX_NUMBER_ENDING_CP.match(oldProtName)
         if mOld:
             newProtPrefix = mOld.groupdict()['prefix']
@@ -993,7 +993,7 @@ class Project(object):
         newNumber = oldNumber + 1
 
         # looking for "<old name> (copy" prefixes in the project and
-        # seting the newNumber as the maximum+1
+        # setting the newNumber as the maximum+1
         for prot in self.getRuns(iterate=True, refresh=False):
             otherProtLabel = prot.getObjLabel()
             mOther = REGEX_NUMBER_ENDING_CP.match(otherProtLabel)
@@ -1231,7 +1231,7 @@ class Project(object):
 
         if (protocol.isRunning() or protocol.isFinished()
                 or protocol.isLaunched()):
-            raise Exception('Cannot SAVE a protocol that is %s. '
+            raise ModificationNotAllowedException('Cannot SAVE a protocol that is %s. '
                             'Copy it instead.' % protocol.getStatus())
 
         protocol.setStatus(pwprot.STATUS_SAVED)
@@ -1436,7 +1436,7 @@ class Project(object):
                     parentNode = outputDict[pointedId]
                     if parentNode is node:
                         print("WARNING: Found a cyclic dependence from node "
-                              "%s to itself, problably a bug. " % pointedId)
+                              "%s to itself, probably a bug. " % pointedId)
                     else:
                         parentNode.addChild(node)
                         return True
@@ -1551,7 +1551,7 @@ class Project(object):
         return self.mapper.getRelationParents(pwobj.RELATION_SOURCE, obj)
 
     def getTransformGraph(self, refresh=False):
-        """ Get the graph from the TRASNFORM relation. """
+        """ Get the graph from the TRANSFORM relation. """
         if refresh or not self._transformGraph:
             self._transformGraph = self._getRelationGraph(pwobj.RELATION_TRANSFORM,
                                                           refresh)

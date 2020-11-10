@@ -23,7 +23,6 @@
 # **************************************************************************
 
 
-
 import os
 
 import pyworkflow.protocol as pwprot
@@ -38,7 +37,7 @@ class View(object):
     Views can be plots, table views, chimera scripts, commands or messages.
     """
     def show(self):
-        """ This method should be overriden to implement how
+        """ This method should be overwritten to implement how
         this particular view will be displayed in desktop.
         """
         pass
@@ -146,7 +145,7 @@ class Viewer(object):
             view.show()
             
     def _visualize(self, obj, **kwargs):
-        """ This method should make the necessary convertions
+        """ This method should make the necessary conversions
         and return the list of Views that will be used to 
         visualize the object
         """
@@ -305,7 +304,7 @@ class ProtocolViewer(pwprot.Protocol, Viewer):
                 limits = e.split('-')
                 values += range(int(limits[0]), int(limits[1])+1)
             else:
-                # If values are separated by comma also splitted 
+                # If values are separated by comma also split
                 values += map(int, e.split())
         return values
 

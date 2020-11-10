@@ -8,7 +8,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -121,7 +121,7 @@ class Message:
     # ------- Protocol Form messages ----------
     LABEL_CITE = 'Cite'
     LABEL_HELP = 'Help'
-    TEXT_HELP = 'The file selected will be uploaded to the project folder. If the file was uploaded before, It will be replaced.'
+    TEXT_HELP = 'The file selected will be uploaded to the project folder. If the file was uploaded before, it will be replaced.'
     LABEL_RUNNAME = 'Run name'
     LABEL_EXECUTION = 'Run mode'
     LABEL_RUNMODE = 'Mode'
@@ -140,7 +140,7 @@ class Message:
     LABEL_EXPERT_EXPERT = 'Expert'
     
     HELP_RUNMODE = """  
-Normally, each protocol is composed by several atomic steps.
+Normally, each protocol is composed of several atomic steps.
 Each step could be computationally intensive, that's why
 the *Continue* execution mode will try to continue from the
 last completed step. On the other hand, the *Restart* mode
@@ -159,7 +159,7 @@ Define the number of processors to be used in the execution.
 
     HELP_USEQUEUE = """
     Click *Yes* if you want to submit a single job per protocol to a Queue system.
-    The queue commands for launch and stop jobs should be configured
+    The queue commands to launch and stop jobs should be configured
     for the current host in the _%s_ file.
         """
     HELP_USEQUEUEPERJOB = """
@@ -241,17 +241,15 @@ pixel size (microns/pixel, Tm).
 They are related by  Ts = Tm / M"""
     LABEL_SAMP_MODE_1 = 'From image'
     LABEL_SAMP_MODE_2 = 'From scanner'
-    LABEL_SAMP_RATE = 'Pixel size ("sampling rate") (Å/px)'
+    LABEL_SAMP_RATE = 'Pixel size (sampling rate) Å/px'
     TEXT_SAMP_RATE = "Pixel size"
     LABEL_MAGNI_RATE = 'Magnification rate'
     TEXT_MAGNI_RATE = """\
 Electron optical magnification (M). It can be used to compute the Image Pixel
-Size ("Sampling Rate") (Ts) using the Scanner Pixel Size (Tm), Ts = Tm / M.
-
-It is used by a few programs like Ctffind or Frealign."""
+Size ("Sampling Rate") (Ts) using the Scanner Pixel Size (Tm), Ts = Tm / M."""
     LABEL_SCANNED = 'Scanned pixel size (microns/px)'
 
-    ERROR_IMPORT_VOL = 'importVolumes:There is not filePaths matching pattern'
+    ERROR_IMPORT_VOL = 'importVolumes: There are no filePaths matching the pattern'
     
     LABEL_CTF_ESTI = 'CTF Estimation'
     LABEL_INPUT_MIC = 'Input Micrographs'
@@ -296,7 +294,7 @@ Do you really want to restart?'
     TITLE_STOP_FORM = 'Confirm STOP'
     LABEL_STOP_FORM = 'Do you really want to *STOP* this run?'
     
-    NO_VIEWER_FOUND = 'There is not viewer for protocol:' 
+    NO_VIEWER_FOUND = 'There is no viewer for protocol:'
     
     TITLE_SAVE_OUTPUT = 'Save protocol output'
     LABEL_SAVE_OUTPUT = 'Do you wish to save protocol output?'
@@ -310,7 +308,7 @@ Do you really want to restart?'
     TITLE_LAUNCHED_WORKFLOW_FAILED_FORM = 'Error while launching the workflow'
     TITLE_STOPPED_WORKFLOW_FAILED = 'Error while stopping the workflow'
     TITLE_RESETED_WORKFLOW_FAILED = 'Error while resetting the workflow'
-    TITLE_LAUNCHED_WORKFLOW_FAILED = 'The workflow can not be relaunch from this protocol.\n'
+    TITLE_LAUNCHED_WORKFLOW_FAILED = 'The workflow can not be relaunched from this protocol.\n'
     
     # SHOWJ_WEB
     SHOWJ_TITLE = 'Showj'
@@ -354,7 +352,7 @@ Do you really want to restart?'
     ERROR_DIMENSIONS = 'Incorrect table width or height: '
     ERROR_WEBGL = 'Your web browser does not support or is not configured for WebGL. See [[http://get.webgl.org/][WebGL Support]] for more information.'
     
-    TOOLTIP_SEARCH = 'Search a given world in the text. '
+    TOOLTIP_SEARCH = 'Search for a given world in the text. '
     TOOLTIP_SEARCH_NEXT = 'Move to the next highlighted item. Also, press <Down> or <F3>'
     TOOLTIP_SEARCH_PREVIOUS = 'Move to the previous highlighted item. Also, press <Up> or <Shift-F3>'
     TOOLTIP_REFRESH = 'Reload the content of the files in the viewer. '

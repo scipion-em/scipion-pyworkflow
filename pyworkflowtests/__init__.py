@@ -33,6 +33,7 @@ from pyworkflow.plugin import Domain as pwDomain, Plugin as pwPlugin
 
 from .objects import MockObject
 
+
 class TestDomain(pwDomain):
     _name = __name__
     _objectClass = MockObject
@@ -41,7 +42,9 @@ class TestDomain(pwDomain):
     _wizardClass = Wizard
     _baseClasses = globals()
 
+
 Domain = TestDomain
+
 
 class Plugin(pwPlugin):
     pass

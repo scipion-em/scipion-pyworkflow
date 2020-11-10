@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.5'
+VERSION_3_0 = '3.0.6'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -70,18 +70,20 @@ SCIPION_NOTES_FILE_DEFAULT = 'notes.txt'
 SCIPION_NOTES_PROGRAM = 'SCIPION_NOTES_PROGRAM'
 SCIPION_NOTES_ARGS = 'SCIPION_NOTES_ARGS'
 SCIPION_NOTES_HEADING_MSG = \
-     '############################################  SCIPION NOTES  ##############################################' \
-     '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' \
-     'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they\n' \
-     'already exist, the following variables:\n\n' \
-     '\t-%s is used to store the file name (default is %s)\n' \
-     '\t-%s is used to select the program which will be used to open the notes file. If \n' \
-     '\t empty, it will use the default program used by your OS to open that type of file.\n' \
-     '\t-%s is used to add input arguments that will be used in the calling of the program\n' \
-     '\t specified in %s.\n\n' \
-     'These lines can be removed if desired.\n\n' \
-     '###########################################################################################################' \
-     '\n\nPROJECT NOTES:' % (SCIPION_NOTES_FILE, SCIPION_NOTES_FILE_DEFAULT,SCIPION_NOTES_PROGRAM, SCIPION_NOTES_ARGS, SCIPION_NOTES_PROGRAM)
+    '############################################  SCIPION NOTES  ##############################################' \
+    '\n\nThis document can be used to store your notes within your project from Scipion framework.\n\n' \
+    'Scipion notes behaviour can be managed in the Scipion config file by creating or editing, if they\n' \
+    'already exist, the following variables:\n\n' \
+    '\t-%s is used to store the file name (default is %s)\n' \
+    '\t-%s is used to select the program which will be used to open the notes file. If \n' \
+    '\t empty, it will use the default program used by your OS to open that type of file.\n' \
+    '\t-%s is used to add input arguments that will be used in the calling of the program\n' \
+    '\t specified in %s.\n\n' \
+    'These lines can be removed if desired.\n\n' \
+    '###########################################################################################################' \
+    '\n\nPROJECT NOTES:' % (SCIPION_NOTES_FILE, SCIPION_NOTES_FILE_DEFAULT,
+                            SCIPION_NOTES_PROGRAM, SCIPION_NOTES_ARGS,
+                            SCIPION_NOTES_PROGRAM)
 
 SCIPION_DOMAIN = 'SCIPION_DOMAIN'
 
@@ -91,7 +93,7 @@ SCIPION_JSON_TEMPLATES = '.json.template'
 SCIPION_DEBUG_NOCLEAN = 'SCIPION_DEBUG_NOCLEAN'
 SCIPION_DEBUG_SQLITE = 'SCIPION_DEBUG_SQLITE'
 
-# Color and appearance contants
+# Color and appearance constants
 TK_GRAY_DEFAULT = '#d9d9d9'
 
 # Other

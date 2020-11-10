@@ -27,7 +27,6 @@ inside the utils module
 """
 
 
-
 import os
 import shutil
 import sys
@@ -74,7 +73,7 @@ def findRootFrom(referenceFile, searchFile):
     absPath = os.path.dirname(os.path.abspath(referenceFile))
     
     while absPath is not None and absPath != '/':
-        if os.path.os.path.exists(os.path.join(absPath, searchFile)):
+        if os.path.exists(os.path.join(absPath, searchFile)):
             return absPath
         absPath = os.path.dirname(absPath)
         
@@ -116,7 +115,7 @@ def joinExt(*extensions):
 
 
 def getExt(filePath):
-    """ Return the extesion given a file. """
+    """ Return the extension given a file. """
     return os.path.splitext(filePath)[1]
 
 
@@ -431,6 +430,3 @@ def getFileLastModificationDate(fn):
     else:
         print(fn + " does not exist!!. Can't check last modification date.")
         return None
-
-
-

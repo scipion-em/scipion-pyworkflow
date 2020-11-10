@@ -27,9 +27,6 @@ The widgets here are suppose to be used to build more complex
 elements.
 """
 
-
-
-
 import tkinter as tk
 import tkinter.ttk as ttk
 
@@ -42,21 +39,21 @@ from .tooltip import ToolTip
 
 class Button(tk.Button):
     _images = {}
-    
+
     def __init__(self, master, text, imagePath=None, tooltip=None, **opts):
         defaults = {}
         # Used to be {'font': gui.fontButton} but there is no such
         # definition in pyworkflow/gui.
         defaults.update(opts)
-        
+
         if 'bg' in defaults and defaults['bg'] is None:
             del defaults['bg']
-        
+
         if imagePath is not None:
             btnImage = gui.getImage(imagePath, Button._images)
         else:
             btnImage = None
-            
+
         if btnImage is not None:
             if 'compound' not in defaults:
                 defaults['compound'] = tk.LEFT
@@ -64,36 +61,38 @@ class Button(tk.Button):
             self.image = btnImage
         else:
             tk.Button.__init__(self, master, text=text, **defaults)
-            
+
         if tooltip:
             ToolTip(self, tooltip, 500)
-            
+
     def setImage(self, imagePath):
         self.image = gui.getImage(imagePath)
         self.config(image=self.image)
-        
-        
+
+
 class HotButton(Button):
     """ Button having the firebrick color and some other settings. """
+
     def __init__(self, master, text, imagePath=None, tooltip=None, **opts):
         defaults = {'activebackground': gui.cfgButtonActiveBgColor, 'bg': gui.cfgButtonBgColor,
                     'fg': gui.cfgButtonFgColor, 'activeforeground': gui.cfgButtonActiveFgColor,
                     'compound': tk.LEFT}
         defaults.update(opts)
         Button.__init__(self, master, text, imagePath, tooltip, **defaults)
-        
-        
+
+
 class IconButton(HotButton):
     """ Hot button, but only with image and no border """
+
     def __init__(self, master, text, imagePath, tooltip=None, **opts):
         defaults = {'bd': 0, 'bg': 'white', 'compound': tk.NONE}
         defaults.update(opts)
         HotButton.__init__(self, master, text, imagePath, tooltip, **defaults)
-                
+
 
 class AutoScrollbar(tk.Scrollbar):
     """"A scrollbar that hides itself if it's not needed."""
-    
+
     def set(self, lo, hi):
         if float(lo) <= 0.0 and float(hi) >= 1.0:
             self.grid_remove()
@@ -101,13 +100,13 @@ class AutoScrollbar(tk.Scrollbar):
         else:
             self.grid()
         tk.Scrollbar.set(self, lo, hi)
-        
+
 
 class Scrollable(object):
     """This is a base class for all scrollable widgets.
     If it is enabled, it will wrap the widget with a frame
     and will add vertical and horizontal AutoScrollbar"""
-    
+
     def __init__(self, master, WidgetClass, frame=True, **opts):
         if frame:
             self.frame = tk.Frame(master)
@@ -117,7 +116,7 @@ class Scrollable(object):
             self.vscroll.grid(row=0, column=1, sticky='ns')
             self.hscroll = AutoScrollbar(self.frame, orient=tk.HORIZONTAL)
             self.hscroll.grid(row=1, column=0, sticky='ew')
-            WidgetClass.__init__(self, self.frame, 
+            WidgetClass.__init__(self, self.frame,
                                  yscrollcommand=self.vscroll.set,
                                  xscrollcommand=self.hscroll.set, **opts)
             self.vscroll.config(command=self.yview)
@@ -130,15 +129,15 @@ class Scrollable(object):
 
         # Bind ourselves
         self.bindWidget(self)
-        
+
     def scroll(self, event):
-        # print "scrolling, event.num", event.num, "deltha", event.delta
+        # print "scrolling, event.num", event.num, "delta", event.delta
         if event.num == 5 or event.delta < 0:
             count = 1
         if event.num == 4 or event.delta > 0:
             count = -1
         self.yview("scroll", count, "units")
-        
+
     def bindWidget(self, widget):
         """ Make the scroll in the widget, respond to this.
         Useful for child widgets.
@@ -159,13 +158,13 @@ class ExplanationText(tk.Text):
 
     def updateExpText(self, text, width=50):
         # Adapt textbox height to text length (width is in characters)
-        n_lines = ceil(len(text)/width)
+        n_lines = ceil(len(text) / width)
 
         self.text.config(state='normal', height=n_lines)  # Make it editable
         self.text.insert(tk.END, text)
         self.text.config(state='disabled')  # Disable text edit
 
-            
+
 class LabelSlider(ttk.Frame):
     """ Create a personalized frame that contains label, slider and label value
         it also keeps a variable with the value """
@@ -187,7 +186,7 @@ class LabelSlider(ttk.Frame):
         self.labelWidget.grid(row=0, column=0, sticky='nes', padx=5, pady=5)
         self.slider.grid(row=0, column=1, sticky='news', padx=5, pady=5)
         self.columnconfigure(1, weight=3)
-        
+
     def get(self):
         return self.var.get()
 
@@ -197,12 +196,12 @@ class LabelSlider(ttk.Frame):
     def removeHighlightFromLabel(self):
         self.labelWidget.config(text=self.labelText)
 
-    
-    
+
 class ComboBox(ttk.Combobox):
     """ Extension of ttk.ComboBox to allow having different display text and values.
     Also adding some utils to getSelected index and value (same for set)
     """
+
     def __init__(self, parent, choices, values=None, initial=None, onChange=None, **kwargs):
         """ Create a combobox from a list of choices.
         Params:
@@ -212,50 +211,51 @@ class ComboBox(ttk.Combobox):
                 if a list is provided, should have the same length as choices.
             initial: if None, take the first choice
             onChange: provide a callback function to be used when change the selected value
-            **kwargs: extra arguments passed to ttk.Combobox contructor.
+            **kwargs: extra arguments passed to ttk.Combobox constructor.
         """
         indexes = range(len(choices))
         if values is None:
             values = indexes
         choices = [str(c) for c in choices]  # Convert to a list of strings
-        
+
         if initial is None:
             initial = choices[0]
         self._valuesDict = dict(zip(choices, values))
         self._indexDict = dict(zip(choices, indexes))
-        
+
         self._var = tk.StringVar()
         self._var.set(initial)
         self._changeCallback = onChange
         self._var.trace('w', self._onChanged)
         ttk.Combobox.__init__(self, parent, textvariable=self._var, state='readonly', **kwargs)
         self['values'] = choices
-        
+
     def getValue(self):
         """ Return the selected value. """
         return self._valuesDict[self._var.get()]
-    
+
     def getIndex(self):
         """ Return the selected value. """
         return self._indexDict[self._var.get()]
-    
+
     def getText(self):
         """ Return the selected option text. """
         return self._var.get()
-    
+
     def setChangeCallback(self, callback):
         self._changeCallback = callback
-        
+
     def _onChanged(self, *args):
         if self._changeCallback:
             self._changeCallback(self)
-        
-    
+
+
 class GradientFrame(tk.Canvas):
     """A gradient frame which uses a canvas to draw the background
     Taken from:
         http://stackoverflow.com/questions/11892521/tkinter-custom-window
     """
+
     def __init__(self, parent, **args):
         tk.Canvas.__init__(self, parent, **args)
         self._color1 = "#d2a7a7"
@@ -273,12 +273,12 @@ class GradientFrame(tk.Canvas):
         g_ratio = (g2 - g1) / limit
         b_ratio = (b2 - b1) / limit
 
-        for i in range(limit+1):
+        for i in range(limit + 1):
             nr = int(r1 + (r_ratio * i))
             ng = int(g1 + (g_ratio * i))
             nb = int(b1 + (b_ratio * i))
             color = "#%4.4x%4.4x%4.4x" % (nr, ng, nb)
             self.create_line(i, 0, i, height, tags=("gradient",), fill=color)
-            self.create_line(width-i, 0, width-i, height,
+            self.create_line(width - i, 0, width - i, height,
                              tags=("gradient",), fill=color)
         self.lower("gradient")

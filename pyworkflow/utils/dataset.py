@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -43,7 +43,7 @@ class DataSet(object):
     def __init__(self, tables, tableName=None, volumeName=None, numberSlices=0):
         self._tables = list(tables)
         self._tableName = tableName
-        # NAPA de LUXE: Hay que ver si el volumen name se usa en algun lado
+        # FIXME: You have to see if the volumeName is used anywhere
         self._volumeName = volumeName 
         self._numberSlices = numberSlices 
         self.projectPath = None
@@ -128,7 +128,7 @@ class Table(object):
     
     def getColumn(self, columnName):
         if columnName not in self._columns:
-            raise Exception('Table: column "%s" not found.\Current columns: %s' % (
+            raise Exception('Table: column "%s" not found.\nCurrent columns: %s' % (
                 columnName, '\n'.join(self._columns.keys())))
         return self._columns[columnName] 
     
@@ -323,7 +323,7 @@ class SqliteDataSet(DataSet):
         db = SqliteDb()
         db._createConnection(self._dbName, 1000)
         db.executeCommand("SELECT * FROM %sClasses;" % tableName)
-        # This will store the images columsn to join
+        # This will store the images columns to join
         # the _index and the _filename
         imgCols = {}
         for row in db._iterResults():

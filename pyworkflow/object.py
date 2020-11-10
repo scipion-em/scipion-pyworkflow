@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -116,7 +116,7 @@ class Object(object):
         Equivalent to setattr(self, name).set(value) 
         If the attrName contains dot: x.y
         it will be equivalent to getattr(getattr(self, 'x'), 'y').set(value)
-        If ignoreMissing is True, unexisting attrName will not raise an
+        If ignoreMissing is True, non-existing attrName will not raise an
         exception.
         """
         attrList = attrName.split('.')
@@ -339,7 +339,7 @@ class Object(object):
         If the name X is in attrNames, it would be equivalent to:
         self.X.set(other.X.get())
         This method is more useful for Scalar attributes.
-        There are two patchs for Pointer and PointerList.
+        There are two paths for Pointer and PointerList.
         """
         for name in attrNames:
             attr = getattr(self, name, None)
@@ -887,7 +887,7 @@ class Pointer(Object):
             return []
     
     def setExtendedParts(self, parts):
-        """ Set the extedend attribute but using 
+        """ Set the extended attribute but using
         a list as input. 
         """
         self.setExtended('.'.join(parts))
@@ -962,7 +962,7 @@ class List(Object, list):
     
     def _stringToIndex(self, strIndex):
         """ From the string index representation obtain the index.
-        For symetry the number in the index string will be
+        For symmetry the number in the index string will be
         decreased in 1.
         """
         return int(strIndex.split(self.ITEM_PREFIX)[1]) - 1
@@ -1080,7 +1080,7 @@ class Set(OrderedObject):
         self._idCount = 0
         self._size = Integer(0)  # cached value of the number of images
         # It is a bit contradictory that initially a set is Closed
-        # but this is the default behaviour of the Set before Streamming extension
+        # but this is the default behaviour of the Set before Streaming extension
         self._streamState = Integer(self.STREAM_CLOSED)  
         self.setMapperClass(mapperClass)
         self._mapperPath = CsvList()  # sqlite filename
@@ -1341,6 +1341,7 @@ class Set(OrderedObject):
         pwmapper.SqliteDb.closeConnection(setFn)
         setObj = cls(filename=setFn, **kwargs)
         return setObj
+
 
 def ObjectWrap(value):
     """This function will act as a simple Factory

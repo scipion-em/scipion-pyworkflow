@@ -25,7 +25,6 @@
 # **************************************************************************
 
 
-
 import os
 import json
 import datetime as dt
@@ -179,6 +178,7 @@ class ProjectSettings(pwobj.OrderedObject):
 
 class ProjectConfig(pwobj.OrderedObject):
     """A simple base class to store ordered parameters"""
+
     def __init__(self, **args):
         pwobj.OrderedObject.__init__(self, **args)
         self.logo = pwobj.String('scipion_logo_small.gif')
@@ -191,6 +191,7 @@ class MenuConfig(object):
     """Menu configuration in a tree fashion.
     Each menu can contains submenus.
     Leaf elements can contain actions"""
+
     def __init__(self, text=None, value=None,
                  icon=None, tag=None, **kwargs):
         """Constructor for the Menu config item.
@@ -227,6 +228,7 @@ class MenuConfig(object):
 
 class ProtocolConfig(MenuConfig):
     """Store protocols configuration """
+
     def __init__(self, text=None, value=None, **args):
         MenuConfig.__init__(self, text, value, **args)
         if 'openItem' not in args:
@@ -246,61 +248,61 @@ class ProtocolConfig(MenuConfig):
 
 class NodeConfig(pwobj.Scalar):
     """ Store Graph node information such as x, y. """
-    
+
     def __init__(self, nodeId=0, x=None, y=None, selected=False, expanded=True):
         pwobj.Scalar.__init__(self)
         # Special node id 0 for project node
-        self._values = {'id': nodeId, 
-                        'x': pwobj.Integer(x).get(0), 
-                        'y': pwobj.Integer(y).get(0), 
-                        'selected': selected, 
+        self._values = {'id': nodeId,
+                        'x': pwobj.Integer(x).get(0),
+                        'y': pwobj.Integer(y).get(0),
+                        'selected': selected,
                         'expanded': expanded,
                         'labels': []}
-        
+
     def _convertValue(self, value):
         """Value should be a str with comma separated values
         or a list.
         """
         self._values = json.loads(value)
-            
+
     def getObjValue(self):
         self._objValue = json.dumps(self._values)
         return self._objValue
-    
+
     def get(self):
         return self.getObjValue()
-        
+
     def getId(self):
         return self._values['id']
-    
+
     def setX(self, x):
         self._values['x'] = x
-        
+
     def getX(self):
         return self._values['x']
-    
+
     def setY(self, y):
         self._values['y'] = y
-        
+
     def getY(self):
         return self._values['y']
-    
+
     def setPosition(self, x, y):
         self.setX(x)
         self.setY(y)
-        
+
     def getPosition(self):
         return self.getX(), self.getY()
-        
+
     def setSelected(self, selected):
         self._values['selected'] = selected
-        
+
     def isSelected(self):
         return self._values['selected']
-    
+
     def setExpanded(self, expanded):
         self._values['expanded'] = expanded
-        
+
     def isExpanded(self):
         return self._values['expanded']
 
@@ -309,38 +311,39 @@ class NodeConfig(pwobj.Scalar):
 
     def getLabels(self):
         return self._values.get('labels', None)
-    
+
     def __str__(self):
         return 'NodeConfig: %s' % self._values
-    
-    
+
+
 class NodeConfigList(pwobj.List):
     """ Store all nodes information items and 
     also store a dictionary for quick access
     to nodes query.
     """
+
     def __init__(self):
         self._nodesDict = {}
         pwobj.List.__init__(self)
-        
+
     def getNode(self, nodeId):
         return self._nodesDict.get(nodeId, None)
-    
+
     def addNode(self, nodeId, **kwargs):
         node = NodeConfig(nodeId, **kwargs)
         self._nodesDict[node.getId()] = node
         self.append(node)
         return node
-        
+
     def updateDict(self):
         self._nodesDict.clear()
         for node in self:
             self._nodesDict[node.getId()] = node
-            
+
     def clear(self):
         pwobj.List.clear(self)
         self._nodesDict.clear()
-        
+
 
 class Label(pwobj.Scalar):
     """ Store Label information """
@@ -389,6 +392,7 @@ class Label(pwobj.Scalar):
 
 class LabelsList(pwobj.List):
     """ Store all labels information"""
+
     def __init__(self):
         self._labelsDict = {}
         pwobj.List.__init__(self)
@@ -488,16 +492,16 @@ class ProtocolTreeConfig:
                     if childs[i].tag == cls.TAG_PROTOCOL:
                         break
                     else:
-                        tmp = childs[i+1]
-                        childs[i+1] = childs[i]
+                        tmp = childs[i + 1]
+                        childs[i + 1] = childs[i]
                         childs[i] = tmp
             else:
                 for i in range(lastChildPos - 1, -1, -1):
                     if childs[i].tag == cls.TAG_PROTOCOL:
                         break
                     elif 'more' in str(childs[i].text).lower():
-                        tmp = childs[i+1]
-                        childs[i+1] = childs[i]
+                        tmp = childs[i + 1]
+                        childs[i + 1] = childs[i]
                         childs[i] = tmp
 
     @classmethod
@@ -621,14 +625,14 @@ class ProtocolTreeConfig:
                 if isModuleAFolder(pluginName):
                     # Locate the plugin protocols.conf file
                     protocolsConfPath = os.path.join(
-                                            pluginDict[pluginName].__path__[0],
-                                            cls.PLUGIN_CONFIG_PROTOCOLS)
+                        pluginDict[pluginName].__path__[0],
+                        cls.PLUGIN_CONFIG_PROTOCOLS)
                     cls.__addProtocolsFromConf(protocols, protocolsConfPath)
 
             except Exception as e:
                 print('Failed to read settings. The reported error was:\n  %s\n'
                       'To solve it, fix %s and run again.' % (
-                            e, os.path.abspath(protocolsConfPath)))
+                          e, os.path.abspath(protocolsConfPath)))
 
             # Add all protocols to All view
         cls.__addAllProtocols(pw.Config.getDomain(), protocols)

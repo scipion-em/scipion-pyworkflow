@@ -386,7 +386,7 @@ class FileTransfer:
         """
         Separate user and host pair in their individuals.
         userAndHostPairs -- User and host pair: "userName1@hostName1:userName2@hostName2"
-        returns -- Spplited pairs: ["userName1@hostName1", "userName2@hostName2"]
+        returns -- Split pairs: ["userName1@hostName1", "userName2@hostName2"]
         """
         return userAndHostPairs.split(PAIRS_SEPARATOR)
     
@@ -431,7 +431,7 @@ class FileTransfer:
         Checks if one userName@hostName credential is about local machine.
         """
         if (userAndHost is None or
-            userAndHost == LOCAL_USER_AND_HOST):
+                userAndHost == LOCAL_USER_AND_HOST):
             return True
         else:
             hostName = self.__getUserAndHost(userAndHost)[1]
