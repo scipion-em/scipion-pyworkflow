@@ -867,12 +867,12 @@ class SectionFrame(tk.Frame):
         self.headerLabel.grid(row=0, column=0, sticky='nw')
 
     def _createContent(self):
-        canvasFrame = tk.Frame(self, name="sectioncontentframe")
-        configureWeigths(canvasFrame)
-        self.canvas = Canvas(canvasFrame, width=625, height=self.height,
-                             highlightthickness=0, name="sectioncanvas")
+        self.canvasFrame = tk.Frame(self, name="sectioncontentframe")
+        configureWeigths(self.canvasFrame)
+        self.canvas = Canvas(self.canvasFrame, width=625, height=self.height,
+                             bg="white", highlightthickness=0, name="sectioncanvas")
         self.canvas.grid(row=0, column=0, sticky='news')
-        canvasFrame.grid(row=1, column=0, sticky='news')
+        self.canvasFrame.grid(row=1, column=0, sticky='news')
 
         configureWeigths(self.canvas)
 
@@ -908,13 +908,16 @@ class SectionFrame(tk.Frame):
 
     def _configure_canvas(self, event=None):
         fsize = self._getReqSize(self.contentFrame)
-        csize = self._getSize(self.canvas)
-        if fsize != csize:
-            # update the inner frame's width to fill the canvas
-            self.canvas.itemconfigure(self.contentId, width=csize[0], height=csize[1])
-            if csize[1] < fsize[1]:
-                self.canvas.itemconfigure(self.contentId, height=fsize[1])
-                self.canvas.config(scrollregion="0 0 %s %s" % csize)
+        csize = self._getContentSize()
+
+        # update the inner frame's width to fill the canvas
+        self.canvas.itemconfigure(self.contentId, width=csize[0],height=csize[1])
+        self.canvas.config(scrollregion="0 0 %s %s" % fsize)
+
+    def _getContentSize(self):
+        fsize = self._getReqSize(self.contentFrame)
+        cFrame = self._getSize(self.canvasFrame)
+        return (max(fsize[0], cFrame[0]), max(fsize[1], cFrame[1]))
 
     def adjustContent(self):
         self._configure_interior()
@@ -2393,6 +2396,8 @@ class FormWindow(Window):
         for d in param._dependants:
             self._checkCondition(d)
 
+        self.adjustSections()
+
     def _checkAllChanges(self):
         for paramName in self.widgetDict:
             self._checkCondition(paramName)
@@ -2400,6 +2405,10 @@ class FormWindow(Window):
     def _onExpertLevelChanged(self, *args):
         self._checkAllChanges()
         self.root.update_idletasks()
+        self.adjustSections()
+
+    def adjustSections(self):
+
         for s in self._sections:
             s.adjustContent()
 
