@@ -911,10 +911,10 @@ class SectionFrame(tk.Frame):
         csize = self._getSize(self.canvas)
         if fsize != csize:
             # update the inner frame's width to fill the canvas
-            self.canvas.itemconfigure(self.contentId, width=csize[0], height=csize[1])
-            if csize[1] < fsize[1]:
-                self.canvas.itemconfigure(self.contentId, height=fsize[1])
-                self.canvas.config(scrollregion="0 0 %s %s" % csize)
+            self.canvas.itemconfigure(self.contentId, width=fsize[0],height=fsize[1])
+            # if csize[1] < fsize[1]:
+            #     self.canvas.itemconfigure(self.contentId, )
+            self.canvas.config(scrollregion="0 0 %s %s" % fsize)
 
     def adjustContent(self):
         self._configure_interior()
@@ -2393,6 +2393,8 @@ class FormWindow(Window):
         for d in param._dependants:
             self._checkCondition(d)
 
+        self.adjustSections()
+
     def _checkAllChanges(self):
         for paramName in self.widgetDict:
             self._checkCondition(paramName)
@@ -2400,6 +2402,10 @@ class FormWindow(Window):
     def _onExpertLevelChanged(self, *args):
         self._checkAllChanges()
         self.root.update_idletasks()
+        self.adjustSections()
+
+    def adjustSections(self):
+
         for s in self._sections:
             s.adjustContent()
 
