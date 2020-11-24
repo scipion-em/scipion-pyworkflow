@@ -114,6 +114,8 @@ class Config:
     # LOGS PATHS
     # Path for Scipion logs
     SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA, 'logs'))
+    # Scratch path
+    SCIPION_SCRATCH = _get('SCIPION_SCRATCH', None)
 
     # Get general log file path
     SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')

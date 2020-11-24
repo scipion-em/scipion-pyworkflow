@@ -25,7 +25,7 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-
+import shutil
 import sys
 import json
 import time
@@ -1280,21 +1280,32 @@ class Protocol(Step):
         if in RESTART mode.
         """
         # Clean working path if in RESTART mode
-        paths = [self._getPath(), self._getExtraPath(), self._getTmpPath(),
-                 self._getLogsPath()]
+        paths = [self._getExtraPath(), self._getLogsPath()]
 
         if self.runMode == MODE_RESTART:
             pwutils.cleanPath(*paths)
+            self.cleanTmp()
+            pwutils.cleanPath(self._getPath())
             self.__deleteOutputs()
             # Delete the relations created by this protocol
             # (delete this in both project and protocol db)
             self.mapper.deleteRelations(self)
-        # Create workingDir, extra and tmp paths
+        # Create workingDir, logs and extra paths. Here tmp folder is excluding
         pwutils.makePath(*paths)
+        # Create scratch if SCIPION_SCRATCH environment variable exist.
+        # In other case, tmp folder is created
+        pwutils.makeTmpPath(self)
 
     def cleanTmp(self):
         """ Delete all files and subdirectories under Tmp folder. """
-        pwutils.cleanPattern(self._getTmpPath('*'))
+        tmpFolder = self._getTmpPath()
+
+        if os.path.islink(tmpFolder):
+            pwutils.cleanPath(os.path.realpath(tmpFolder))
+            os.remove(tmpFolder)
+        else:
+            pwutils.cleanPath(tmpFolder)
+
 
     def _run(self):
         # Check that a proper Steps executor have been set

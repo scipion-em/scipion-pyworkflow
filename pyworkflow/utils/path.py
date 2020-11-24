@@ -33,6 +33,7 @@ import sys
 from glob import glob
 import datetime
 
+from pyworkflow.config import Config
 
 ROOT = "/"
 
@@ -152,6 +153,26 @@ def makePath(*paths):
     for p in paths:
         if not os.path.exists(p) and len(p):
             os.makedirs(p)
+
+
+def makeTmpPath(protocol):
+    """
+    Create the scratch folder if SCIPION_SCRATCH variable is defined into the
+    Scipion config, i.o.c create tmp folder
+    """
+    tmpPath = protocol._getTmpPath()
+    if not os.path.exists(tmpPath) and len(tmpPath):
+        scratchPath = Config.SCIPION_SCRATCH
+
+        if scratchPath is None:  # Case when SCIPION_SCRATCH isn't exist. TMP folder is created
+            os.makedirs(tmpPath)
+        else:
+            folderId = protocol.getProject().getProtWorkingDir(protocol)
+            tmpScratchFolder = os.path.join(scratchPath, folderId)
+
+            os.makedirs(tmpScratchFolder)  # Create scratch folder
+            createAbsLink(tmpScratchFolder, tmpPath)
+
 
 
 def makeFilePath(*files):

@@ -1303,13 +1303,19 @@ class Project(object):
         if not self.openedAsReadOnly():
             self._storeProtocol(protocol)  # Store first to get a proper id
             # Set important properties of the protocol
-            workingDir = "%06d_%s" % (
-                protocol.getObjId(), protocol.getClassName())
+            workingDir = self.getProtWorkingDir(protocol)
             self._setProtocolMapper(protocol)
 
             protocol.setWorkingDir(self.getPath(PROJECT_RUNS, workingDir))
             # Update with changes
             self._storeProtocol(protocol)
+
+    @staticmethod
+    def getProtWorkingDir(protocol):
+        """
+        Return the protocol working directory
+        """
+        return "%06d_%s" % (protocol.getObjId(), protocol.getClassName())
 
     def getRuns(self, iterate=False, refresh=True, checkPids=False):
         """ Return the existing protocol runs in the project. 
