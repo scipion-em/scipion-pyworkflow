@@ -174,7 +174,6 @@ def makeTmpPath(protocol):
             createAbsLink(tmpScratchFolder, tmpPath)
 
 
-
 def makeFilePath(*files):
     """ Make the path to ensure that files can be written. """
     makePath(*[os.path.dirname(f) for f in files])

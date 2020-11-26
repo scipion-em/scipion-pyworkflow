@@ -1280,17 +1280,24 @@ class Protocol(Step):
         if in RESTART mode.
         """
         # Clean working path if in RESTART mode
-        paths = [self._getExtraPath(), self._getLogsPath()]
-
         if self.runMode == MODE_RESTART:
-            pwutils.cleanPath(*paths)
-            self.cleanTmp()
-            pwutils.cleanPath(self._getPath())
+            self.cleanWorkingDir()
             self.__deleteOutputs()
             # Delete the relations created by this protocol
             # (delete this in both project and protocol db)
             self.mapper.deleteRelations(self)
-        # Create workingDir, logs and extra paths. Here tmp folder is excluding
+        self.makeWorkingDir()
+
+    def cleanWorkingDir(self):
+        """
+        Delete all files and subdirectories related with the protocol
+        """
+        self.cleanTmp()
+        pwutils.cleanPath(self._getPath())
+
+    def makeWorkingDir(self):
+        # Create workingDir, logs and extra paths
+        paths = [self._getPath(), self._getExtraPath(), self._getLogsPath()]
         pwutils.makePath(*paths)
         # Create scratch if SCIPION_SCRATCH environment variable exist.
         # In other case, tmp folder is created
@@ -1305,7 +1312,6 @@ class Protocol(Step):
             os.remove(tmpFolder)
         else:
             pwutils.cleanPath(tmpFolder)
-
 
     def _run(self):
         # Check that a proper Steps executor have been set

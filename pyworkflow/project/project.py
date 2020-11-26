@@ -880,8 +880,7 @@ class Project(object):
             wd = prot.workingDir.get()
 
             if wd.startswith(PROJECT_RUNS):
-                prot.cleanTmp()
-                pwutils.path.cleanPath(wd)
+                prot.cleanWorkingDir()
             else:
                 print("Error path: ", wd)
 
