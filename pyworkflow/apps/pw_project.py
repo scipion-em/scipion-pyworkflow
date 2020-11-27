@@ -52,6 +52,11 @@ def openProject(projectName):
     # from the current directory
     if projName == 'here':
         cwd = Config.SCIPION_CWD
+
+        if " " in cwd:
+            print("Projects can't have spaces in the name: %s" % cwd)
+            sys.exit(1)
+
         print("\nYou are trying to create a project here:",
               pwutils.cyan(cwd))
 
@@ -66,7 +71,7 @@ def openProject(projectName):
             print("\nCreating project....")
             projName = os.path.basename(cwd)
             projDir = os.path.dirname(cwd)
-            proj = manager.createProject(projName, location=projDir)
+            manager.createProject(projName, location=projDir)
 
     elif projName == 'last':  # Get last project
         projects = manager.listProjects()

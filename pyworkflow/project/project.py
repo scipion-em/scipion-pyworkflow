@@ -1666,6 +1666,13 @@ class Project(object):
                                       pwutils.green("   %s -> %s" % (f, newFile)))
                                 pwutils.createAbsLink(newFile, f)
 
+    @staticmethod
+    def cleanProjectName(projectName):
+        """ Cleans a project name to avoid common errors
+        Use it whenever you want to get the final project name pyworkflow will endup.
+        Spaces will be replaced by _ """
+        return projectName.replace(" ", "_")
+
 
 class MissingProjectDbException(Exception):
     pass

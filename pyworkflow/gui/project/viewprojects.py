@@ -169,9 +169,9 @@ class ProjectsView(tk.Frame):
         return frame
 
     def createNewProject(self, projName, projLocation):
-        self.manager.createProject(projName, location=projLocation)
+        proj = self.manager.createProject(projName, location=projLocation)
         self.createProjectList(self.text)
-        self.openProject(projName)
+        self.openProject(proj.getShortName())
 
     def _onCreateProject(self, e=None):
         projWindow = ProjectCreateWindow("Create project", self)
@@ -250,29 +250,32 @@ class ProjectCreateWindow(Window):
         content.config(bg='white')
         content.grid(row=0, column=0, sticky='news', padx=5, pady=5)
 
+        # Info line
+        labelInfo = tk.Label(content, text="Spaces will be replaced by underscores!" , bg='white', bd=0)
+        labelInfo.grid(row=0, sticky=tk.W, padx=5, pady=5)
         #  Project name line
         labelName = tk.Label(content, text=Message.LABEL_PROJECT + ' name', bg='white', bd=0)
-        labelName.grid(row=0, sticky=tk.W, padx=5, pady=5)
+        labelName.grid(row=1, sticky=tk.W, padx=5, pady=5)
         entryName = tk.Entry(content, bg=cfgEntryBgColor, width=20, textvariable=self.projName)
-        entryName.grid(row=0, column=1, columnspan=2, sticky=tk.W, padx=5, pady=5)
+        entryName.grid(row=1, column=1, columnspan=2, sticky=tk.EW, padx=5, pady=5)
         entryName.bind("<Return>", self._create)
         entryName.bind("<KP_Enter>", self._create)
         # Project location line
         labelLocation = tk.Label(content, text=Message.LABEL_PROJECT + ' location', bg='white', bd=0)
-        labelLocation.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
+        labelLocation.grid(row=2, column=0, sticky='nw', padx=5, pady=5)
 
         self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40, textvariable=self.projLocation)
-        self.entryBrowse.grid(row=1, column=1, sticky='nw', padx=5, pady=5)
+        self.entryBrowse.grid(row=2, column=1, sticky='nw', padx=5, pady=5)
         self.btnBrowse = IconButton(content, 'Browse', Icon.ACTION_BROWSE,
                                     highlightthickness=0, command=self._browsePath)
-        self.btnBrowse.grid(row=1, column=2, sticky='e', padx=5, pady=5)
+        self.btnBrowse.grid(row=2, column=2, sticky='e', padx=5, pady=5)
 
         self.initial_focus = entryName
         self.initial_focus.focus()
 
         btnFrame = tk.Frame(content)
         btnFrame.columnconfigure(0, weight=1)
-        btnFrame.grid(row=2, column=0, sticky='sew', padx=5, pady=(0, 5), columnspan=2)
+        btnFrame.grid(row=3, column=0, sticky='sew', padx=5, pady=(0, 5), columnspan=2)
         btnFrame.config(bg='white')
 
         # Create buttons
