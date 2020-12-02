@@ -964,7 +964,10 @@ class Project(object):
                 matches.append((oKey, iKey))
             else:
                 for oKey, oAttr in node.run.iterOutputAttributes():
-                    if oAttr.getObjId() == iAttr.get().getObjId():
+                    # If node output is "real" and iAttr is still just a pointer
+                    # the iAttr.get() will return None
+                    pointed = iAttr.get()
+                    if pointed is not None and oAttr.getObjId() == pointed.getObjId():
                         matches.append((oKey, iKey))
 
         return matches

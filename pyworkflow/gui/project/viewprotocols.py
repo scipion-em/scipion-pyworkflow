@@ -1788,9 +1788,11 @@ class ProtocolsView(tk.Frame):
             self.outputViewer.clear()
             # Right now skip the err tab since we are redirecting
             # stderr to stdout
-            out, _, log = prot.getLogPaths()
+            out, _, log, schedule = prot.getLogPaths()
             self.outputViewer.addFile(out)
             self.outputViewer.addFile(log)
+            if os.path.exists(schedule):
+                self.outputViewer.addFile(schedule)
             self.outputViewer.setIndex(i)  # Preserve the last selected tab
             self.outputViewer.selectedText().goEnd()
             # when there are not logs, force re-load next time
@@ -2039,6 +2041,8 @@ class ProtocolsView(tk.Frame):
                     self._exportProtocols(defaultPath=browser.getCurrentDir(),
                                           defaultBasename=browser.getEntryValue())
             except Exception as ex:
+                import traceback
+                traceback.print_exc()
                 self.windows.showError(str(ex))
 
         browser = pwgui.browser.FileBrowserWindow(
@@ -2182,7 +2186,7 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_RESULTS:
                     self._analyzeResults(prot)
                 elif action == ACTION_EXPORT:
-                    self._exportProtocols()
+                    self._exportProtocols(defaultPath=pwutils.getHomePath())
                 elif action == ACTION_EXPORT_UPLOAD:
                     self._exportUploadProtocols()
                 elif action == ACTION_COLLAPSE:
