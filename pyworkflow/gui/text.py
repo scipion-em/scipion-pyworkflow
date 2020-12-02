@@ -66,7 +66,7 @@ elif os.name == 'posix':  # linux systems and so on
 
     def _open_cmd(path, tkParent=None):
         # If it is an url, open with browser.
-        if path.startswith('http://') or path.startswith('https://'):
+        if path.startswith('http://') or path.startswith('https://') or path.endswith('.html'):
             try:
                 webbrowser.open_new_tab(path)
                 return
