@@ -88,6 +88,9 @@ class Manager(object):
         confs dict can contains customs .conf files 
         for: menus, protocols, or hosts
         """
+        # Clean project name from undesired characters
+        projectName = Project.cleanProjectName(projectName)
+
         # If location is not None create project on it (if exists)
         if location is None:
             projectPath = self.getProjectPath(projectName)
