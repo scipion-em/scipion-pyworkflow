@@ -39,6 +39,8 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
 from .constants import *
 from .params import Form
 
+SCHEDULE_LOG = 'schedule.log'
+
 
 class Step(OrderedObject):
     """ Basic execution unit.
@@ -1432,7 +1434,10 @@ class Protocol(Step):
 
     def getLogPaths(self):
         return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', 'run.log']))
+                        ['run.stdout', 'run.stderr', 'run.log', SCHEDULE_LOG]))
+
+    def getScheduleLog(self):
+        return self._getLogsPath(SCHEDULE_LOG)
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
