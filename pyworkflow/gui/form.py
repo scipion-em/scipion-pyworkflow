@@ -2248,12 +2248,10 @@ class FormWindow(Window):
         except ModificationNotAllowedException as ex:
             self.showInfo("Modification not allowed.\n\n %s\n" % ex)
         except Exception as ex:
-            import traceback
-            traceStr = traceback.format_exc()
             action = "EXECUTE"
             if onlySave:
                 action = "SAVE"
-            self.showError("Error during %s: %s\n\nTraceback:\n%s" % (action, ex, traceStr))
+            self.showError("Error during %s: \n%s" % (action, ex), exception=ex)
 
     def getWidgetValue(self, protVar, param):
         widgetValue = ""

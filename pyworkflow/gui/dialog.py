@@ -29,7 +29,10 @@ Module to handling Dialogs
 some code was taken from tkSimpleDialog
 """
 import tkinter as tk
+import traceback
 from tkinter.colorchooser import askcolor as _askColor
+
+from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon
 from . import gui
 from .tree import BoundTree
@@ -239,13 +242,13 @@ def fillMessageText(text, message):
         lines = message.splitlines()
     text.setReadOnly(False)
     text.clear()
-    m = 0
+    w = 0
     for l in lines:
-        m = max(m, len(l))
+        w = max(w, len(l))
         text.addLine(l)
-    m = min(m + 5, 80)
+    w = min(w + 5, 80)
     h = min(len(lines) + 3, 30)
-    text.config(height=h, width=m)
+    text.config(height=h, width=w)
     text.addNewline()
     text.setReadOnly(True)
 
@@ -291,6 +294,34 @@ class MessageDialog(Dialog):
         self.image = gui.getImage(self.iconPath)
         createMessageBody(bodyFrame, self.msg, self.image)
 
+class ExceptionDialog(MessageDialog):
+    def __init__(self, *args, **kwargs):
+        self._exception = None if "exception" not in kwargs else kwargs['exception']
+        super().__init__(*args, **kwargs)
+
+    def body(self, bodyFrame):
+        super().body(bodyFrame)
+
+        def addTraceback(event):
+            detailsText = TaggedText(bodyFrame, bg='white', bd=0, highlightthickness=0)
+            traceStr = traceback.format_exc()
+            fillMessageText(detailsText, traceStr)
+            detailsText.frame.grid(row=row+1, column=0, columnspan=2, sticky='news', padx=5, pady=5)
+            event.widget.grid_forget()
+
+        row = 1
+        if self._exception:
+
+            if isinstance(self._exception, PyworkflowException):
+                helpUrl = self._exception.getUrl()
+                labelUrl = TaggedText(bodyFrame, bg='white', bd=0, highlightthickness=0)
+                fillMessageText(labelUrl,"Please go here for more details: %s" % helpUrl)
+                labelUrl.grid(row=row, column=0, columnspan=2, sticky='news')
+                row += 1
+
+            label = tk.Label(bodyFrame, text="Show details...", bg='white', bd=0)
+            label.grid(row=row, column=0, columnspan=2, sticky='news')
+            label.bind("<Button-1>", addTraceback)
 
 class YesNoDialog(MessageDialog):
     """Ask a question with YES/NO answer"""
@@ -482,8 +513,8 @@ def showWarning(title, msg, parent):
     MessageDialog(parent, title, msg, 'fa-exclamation-triangle_alert.gif')
 
 
-def showError(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-times-circle_alert.gif')
+def showError(title, msg, parent, exception=None):
+    ExceptionDialog(parent, title, msg, 'fa-times-circle_alert.gif', exception=exception)
 
 
 def askString(title, label, parent, entryWidth=20, defaultValue='', headerLabel=None):

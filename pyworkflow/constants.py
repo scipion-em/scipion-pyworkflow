@@ -63,6 +63,7 @@ SCIPION_PYTHON = 'SCIPION_PYTHON'
 SCIPION_PYTHON_DEFAULT = 'python3'
 SCIPION_HOME_VAR = 'SCIPION_HOME'
 SCIPION_TESTS = 'SCIPION_TESTS'
+SCIPION_SCRATCH = 'SCIPION_SCRATCH'
 
 # NOTES CONSTANTS
 SCIPION_NOTES_FILE = 'SCIPION_NOTES_FILE'
@@ -100,3 +101,10 @@ TK_GRAY_DEFAULT = '#d9d9d9'
 SCIPION_TESTS_CMD = 'SCIPION_TESTS_CMD'
 CONDA_ACTIVATION_CMD_VAR = 'CONDA_ACTIVATION_CMD'
 VIEWERS = 'VIEWERS'
+
+class DOCSITEURLS:
+    """Documentation site URL usefull when exceptions happens and you want to point to some pages"""
+    HOME = 'https://scipion-em.github.io/docs/'
+    CONFIG = HOME + 'docs/scipion-modes/scipion-configuration.html'
+    CONFIG_SECTION = CONFIG + '#%s'
+    CONTACTUS = 'http://scipion.i2pc.es/contact'

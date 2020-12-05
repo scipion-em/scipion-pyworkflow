@@ -62,11 +62,11 @@ elif os.name == 'posix':  # linux systems and so on
 
     x_open = find_prog('xdg-open', 'gnome-open', 'kde-open', 'gvfs-open')
     editor = find_prog('pluma', 'gedit', 'kwrite', 'geany', 'kate',
-                       'emacs', 'nedit', 'mousepad')
+                       'emacs', 'nedit', 'mousepad', 'code')
 
     def _open_cmd(path, tkParent=None):
         # If it is an url, open with browser.
-        if path.startswith('http://') or path.startswith('https://'):
+        if path.startswith('http://') or path.startswith('https://') or path.endswith('.html'):
             try:
                 webbrowser.open_new_tab(path)
                 return

@@ -25,12 +25,12 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-import shutil
 import sys
 import json
 import time
 
 import pyworkflow as pw
+from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import ScipionLogger
@@ -195,7 +195,7 @@ class Step(OrderedObject):
                     status = STATUS_FINISHED
                 self.status.set(status)
 
-        except ValidationException as e:
+        except PyworkflowException as e:
             print(pwutils.redStr(str(e)))
             self.setFailed(str(e))
         except Exception as e:
@@ -2311,10 +2311,6 @@ def isProtocolUpToDate(protocol):
               % (protocol, protTS, protocol, dbTS))
     else:
         return protTS > dbTS
-
-
-class ValidationException(Exception):
-    pass
 
 
 class ProtImportBase(Protocol):
