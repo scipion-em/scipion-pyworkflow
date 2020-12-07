@@ -81,10 +81,13 @@ class Domain:
         m._bibtex = {}
         bib = cls.__getSubmodule(name, 'bibtex')
         if bib is not None:
-            try:
-                m._bibtex = pwutils.parseBibTex(bib.__doc__)
-            except Exception:
-                pass
+            if hasattr(bib, "_bibtex"):
+                print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
+            else:
+                try:
+                    m._bibtex = pwutils.LazyDict(lambda :pwutils.parseBibTex(bib.__doc__))
+                except Exception:
+                    pass
         cls._plugins[name] = m  # Register the name to as a plugin
 
     @classmethod
