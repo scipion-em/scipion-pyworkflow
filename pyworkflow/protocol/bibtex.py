@@ -25,11 +25,6 @@
 # *
 # **************************************************************************
 """
-Bibtex string file for Scipion package.
-"""
-
-_bibtexStr = """
-
 @article{delaRosaTrevin201693,
 title = "Scipion: A software framework toward integration, reproducibility and validation in 3D electron microscopy ",
 journal = "Journal of Structural Biology",
@@ -51,7 +46,3 @@ keywords = "Reproducibility "
 }
 """
 
-
-from pyworkflow.utils import parseBibTex
-
-_bibtex = parseBibTex(_bibtexStr)  
