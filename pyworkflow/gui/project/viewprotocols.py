@@ -1032,7 +1032,7 @@ class ProtocolsView(tk.Frame):
             viewKey = currentView
         else:
             viewKey = self.getProtocolViews()[0]
-            self.settings.setProtocolView(viewKey)
+            self.project.settings.setProtocolView(viewKey)
             if currentView is not None:
                 print("PROJECT: Warning, protocol view '%s' not found." % currentView)
                 print("         Using '%s' instead." % viewKey)
