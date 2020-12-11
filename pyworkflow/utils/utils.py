@@ -29,6 +29,7 @@ from datetime import datetime
 import traceback
 from enum import Enum
 
+import bibtexparser
 import numpy as np
 import math
 
@@ -427,7 +428,7 @@ PATTERN_BOLD = "(^|[\s])[*](?P<bold>[^\s*][^*]*[^\s*]|[^\s*])[*]"
 # PATTERN_BOLD = r"[\s]+[*]([^\s][^*]+[^\s])[*][\s]+"
 PATTERN_ITALIC = "(^|[\s])[_](?P<italic>[^\s_][^_]*[^\s_]|[^\s_])[_]"
 # PATTERN_ITALIC = r"[\s]+[_]([^\s][^_]+[^\s])[_][\s]+"
-PATTERN_LINK1 = '(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
+PATTERN_LINK1 = '(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+#]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
 PATTERN_LINK2 = "[\[]{2}(?P<link2>[^\s][^\]]+[^\s])[\]][\[](?P<link2_label>[^\s][^\]]+[^\s])[\]]{2}"
 # __PATTERN_LINK2 should be first since it could contain __PATTERN_LINK1
 PATTERN_ALL = '|'.join([PATTERN_BOLD, PATTERN_ITALIC, PATTERN_LINK2, PATTERN_LINK1])
@@ -475,24 +476,43 @@ def parseHyperText(text, matchCallback):
 #
 #    return text
 
+class LazyDict(object):
+    """ Dictionary to be initialized in the moment it is accessed for the first time.
+    Initialization is done by a callback passed at instantiation"""
+    def __init__(self, callback=dict):
+        """ :param callback: method to initialize the dictionary. SHould return a dictionary"""
+        self.data = None
+        self.callback = callback
+
+    def evaluate_callback(self):
+        self.data = self.callback()
+
+    def __getitem__(self, name):
+        if self.data is None:
+            self.evaluate_callback()
+        return self.data.__getitem__(name)
+
+    def __setitem__(self, name, value):
+        if self.data is None:
+            self.evaluate_callback()
+        return self.data.__setitem__(name, value)
+
+    def __getattr__(self, name):
+        if self.data is None:
+            self.evaluate_callback()
+        return getattr(self.data, name)
+
+    def __iter__(self):
+        if self.data is None:
+            self.evaluate_callback()
+        return self.data.__iter__()
+
 
 def parseBibTex(bibtexStr):
     """ Parse a bibtex file and return a dictionary. """
-    import bibtexparser
 
-    if hasattr(bibtexparser, 'loads'):
-        return bibtexparser.loads(bibtexStr).entries_dict
+    return bibtexparser.loads(bibtexStr).entries_dict
 
-    # For older bibtexparser version 0.5
-    from bibtexparser.bparser import BibTexParser
-    from io import StringIO
-
-    f = StringIO()
-    f.write(bibtexStr)
-    f.seek(0, 0)
-    parser = BibTexParser(f)
-
-    return parser.bib_database.get_entry_dict()
 
 
 def isPower2(num):
@@ -512,7 +532,7 @@ def getListFromRangeString(rangeStr):
     "2 5, 6-8" -> [2,5,6,7,8]
     """
     # Split elements by command or space
-    elements = re.split(',| ', rangeStr)
+    elements = re.split(',|\s', rangeStr)
     values = []
     for e in elements:
         if '-' in e:

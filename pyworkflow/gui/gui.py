@@ -449,9 +449,13 @@ class Window:
         # TODO: have a proper model instead of a tuple?
         cls._pluginMenus.append((label, callback, icon))
 
-    def showError(self, msg, header="Error"):
+    def showError(self, msg, header="Error", exception=None):
+        """Pops up a dialog with the error message
+        :param msg Message to display
+        :param header Title of the dialog
+        :param exception: Optional. exception associated"""
         from .dialog import showError
-        showError(header, msg, self.root)
+        showError(header, msg, self.root, exception=exception)
 
     def showInfo(self, msg, header="Info"):
         from .dialog import showInfo

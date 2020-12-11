@@ -22,7 +22,9 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from configparser import ConfigParser
 
+from pyworkflow.project import MenuConfig
 from pyworkflow import Config
 
 INIT_REFRESH_SECONDS = 3
@@ -44,7 +46,6 @@ import pyworkflow.object as pwobj
 import pyworkflow.utils as pwutils
 import pyworkflow.protocol as pwprot
 import pyworkflow.gui as pwgui
-from pyworkflow.project import ProtocolTreeConfig
 from pyworkflow.gui.dialog import askColor, FloatingMessage
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
 from pyworkflow.utils.properties import Message, Icon, Color, KEYSYM
@@ -592,6 +593,7 @@ class ProtocolsView(tk.Frame):
     """
 
     RUNS_CANVAS_NAME = "runs_canvas"
+    _protocolViews = None
 
     def __init__(self, parent, windows, **args):
         tk.Frame.__init__(self, parent, **args)
@@ -601,7 +603,7 @@ class ProtocolsView(tk.Frame):
         self.domain = self.project.getDomain()
         self.root = windows.root
         self.getImage = windows.getImage
-        self.protCfg = windows.protCfg
+        self.protCfg = self.getCurrentProtocolView()
         self.settings = windows.getSettings()
         self.runsView = self.settings.getRunsView()
         self._loadSelection()
@@ -999,7 +1001,7 @@ class ProtocolsView(tk.Frame):
         comboFrame = tk.Frame(parent, bg=bgColor)
         tk.Label(comboFrame, text='View', bg=bgColor).grid(row=0, column=0,
                                                            padx=(0, 5), pady=5)
-        choices = self.project.getProtocolViews()
+        choices = self.getProtocolViews()
         initialChoice = self.settings.getProtocolView()
         combo = pwgui.widgets.ComboBox(comboFrame, choices=choices,
                                        initial=initialChoice)
@@ -1013,13 +1015,47 @@ class ProtocolsView(tk.Frame):
         t.after(3000, self._automaticRefreshRuns)
         self.protTree = t
 
+    def getProtocolViews(self):
+
+        if self._protocolViews is None:
+            self._loadProtocols()
+
+        return list(self._protocolViews.keys())
+
+    def getCurrentProtocolView(self):
+        """ Select the view that is currently selected.
+        Read from the settings the last selected view
+        and get the information from the self._protocolViews dict.
+        """
+        currentView = self.project.getProtocolView()
+        if currentView in self.getProtocolViews():
+            viewKey = currentView
+        else:
+            viewKey = self.getProtocolViews()[0]
+            self.project.settings.setProtocolView(viewKey)
+            if currentView is not None:
+                print("PROJECT: Warning, protocol view '%s' not found." % currentView)
+                print("         Using '%s' instead." % viewKey)
+
+        return self._protocolViews[viewKey]
+
+    def _loadProtocols(self):
+        """ Load protocol configuration from a .conf file. """
+        # If the host file is not passed as argument...
+        configProtocols = Config.SCIPION_PROTOCOLS
+
+        localDir = Config.SCIPION_LOCAL_CONFIG
+        protConf = os.path.join(localDir, configProtocols)
+        self._protocolViews = ProtocolTreeConfig.load(self.project.getDomain(),
+                                                      protConf)
+
     def _onSelectProtocols(self, combo):
         """ This function will be called when a protocol menu
         is selected. The index of the new menu is passed. 
         """
         protView = combo.getText()
         self.settings.setProtocolView(protView)
-        self.protCfg = self.project.getCurrentProtocolView()
+        self.protCfg = self.getCurrentProtocolView()
         self.updateProtocolsTree(self.protCfg)
 
     def populateTree(self, tree, treeItems, prefix, obj, subclassedDict, level=0):
@@ -1788,9 +1824,11 @@ class ProtocolsView(tk.Frame):
             self.outputViewer.clear()
             # Right now skip the err tab since we are redirecting
             # stderr to stdout
-            out, _, log = prot.getLogPaths()
+            out, _, log, schedule = prot.getLogPaths()
             self.outputViewer.addFile(out)
             self.outputViewer.addFile(log)
+            if os.path.exists(schedule):
+                self.outputViewer.addFile(schedule)
             self.outputViewer.setIndex(i)  # Preserve the last selected tab
             self.outputViewer.selectedText().goEnd()
             # when there are not logs, force re-load next time
@@ -2039,6 +2077,8 @@ class ProtocolsView(tk.Frame):
                     self._exportProtocols(defaultPath=browser.getCurrentDir(),
                                           defaultBasename=browser.getEntryValue())
             except Exception as ex:
+                import traceback
+                traceback.print_exc()
                 self.windows.showError(str(ex))
 
         browser = pwgui.browser.FileBrowserWindow(
@@ -2182,7 +2222,7 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_RESULTS:
                     self._analyzeResults(prot)
                 elif action == ACTION_EXPORT:
-                    self._exportProtocols()
+                    self._exportProtocols(defaultPath=pwutils.getHomePath())
                 elif action == ACTION_EXPORT_UPLOAD:
                     self._exportUploadProtocols()
                 elif action == ACTION_COLLAPSE:
@@ -2456,3 +2496,242 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             # show attributes for objects and items for lists and tuples 
             if isBelowMaxDeep and isNew and isIterable(obj[i]):
                 recursivePrint(obj[i], prefix, isFirstOrLast)
+
+
+class ProtocolTreeConfig:
+    """ Handler class that groups functions and constants
+    related to the protocols tree configuration.
+    """
+    ALL_PROTOCOLS = "All"
+    TAG_PROTOCOL_DISABLED = 'protocol-disabled'
+    TAG_PROTOCOL = 'protocol'
+    TAG_SECTION = 'section'
+    TAG_PROTOCOL_GROUP = 'protocol_group'
+    PLUGIN_CONFIG_PROTOCOLS = 'protocols.conf'
+
+    @classmethod
+    def getProtocolTag(cls, isInstalled):
+        """ Return the proper tag depending if the protocol is installed or not.
+        """
+        return cls.TAG_PROTOCOL if isInstalled else cls.TAG_PROTOCOL_DISABLED
+
+    @classmethod
+    def isAFinalProtocol(cls, v, k):
+        if (issubclass(v, ProtocolViewer) or
+                v.isBase() or v.isDisabled()):
+            return False
+
+        return v.__name__ == k
+
+    @classmethod
+    def __addToTree(cls, menu, item, checkFunction=None):
+        """ Helper function to recursively add items to a menu.
+        Add item (a dictionary that can contain more dictionaries) to menu
+        If check function is added will use it to check if the value must be added.
+        """
+        children = item.pop('children', [])
+
+        if checkFunction is not None:
+            add = checkFunction(item)
+            if not add:
+                return
+        subMenu = menu.addSubMenu(**item)  # we expect item={'text': ...}
+        for child in children:
+            cls.__addToTree(subMenu, child, checkFunction)  # add recursively to sub-menu
+
+        return subMenu
+
+    @classmethod
+    def __inSubMenu(cls, child, subMenu):
+        """
+        Return True if child belongs to subMenu
+        """
+        for ch in subMenu:
+            if child['tag'] == cls.TAG_PROTOCOL:
+                if not ch.value.empty() and ch.value == child['value']:
+                    return ch
+            elif ch.text == child['text']:
+                return ch
+        return None
+
+    @classmethod
+    def _orderSubMenu(cls, session):
+        """
+        Order all children of a given session:
+        The protocols first, then the sessions(the 'more' session at the end)
+        """
+        lengthSession = len(session.childs)
+        if lengthSession > 1:
+            childs = session.childs
+            lastChildPos = lengthSession - 1
+            if childs[lastChildPos].tag == cls.TAG_PROTOCOL:
+                for i in range(lastChildPos - 1, -1, -1):
+                    if childs[i].tag == cls.TAG_PROTOCOL:
+                        break
+                    else:
+                        tmp = childs[i + 1]
+                        childs[i + 1] = childs[i]
+                        childs[i] = tmp
+            else:
+                for i in range(lastChildPos - 1, -1, -1):
+                    if childs[i].tag == cls.TAG_PROTOCOL:
+                        break
+                    elif 'more' in str(childs[i].text).lower():
+                        tmp = childs[i + 1]
+                        childs[i + 1] = childs[i]
+                        childs[i] = tmp
+
+    @classmethod
+    def __findTreeLocation(cls, subMenu, children, parent):
+        """
+        Locate the protocol position in the given view
+        """
+        for child in children:
+            sm = cls.__inSubMenu(child, subMenu)
+            if sm is None:
+                cls.__addToTree(parent, child, cls.__checkItem)
+                cls._orderSubMenu(parent)
+            elif child['tag'] == cls.TAG_PROTOCOL_GROUP or child['tag'] == cls.TAG_SECTION:
+                cls.__findTreeLocation(sm.childs, child['children'], sm)
+
+    @classmethod
+    def __checkItem(cls, item):
+        """ Function to check if the protocol has to be added or not.
+        Params:
+            item: {"tag": "protocol", "value": "ProtImportMovies",
+                   "text": "import movies"}
+        """
+        if item["tag"] != cls.TAG_PROTOCOL:
+            return True
+
+        # It is a protocol as this point, get the class name and
+        # check if it is disabled
+        protClassName = item["value"]
+        protClass = Config.getDomain().getProtocols().get(protClassName)
+
+        return False if protClass is None else not protClass.isDisabled()
+
+    @classmethod
+    def __addAllProtocols(cls, domain, protocols):
+        # Add all protocols
+        allProts = domain.getProtocols()
+
+        # Sort the dictionary
+        allProtsSorted = OrderedDict(sorted(allProts.items(),
+                                            key=lambda e: e[1].getClassLabel()))
+        allProtMenu = ProtocolConfig(cls.ALL_PROTOCOLS)
+        packages = {}
+
+        # Group protocols by package name
+        for k, v in allProtsSorted.items():
+            if cls.isAFinalProtocol(v, k):
+                packageName = v.getClassPackageName()
+                # Get the package submenu
+                packageMenu = packages.get(packageName)
+
+                # If no package menu available
+                if packageMenu is None:
+                    # Add it to the menu ...
+                    packageLine = {"tag": "package", "value": packageName,
+                                   "text": packageName}
+                    packageMenu = cls.__addToTree(allProtMenu, packageLine)
+
+                    # Store it in the dict
+                    packages[packageName] = packageMenu
+
+                # Add the protocol
+                tag = cls.getProtocolTag(v.isInstalled())
+
+                protLine = {"tag": tag, "value": k,
+                            "text": v.getClassLabel(prependPackageName=False)}
+
+                # If it's a new protocol
+                if v.isNew() and v.isInstalled():
+                    # add the new icon
+                    protLine["icon"] = "newProt.gif"
+
+                cls.__addToTree(packageMenu, protLine)
+
+        protocols[cls.ALL_PROTOCOLS] = allProtMenu
+
+    @classmethod
+    def __addProtocolsFromConf(cls, protocols, protocolsConfPath):
+        """
+        Load the protocols in the tree from a given protocols.conf file,
+        either the global one in Scipion or defined in a plugin.
+        """
+        # Populate the protocols menu from the plugin config file.
+        if os.path.exists(protocolsConfPath):
+            cp = ConfigParser()
+            cp.optionxform = str  # keep case
+            cp.read(protocolsConfPath)
+            #  Ensure that the protocols section exists
+            if cp.has_section('PROTOCOLS'):
+                for menuName in cp.options('PROTOCOLS'):
+                    if menuName not in protocols:  # The view has not been inserted
+                        menu = ProtocolConfig(menuName)
+                        children = json.loads(cp.get('PROTOCOLS', menuName))
+                        for child in children:
+                            cls.__addToTree(menu, child, cls.__checkItem)
+                        protocols[menuName] = menu
+                    else:  # The view has been inserted
+                        menu = protocols.get(menuName)
+                        children = json.loads(cp.get('PROTOCOLS',
+                                                     menuName))
+                        cls.__findTreeLocation(menu.childs, children, menu)
+
+    @classmethod
+    def load(cls, domain, protocolsConf):
+        """ Read the protocol configuration from a .conf file similar to the
+        one in scipion/config/protocols.conf,
+        which is the default one when no file is passed.
+        """
+        protocols = OrderedDict()
+        # Read the protocols.conf from Scipion (base) and create an initial
+        # tree view
+        cls.__addProtocolsFromConf(protocols, protocolsConf)
+
+        # Read the protocols.conf of any installed plugin
+        pluginDict = domain.getPlugins()
+        pluginList = pluginDict.keys()
+        for pluginName in pluginList:
+            try:
+
+                # if the plugin has a path
+                if pwutils.isModuleAFolder(pluginName):
+                    # Locate the plugin protocols.conf file
+                    protocolsConfPath = os.path.join(
+                        pluginDict[pluginName].__path__[0],
+                        cls.PLUGIN_CONFIG_PROTOCOLS)
+                    cls.__addProtocolsFromConf(protocols, protocolsConfPath)
+
+            except Exception as e:
+                print('Failed to read settings. The reported error was:\n  %s\n'
+                      'To solve it, fix %s and run again.' % (
+                          e, os.path.abspath(protocolsConfPath)))
+
+            # Add all protocols to All view
+        cls.__addAllProtocols(Config.getDomain(), protocols)
+
+        return protocols
+
+
+class ProtocolConfig(MenuConfig):
+    """Store protocols configuration """
+
+    def __init__(self, text=None, value=None, **args):
+        MenuConfig.__init__(self, text, value, **args)
+        if 'openItem' not in args:
+            self.openItem.set(self.tag.get() != 'protocol_base')
+
+    def addSubMenu(self, text, value=None, shortCut=None, **args):
+        if 'icon' not in args:
+            tag = args.get('tag', None)
+            if tag == 'protocol':
+                args['icon'] = 'python_file.gif'
+            elif tag == 'protocol_base':
+                args['icon'] = 'class_obj.gif'
+
+        args['shortCut'] = shortCut
+        return MenuConfig.addSubMenu(self, text, value, **args)
+

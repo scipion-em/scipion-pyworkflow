@@ -27,6 +27,7 @@
 
 import sys
 import os
+import time
 
 import pyworkflow as pw
 from pyworkflow.project import Manager
@@ -91,6 +92,8 @@ for prot in runs:
     if (protClassName not in sys.argv[3:] and
             protLabelName not in sys.argv[3:]):
         project.scheduleProtocol(prot)
+        # Wait 1 seconds to avoid concurrent activity
+        time.sleep(0.7)
     else:
         print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
                               % (protClassName, protLabelName)))

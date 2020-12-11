@@ -100,7 +100,6 @@ class Project(object):
         self.settings = None
         # Host configuration
         self._hosts = None
-        self._protocolViews = None
         #  Creation time should be stored in project.sqlite when the project
         # is created and then loaded with other properties from the database
         self._creationTime = None
@@ -246,7 +245,6 @@ class Project(object):
             self._loadHosts(hostsConf)
 
             if loadAllConfig:
-                self._loadProtocols(protocolsConf)
 
                 # FIXME: Handle settings argument here
 
@@ -331,26 +329,6 @@ class Project(object):
 
         self._hosts = pwprot.HostConfig.load(hostsFile)
 
-    def _loadProtocols(self, protocolsConf):
-        """ Load protocol configuration from a .conf file. """
-        # If the host file is not passed as argument...
-        configProtocols = pw.Config.SCIPION_PROTOCOLS
-        projProtConf = self.getPath(PROJECT_CONFIG, configProtocols)
-
-        if protocolsConf is None:
-            # Try first to read it from the project file .config/hosts.conf
-            if os.path.exists(projProtConf):
-                protConf = projProtConf
-            else:
-                localDir = pw.Config.SCIPION_LOCAL_CONFIG
-                protConf = os.path.join(localDir, configProtocols)
-        else:
-            pwutils.copyFile(protocolsConf, projProtConf)
-            protConf = protocolsConf
-
-        self._protocolViews = config.ProtocolTreeConfig.load(self.getDomain(),
-                                                             protConf)
-
     def getHostNames(self):
         """ Return the list of host name in the project. """
         return list(self._hosts.keys())
@@ -365,25 +343,9 @@ class Project(object):
 
         return self._hosts[hostKey]
 
-    def getProtocolViews(self):
-        return list(self._protocolViews.keys())
-
-    def getCurrentProtocolView(self):
-        """ Select the view that is currently selected.
-        Read from the settings the last selected view
-        and get the information from the self._protocolViews dict.
-        """
-        currentView = self.settings.getProtocolView()
-        if currentView in self._protocolViews:
-            viewKey = currentView
-        else:
-            viewKey = self.getProtocolViews()[0]
-            self.settings.setProtocolView(viewKey)
-            if currentView is not None:
-                print("PROJECT: Warning, protocol view '%s' not found." % currentView)
-                print("         Using '%s' instead." % viewKey)
-
-        return self._protocolViews[viewKey]
+    def getProtocolView(self):
+        """ Returns de view selected in the tree when it was persisted"""
+        return self.settings.getProtocolView()
 
     def create(self, runsView=1, readOnly=False, hostsConf=None,
                protocolsConf=None):
@@ -409,7 +371,6 @@ class Project(object):
             pwutils.path.makePath(p)
 
         self._loadHosts(hostsConf)
-        self._loadProtocols(protocolsConf)
 
     def _storeCreationTime(self, creationTime):
         """ Store the creation time in the project db. """
@@ -880,7 +841,7 @@ class Project(object):
             wd = prot.workingDir.get()
 
             if wd.startswith(PROJECT_RUNS):
-                pwutils.path.cleanPath(wd)
+                prot.cleanWorkingDir()
             else:
                 print("Error path: ", wd)
 
@@ -964,7 +925,10 @@ class Project(object):
                 matches.append((oKey, iKey))
             else:
                 for oKey, oAttr in node.run.iterOutputAttributes():
-                    if oAttr.getObjId() == iAttr.get().getObjId():
+                    # If node output is "real" and iAttr is still just a pointer
+                    # the iAttr.get() will return None
+                    pointed = iAttr.get()
+                    if pointed is not None and oAttr.getObjId() == pointed.getObjId():
                         matches.append((oKey, iKey))
 
         return matches
@@ -1303,13 +1267,19 @@ class Project(object):
         if not self.openedAsReadOnly():
             self._storeProtocol(protocol)  # Store first to get a proper id
             # Set important properties of the protocol
-            workingDir = "%06d_%s" % (
-                protocol.getObjId(), protocol.getClassName())
+            workingDir = self.getProtWorkingDir(protocol)
             self._setProtocolMapper(protocol)
 
             protocol.setWorkingDir(self.getPath(PROJECT_RUNS, workingDir))
             # Update with changes
             self._storeProtocol(protocol)
+
+    @staticmethod
+    def getProtWorkingDir(protocol):
+        """
+        Return the protocol working directory
+        """
+        return "%06d_%s" % (protocol.getObjId(), protocol.getClassName())
 
     def getRuns(self, iterate=False, refresh=True, checkPids=False):
         """ Return the existing protocol runs in the project. 
@@ -1665,6 +1635,13 @@ class Project(object):
                                 print("  Found file %s, creating link..." % newFile,
                                       pwutils.green("   %s -> %s" % (f, newFile)))
                                 pwutils.createAbsLink(newFile, f)
+
+    @staticmethod
+    def cleanProjectName(projectName):
+        """ Cleans a project name to avoid common errors
+        Use it whenever you want to get the final project name pyworkflow will endup.
+        Spaces will be replaced by _ """
+        return projectName.replace(" ", "_")
 
 
 class MissingProjectDbException(Exception):

@@ -387,6 +387,15 @@ class PluginStates:
     ERRORS = 'errors'
 
 
+class PluginInformation:
+    PLUGIN_URL = 'pluginURL'
+    PLUGIN_NAME = 'pluginName'
+    PLUGIN_VERSION = 'pluginVersion'
+    PLUGIN_RELEASE_DATE = 'pluginUploadedDate'
+    PLUGIN_DESCRIPTION = 'pluginDescription'
+    PLUGIN_AUTHORS = 'pluginAuthor'
+
+
 # To get font awesome icons into png use: http://fa2png.io/
 class Icon:
     # Project Content Template
@@ -459,6 +468,12 @@ class Icon:
     DELETE_OPERATION = 'fa-delete-operation.gif'
     TO_UPDATE = 'fa-update.gif'
     ACTION_UNDO = 'fa-undo.gif'
+
+    PLUGIN_AUTHORS = 'users.gif'
+    PLUGIN_DESCRIPTION = 'file_stack.gif'
+    PLUGIN_RELEASE_DATE = 'fa-upload.gif'
+    PLUGIN_VERSION = 'file_vol.gif'
+    PLUGIN_PACKAGE = 'file_folder.gif'
 
 
 class Color:

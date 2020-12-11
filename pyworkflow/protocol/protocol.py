@@ -25,12 +25,12 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-
 import sys
 import json
 import time
 
 import pyworkflow as pw
+from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import ScipionLogger
@@ -38,6 +38,8 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
 from .params import Form
+
+SCHEDULE_LOG = 'schedule.log'
 
 
 class Step(OrderedObject):
@@ -195,7 +197,7 @@ class Step(OrderedObject):
                     status = STATUS_FINISHED
                 self.status.set(status)
 
-        except ValidationException as e:
+        except PyworkflowException as e:
             print(pwutils.redStr(str(e)))
             self.setFailed(str(e))
         except Exception as e:
@@ -1280,21 +1282,38 @@ class Protocol(Step):
         if in RESTART mode.
         """
         # Clean working path if in RESTART mode
-        paths = [self._getPath(), self._getExtraPath(), self._getTmpPath(),
-                 self._getLogsPath()]
-
         if self.runMode == MODE_RESTART:
-            pwutils.cleanPath(*paths)
+            self.cleanWorkingDir()
             self.__deleteOutputs()
             # Delete the relations created by this protocol
             # (delete this in both project and protocol db)
             self.mapper.deleteRelations(self)
-        # Create workingDir, extra and tmp paths
+        self.makeWorkingDir()
+
+    def cleanWorkingDir(self):
+        """
+        Delete all files and subdirectories related with the protocol
+        """
+        self.cleanTmp()
+        pwutils.cleanPath(self._getPath())
+
+    def makeWorkingDir(self):
+        # Create workingDir, logs and extra paths
+        paths = [self._getPath(), self._getExtraPath(), self._getLogsPath()]
         pwutils.makePath(*paths)
+        # Create scratch if SCIPION_SCRATCH environment variable exist.
+        # In other case, tmp folder is created
+        pwutils.makeTmpPath(self)
 
     def cleanTmp(self):
         """ Delete all files and subdirectories under Tmp folder. """
-        pwutils.cleanPattern(self._getTmpPath('*'))
+        tmpFolder = self._getTmpPath()
+
+        if os.path.islink(tmpFolder):
+            pwutils.cleanPath(os.path.realpath(tmpFolder))
+            os.remove(tmpFolder)
+        else:
+            pwutils.cleanPath(tmpFolder)
 
     def _run(self):
         # Check that a proper Steps executor have been set
@@ -1415,7 +1434,10 @@ class Protocol(Step):
 
     def getLogPaths(self):
         return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', 'run.log']))
+                        ['run.stdout', 'run.stderr', 'run.log', SCHEDULE_LOG]))
+
+    def getScheduleLog(self):
+        return self._getLogsPath(SCHEDULE_LOG)
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
@@ -2294,10 +2316,6 @@ def isProtocolUpToDate(protocol):
               % (protocol, protTS, protocol, dbTS))
     else:
         return protTS > dbTS
-
-
-class ValidationException(Exception):
-    pass
 
 
 class ProtImportBase(Protocol):

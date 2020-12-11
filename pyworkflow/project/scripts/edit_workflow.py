@@ -69,7 +69,7 @@ manager = Manager(workspace=customUserData)
 
 projName = os.path.basename(jsonFn)
 proj = manager.createProject(projName)
-projPath = manager.getProjectPath(projName)
+projPath = manager.getProjectPath(proj.getShortName())
 proj.loadProtocols(jsonFn)
 
 

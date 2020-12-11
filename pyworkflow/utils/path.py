@@ -33,6 +33,9 @@ import sys
 from glob import glob
 import datetime
 
+from pyworkflow import SCIPION_SCRATCH, DOCSITEURLS
+from pyworkflow.exceptions import PyworkflowException
+from pyworkflow.config import Config
 
 ROOT = "/"
 
@@ -152,6 +155,30 @@ def makePath(*paths):
     for p in paths:
         if not os.path.exists(p) and len(p):
             os.makedirs(p)
+
+
+def makeTmpPath(protocol):
+    """
+    Create the scratch folder if SCIPION_SCRATCH variable is defined into the
+    Scipion config, i.o.c create tmp folder
+    """
+    tmpPath = protocol._getTmpPath()
+    if not os.path.exists(tmpPath) and len(tmpPath):
+        scratchPath = Config.SCIPION_SCRATCH
+
+        if scratchPath is None:  # Case when SCIPION_SCRATCH doesn't exist. TMP folder is created
+            os.makedirs(tmpPath)
+        else:
+            try:
+                project = protocol.getProject()
+                folderId = "_".join([project.getShortName(),project.getProtWorkingDir(protocol)])
+                tmpScratchFolder = os.path.join(scratchPath, folderId)
+                os.makedirs(tmpScratchFolder)  # Create scratch folder
+                createAbsLink(tmpScratchFolder, tmpPath)
+
+            except Exception as e:
+                raise PyworkflowException("Couldn't create the temporary folder %s at:\n %s\nPlease, review %s variable." %
+                                (folderId, scratchPath, SCIPION_SCRATCH), url=DOCSITEURLS.CONFIG_SECTION % "scratch-folder") from e
 
 
 def makeFilePath(*files):

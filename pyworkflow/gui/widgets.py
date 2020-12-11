@@ -148,6 +148,12 @@ class Scrollable(object):
         widget.bind("<Button-4>", self.scroll)
         widget.bind("<Button-5>", self.scroll)
 
+    def getVScroll(self):
+        return self.vscroll.get()
+
+    def getHScroll(self):
+        return self.hscroll.get()
+
 
 class ExplanationText(tk.Text):
     """Create an explanation text box"""
