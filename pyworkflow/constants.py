@@ -102,6 +102,7 @@ SCIPION_TESTS_CMD = 'SCIPION_TESTS_CMD'
 CONDA_ACTIVATION_CMD_VAR = 'CONDA_ACTIVATION_CMD'
 VIEWERS = 'VIEWERS'
 
+
 class DOCSITEURLS:
     """Documentation site URL usefull when exceptions happens and you want to point to some pages"""
     HOME = 'https://scipion-em.github.io/docs/'

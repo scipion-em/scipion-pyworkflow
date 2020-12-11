@@ -488,23 +488,25 @@ class LazyDict(object):
         self.data = self.callback()
 
     def __getitem__(self, name):
-        if (self.data is None):
+        if self.data is None:
             self.evaluate_callback()
         return self.data.__getitem__(name)
 
     def __setitem__(self, name, value):
-        if (self.data is None):
+        if self.data is None:
             self.evaluate_callback()
         return self.data.__setitem__(name, value)
 
     def __getattr__(self, name):
-        if (self.data is None):
+        if self.data is None:
             self.evaluate_callback()
         return getattr(self.data, name)
+
     def __iter__(self):
-        if (self.data is None):
+        if self.data is None:
             self.evaluate_callback()
         return self.data.__iter__()
+
 
 def parseBibTex(bibtexStr):
     """ Parse a bibtex file and return a dictionary. """
@@ -530,7 +532,7 @@ def getListFromRangeString(rangeStr):
     "2 5, 6-8" -> [2,5,6,7,8]
     """
     # Split elements by command or space
-    elements = re.split(',| ', rangeStr)
+    elements = re.split(',|\s', rangeStr)
     values = []
     for e in elements:
         if '-' in e:

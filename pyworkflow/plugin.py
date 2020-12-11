@@ -85,7 +85,7 @@ class Domain:
                 print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
             else:
                 try:
-                    m._bibtex = pwutils.LazyDict(lambda :pwutils.parseBibTex(bib.__doc__))
+                    m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
                 except Exception:
                     pass
         cls._plugins[name] = m  # Register the name to as a plugin

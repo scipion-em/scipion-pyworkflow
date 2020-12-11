@@ -1047,7 +1047,7 @@ class ProtocolsView(tk.Frame):
         localDir = Config.SCIPION_LOCAL_CONFIG
         protConf = os.path.join(localDir, configProtocols)
         self._protocolViews = ProtocolTreeConfig.load(self.project.getDomain(),
-                                                             protConf)
+                                                      protConf)
 
     def _onSelectProtocols(self, combo):
         """ This function will be called when a protocol menu
@@ -2714,6 +2714,7 @@ class ProtocolTreeConfig:
         cls.__addAllProtocols(Config.getDomain(), protocols)
 
         return protocols
+
 
 class ProtocolConfig(MenuConfig):
     """Store protocols configuration """
