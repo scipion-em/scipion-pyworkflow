@@ -106,7 +106,6 @@ class ProjectDataView(tk.Frame):
         self.project = windows.project
         self.root = windows.root
         self.getImage = windows.getImage
-        self.protCfg = windows.protCfg
         self.settings = windows.getSettings()
         self.showGraph = self.settings.getRunsView()
         self.style = ttk.Style()

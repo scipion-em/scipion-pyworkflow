@@ -100,7 +100,6 @@ class Project(object):
         self.settings = None
         # Host configuration
         self._hosts = None
-        self._protocolViews = None
         #  Creation time should be stored in project.sqlite when the project
         # is created and then loaded with other properties from the database
         self._creationTime = None
@@ -246,7 +245,6 @@ class Project(object):
             self._loadHosts(hostsConf)
 
             if loadAllConfig:
-                self._loadProtocols(protocolsConf)
 
                 # FIXME: Handle settings argument here
 
@@ -331,26 +329,6 @@ class Project(object):
 
         self._hosts = pwprot.HostConfig.load(hostsFile)
 
-    def _loadProtocols(self, protocolsConf):
-        """ Load protocol configuration from a .conf file. """
-        # If the host file is not passed as argument...
-        configProtocols = pw.Config.SCIPION_PROTOCOLS
-        projProtConf = self.getPath(PROJECT_CONFIG, configProtocols)
-
-        if protocolsConf is None:
-            # Try first to read it from the project file .config/hosts.conf
-            if os.path.exists(projProtConf):
-                protConf = projProtConf
-            else:
-                localDir = pw.Config.SCIPION_LOCAL_CONFIG
-                protConf = os.path.join(localDir, configProtocols)
-        else:
-            pwutils.copyFile(protocolsConf, projProtConf)
-            protConf = protocolsConf
-
-        self._protocolViews = config.ProtocolTreeConfig.load(self.getDomain(),
-                                                             protConf)
-
     def getHostNames(self):
         """ Return the list of host name in the project. """
         return list(self._hosts.keys())
@@ -365,25 +343,9 @@ class Project(object):
 
         return self._hosts[hostKey]
 
-    def getProtocolViews(self):
-        return list(self._protocolViews.keys())
-
-    def getCurrentProtocolView(self):
-        """ Select the view that is currently selected.
-        Read from the settings the last selected view
-        and get the information from the self._protocolViews dict.
-        """
-        currentView = self.settings.getProtocolView()
-        if currentView in self._protocolViews:
-            viewKey = currentView
-        else:
-            viewKey = self.getProtocolViews()[0]
-            self.settings.setProtocolView(viewKey)
-            if currentView is not None:
-                print("PROJECT: Warning, protocol view '%s' not found." % currentView)
-                print("         Using '%s' instead." % viewKey)
-
-        return self._protocolViews[viewKey]
+    def getProtocolView(self):
+        """ Returns de view selected in the tree when it was persisted"""
+        return self.settings.getProtocolView()
 
     def create(self, runsView=1, readOnly=False, hostsConf=None,
                protocolsConf=None):
@@ -409,7 +371,6 @@ class Project(object):
             pwutils.path.makePath(p)
 
         self._loadHosts(hostsConf)
-        self._loadProtocols(protocolsConf)
 
     def _storeCreationTime(self, creationTime):
         """ Store the creation time in the project db. """
