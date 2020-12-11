@@ -45,6 +45,7 @@ from pyworkflow.utils.properties import Icon
 
 class ProjectsView(tk.Frame):
     _PROJ_CONTAINER = "projectsframe"
+
     def __init__(self, parent, windows, **args):
         tk.Frame.__init__(self, parent, bg='white', **args)
         self.windows = windows
@@ -252,7 +253,7 @@ class ProjectCreateWindow(Window):
         content.grid(row=0, column=0, sticky='news', padx=5, pady=5)
 
         # Info line
-        labelInfo = tk.Label(content, text="Spaces will be replaced by underscores!" , bg='white', bd=0)
+        labelInfo = tk.Label(content, text="Spaces will be replaced by underscores!", bg='white', bd=0)
         labelInfo.grid(row=0, sticky=tk.W, padx=5, pady=5)
         #  Project name line
         labelName = tk.Label(content, text=Message.LABEL_PROJECT + ' name', bg='white', bd=0)

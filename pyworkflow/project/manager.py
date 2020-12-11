@@ -44,7 +44,7 @@ class ProjectInfo(object):
         self.path = path
 
     def __str__(self):
-        return "%s - %s" % (self.projName , self.path)
+        return "%s - %s" % (self.projName, self.path)
 
     def getName(self):
         return self.projName
@@ -60,6 +60,7 @@ class ProjectInfo(object):
 
     def realPath(self):
         return os.path.realpath(self.path)
+
 
 class Manager(object):
     """ Manage all projects of a given workspace, for a given Domain.
