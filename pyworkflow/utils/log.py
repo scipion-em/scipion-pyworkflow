@@ -28,12 +28,23 @@ import os
 import sys
 import logging
 import logging.config
-
+import json
 
 from pyworkflow.utils import makeFilePath
 
-
 def getLogConfiguration():
+    from pyworkflow import Config
+
+    if Config.SCIPION_LOG_CONFIG:
+
+        with open(Config.SCIPION_LOG_CONFIG, 'r') as stream:
+            config = json.load(stream)
+
+        return logging.config.dictConfig(config)
+    else:
+        return getDefaultLogConfiguration()
+
+def getDefaultLogConfiguration():
     from pyworkflow import Config
     # Log configuration
     config = {
@@ -111,7 +122,7 @@ class ScipionLogger:
         return self._log  
     
     def getLogString(self):
-        return open(self._filePath, 'r').readlines()  
+        return open(self._filePath, 'r').readlines()
         
     def info(self, message, redirectStandard=False, *args, **kwargs):
         if redirectStandard:

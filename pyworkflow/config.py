@@ -117,6 +117,8 @@ class Config:
     # Scratch path
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
 
+    # Optional logging configuration file
+    SCIPION_LOG_CONFIG = _get('SCIPION_LOG_CONFIG', None)
     # Get general log file path
     SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
 
