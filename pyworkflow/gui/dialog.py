@@ -294,6 +294,7 @@ class MessageDialog(Dialog):
         self.image = gui.getImage(self.iconPath)
         createMessageBody(bodyFrame, self.msg, self.image)
 
+
 class ExceptionDialog(MessageDialog):
     def __init__(self, *args, **kwargs):
         self._exception = None if "exception" not in kwargs else kwargs['exception']
@@ -322,6 +323,7 @@ class ExceptionDialog(MessageDialog):
             label = tk.Label(bodyFrame, text="Show details...", bg='white', bd=0)
             label.grid(row=row, column=0, columnspan=2, sticky='news')
             label.bind("<Button-1>", addTraceback)
+
 
 class YesNoDialog(MessageDialog):
     """Ask a question with YES/NO answer"""

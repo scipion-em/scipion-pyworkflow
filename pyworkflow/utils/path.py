@@ -179,6 +179,8 @@ def makeTmpPath(protocol):
             except Exception as e:
                 raise PyworkflowException("Couldn't create the temporary folder %s at:\n %s\nPlease, review %s variable." %
                                 (folderId, scratchPath, SCIPION_SCRATCH), url=DOCSITEURLS.CONFIG_SECTION % "scratch-folder") from e
+
+
 def makeFilePath(*files):
     """ Make the path to ensure that files can be written. """
     makePath(*[os.path.dirname(f) for f in files])

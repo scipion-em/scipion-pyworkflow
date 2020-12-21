@@ -396,7 +396,6 @@ class PluginInformation:
     PLUGIN_AUTHORS = 'pluginAuthor'
 
 
-
 # To get font awesome icons into png use: http://fa2png.io/
 class Icon:
     # Project Content Template

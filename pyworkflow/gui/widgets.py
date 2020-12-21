@@ -154,6 +154,7 @@ class Scrollable(object):
     def getHScroll(self):
         return self.hscroll.get()
 
+
 class ExplanationText(tk.Text):
     """Create an explanation text box"""
 

@@ -29,7 +29,7 @@ import os
 import json
 import datetime as dt
 from collections import OrderedDict
-from configparser import ConfigParser  # FIXME Does not work in Python3
+from configparser import ConfigParser
 
 import pyworkflow.object as pwobj
 from pyworkflow.mapper import SqliteMapper
