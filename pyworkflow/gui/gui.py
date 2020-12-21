@@ -26,7 +26,7 @@ import tkinter as tk
 import tkinter.font as tkFont
 import queue
 
-from pyworkflow.object import OrderedObject
+from pyworkflow.object import Object
 import pyworkflow as pw
 from pyworkflow.utils import Message, Color, Icon
 
@@ -68,7 +68,7 @@ cfgMinFontSize = 6
 cfgWrapLenght = cfgMaxWidth - 50
 
 
-class Config(OrderedObject):
+class Config(Object):
     pass
 
 

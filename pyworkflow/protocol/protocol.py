@@ -42,14 +42,14 @@ from .params import Form
 SCHEDULE_LOG = 'schedule.log'
 
 
-class Step(OrderedObject):
+class Step(Object):
     """ Basic execution unit.
     It should defines its Input, Output
     and define a run method.
     """
 
     def __init__(self, **kwargs):
-        OrderedObject.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self._prerequisites = CsvList()  # which steps needs to be done first
         self.status = String()
         self.initTime = String()
@@ -1202,7 +1202,7 @@ class Protocol(Step):
         for attrName in attributes:
             attr = getattr(self, attrName)
             self.mapper.delete(attr)
-            self.deleteAttribute(attrName)
+            delattr(self, attrName)
 
         self._outputs.clear()
         self.mapper.store(self._outputs)
@@ -1216,7 +1216,7 @@ class Protocol(Step):
     def deleteOutput(self, output):
         attrName = self.findAttributeName(output)
         self.mapper.delete(output)
-        self.deleteAttribute(attrName)
+        delattr(self,attrName)
         if attrName in self._outputs:
             self._outputs.remove(attrName)
         self.mapper.store(self._outputs)

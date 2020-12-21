@@ -131,11 +131,12 @@ class Object(object):
         obj.set(value)
         
     def getAttributes(self):
-        """Return the list of attributes than are
+        """Return the list of attributes that are
         subclasses of Object"""
-        for key, attr in self.__dict__.items():
-            if issubclass(attr.__class__, Object):
-                yield key, attr
+        for name in vars(self):
+            value = getattr(self, name)
+            if isinstance(value, Object):
+                yield name, value
                 
     def getAttributesToStore(self):
         """Return the list of attributes than are
@@ -545,49 +546,9 @@ class Object(object):
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(dict(self.getObjDict(includeClasses)))        
 
-
 class OrderedObject(Object):
-    """This is based on Object, but keep the list
-    of the attributes to store in the same order
-    of insertion, this can be useful where order matters"""
-    def __init__(self, value=None, **kwargs):
-        object.__setattr__(self, '_attributes', [])
-        Object.__init__(self, value, **kwargs)
-
-    def __attrPointed(self, name, value):
-        """ Check if a value is already pointed by other
-        attribute. This will prevent to storing pointed
-        attributes such as:
-        self.inputMics = self.inputMicrographs.get()
-        In this case we want to avoid to store self.inputMics as 
-        another attribute of this object.
-        """
-        for key in self._attributes:
-            attr = getattr(self, key)
-            if attr is not None and attr.isPointer():
-                if attr.get() is value:
-                    return True
-        return False
-    
-    def __setattr__(self, name, value):
-        if (name not in self._attributes and
-            issubclass(value.__class__, Object) and
-                not self.__attrPointed(name, value) and value._objDoStore):
-            self._attributes.append(name)
-        Object.__setattr__(self, name, value)
-    
-    def getAttributes(self):
-        """Return the list of attributes than are
-        subclasses of Object and will be stored"""
-        for key in self._attributes:
-            yield key, getattr(self, key)
-                
-    def deleteAttribute(self, attrName):
-        """ Delete an attribute. """
-        if attrName in self._attributes:
-            self._attributes.remove(attrName)
-            delattr(self, attrName)
-
+    """Legacy class, to be removed. Object should give same functionality and faster"""
+    pass
                 
 class Scalar(Object):
     """Base class for basic types"""
@@ -1058,7 +1019,7 @@ class CsvList(Scalar, list):
         return all(a == b for a, b in zip(self, other))
 
 
-class Set(OrderedObject):
+class Set(Object):
     """ This class will be a container implementation for elements.
     It will use an extra sqlite file to store the elements.
     All items will have an unique id that identifies each element in the set.
@@ -1075,7 +1036,7 @@ class Set(OrderedObject):
     def __init__(self, filename=None, prefix='', 
                  mapperClass=None, classesDict=None, **kwargs):
         # Use the object value to store the filename
-        OrderedObject.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self._mapper = None
         self._idCount = 0
         self._size = Integer(0)  # cached value of the number of images
