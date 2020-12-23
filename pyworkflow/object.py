@@ -58,14 +58,26 @@ class Object(object):
 
     def __init__(self, value=None, **kwargs):
         object.__init__(self)
-        self._objIsPointer = kwargs.get('objIsPointer', False)  # True if will be treated as a reference for storage
-        self._objId = kwargs.get('objId', None)  # Unique identifier of this object in some context
-        self._objParentId = kwargs.get('objParentId', None)  # identifier of the parent object
-        self._objName = kwargs.get('objName', '')  # The name of the object will contains the whole path of ancestors
-        self._objLabel = kwargs.get('objLabel', '')  # This will serve to label the objects
-        self._objComment = kwargs.get('objComment', '')
-        self._objTag = kwargs.get('objTag', None)  # This attribute serve to make some annotation on the object.
-        self._objDoStore = kwargs.get('objDoStore', True)  # True if this object will be stored from his parent
+        if len(kwargs) == 0:
+            self._objIsPointer =  False  # True if will be treated as a reference for storage
+            self._objId =  None  # Unique identifier of this object in some context
+            self._objParentId =  None  # identifier of the parent object
+            self._objName = ''  # The name of the object will contains the whole path of ancestors
+            self._objLabel =  ''  # This will serve to label the objects
+            self._objComment = ''
+            self._objTag =  None  # This attribute serve to make some annotation on the object.
+            self._objDoStore = True
+        else:
+
+            self._objIsPointer = kwargs.get('objIsPointer', False)  # True if will be treated as a reference for storage
+            self._objId = kwargs.get('objId', None)  # Unique identifier of this object in some context
+            self._objParentId = kwargs.get('objParentId', None)  # identifier of the parent object
+            self._objName = kwargs.get('objName', '')  # The name of the object will contains the whole path of ancestors
+            self._objLabel = kwargs.get('objLabel', '')  # This will serve to label the objects
+            self._objComment = kwargs.get('objComment', '')
+            self._objTag = kwargs.get('objTag', None)  # This attribute serve to make some annotation on the object.
+            self._objDoStore = kwargs.get('objDoStore', True)  # True if this object will be stored from his parent
+
         self._objCreation = None
         self._objParent = None  # Reference to parent object
         self._objEnabled = True
