@@ -57,7 +57,7 @@ class Object(object):
     that will contains all base properties"""
 
     def __init__(self, value=None, **kwargs):
-        object.__init__(self)
+        super().__init__()
         if len(kwargs) == 0:
             self._objIsPointer =  False  # True if will be treated as a reference for storage
             self._objId =  None  # Unique identifier of this object in some context
@@ -65,7 +65,7 @@ class Object(object):
             self._objName = ''  # The name of the object will contains the whole path of ancestors
             self._objLabel =  ''  # This will serve to label the objects
             self._objComment = ''
-            self._objTag =  None  # This attribute serve to make some annotation on the object.
+            # Performance: self._objTag =  None  # This attribute serve to make some annotation on the object.
             self._objDoStore = True
         else:
 
@@ -75,7 +75,7 @@ class Object(object):
             self._objName = kwargs.get('objName', '')  # The name of the object will contains the whole path of ancestors
             self._objLabel = kwargs.get('objLabel', '')  # This will serve to label the objects
             self._objComment = kwargs.get('objComment', '')
-            self._objTag = kwargs.get('objTag', None)  # This attribute serve to make some annotation on the object.
+            #Performance: self._objTag = kwargs.get('objTag', None)  # This attribute serve to make some annotation on the object.
             self._objDoStore = kwargs.get('objDoStore', True)  # True if this object will be stored from his parent
 
         self._objCreation = None
@@ -154,14 +154,14 @@ class Object(object):
         """Return the list of attributes than are
         subclasses of Object and will be stored"""
         for key, attr in self.getAttributes():
-            if not hasattr(attr, '_objDoStore'):
+            try:
+                if attr is not None and attr._objDoStore:
+                    yield key, attr
+            except:
                 print("Object.getAttributesToStore: attribute '%s' seems to "
                       "be overwritten," % key)
                 print("   since '_objDoStore' was not found. "
                       "Ignoring attribute. ")
-            else:
-                if attr is not None and attr._objDoStore:
-                    yield key, attr
 
     def isPointer(self):
         """If this is true, the value field is a pointer 
@@ -372,15 +372,20 @@ class Object(object):
         if prefix:
             prefix += '.'
         for k, v in self.getAttributesToStore():
-            if not v.isPointer():
-                kPrefix = prefix + k
-                if includeClass:
-                    objDict[kPrefix] = (v.getClassName(), v.getObjValue())
-                else:
-                    objDict[kPrefix] = v.getObjValue()
-                if not isinstance(v, Scalar):
-                    v.__getObjDict(kPrefix, objDict, includeClass)
-            
+            self.fillObjDict(prefix, objDict, includeClass, k, v)
+
+    @staticmethod
+    def fillObjDict(prefix, objDict, includeClass, k, v):
+
+        if not v.isPointer():
+            kPrefix = prefix + k
+            if includeClass:
+                objDict[kPrefix] = (v.getClassName(), v.getObjValue())
+            else:
+                objDict[kPrefix] = v.getObjValue()
+            if not isinstance(v, Scalar):
+                v.__getObjDict(kPrefix, objDict, includeClass)
+
     def getObjDict(self, includeClass=False, includeBasic=False):
         """ Return all attributes and values in a dictionary.
         Nested attributes will be separated with a dot in the dict key.
@@ -559,7 +564,7 @@ class Object(object):
         pp.pprint(dict(self.getObjDict(includeClasses)))        
 
 class OrderedObject(Object):
-    """Legacy class, to be removed. Object should give same functionality and faster"""
+    """Legacy class, to be removed. Object should give same functionality and is faster"""
     pass
                 
 class Scalar(Object):
