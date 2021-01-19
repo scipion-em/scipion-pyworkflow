@@ -49,7 +49,7 @@ class Step(Object):
     """
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        Object.__init__(self, **kwargs)
         self._prerequisites = CsvList()  # which steps needs to be done first
         self.status = String()
         self.initTime = String()
