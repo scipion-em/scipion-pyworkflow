@@ -57,7 +57,7 @@ class Object(object):
     that will contains all base properties"""
 
     def __init__(self, value=None, **kwargs):
-        super().__init__()
+        object.__init__(self)
         if len(kwargs) == 0:
             self._objIsPointer =  False  # True if will be treated as a reference for storage
             self._objId =  None  # Unique identifier of this object in some context
