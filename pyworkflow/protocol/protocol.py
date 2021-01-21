@@ -314,6 +314,7 @@ class Protocol(Step):
     # Version where protocol appeared first time
     _lastUpdateVersion = pw.VERSION_1
     _stepsCheckSecs = 3
+    _devStatus = pw.PROD
 
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
@@ -504,13 +505,15 @@ class Protocol(Step):
         return hasattr(cls, '_definition')
 
     @classmethod
-    def getLastUpdateVersion(cls):
-        return cls._lastUpdateVersion
+    def isNew(cls):
+        if cls._devStatus == pw.NEW:
+            return True
+        elif cls._devStatus == pw.PROD:
+            return cls._lastUpdateVersion not in pw.OLD_VERSIONS
 
     @classmethod
-    def isNew(cls):
-        version = cls.getLastUpdateVersion()
-        return version not in pw.OLD_VERSIONS
+    def isBeta(cls):
+        return cls._devStatus == pw.BETA
 
     def getDefinition(self):
         """ Access the protocol definition. """
