@@ -314,6 +314,7 @@ class Protocol(Step):
     # Version where protocol appeared first time
     _lastUpdateVersion = pw.VERSION_1
     _stepsCheckSecs = 3
+    # Protocol develop status: PROD, BETA, NEW
     _devStatus = pw.PROD
 
     def __init__(self, **kwargs):
