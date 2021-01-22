@@ -172,7 +172,7 @@ class ThreadStepExecutor(StepExecutor):
             nGpu = len(self.gpuList)
 
             if nGpu > nThreads:
-                chunk = nGpu / nThreads
+                chunk = int(nGpu / nThreads)
                 for i, node in enumerate(nodes):
                     self.gpuDict[node] = list(self.gpuList[i*chunk:(i+1)*chunk])
             else:
