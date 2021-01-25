@@ -410,7 +410,7 @@ class Window:
         (using add_cascade or add_command for sub-menus and final options)."""
         # Helper function to create the main menu.
         for sub in menuConfig:
-            menuLabel = sub.text.get()
+            menuLabel = sub.text
             if not menuLabel:  # empty or None label means a separator
                 menu.add_separator()
             elif len(sub) > 0:  # sub-menu
@@ -425,12 +425,12 @@ class Window:
                     f = "on%s" % "".join(x.capitalize() for x in name.split())
                     return lambda: getattr(self, f)()
 
-                if sub.shortCut.get() is not None:
-                    menuLabel += ' (' + sub.shortCut.get() + ')'
+                if sub.shortCut is not None:
+                    menuLabel += ' (' + sub.shortCut + ')'
 
                 menu.add_command(label=menuLabel, compound=tk.LEFT,
-                                 image=self.getImage(sub.icon.get()),
-                                 command=callback(name=sub.text.get()))
+                                 image=self.getImage(sub.icon),
+                                 command=callback(name=sub.text))
 
     def _addPluginMenus(self, menu):
 

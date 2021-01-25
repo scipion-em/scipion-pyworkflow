@@ -200,13 +200,13 @@ class MenuConfig(object):
           tag: put some tags to items
         **args: pass other options to base class.
         """
-        self.text = pwobj.String(text)
-        self.value = pwobj.String(value)
-        self.icon = pwobj.String(icon)
-        self.tag = pwobj.String(tag)
-        self.shortCut = pwobj.String(kwargs.get('shortCut', None))
+        self.text = text
+        self.value = value
+        self.icon = icon
+        self.tag = tag
+        self.shortCut = kwargs.get('shortCut', None)
         self.childs = pwobj.List()
-        self.openItem = pwobj.Boolean(kwargs.get('openItem', False))
+        self.openItem = kwargs.get('openItem', False)
 
     def addSubMenu(self, text, value=None, **args):
         subMenu = type(self)(text, value, **args)
