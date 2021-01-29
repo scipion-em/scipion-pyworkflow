@@ -108,15 +108,22 @@ class Step(OrderedObject):
 
     def setFailed(self, msg):
         """ Set the run failed and store an error message. """
-        self.endTime.set(dt.datetime.now())
-        self._error.set(msg)
-        self.status.set(STATUS_FAILED)
+        self._finalizeStep(STATUS_FAILED, msg=msg)
 
     def setAborted(self):
-        """ Set the status to aborted and updated the endTime. """
+        """ Set the status to aborted and updates the endTime. """
+        self._finalizeStep(STATUS_ABORTED, "Aborted by user.")
+
+    def setFinished(self):
+        """ Set the status to finish updates the end time """
+        self._finalizeStep(STATUS_FINISHED)
+
+    def _finalizeStep(self, status, msg=None):
+        """ Closes the step, setting up the endTime and optionally an error message"""
         self.endTime.set(dt.datetime.now())
-        self._error.set("Aborted by user.")
-        self.status.set(STATUS_ABORTED)
+        if msg:
+            self._error.set(msg)
+        self.status.set(status)
 
     def setSaved(self):
         """ Set the status to saved and updated the endTime. """
@@ -398,6 +405,7 @@ class Protocol(Step):
         self._pid = Integer()
         self._stepsExecutor = None
         self._stepsDone = Integer(0)
+        self._cpuTime = Integer(0)
         self._numberOfSteps = Integer(0)
         # For visualization
         self.allowHeader = Boolean(True)
@@ -447,9 +455,9 @@ class Protocol(Step):
                          state=Set.STREAM_OPEN):
         """ Use this function when updating an Stream output set.
         """
-        self.__tryUpdateOuputSet(outputName, outputSet, state)
+        self.__tryUpdateOutputSet(outputName, outputSet, state)
 
-    def __tryUpdateOuputSet(self, outputName, outputSet,
+    def __tryUpdateOutputSet(self, outputName, outputSet,
                             state=Set.STREAM_OPEN, tries=1):
         try:
             # Update the set with the streamState value (either OPEN or CLOSED)
@@ -931,11 +939,27 @@ class Protocol(Step):
 
         return step.getIndex()
 
-    def _setStatusSteps(self, status):
-        """Set the status of all steps"""
+    def setRunning(self):
+        """ Do not reset the init time in RESUME_MODE"""
+        previousStart = self.initTime.get()
+        super().setRunning()
+        if self.getRunMode() == MODE_RESUME:
+            self.initTime.set(previousStart)
+        else:
+            self._cpuTime.set(0)
+
+    def setAborted(self):
+        """ Abort the protocol and finalize the steps"""
+        super().setAborted()
+        self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+
+    def _updateSteps(self, updater, where="1"):
+        """Set the status of all steps
+        :parameter updater callback/lambda receiving a step and editing it inside
+        :parameter where condition to filter the set with."""
         stepsSet = StepSet(filename=self.getStepsFile())
-        for step in stepsSet:
-            step.setStatus(status)
+        for step in stepsSet.iterItems(where=where):
+            updater(step)
             stepsSet.update(step)
         stepsSet.write()
         stepsSet.close()  # Close the connection
@@ -1158,7 +1182,8 @@ class Protocol(Step):
 
         self.__updateStep(step)
         self._stepsDone.increment()
-        self._store(self._stepsDone)
+        self._cpuTime.set(self._cpuTime.get() + step.getElapsedTime().total_seconds())
+        self._store(self._stepsDone,  self._cpuTime)
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
                   % (step.funcName.get(), step._index, step.endTime.datetime()))
@@ -1768,6 +1793,11 @@ class Protocol(Step):
     def stepsDone(self):
         """ Return the number of steps executed. """
         return self._stepsDone.get(0)
+
+    @property
+    def cpuTime(self):
+        """ Return the sum of all durations of the finished steps"""
+        return self._cpuTime.get()
 
     def updateSteps(self):
         """ After the steps list is modified, this methods will update steps

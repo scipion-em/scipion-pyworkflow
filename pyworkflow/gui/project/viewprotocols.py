@@ -203,7 +203,7 @@ class StepsTreeProvider(pwgui.tree.TreeProvider):
                 s._index = i + 1
 
         self._stepsList = stepsList
-        self.getColumns = lambda: [('Index', 50), ('Step', 200),
+        self.getColumns = lambda: [('Index', 50), ('Step', 200), ('Status', 150),
                                    ('Time', 150), ('Class', 100)]
         self._parentDict = {}
 
@@ -213,7 +213,7 @@ class StepsTreeProvider(pwgui.tree.TreeProvider):
     @staticmethod
     def getObjectInfo(obj):
         info = {'key': obj._index,
-                'values': (str(obj), pwutils.prettyDelta(obj.getElapsedTime()),
+                'values': (str(obj), obj.getStatus(), pwutils.prettyDelta(obj.getElapsedTime()),
                            obj.getClassName())}
         return info
 
@@ -241,18 +241,40 @@ class StepsWindow(pwgui.browser.BrowserWindow):
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(1, weight=1)
 
-        toolbar = tk.Frame(self.root)
-        toolbar.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
-        btn = tk.Label(toolbar, text="Tree",
-                       image=self.getImage(Icon.RUNS_TREE),
-                       compound=tk.LEFT, cursor='hand2')
-        btn.bind('<Button-1>', self._showTree)
-        btn.grid(row=0, column=0, sticky='nw')
+        self.fillToolBar()
+
         # Create and set browser
         browser = pwgui.browser.ObjectBrowser(self.root, provider,
                                               showPreviewTop=False)
         self.setBrowser(browser, row=1, column=0)
 
+    def fillToolBar(self):
+        # Tool bar
+        toolbar = tk.Frame(self.root)
+        toolbar.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
+
+        # Tree button
+        btn = tk.Label(toolbar, text="Tree",
+                       image=self.getImage(Icon.RUNS_TREE),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.bind('<Button-1>', self._showTree)
+        btn.grid(row=0, column=0, sticky='nw')
+
+        # Reset status
+        btn = tk.Label(toolbar, text="Reset",
+                       image=self.getImage(Icon.ACTION_REFRESH),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.bind('<Button-1>', self._resetStep)
+        btn.grid(row=0, column=1, sticky='nw')
+
+    def _resetStep(self, e=None):
+
+        item = self.browser._lastSelected
+        if item is not None:
+            objId = item.getObjId()
+            self._protocol._updateSteps(lambda step: step.setStatus(pwprot.STATUS_NEW), where="id='%s'" % objId)
+            item.setStatus(pwprot.STATUS_NEW)
+            self.browser.tree.update()
     # noinspection PyUnusedLocal
     def _showTree(self, e=None):
         g = self._protocol.getStepsGraph()
@@ -1643,9 +1665,11 @@ class ProtocolsView(tk.Frame):
 
         if prot:
             tm = '*%s*\n' % prot.getRunName()
-            tm += '   Id: %s\n' % prot.getObjId()
-            tm += 'State: %s\n' % prot.getStatusMessage()
-            tm += ' Time: %s\n' % pwutils.prettyDelta(prot.getElapsedTime())
+            tm += 'Identifier :%s\n' % prot.getObjId()
+            tm += 'Status: %s\n' % prot.getStatusMessage()
+            tm += 'Wall time: %s\n' % pwutils.prettyDelta(prot.getElapsedTime())
+            tm += 'CPU time: %s\n' % pwutils.prettyDelta(dt.timedelta(seconds=prot.cpuTime))
+
             if not hasattr(tw, 'tooltipText'):
                 frame = tk.Frame(tw)
                 frame.grid(row=0, column=0)
