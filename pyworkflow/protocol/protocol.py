@@ -484,8 +484,8 @@ class Protocol(Step):
                 raise ex
             else:
                 time.sleep(tries)
-                self.__tryUpdateOuputSet(outputName, outputSet, state,
-                                         tries + 1)
+                self.__tryUpdateOutputSet(outputName, outputSet, state,
+                                          tries + 1)
 
     def hasExpert(self):
         """ This function checks if the protocol has
