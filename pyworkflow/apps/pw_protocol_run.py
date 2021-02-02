@@ -40,4 +40,4 @@ if __name__ == '__main__':
         
     else:
         from os.path import basename
-        print("usage: %s dbPath protocolID" % basename(sys.argv[0]))
+        print("usage: %s projPath dbPath protocolID" % basename(sys.argv[0]))
