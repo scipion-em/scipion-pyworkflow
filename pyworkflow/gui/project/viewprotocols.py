@@ -27,7 +27,7 @@ from configparser import ConfigParser
 from pyworkflow.project import MenuConfig
 from pyworkflow import Config
 
-INIT_REFRESH_SECONDS = 3
+INIT_REFRESH_SECONDS = 5
 
 """
 View with the protocols inside the main project window.
@@ -851,8 +851,10 @@ class ProtocolsView(tk.Frame):
                 print("    - %s, %s" % (f.path, f.fd))
             print("  memory percent: ", proc.memory_percent())
 
-        self.updateRunsGraph(True, checkPids=checkPids)
-        self.updateRunsTree(False)
+        if self.runsView == VIEW_LIST:
+            self.updateRunsTree(False)
+        else:
+            self.updateRunsGraph(True, checkPids=checkPids)
 
         if initRefreshCounter:
 
@@ -1426,7 +1428,7 @@ class ProtocolsView(tk.Frame):
         if viewValue == VIEW_LIST:
             self.runsTree.grid(row=0, column=0, sticky='news')
             self.runsGraphCanvas.frame.grid_remove()
-            self.updateRunsTreeSelection()
+            self.updateRunsTree()
             self.viewButtons[ACTION_TREE].grid_remove()
             self._lastRightClickPos = None
         else:
