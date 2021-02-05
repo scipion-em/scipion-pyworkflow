@@ -114,3 +114,12 @@ class DOCSITEURLS:
     CONFIG = HOME + 'docs/scipion-modes/scipion-configuration.html'
     CONFIG_SECTION = CONFIG + '#%s'
     CONTACTUS = 'http://scipion.i2pc.es/contact'
+
+# tkinter bind constants
+class TK:
+    LEFT_CLICK = '<Button-1>'
+    RETURN = '<Return>'
+    ENTER = '<KP_Enter>'
+    LEFT_DOUBLE_CLICK = '<Double-1>'
+    TREEVIEW_OPEN = '<<TreeviewOpen>>'
+    TREEVIEW_CLOSE = '<<TreeviewClose>>'
