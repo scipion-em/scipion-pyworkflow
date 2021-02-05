@@ -1828,16 +1828,16 @@ class ProtocolsView(tk.Frame):
             self.outputViewer.clear()
             # Right now skip the err tab since we are redirecting
             # stderr to stdout
-            out, _, log, schedule = prot.getLogPaths()
+            out, err, schedule = prot.getLogPaths()
             self.outputViewer.addFile(out)
-            self.outputViewer.addFile(log)
+            self.outputViewer.addFile(err)
             if os.path.exists(schedule):
                 self.outputViewer.addFile(schedule)
             self.outputViewer.setIndex(i)  # Preserve the last selected tab
             self.outputViewer.selectedText().goEnd()
             # when there are not logs, force re-load next time
             if (not os.path.exists(out) or
-                    not os.path.exists(log)):
+                    not os.path.exists(err)):
                 self._lastStatus = None
 
         elif prot.isActive() or prot.getStatus() != self._lastStatus:

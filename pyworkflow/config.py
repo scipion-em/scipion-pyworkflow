@@ -111,16 +111,18 @@ class Config:
 
     # General purpose scipion tmp folder
     SCIPION_TMP = _get('SCIPION_TMP', _join(SCIPION_USER_DATA, 'tmp'))
-    # LOGS PATHS
-    # Path for Scipion logs
+    # LOGGING variables
+    # Path for Scipion logs folder: used by GUI
     SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA, 'logs'))
+    # Optional: custom logging configuration file
+    SCIPION_LOG_CONFIG = _get('SCIPION_LOG_CONFIG', None)
+    # Get general log file path (for the GUI)
+    SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
+    # Default logging level: String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    SCIPION_LOG_LEVEL = _get('SCIPION_LOG_LEVEL', 'INFO')
+
     # Scratch path
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
-
-    # Optional logging configuration file
-    SCIPION_LOG_CONFIG = _get('SCIPION_LOG_CONFIG', None)
-    # Get general log file path
-    SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
 
     # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
