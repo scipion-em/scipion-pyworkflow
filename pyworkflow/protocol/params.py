@@ -30,13 +30,13 @@ from pyworkflow.object import *
 from .constants import *
 
 
-class FormElement(OrderedObject):
+class FormElement(Object):
     """Base for any element on the form"""
     ATTRIBUTES = ['label', 'expertLevel', 'condition', 'important', 'help',
                   'default', 'paramClass']
     
     def __init__(self, **args):
-        OrderedObject.__init__(self, **args)
+        super().__init__(**args)
         self.label = String(args.get('label', None))
         self.expertLevel = Integer(args.get('expertLevel', LEVEL_NORMAL))
         self.condition = String(args.get('condition', None))
