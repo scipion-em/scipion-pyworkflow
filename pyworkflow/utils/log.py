@@ -42,9 +42,6 @@ from logging.handlers import RotatingFileHandler
 
 from pyworkflow.utils import makeFilePath, Config
 
-FILE_FORMATTER = 'fileFormatter'
-
-
 def getLogConfiguration():
     if not loadCustomLoggingConfig():
         getDefaultLogConfiguration()
@@ -72,12 +69,9 @@ def getDefaultLogConfiguration():
         'disable_existing_loggers': False,
         'formatters': {
             'standard': {
-                'format': '%(asctime)s %(levelname)s:  %(message)s'
+                'format': '%(asctime)s %(name)s %(levelname)s:  %(message)s'
                 # TODO: use formattime to show the time less verbose
-            },
-            FILE_FORMATTER: {
-                'format': '%(asctime)s %(levelname)s:  %(message)s'
-            },
+            }
         },
         'handlers': {
             'fileHandler': {
@@ -109,71 +103,11 @@ def getDefaultLogConfiguration():
     logging.config.dictConfig(config)
 
 def getRotatingFileLogger(name, path):
-    logging.getLogger(name)
-
-class ScipionLogger:
-    def __init__(self, filePath=''):
-        from pyworkflow import Config
-        """ If filePath is empty string, the general logger is used. """
-        self._filePath = filePath
-        makeFilePath(self._filePath)
-
-        self.config = getLogConfiguration()
-
-        if self._filePath not in self.config['loggers']:
-            self.config['handlers'][self._filePath] = {
-                'level': Config.SCIPION_LOG_LEVEL,
-                'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': FILE_FORMATTER,
-                'filename': self._filePath,
-                'maxBytes': 100000}
-
-            self.config['loggers'][self._filePath] = {
-                'handlers': [self._filePath],
-                'level': Config.SCIPION_LOG_LEVEL,
-                'propagate': False}
-            # Note: if we want to see in the console what we also have in
-            # run.log, add 'consoleHandler' to the list of 'handlers'.
-
-            logging.config.dictConfig(self.config)
-
-        self._log = logging.getLogger(self._filePath)
-
-    def getLog(self):
-        return self._log  
-    
-    def getLogString(self):
-        return open(self._filePath, 'r').readlines()
-        
-    def info(self, message, redirectStandard=False, *args, **kwargs):
-        if redirectStandard:
-            print(message)
-            sys.stdout.flush()
-        self._log.info(message, *args, **kwargs)
-
-    def warning(self, message, redirectStandard=False, *args, **kwargs):
-        if redirectStandard:
-            print(message)
-            sys.stdout.flush()
-        self._log.warning(message, *args, **kwargs)
-        
-    def error(self, message, redirectStandard=False, *args, **kwargs):
-        if redirectStandard:
-            sys.stderr.write(message + '\n')
-            sys.stderr.flush()
-        self._log.error(message, *args, **kwargs)    
-        
-    def debug(self, message, redirectStandard=False, *args, **kwargs):
-        if redirectStandard:
-            sys.stderr.write(message + '\n')
-            sys.stderr.flush()
-        self._log.debug(message, *args, **kwargs)
-
-    def close(self):
-        if self._filePath in self.config['loggers']:
-            del self.config['handlers'][self._filePath]
-            del self.config['loggers'][self._filePath]
-
+    logger = logging.getLogger(name)
+    makeFilePath(path)
+    handler = RotatingFileHandler(filename=path, maxBytes=100000)
+    handler.setLevel(Config.SCIPION_LOG_LEVEL)
+    return logger
 
 class StreamToLogger(object):
     """
@@ -190,6 +124,9 @@ class StreamToLogger(object):
 
     def flush(self):
         pass
+    def fileno(self):
+        # Mimic filehandle, this is used by subprocess.
+        return 1
 
 def setUpGUILogging():
     """Sets up the logging library for the GUI processes: By default all goes to SCIPION_LOG file and console."""
@@ -214,7 +151,10 @@ def setUpProtocolRunLogging(stdoutLogFile, stderrLogFile):
     sys.stderr = StreamToLogger(rootLogger,logging.ERROR)
     sys.stdout = StreamToLogger(rootLogger, logging.INFO)
 
+    return rootLogger
 
-
+def restoreStdoutAndErr():
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
 
 
