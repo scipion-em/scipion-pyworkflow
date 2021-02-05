@@ -855,6 +855,7 @@ class ProtocolsView(tk.Frame):
             self.updateRunsTree(False)
         else:
             self.updateRunsGraph(True, checkPids=checkPids)
+            self._updateSelection()
 
         if initRefreshCounter:
 
