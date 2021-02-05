@@ -27,7 +27,7 @@ from configparser import ConfigParser
 from pyworkflow.project import MenuConfig
 from pyworkflow import Config
 
-INIT_REFRESH_SECONDS = 3
+INIT_REFRESH_SECONDS = 5
 
 """
 View with the protocols inside the main project window.
@@ -857,8 +857,10 @@ class ProtocolsView(tk.Frame):
                 print("    - %s, %s" % (f.path, f.fd))
             print("  memory percent: ", proc.memory_percent())
 
-        self.updateRunsGraph(True, checkPids=checkPids)
-        self.updateRunsTree(False)
+        if self.runsView == VIEW_LIST:
+            self.updateRunsTree(False)
+        else:
+            self.updateRunsGraph(True, checkPids=checkPids)
 
         if initRefreshCounter:
 
@@ -1063,13 +1065,12 @@ class ProtocolsView(tk.Frame):
         self.updateProtocolsTree(self.protCfg)
 
     def populateTree(self, tree, treeItems, prefix, obj, subclassedDict, level=0):
-        text = obj.text.get()
+        text = obj.text
         if text:
-            value = obj.value.get(text)
+            value = obj.value if obj.value is not None else text
             key = '%s.%s' % (prefix, value)
-
-            img = obj.icon.get('')
-            tag = obj.tag.get('')
+            img = obj.icon if obj.icon is not None else ''
+            tag = obj.tag if obj.tag is not None else ''
 
             if len(img):
                 img = self.getImage(img)
@@ -1096,7 +1097,7 @@ class ProtocolsView(tk.Frame):
             if openItem:
                 tree.item(item, open=True)
 
-            if obj.value.hasValue() and tag == 'protocol_base':
+            if obj.value is not None and tag == 'protocol_base':
                 if prot is not None:
                     tree.item(item, image=self.getImage('class_obj.gif'))
 
@@ -1142,7 +1143,7 @@ class ProtocolsView(tk.Frame):
     def _treeViewItemChange(self, openItem):
         item = self.protTree.focus()
         if item in self.protTreeItems:
-            self.protTreeItems[item].openItem.set(openItem)
+            self.protTreeItems[item].openItem = openItem
 
     def createRunsTree(self, parent):
         self.provider = RunsTreeProvider(self.project, self._runActionClicked)
@@ -1431,7 +1432,7 @@ class ProtocolsView(tk.Frame):
         if viewValue == VIEW_LIST:
             self.runsTree.grid(row=0, column=0, sticky='news')
             self.runsGraphCanvas.frame.grid_remove()
-            self.updateRunsTreeSelection()
+            self.updateRunsTree()
             self.viewButtons[ACTION_TREE].grid_remove()
             self._lastRightClickPos = None
         else:
@@ -2561,7 +2562,7 @@ class ProtocolTreeConfig:
         """
         for ch in subMenu:
             if child['tag'] == cls.TAG_PROTOCOL:
-                if not ch.value.empty() and ch.value == child['value']:
+                if ch.value is not None and ch.value == child['value']:
                     return ch
             elif ch.text == child['text']:
                 return ch
@@ -2736,7 +2737,7 @@ class ProtocolConfig(MenuConfig):
     def __init__(self, text=None, value=None, **args):
         MenuConfig.__init__(self, text, value, **args)
         if 'openItem' not in args:
-            self.openItem.set(self.tag.get() != 'protocol_base')
+            self.openItem = self.tag != 'protocol_base'
 
     def addSubMenu(self, text, value=None, shortCut=None, **args):
         if 'icon' not in args:
