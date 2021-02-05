@@ -332,12 +332,14 @@ class SearchProtocolWindow(pwgui.Window):
         frame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
 
     def _configureTreeColumns(self):
-        self._resultsTree.column('#0', width=0, stretch=tk.FALSE)
+        self._resultsTree.column('#0', width=50, minwidth=50, stretch=tk.NO)
         self._resultsTree.column('protocol', width=300, stretch=tk.FALSE)
         self._resultsTree.column('streaming', width=100, stretch=tk.FALSE)
         self._resultsTree.column('installed', width=110, stretch=tk.FALSE)
         self._resultsTree.column('help', minwidth=300, stretch=tk.YES)
         self._resultsTree.column('score', width=50, stretch=tk.FALSE)
+
+        self._resultsTree.heading('#0', text='Status')
         self._resultsTree.heading('protocol', text='Protocol', command=lambda: self._resultsTree.sortByColumn("protocol", False))
         self._resultsTree.heading('streaming', text='Streamified', command=lambda: self._resultsTree.sortByColumn("streaming", False))
         self._resultsTree.heading('installed', text='Installation', command=lambda: self._resultsTree.sortByColumn("installed", False))
@@ -377,18 +379,22 @@ class SearchProtocolWindow(pwgui.Window):
                 line = (key, label,
                         "installed" if prot.isInstalled() else "missing installation",
                         prot.getHelpText().strip().replace('\r', '').replace('\n', '').lower(),
-                        "streamified" if prot.worksInStreaming() else "static")
+                        "streamified" if prot.worksInStreaming() else "static",
+                        "beta" if prot.isBeta() else "",
+                        "new" if prot.isNew() else "")
 
                 line = addSearchWeight(line, keyword)
                 # something was found: weight > 0
-                if line[5] != 0:
+                if line[7] != 0:
                     protList.append(line)
 
         # Sort by weight
-        protList.sort(reverse=True, key=lambda x: x[5])
+        protList.sort(reverse=True, key=lambda x: x[7])
 
-        for key, label, installed, help, streamified, weight in protList:
-            tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed')
+        for key, label, installed, help, streamified, beta, new, weight in protList:
+            tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed',
+                                                    beta == 'beta',
+                                                    new == 'new')
             self._resultsTree.insert(
                 '', 'end', key, text="", tags=tag,
                 values=(label, streamified, installed, help, weight))
@@ -974,25 +980,23 @@ class ProtocolsView(tk.Frame):
         t = pwgui.tree.Tree(parent, show=show, style='W.Treeview',
                             columns=columns)
         t.column('#0', minwidth=300)
-        # Protocol nodes
-        t.tag_configure(ProtocolTreeConfig.TAG_PROTOCOL,
-                        image=self.getImage('python_file.gif'))
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   TK.LEFT_DOUBLE_CLICK, self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   TK.RETURN, self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   TK.ENTER, self._protocolItemClick)
 
+        def configureTag(tag, img):
+            # Protocol nodes
+            t.tag_configure(tag, image=self.getImage(img))
+            t.tag_bind(tag, TK.LEFT_DOUBLE_CLICK, self._protocolItemClick)
+            t.tag_bind(tag, TK.RETURN, self._protocolItemClick)
+            t.tag_bind(tag, TK.ENTER, self._protocolItemClick)
+
+        # Protocol nodes
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, 'python_file.gif')
+        # New protocols
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_NEW, 'new.gif')
+        # Beta protocols
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_BETA, 'beta.gif')
         # Disable protocols (not installed) are allowed to be added.
-        t.tag_configure(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                        image=self.getImage('prot_disabled.gif'))
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   TK.LEFT_DOUBLE_CLICK, self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   TK.RETURN, self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   TK.ENTER, self._protocolItemClick)
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
+                     'prot_disabled.gif')
 
         t.tag_configure('protocol_base', image=self.getImage('class_obj.gif'))
         t.tag_configure('protocol_group', image=self.getImage('class_obj.gif'))
@@ -2509,13 +2513,22 @@ class ProtocolTreeConfig:
     TAG_PROTOCOL = 'protocol'
     TAG_SECTION = 'section'
     TAG_PROTOCOL_GROUP = 'protocol_group'
+    TAG_PROTOCOL_BETA = 'protocol_beta'
+    TAG_PROTOCOL_NEW = 'protocol_new'
     PLUGIN_CONFIG_PROTOCOLS = 'protocols.conf'
 
     @classmethod
-    def getProtocolTag(cls, isInstalled):
+    def getProtocolTag(cls, isInstalled, isBeta=False, isNew=False):
         """ Return the proper tag depending if the protocol is installed or not.
         """
-        return cls.TAG_PROTOCOL if isInstalled else cls.TAG_PROTOCOL_DISABLED
+        if isInstalled:
+            if isBeta:
+                return cls.TAG_PROTOCOL_BETA
+            elif isNew:
+                return cls.TAG_PROTOCOL_NEW
+            return cls.TAG_PROTOCOL
+        else:
+            return cls.TAG_PROTOCOL_DISABLED
 
     @classmethod
     def isAFinalProtocol(cls, v, k):
@@ -2610,7 +2623,13 @@ class ProtocolTreeConfig:
         # check if it is disabled
         protClassName = item["value"]
         protClass = Config.getDomain().getProtocols().get(protClassName)
-
+        icon = 'python_file.gif'
+        if protClass is not None:
+            if protClass.isBeta():
+                icon = "beta.gif"
+            elif protClass.isNew():
+                icon = "new.gif"
+        item['icon'] = icon
         return False if protClass is None else not protClass.isDisabled()
 
     @classmethod
@@ -2642,15 +2661,10 @@ class ProtocolTreeConfig:
                     packages[packageName] = packageMenu
 
                 # Add the protocol
-                tag = cls.getProtocolTag(v.isInstalled())
+                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew())
 
                 protLine = {"tag": tag, "value": k,
                             "text": v.getClassLabel(prependPackageName=False)}
-
-                # If it's a new protocol
-                if v.isNew() and v.isInstalled():
-                    # add the new icon
-                    protLine["icon"] = "newProt.gif"
 
                 cls.__addToTree(packageMenu, protLine)
 
@@ -2729,9 +2743,7 @@ class ProtocolConfig(MenuConfig):
     def addSubMenu(self, text, value=None, shortCut=None, **args):
         if 'icon' not in args:
             tag = args.get('tag', None)
-            if tag == 'protocol':
-                args['icon'] = 'python_file.gif'
-            elif tag == 'protocol_base':
+            if tag == 'protocol_base':
                 args['icon'] = 'class_obj.gif'
 
         args['shortCut'] = shortCut
