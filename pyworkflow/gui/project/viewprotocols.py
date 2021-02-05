@@ -25,7 +25,7 @@
 from configparser import ConfigParser
 
 from pyworkflow.project import MenuConfig
-from pyworkflow import Config
+from pyworkflow import Config, TK
 
 INIT_REFRESH_SECONDS = 5
 
@@ -246,7 +246,7 @@ class StepsWindow(pwgui.browser.BrowserWindow):
         btn = tk.Label(toolbar, text="Tree",
                        image=self.getImage(Icon.RUNS_TREE),
                        compound=tk.LEFT, cursor='hand2')
-        btn.bind('<Button-1>', self._showTree)
+        btn.bind(TK.LEFT_CLICK, self._showTree)
         btn.grid(row=0, column=0, sticky='nw')
         # Create and set browser
         browser = pwgui.browser.ObjectBrowser(self.root, provider,
@@ -311,8 +311,8 @@ class SearchProtocolWindow(pwgui.Window):
         label.grid(row=0, column=0, sticky='nw')
         self._searchVar = tk.StringVar()
         entry = tk.Entry(frame, bg='white', textvariable=self._searchVar)
-        entry.bind('<Return>', self._onSearchClick)
-        entry.bind('<KP_Enter>', self._onSearchClick)
+        entry.bind(TK.RETURN, self._onSearchClick)
+        entry.bind(TK.ENTER, self._onSearchClick)
         entry.focus_set()
         entry.grid(row=0, column=1, sticky='nw')
         btn = pwgui.widgets.IconButton(frame, "Search",
@@ -903,7 +903,7 @@ class ProtocolsView(tk.Frame):
             btn = tk.Label(toolbar, text=text,
                            image=self.getImage(ActionIcons.get(action, None)),
                            compound=tk.LEFT, cursor='hand2', bg='white')
-            btn.bind('<Button-1>', lambda e: self._runActionClicked(action))
+            btn.bind(TK.LEFT_CLICK, lambda e: self._runActionClicked(action))
             return btn
 
         for action in self.actionList:
@@ -978,21 +978,21 @@ class ProtocolsView(tk.Frame):
         t.tag_configure(ProtocolTreeConfig.TAG_PROTOCOL,
                         image=self.getImage('python_file.gif'))
         t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   '<Double-1>', self._protocolItemClick)
+                   TK.LEFT_DOUBLE_CLICK, self._protocolItemClick)
         t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   '<Return>', self._protocolItemClick)
+                   TK.RETURN, self._protocolItemClick)
         t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   '<KP_Enter>', self._protocolItemClick)
+                   TK.ENTER, self._protocolItemClick)
 
         # Disable protocols (not installed) are allowed to be added.
         t.tag_configure(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
                         image=self.getImage('prot_disabled.gif'))
         t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   '<Double-1>', self._protocolItemClick)
+                   TK.LEFT_DOUBLE_CLICK, self._protocolItemClick)
         t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   '<Return>', self._protocolItemClick)
+                   TK.RETURN, self._protocolItemClick)
         t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   '<KP_Enter>', self._protocolItemClick)
+                   TK.ENTER, self._protocolItemClick)
 
         t.tag_configure('protocol_base', image=self.getImage('class_obj.gif'))
         t.tag_configure('protocol_group', image=self.getImage('class_obj.gif'))
@@ -1118,8 +1118,8 @@ class ProtocolsView(tk.Frame):
         try:
             self.protCfg = protCfg
             self.protTree.clear()
-            self.protTree.unbind('<<TreeviewOpen>>')
-            self.protTree.unbind('<<TreeviewClose>>')
+            self.protTree.unbind(TK.TREEVIEW_OPEN)
+            self.protTree.unbind(TK.TREEVIEW_CLOSE)
             self.protTreeItems = {}
             subclassedDict = {}  # Check which classes serve as base to not show them
             emProtocolsDict = self.domain.getProtocols()
@@ -1129,9 +1129,9 @@ class ProtocolsView(tk.Frame):
                         subclassedDict[k2] = True
             self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg,
                               subclassedDict)
-            self.protTree.bind('<<TreeviewOpen>>',
+            self.protTree.bind(TK.TREEVIEW_OPEN,
                                lambda e: self._treeViewItemChange(True))
-            self.protTree.bind('<<TreeviewClose>>',
+            self.protTree.bind(TK.TREEVIEW_CLOSE,
                                lambda e: self._treeViewItemChange(False))
         except Exception as e:
             # Tree can't be loaded report back, but continue
