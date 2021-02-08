@@ -22,14 +22,17 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+from configparser import ConfigParser
 
-from pyworkflow import Config
+from pyworkflow.project import MenuConfig
+from pyworkflow import Config, TK
 
-INIT_REFRESH_SECONDS = 3
+INIT_REFRESH_SECONDS = 5
 
 """
 View with the protocols inside the main project window.
 """
+
 import os
 import json
 import re
@@ -43,7 +46,6 @@ import pyworkflow.object as pwobj
 import pyworkflow.utils as pwutils
 import pyworkflow.protocol as pwprot
 import pyworkflow.gui as pwgui
-from pyworkflow.project import ProtocolTreeConfig
 from pyworkflow.gui.dialog import askColor, FloatingMessage
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
 from pyworkflow.utils.properties import Message, Icon, Color, KEYSYM
@@ -244,7 +246,7 @@ class StepsWindow(pwgui.browser.BrowserWindow):
         btn = tk.Label(toolbar, text="Tree",
                        image=self.getImage(Icon.RUNS_TREE),
                        compound=tk.LEFT, cursor='hand2')
-        btn.bind('<Button-1>', self._showTree)
+        btn.bind(TK.LEFT_CLICK, self._showTree)
         btn.grid(row=0, column=0, sticky='nw')
         # Create and set browser
         browser = pwgui.browser.ObjectBrowser(self.root, provider,
@@ -309,8 +311,8 @@ class SearchProtocolWindow(pwgui.Window):
         label.grid(row=0, column=0, sticky='nw')
         self._searchVar = tk.StringVar()
         entry = tk.Entry(frame, bg='white', textvariable=self._searchVar)
-        entry.bind('<Return>', self._onSearchClick)
-        entry.bind('<KP_Enter>', self._onSearchClick)
+        entry.bind(TK.RETURN, self._onSearchClick)
+        entry.bind(TK.ENTER, self._onSearchClick)
         entry.focus_set()
         entry.grid(row=0, column=1, sticky='nw')
         btn = pwgui.widgets.IconButton(frame, "Search",
@@ -324,22 +326,25 @@ class SearchProtocolWindow(pwgui.Window):
         frame = tk.Frame(content, bg=Color.LIGHT_GREY_COLOR, padx=5, pady=5)
         pwgui.configureWeigths(frame)
         self._resultsTree = self.master.getViewWidget()._createProtocolsTree(
-            frame, show=None, columns=("streaming", "installed", "help", "score"))
+            frame, show=None, columns=("protocol", "streaming", "installed", "help", "score"))
         self._configureTreeColumns()
         self._resultsTree.grid(row=0, column=0, sticky='news')
         frame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
 
     def _configureTreeColumns(self):
-        self._resultsTree.column('#0', width=300, stretch=tk.FALSE)
+        self._resultsTree.column('#0', width=50, minwidth=50, stretch=tk.NO)
+        self._resultsTree.column('protocol', width=300, stretch=tk.FALSE)
         self._resultsTree.column('streaming', width=100, stretch=tk.FALSE)
         self._resultsTree.column('installed', width=110, stretch=tk.FALSE)
         self._resultsTree.column('help', minwidth=300, stretch=tk.YES)
         self._resultsTree.column('score', width=50, stretch=tk.FALSE)
-        self._resultsTree.heading('#0', text='Protocol')
-        self._resultsTree.heading('streaming', text='Streamified')
-        self._resultsTree.heading('installed', text='Installation')
-        self._resultsTree.heading('help', text='Help')
-        self._resultsTree.heading('score', text='Score')
+
+        self._resultsTree.heading('#0', text='Status')
+        self._resultsTree.heading('protocol', text='Protocol', command=lambda: self._resultsTree.sortByColumn("protocol", False))
+        self._resultsTree.heading('streaming', text='Streamified', command=lambda: self._resultsTree.sortByColumn("streaming", False))
+        self._resultsTree.heading('installed', text='Installation', command=lambda: self._resultsTree.sortByColumn("installed", False))
+        self._resultsTree.heading('help', text='Help', command=lambda: self._resultsTree.sortByColumn("help", False))
+        self._resultsTree.heading('score', text='Score', command=lambda: self._resultsTree.sortByColumn("score", False, casting=int))
 
     def _onSearchClick(self, e=None):
         self._resultsTree.clear()
@@ -374,21 +379,25 @@ class SearchProtocolWindow(pwgui.Window):
                 line = (key, label,
                         "installed" if prot.isInstalled() else "missing installation",
                         prot.getHelpText().strip().replace('\r', '').replace('\n', '').lower(),
-                        "streamified" if prot.worksInStreaming() else "static")
+                        "streamified" if prot.worksInStreaming() else "static",
+                        "beta" if prot.isBeta() else "",
+                        "new" if prot.isNew() else "")
 
                 line = addSearchWeight(line, keyword)
                 # something was found: weight > 0
-                if line[5] != 0:
+                if line[7] != 0:
                     protList.append(line)
 
-        # Sort by protocol name
-        protList.sort(reverse=False, key=lambda x: x[1])  # sort by name
+        # Sort by weight
+        protList.sort(reverse=True, key=lambda x: x[7])
 
-        for key, label, installed, help, streamified, weight in protList:
-            tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed')
+        for key, label, installed, help, streamified, beta, new, weight in protList:
+            tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed',
+                                                    beta == 'beta',
+                                                    new == 'new')
             self._resultsTree.insert(
-                '', 'end', key, text=label, tags=tag,
-                values=(streamified, installed, help, weight, weight))
+                '', 'end', key, text="", tags=tag,
+                values=(label, streamified, installed, help, weight))
 
 
 class RunIOTreeProvider(pwgui.tree.TreeProvider):
@@ -590,6 +599,7 @@ class ProtocolsView(tk.Frame):
     """
 
     RUNS_CANVAS_NAME = "runs_canvas"
+    _protocolViews = None
 
     def __init__(self, parent, windows, **args):
         tk.Frame.__init__(self, parent, **args)
@@ -599,7 +609,7 @@ class ProtocolsView(tk.Frame):
         self.domain = self.project.getDomain()
         self.root = windows.root
         self.getImage = windows.getImage
-        self.protCfg = windows.protCfg
+        self.protCfg = self.getCurrentProtocolView()
         self.settings = windows.getSettings()
         self.runsView = self.settings.getRunsView()
         self._loadSelection()
@@ -713,12 +723,12 @@ class ProtocolsView(tk.Frame):
         infoFrame.rowconfigure(1, weight=1)
         # Create the Analyze results button
         self.btnAnalyze = pwgui.Button(infoFrame, text=Message.LABEL_ANALYZE,
-                                  fg='white', bg=Color.RED_COLOR,
-                                  image=self.getImage(Icon.ACTION_VISUALIZE),
-                                  compound=tk.LEFT,
-                                  activeforeground='white',
-                                  activebackground='#A60C0C',
-                                  command=self._analyzeResultsClicked)
+                                       fg='white', bg=Color.RED_COLOR,
+                                       image=self.getImage(Icon.ACTION_VISUALIZE),
+                                       compound=tk.LEFT,
+                                       activeforeground='white',
+                                       activebackground='#A60C0C',
+                                       command=self._analyzeResultsClicked)
         self.btnAnalyze.grid(row=0, column=0, sticky='ne', padx=15)
         # self.style.configure("W.TNotebook")#, background='white')
         tab = ttk.Notebook(infoFrame)  # , style='W.TNotebook')
@@ -847,8 +857,11 @@ class ProtocolsView(tk.Frame):
                 print("    - %s, %s" % (f.path, f.fd))
             print("  memory percent: ", proc.memory_percent())
 
-        self.updateRunsGraph(True, checkPids=checkPids)
-        self.updateRunsTree(False)
+        if self.runsView == VIEW_LIST:
+            self.updateRunsTree(False)
+        else:
+            self.updateRunsGraph(True, checkPids=checkPids)
+            self._updateSelection()
 
         if initRefreshCounter:
 
@@ -896,7 +909,7 @@ class ProtocolsView(tk.Frame):
             btn = tk.Label(toolbar, text=text,
                            image=self.getImage(ActionIcons.get(action, None)),
                            compound=tk.LEFT, cursor='hand2', bg='white')
-            btn.bind('<Button-1>', lambda e: self._runActionClicked(action))
+            btn.bind(TK.LEFT_CLICK, lambda e: self._runActionClicked(action))
             return btn
 
         for action in self.actionList:
@@ -931,12 +944,9 @@ class ProtocolsView(tk.Frame):
         viewChoices = ['List', 'Tree', 'Tree - small']
         self.switchCombo = pwgui.widgets.ComboBox(parent, width=10,
                                                   choices=viewChoices,
-                                                  values=[VIEW_LIST, VIEW_TREE,
-                                                          VIEW_TREE_SMALL],
-                                                  initial=viewChoices[
-                                                      self.runsView],
-                                                  onChange=lambda
-                                                      e: self._runActionClicked(
+                                                  values=[VIEW_LIST, VIEW_TREE, VIEW_TREE_SMALL],
+                                                  initial=viewChoices[self.runsView],
+                                                  onChange=lambda e: self._runActionClicked(
                                                       ACTION_SWITCH_VIEW))
         self.switchCombo.grid(row=0, column=1)
 
@@ -970,25 +980,23 @@ class ProtocolsView(tk.Frame):
         t = pwgui.tree.Tree(parent, show=show, style='W.Treeview',
                             columns=columns)
         t.column('#0', minwidth=300)
-        # Protocol nodes
-        t.tag_configure(ProtocolTreeConfig.TAG_PROTOCOL,
-                        image=self.getImage('python_file.gif'))
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   '<Double-1>', self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   '<Return>', self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL,
-                   '<KP_Enter>', self._protocolItemClick)
 
+        def configureTag(tag, img):
+            # Protocol nodes
+            t.tag_configure(tag, image=self.getImage(img))
+            t.tag_bind(tag, TK.LEFT_DOUBLE_CLICK, self._protocolItemClick)
+            t.tag_bind(tag, TK.RETURN, self._protocolItemClick)
+            t.tag_bind(tag, TK.ENTER, self._protocolItemClick)
+
+        # Protocol nodes
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, 'python_file.gif')
+        # New protocols
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_NEW, 'new.gif')
+        # Beta protocols
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_BETA, 'beta.gif')
         # Disable protocols (not installed) are allowed to be added.
-        t.tag_configure(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                        image=self.getImage('prot_disabled.gif'))
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   '<Double-1>', self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   '<Return>', self._protocolItemClick)
-        t.tag_bind(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                   '<KP_Enter>', self._protocolItemClick)
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
+                     'prot_disabled.gif')
 
         t.tag_configure('protocol_base', image=self.getImage('class_obj.gif'))
         t.tag_configure('protocol_group', image=self.getImage('class_obj.gif'))
@@ -1000,7 +1008,7 @@ class ProtocolsView(tk.Frame):
         comboFrame = tk.Frame(parent, bg=bgColor)
         tk.Label(comboFrame, text='View', bg=bgColor).grid(row=0, column=0,
                                                            padx=(0, 5), pady=5)
-        choices = self.project.getProtocolViews()
+        choices = self.getProtocolViews()
         initialChoice = self.settings.getProtocolView()
         combo = pwgui.widgets.ComboBox(comboFrame, choices=choices,
                                        initial=initialChoice)
@@ -1014,23 +1022,56 @@ class ProtocolsView(tk.Frame):
         t.after(3000, self._automaticRefreshRuns)
         self.protTree = t
 
+    def getProtocolViews(self):
+
+        if self._protocolViews is None:
+            self._loadProtocols()
+
+        return list(self._protocolViews.keys())
+
+    def getCurrentProtocolView(self):
+        """ Select the view that is currently selected.
+        Read from the settings the last selected view
+        and get the information from the self._protocolViews dict.
+        """
+        currentView = self.project.getProtocolView()
+        if currentView in self.getProtocolViews():
+            viewKey = currentView
+        else:
+            viewKey = self.getProtocolViews()[0]
+            self.project.settings.setProtocolView(viewKey)
+            if currentView is not None:
+                print("PROJECT: Warning, protocol view '%s' not found." % currentView)
+                print("         Using '%s' instead." % viewKey)
+
+        return self._protocolViews[viewKey]
+
+    def _loadProtocols(self):
+        """ Load protocol configuration from a .conf file. """
+        # If the host file is not passed as argument...
+        configProtocols = Config.SCIPION_PROTOCOLS
+
+        localDir = Config.SCIPION_LOCAL_CONFIG
+        protConf = os.path.join(localDir, configProtocols)
+        self._protocolViews = ProtocolTreeConfig.load(self.project.getDomain(),
+                                                      protConf)
+
     def _onSelectProtocols(self, combo):
         """ This function will be called when a protocol menu
         is selected. The index of the new menu is passed. 
         """
         protView = combo.getText()
         self.settings.setProtocolView(protView)
-        self.protCfg = self.project.getCurrentProtocolView()
+        self.protCfg = self.getCurrentProtocolView()
         self.updateProtocolsTree(self.protCfg)
 
     def populateTree(self, tree, treeItems, prefix, obj, subclassedDict, level=0):
-        text = obj.text.get()
+        text = obj.text
         if text:
-            value = obj.value.get(text)
+            value = obj.value if obj.value is not None else text
             key = '%s.%s' % (prefix, value)
-
-            img = obj.icon.get('')
-            tag = obj.tag.get('')
+            img = obj.icon if obj.icon is not None else ''
+            tag = obj.tag if obj.tag is not None else ''
 
             if len(img):
                 img = self.getImage(img)
@@ -1057,7 +1098,7 @@ class ProtocolsView(tk.Frame):
             if openItem:
                 tree.item(item, open=True)
 
-            if obj.value.hasValue() and tag == 'protocol_base':
+            if obj.value is not None and tag == 'protocol_base':
                 if prot is not None:
                     tree.item(item, image=self.getImage('class_obj.gif'))
 
@@ -1081,8 +1122,8 @@ class ProtocolsView(tk.Frame):
         try:
             self.protCfg = protCfg
             self.protTree.clear()
-            self.protTree.unbind('<<TreeviewOpen>>')
-            self.protTree.unbind('<<TreeviewClose>>')
+            self.protTree.unbind(TK.TREEVIEW_OPEN)
+            self.protTree.unbind(TK.TREEVIEW_CLOSE)
             self.protTreeItems = {}
             subclassedDict = {}  # Check which classes serve as base to not show them
             emProtocolsDict = self.domain.getProtocols()
@@ -1092,9 +1133,9 @@ class ProtocolsView(tk.Frame):
                         subclassedDict[k2] = True
             self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg,
                               subclassedDict)
-            self.protTree.bind('<<TreeviewOpen>>',
+            self.protTree.bind(TK.TREEVIEW_OPEN,
                                lambda e: self._treeViewItemChange(True))
-            self.protTree.bind('<<TreeviewClose>>',
+            self.protTree.bind(TK.TREEVIEW_CLOSE,
                                lambda e: self._treeViewItemChange(False))
         except Exception as e:
             # Tree can't be loaded report back, but continue
@@ -1103,7 +1144,7 @@ class ProtocolsView(tk.Frame):
     def _treeViewItemChange(self, openItem):
         item = self.protTree.focus()
         if item in self.protTreeItems:
-            self.protTreeItems[item].openItem.set(openItem)
+            self.protTreeItems[item].openItem = openItem
 
     def createRunsTree(self, parent):
         self.provider = RunsTreeProvider(self.project, self._runActionClicked)
@@ -1392,7 +1433,7 @@ class ProtocolsView(tk.Frame):
         if viewValue == VIEW_LIST:
             self.runsTree.grid(row=0, column=0, sticky='news')
             self.runsGraphCanvas.frame.grid_remove()
-            self.updateRunsTreeSelection()
+            self.updateRunsTree()
             self.viewButtons[ACTION_TREE].grid_remove()
             self._lastRightClickPos = None
         else:
@@ -1789,9 +1830,11 @@ class ProtocolsView(tk.Frame):
             self.outputViewer.clear()
             # Right now skip the err tab since we are redirecting
             # stderr to stdout
-            out, _, log = prot.getLogPaths()
+            out, _, log, schedule = prot.getLogPaths()
             self.outputViewer.addFile(out)
             self.outputViewer.addFile(log)
+            if os.path.exists(schedule):
+                self.outputViewer.addFile(schedule)
             self.outputViewer.setIndex(i)  # Preserve the last selected tab
             self.outputViewer.selectedText().goEnd()
             # when there are not logs, force re-load next time
@@ -2040,6 +2083,8 @@ class ProtocolsView(tk.Frame):
                     self._exportProtocols(defaultPath=browser.getCurrentDir(),
                                           defaultBasename=browser.getEntryValue())
             except Exception as ex:
+                import traceback
+                traceback.print_exc()
                 self.windows.showError(str(ex))
 
         browser = pwgui.browser.FileBrowserWindow(
@@ -2070,7 +2115,7 @@ class ProtocolsView(tk.Frame):
     def _analyzeResults(self, prot):
         viewers = self.domain.findViewers(prot.getClassName(), DESKTOP_TKINTER)
         if len(viewers):
-            # Instanciate the first available viewer
+            # Instantiate the first available viewer
             # TODO: If there are more than one viewer we should display
             # TODO: a selection menu
             firstViewer = viewers[0](project=self.project, protocol=prot,
@@ -2084,7 +2129,7 @@ class ProtocolsView(tk.Frame):
             for _, output in prot.iterOutputAttributes():
                 viewers = self.domain.findViewers(output.getClassName(), DESKTOP_TKINTER)
                 if len(viewers):
-                    # Instanciate the first available viewer
+                    # Instantiate the first available viewer
                     # TODO: If there are more than one viewer we should display
                     # TODO: a selection menu
                     viewerclass = viewers[0]
@@ -2118,17 +2163,24 @@ class ProtocolsView(tk.Frame):
             if bibTexCites:
                 with tempfile.NamedTemporaryFile(suffix='.bib') as bibFile:
                     for refId, refDict in bibTexCites.items():
-                        refType = refDict['ENTRYTYPE']
-                        # remove 'type' and 'id' keys
-                        refDict = {k: v for k, v in refDict.items()
-                                   if k not in ['ENTRYTYPE', 'ID']}
-                        jsonStr = json.dumps(refDict, indent=4,
-                                             ensure_ascii=False)[1:]
-                        jsonStr = jsonStr.replace('": "', '"= "')
-                        jsonStr = re.sub('(?<!= )"(\S*?)"', '\\1', jsonStr)
-                        jsonStr = jsonStr.replace('= "', ' = "')
-                        refStr = '@%s{%s,%s\n\n' % (refType, refId, jsonStr)
-                        bibFile.write(refStr.encode('utf-8'))
+                        # getCitations does not always return a dictionary
+                        # if the citation is not found in the bibtex file it adds just
+                        # the refId: like "Ramirez-Aportela-2019"
+                        # we need to exclude this
+                        if isinstance(refDict, dict):
+                            refType = refDict['ENTRYTYPE']
+                            # remove 'type' and 'id' keys
+                            refDict = {k: v for k, v in refDict.items()
+                                       if k not in ['ENTRYTYPE', 'ID']}
+                            jsonStr = json.dumps(refDict, indent=4,
+                                                 ensure_ascii=False)[1:]
+                            jsonStr = jsonStr.replace('": "', '"= "')
+                            jsonStr = re.sub('(?<!= )"(\S*?)"', '\\1', jsonStr)
+                            jsonStr = jsonStr.replace('= "', ' = "')
+                            refStr = '@%s{%s,%s\n\n' % (refType, refId, jsonStr)
+                            bibFile.write(refStr.encode('utf-8'))
+                        else:
+                            print("WARNING: reference %s not properly defined or unpublished." % refId)
                     # flush so we can see content when opening
                     bibFile.flush()
                     pwgui.text.openTextFileEditor(bibFile.name)
@@ -2176,7 +2228,7 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_RESULTS:
                     self._analyzeResults(prot)
                 elif action == ACTION_EXPORT:
-                    self._exportProtocols()
+                    self._exportProtocols(defaultPath=pwutils.getHomePath())
                 elif action == ACTION_EXPORT_UPLOAD:
                     self._exportUploadProtocols()
                 elif action == ACTION_COLLAPSE:
@@ -2239,20 +2291,20 @@ class RunBox(pwgui.TextBox):
 
 def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=None):
     """ Creates a .CSV file in the filename path with
-        all its members and recursibely with a certain maxDeep,
-        if maxDeep=0 means no maxDeep (untils all members are inspected).
+        all its members and recursively with a certain maxDeep,
+        if maxDeep=0 means no maxDeep (until all members are inspected).
         
         inspectDetail can be:
          - 1: All attributes are shown
          - 2: All attributes are shown and iterable values are also inspected
 
-        prefix and memoryDict will be updated in the recursibe entries:
-         - prefix is to compond the two first columns (DEEP and Tree)
-         - memoryDict is a dictionary with the memory adress and an identifier
+        prefix and memoryDict will be updated in the recursive entries:
+         - prefix is a compound of the two first columns (DEEP and Tree)
+         - memoryDict is a dictionary with the memory address and an identifier
     """
     END_LINE = '\n'  # end of line char
     COL_DELIM = '\t'  # column delimiter
-    INDENT_COUNTER = '/'  # character append in each indention (it's not writed)
+    INDENT_COUNTER = '/'  # character append in each indention (it's not written)
 
     NEW_CHILD = '  |------>  '  # new item indention
     BAR_CHILD = '  | ' + INDENT_COUNTER  # bar indention
@@ -2273,7 +2325,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         """ Writes a row item. """
         # we will avoid to recursively print the items wrote before 
         #  (ie. with the same memory address), thus we store a dict with the
-        #  addresses and the flag isNew is propertly set
+        #  addresses and the flag isNew is properly set
         if str(hex(id(value))) in memoryDict:
             memorySTR = memoryDict[str(hex(id(value)))]
             isNew = False
@@ -2295,7 +2347,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             # else, we print the value avoiding the EndOfLine char (// instead)
             thirdCol = str(value).replace(END_LINE, ' // ')
 
-        # we will print the indetion deep number in the first row
+        # we will print the indentation deep number in the first row
         indentionDeep = prefix.count(INDENT_COUNTER)
         deepStr = str(indentionDeep) + COL_DELIM
 
@@ -2329,7 +2381,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         if isFirstOrLast == IS_FIRST:
             deepStr = str(indentionDeep) + COL_DELIM
         else:
-            # When it was not the first item, the deep is encreased 
+            # When it was not the first item, the deep is increased
             #   to improve the readability when filter 
             deepStr = str(indentionDeep+1) + COL_DELIM
 
@@ -2346,7 +2398,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         file.close()
 
     def isIterable(obj):
-        """ Returns true if obj is a tuple, list, dict or calss. """
+        """ Returns true if obj is a tuple, list, dict or calls. """
         isTupleListDict = (isinstance(obj, tuple) or
                            isinstance(obj, dict) or
                            isinstance(obj, list)) and len(value) > 1
@@ -2373,12 +2425,12 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
         col1 = '    - Name - (value for Lists and Tuples)' + COL_DELIM
         col3 = '    - Value - (Pos./Len for Lists and Tuples) ' + COL_DELIM
 
-        #  writting the header row
+        #  writing the header row
         file = open(filename, 'w')
         file.write(prefixHeader + col1 + column2 + col3 + column4 + END_LINE)
         file.close()
 
-        #  writting the root object
+        #  writing the root object
         writeRow(obj.__class__.__name__, obj, prefix)
         #  adding the child bar to the prefix
         prefix = '  ' + BAR_CHILD
@@ -2422,7 +2474,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             # write the variable
             isNew = writeRow(key, value, prefixToWrite)
 
-            # managing the extrems of the loop
+            # managing the extremes of the loop
             if counter == 1:
                 isFirstOrLast = IS_FIRST
             elif counter == len(obj_dict):
@@ -2439,7 +2491,7 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             isNew = writeRow(obj[i], obj[i], prefixToWrite, 
                              str(i+1)+'/'+str(len(obj)))
 
-            # managing the extrems of the loop
+            # managing the extremes of the loop
             if i == 0:
                 isFirstOrLast = IS_FIRST
             elif len(obj) == i+1:
@@ -2450,3 +2502,250 @@ def inspectObj(obj, filename, prefix='', maxDeep=5, inspectDetail=2, memoryDict=
             # show attributes for objects and items for lists and tuples 
             if isBelowMaxDeep and isNew and isIterable(obj[i]):
                 recursivePrint(obj[i], prefix, isFirstOrLast)
+
+
+class ProtocolTreeConfig:
+    """ Handler class that groups functions and constants
+    related to the protocols tree configuration.
+    """
+    ALL_PROTOCOLS = "All"
+    TAG_PROTOCOL_DISABLED = 'protocol-disabled'
+    TAG_PROTOCOL = 'protocol'
+    TAG_SECTION = 'section'
+    TAG_PROTOCOL_GROUP = 'protocol_group'
+    TAG_PROTOCOL_BETA = 'protocol_beta'
+    TAG_PROTOCOL_NEW = 'protocol_new'
+    PLUGIN_CONFIG_PROTOCOLS = 'protocols.conf'
+
+    @classmethod
+    def getProtocolTag(cls, isInstalled, isBeta=False, isNew=False):
+        """ Return the proper tag depending if the protocol is installed or not.
+        """
+        if isInstalled:
+            if isBeta:
+                return cls.TAG_PROTOCOL_BETA
+            elif isNew:
+                return cls.TAG_PROTOCOL_NEW
+            return cls.TAG_PROTOCOL
+        else:
+            return cls.TAG_PROTOCOL_DISABLED
+
+    @classmethod
+    def isAFinalProtocol(cls, v, k):
+        if (issubclass(v, ProtocolViewer) or
+                v.isBase() or v.isDisabled()):
+            return False
+
+        return v.__name__ == k
+
+    @classmethod
+    def __addToTree(cls, menu, item, checkFunction=None):
+        """ Helper function to recursively add items to a menu.
+        Add item (a dictionary that can contain more dictionaries) to menu
+        If check function is added will use it to check if the value must be added.
+        """
+        children = item.pop('children', [])
+
+        if checkFunction is not None:
+            add = checkFunction(item)
+            if not add:
+                return
+        subMenu = menu.addSubMenu(**item)  # we expect item={'text': ...}
+        for child in children:
+            cls.__addToTree(subMenu, child, checkFunction)  # add recursively to sub-menu
+
+        return subMenu
+
+    @classmethod
+    def __inSubMenu(cls, child, subMenu):
+        """
+        Return True if child belongs to subMenu
+        """
+        for ch in subMenu:
+            if child['tag'] == cls.TAG_PROTOCOL:
+                if ch.value is not None and ch.value == child['value']:
+                    return ch
+            elif ch.text == child['text']:
+                return ch
+        return None
+
+    @classmethod
+    def _orderSubMenu(cls, session):
+        """
+        Order all children of a given session:
+        The protocols first, then the sessions(the 'more' session at the end)
+        """
+        lengthSession = len(session.childs)
+        if lengthSession > 1:
+            childs = session.childs
+            lastChildPos = lengthSession - 1
+            if childs[lastChildPos].tag == cls.TAG_PROTOCOL:
+                for i in range(lastChildPos - 1, -1, -1):
+                    if childs[i].tag == cls.TAG_PROTOCOL:
+                        break
+                    else:
+                        tmp = childs[i + 1]
+                        childs[i + 1] = childs[i]
+                        childs[i] = tmp
+            else:
+                for i in range(lastChildPos - 1, -1, -1):
+                    if childs[i].tag == cls.TAG_PROTOCOL:
+                        break
+                    elif 'more' in str(childs[i].text).lower():
+                        tmp = childs[i + 1]
+                        childs[i + 1] = childs[i]
+                        childs[i] = tmp
+
+    @classmethod
+    def __findTreeLocation(cls, subMenu, children, parent):
+        """
+        Locate the protocol position in the given view
+        """
+        for child in children:
+            sm = cls.__inSubMenu(child, subMenu)
+            if sm is None:
+                cls.__addToTree(parent, child, cls.__checkItem)
+                cls._orderSubMenu(parent)
+            elif child['tag'] == cls.TAG_PROTOCOL_GROUP or child['tag'] == cls.TAG_SECTION:
+                cls.__findTreeLocation(sm.childs, child['children'], sm)
+
+    @classmethod
+    def __checkItem(cls, item):
+        """ Function to check if the protocol has to be added or not.
+        Params:
+            item: {"tag": "protocol", "value": "ProtImportMovies",
+                   "text": "import movies"}
+        """
+        if item["tag"] != cls.TAG_PROTOCOL:
+            return True
+
+        # It is a protocol as this point, get the class name and
+        # check if it is disabled
+        protClassName = item["value"]
+        protClass = Config.getDomain().getProtocols().get(protClassName)
+        icon = 'python_file.gif'
+        if protClass is not None:
+            if protClass.isBeta():
+                icon = "beta.gif"
+            elif protClass.isNew():
+                icon = "new.gif"
+        item['icon'] = icon
+        return False if protClass is None else not protClass.isDisabled()
+
+    @classmethod
+    def __addAllProtocols(cls, domain, protocols):
+        # Add all protocols
+        allProts = domain.getProtocols()
+
+        # Sort the dictionary
+        allProtsSorted = OrderedDict(sorted(allProts.items(),
+                                            key=lambda e: e[1].getClassLabel()))
+        allProtMenu = ProtocolConfig(cls.ALL_PROTOCOLS)
+        packages = {}
+
+        # Group protocols by package name
+        for k, v in allProtsSorted.items():
+            if cls.isAFinalProtocol(v, k):
+                packageName = v.getClassPackageName()
+                # Get the package submenu
+                packageMenu = packages.get(packageName)
+
+                # If no package menu available
+                if packageMenu is None:
+                    # Add it to the menu ...
+                    packageLine = {"tag": "package", "value": packageName,
+                                   "text": packageName}
+                    packageMenu = cls.__addToTree(allProtMenu, packageLine)
+
+                    # Store it in the dict
+                    packages[packageName] = packageMenu
+
+                # Add the protocol
+                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew())
+
+                protLine = {"tag": tag, "value": k,
+                            "text": v.getClassLabel(prependPackageName=False)}
+
+                cls.__addToTree(packageMenu, protLine)
+
+        protocols[cls.ALL_PROTOCOLS] = allProtMenu
+
+    @classmethod
+    def __addProtocolsFromConf(cls, protocols, protocolsConfPath):
+        """
+        Load the protocols in the tree from a given protocols.conf file,
+        either the global one in Scipion or defined in a plugin.
+        """
+        # Populate the protocols menu from the plugin config file.
+        if os.path.exists(protocolsConfPath):
+            cp = ConfigParser()
+            cp.optionxform = str  # keep case
+            cp.read(protocolsConfPath)
+            #  Ensure that the protocols section exists
+            if cp.has_section('PROTOCOLS'):
+                for menuName in cp.options('PROTOCOLS'):
+                    if menuName not in protocols:  # The view has not been inserted
+                        menu = ProtocolConfig(menuName)
+                        children = json.loads(cp.get('PROTOCOLS', menuName))
+                        for child in children:
+                            cls.__addToTree(menu, child, cls.__checkItem)
+                        protocols[menuName] = menu
+                    else:  # The view has been inserted
+                        menu = protocols.get(menuName)
+                        children = json.loads(cp.get('PROTOCOLS',
+                                                     menuName))
+                        cls.__findTreeLocation(menu.childs, children, menu)
+
+    @classmethod
+    def load(cls, domain, protocolsConf):
+        """ Read the protocol configuration from a .conf file similar to the
+        one in scipion/config/protocols.conf,
+        which is the default one when no file is passed.
+        """
+        protocols = OrderedDict()
+        # Read the protocols.conf from Scipion (base) and create an initial
+        # tree view
+        cls.__addProtocolsFromConf(protocols, protocolsConf)
+
+        # Read the protocols.conf of any installed plugin
+        pluginDict = domain.getPlugins()
+        pluginList = pluginDict.keys()
+        for pluginName in pluginList:
+            try:
+
+                # if the plugin has a path
+                if pwutils.isModuleAFolder(pluginName):
+                    # Locate the plugin protocols.conf file
+                    protocolsConfPath = os.path.join(
+                        pluginDict[pluginName].__path__[0],
+                        cls.PLUGIN_CONFIG_PROTOCOLS)
+                    cls.__addProtocolsFromConf(protocols, protocolsConfPath)
+
+            except Exception as e:
+                print('Failed to read settings. The reported error was:\n  %s\n'
+                      'To solve it, fix %s and run again.' % (
+                          e, os.path.abspath(protocolsConfPath)))
+
+            # Add all protocols to All view
+        cls.__addAllProtocols(Config.getDomain(), protocols)
+
+        return protocols
+
+
+class ProtocolConfig(MenuConfig):
+    """Store protocols configuration """
+
+    def __init__(self, text=None, value=None, **args):
+        MenuConfig.__init__(self, text, value, **args)
+        if 'openItem' not in args:
+            self.openItem = self.tag != 'protocol_base'
+
+    def addSubMenu(self, text, value=None, shortCut=None, **args):
+        if 'icon' not in args:
+            tag = args.get('tag', None)
+            if tag == 'protocol_base':
+                args['icon'] = 'class_obj.gif'
+
+        args['shortCut'] = shortCut
+        return MenuConfig.addSubMenu(self, text, value, **args)
+

@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -27,6 +27,7 @@
 
 import sys
 import os
+import time
 
 import pyworkflow as pw
 from pyworkflow.project import Manager
@@ -60,10 +61,10 @@ elif n > 2 and sys.argv[2] != '--ignore':
 projName = sys.argv[1]
 
 # This fails, since it is triggering matplotlib.pyplot and then import error happens:
-# ... pyworkflow/gui/no-tkinter/_tkinter.py: invalid ELF header. If we want this back we migt need to
+# ... pyworkflow/gui/no-tkinter/_tkinter.py: invalid ELF header. If we want this back we might need to
 # invest some time "faking" tkinter again for python3.
-#path = pw.join('gui', 'no-tkinter')
-#sys.path.insert(1, path)
+# path = pw.join('gui', 'no-tkinter')
+# sys.path.insert(1, path)
 
 # Create a new project
 manager = Manager()
@@ -89,8 +90,10 @@ for prot in runs:
     protClassName = prot.getClassName()
     protLabelName = prot.getObjLabel()
     if (protClassName not in sys.argv[3:] and
-        protLabelName not in sys.argv[3:]):
+            protLabelName not in sys.argv[3:]):
         project.scheduleProtocol(prot)
+        # Wait 1 seconds to avoid concurrent activity
+        time.sleep(0.7)
     else:
         print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
-                                  % (protClassName, protLabelName)))
+                              % (protClassName, protLabelName)))

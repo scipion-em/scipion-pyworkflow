@@ -106,7 +106,6 @@ class ProjectDataView(tk.Frame):
         self.project = windows.project
         self.root = windows.root
         self.getImage = windows.getImage
-        self.protCfg = windows.protCfg
         self.settings = windows.getSettings()
         self.showGraph = self.settings.getRunsView()
         self.style = ttk.Style()
@@ -218,7 +217,7 @@ class ProjectDataView(tk.Frame):
         # a Action Buttons TOOLBAR in the top
         # and another vertical Pane with:
         # Runs History (at Top)
-        # Sectected run info (at Bottom)
+        # Selected run info (at Bottom)
         """
         # Create the Action Buttons TOOLBAR
         toolbar = tk.Frame(parent, bg='white')

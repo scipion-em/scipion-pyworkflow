@@ -191,7 +191,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         p2 = mapper2.selectByClass('Pointer')[0]
 
         # Check the mapper was properly stored when
-        # set to None and the _extended property cleanned
+        # set to None and the _extended property cleaned
         self.assertIsNone(p2.get())
 
     def test_removeFromLists(self):

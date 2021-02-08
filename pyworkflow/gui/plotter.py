@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -56,7 +56,7 @@ class Plotter(View):
         """ This Plotter class has some utilities to create a Matplotlib figure
         and add some plots to it.
         Params:
-            x, y: number of rows and colums of the grid for plots.
+            x, y: number of rows and columns of the grid for plots.
             mainTitle: figure main title.
             figsize: the size of the figure, if None, it will be guessed from x and y
             dpi: resolution, 100 by default.
@@ -138,7 +138,7 @@ class Plotter(View):
         Create a subplot in the figure.
         You should provide plot title, and x and y axis labels.
         yformat True specified the use of global self.plot_yformat
-        Posibles values for projection are:
+        Possible values for projection are:
             'aitoff', 'hammer', 'lambert', 'mollweide', 'polar', 'rectilinear'
 
         """
@@ -218,15 +218,15 @@ class Plotter(View):
         plt.close(self.figure)
         
 
-def getHexColorList(stepColors, colorName='jet'):
+def getHexColorList(numberOfColors, colorName='jet'):
     """ Returns a list of hexColor """
     from matplotlib import cm, colors
     
     colorsList = []
     colorMap = cm.get_cmap(colorName)
-    ratio = 255.0 / (len(stepColors))
-    for index in range(len(stepColors)):
-        colorPosition = int(round((index+1) * ratio))
+    ratio = colorMap.N / numberOfColors
+    for index in range(numberOfColors):
+        colorPosition = int(round((index * ratio)))
         rgb = colorMap(colorPosition)[:3]
         rgbColor = colors.rgb2hex(rgb)
         colorsList.append(rgbColor)

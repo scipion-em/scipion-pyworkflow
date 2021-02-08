@@ -8,7 +8,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -33,6 +33,7 @@ import pyworkflow.mapper as pwmapper
 import pyworkflow.protocol as pwprot
 from pyworkflowtests.protocols import ProtOutputTest
 from pyworkflowtests import Domain, MockObject
+
 
 # Protocol to output of basic scipion objects
 class TestProtocolOutputs(pwtests.BaseTest):
@@ -101,7 +102,6 @@ class TestProtocolOutputs(pwtests.BaseTest):
                         "useOutputList not activated")
 
     def test_basicObjectInProject(self):
-
         prot = self.newProtocol(ProtOutputTest,
                                 objLabel='to generate basic input')
         print("working dir: %s" % prot.getWorkingDir())

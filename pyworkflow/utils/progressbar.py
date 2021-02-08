@@ -8,7 +8,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -41,7 +41,7 @@ class ProgressBar(object):
         N = 1000
         pb = ProgressBar(N, fmt=ProgressBar.FULL)
         pb.start()
-        for x in xrange(N):
+        for x in range(N):
             pb.update(x+1)
             sleep(0.1)
         pb.finish()
@@ -49,7 +49,7 @@ class ProgressBar(object):
     DEFAULT = 'Progress: %(bar)s %(percent)3d%%'
     FULL = '%(bar)s %(current)d/%(total)d (%(percent)3d%%) %(remaining)d to go'
     # scipion uses variable fonts so the bar size changes
-    # since the space widt is different from the = width
+    # since the space width is different from the = width
     NOBAR = '%(current)d/%(total)d (%(percent)3d%%) %(remaining)d to go'
     OBJID = '%(bar)s %(current)d/%(total)d (%(percent)3d%%) (objectId=%(objectId)d)'
     DOT = '.'
@@ -119,7 +119,7 @@ class ProgressBar(object):
         """
         Update the current value and print the progress.
         :param value: New value, should be greater than the previous
-            value and less or equal the total value/
+            value and less or equal the total value
         :return:
         """
         if value < 0 or value <= self._current or value > self._total:

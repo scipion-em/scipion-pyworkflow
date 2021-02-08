@@ -22,8 +22,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
-
+from collections import OrderedDict
 
 from pyworkflow.utils import replaceExt, joinExt
 from .mapper import Mapper
@@ -523,7 +522,7 @@ class SqliteObjectsDb(SqliteDb):
         
     def __createTables(self):
         """Create required tables if don't exists"""
-        # Enable foreings keys
+        # Enable foreign keys
         self.setVersion(self.VERSION)
         self._pragmas['foreing_keys'] = "ON"
         for pragma in self._pragmas.items():
@@ -714,6 +713,7 @@ class SqliteFlatMapper(Mapper):
                  indexes=None):
         Mapper.__init__(self, dictClasses)
         self._objTemplate = None
+        self._attributesToStore = None
         try:
             # We (ROB and JMRT) are playing with different
             # PRAGMAS (see https://www.sqlite.org/pragma.html)
@@ -765,8 +765,24 @@ class SqliteFlatMapper(Mapper):
             self.doCreateTables = False
         """Insert a new object into the system, the id will be set"""
         self.db.insertObject(obj.getObjId(), obj.isEnabled(), obj.getObjLabel(), obj.getObjComment(), 
-                             *obj.getObjDict().values())
-        
+                             *self._getValuesFromObject(obj).values())
+
+    def getAttributes2Store(self, item):
+
+        if self._attributesToStore is None:
+            self._attributesToStore = [key for key, value in item.getAttributesToStore()]
+
+        return self._attributesToStore
+
+    def _getValuesFromObject(self, item):
+
+        valuesDict = OrderedDict()
+
+        for attr in self.getAttributes2Store(item):
+            item.fillObjDict('', valuesDict, False, attr, getattr(item, attr))
+
+        return valuesDict
+
     def enableAppend(self):
         """ This will allow to append items to existing db. 
         This is by default not allow, since most sets are not 
@@ -1163,7 +1179,7 @@ class SqliteFlatDb(SqliteDb):
 
     def getClassRows(self):
         """ Create a dictionary with names of the attributes
-        of the colums. """
+        of the columns. """
         self.executeCommand(self.SELECT_CLASS)
         return self._results(iterate=False)
 
@@ -1255,7 +1271,7 @@ class SqliteFlatDb(SqliteDb):
         # let us count for testing
         selectStr = 'SELECT '
         separator = ' '
-        # This cannot be like the following line should be expresed in terms
+        # This cannot be like the following line should be expressed in terms
         # of C1, C2 etc....
         for operation in operations:
             selectStr += "%s %s(%s) AS %s" % (separator, operation,
@@ -1297,7 +1313,7 @@ class SqliteFlatDb(SqliteDb):
         return self._results(iterate)
 
     # FIXME: Seems to be duplicated and a subset of selectAll
-    # Moreover, it does not translate between "user colums" and
+    # Moreover, it does not translate between "user columns" and
     # "internal" Objects table columns
     def selectObjectsWhere(self, whereStr, iterate=False):
         self.executeCommand(self.selectCmd(whereStr))

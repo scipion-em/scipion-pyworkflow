@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -88,11 +88,11 @@ class RunScheduler:
         protocol = self._loadProtocol()
         mapper = protocol.getMapper()
 
-        log = open(protocol._getLogsPath('schedule.log'), 'w')
+        log = open(protocol.getScheduleLog(), 'w')
         pid = os.getpid()
         protocol.setPid(pid)
 
-        prerequisites = map(int, protocol.getPrerequisites())
+        prerequisites = list(map(int, protocol.getPrerequisites()))
 
         def _log(msg):
             log.write("%s: %s\n" % (prettyTimestamp(), msg))
@@ -108,12 +108,18 @@ class RunScheduler:
         # Keep track of the last time the protocol was checked and
         # its modification date to avoid unnecessary db opening
         lastCheckedDict = {}
+        updatedProtocols = []
 
         def _updateProtocol(protocol, project):
+
+            protId = protocol.getObjId()
+
+            if protId in updatedProtocols:
+                return
+
             protDb = protocol.getDbPath()
 
             if os.path.exists(protDb):
-                protId = protocol.getObjId()
                 lastChecked = lastCheckedDict.get(protId, None)
                 lastModified = getFileLastModificationDate(protDb)
 
@@ -121,6 +127,7 @@ class RunScheduler:
                     project._updateProtocol(protocol,
                                             skipUpdatedProtocols=False)
                     _log("Updated protocol %s" % protId)
+                    updatedProtocols.append(protId)
 
         def _getProtocolFromPointer(pointer):
             """
@@ -156,6 +163,9 @@ class RunScheduler:
             # Check if there are input protocols failed or aborted
             failedInputProtocols = False
 
+            # Clear the list of protocols updated in the previous loop
+            updatedProtocols.clear()
+
             _log("Checking input data...")
             # FIXME: This does not cover all the cases:
             # When the user registers new coordinates after clicking the
@@ -174,10 +184,10 @@ class RunScheduler:
                 _updateProtocol(protocol, project)
                 validation = protocol.validate()
                 if len(validation) > 0:
-                        missing = True
-                        _log("%s doesn't validate:\n\t- %s"
-                             % (protocol.getObjLabel(),
-                                '\n\t- '.join(validation)))
+                    missing  = True
+                    _log("%s doesn't validate:\n\t- %s"
+                         % (protocol.getObjLabel(),
+                            '\n\t- '.join(validation)))
                 elif not protocol.worksInStreaming():
                     for key, attr in protocol.iterInputAttributes():
                         inSet = attr.get()
@@ -193,7 +203,8 @@ class RunScheduler:
                     for prot in inputProtocolDict.values():
                         _updateProtocol(prot, project)
 
-            _log("Checking prerequisited...")
+            _log("Checking prerequisites... %s" % prerequisites)
+
             wait = False  # Check if we need to wait for required protocols
             for protId in prerequisites:
                 prot = project.getProtocol(protId)

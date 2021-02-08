@@ -12,9 +12,9 @@ class TestCanvas(BaseTest):
     # IMPORTANT: Tk requires at least that DISPLAY is defined
     # hence in some environments (like buildbot) the test may fail,
     # check for the TclError exception
-    
-    _labels = [PULL_REQUEST] 
-    
+
+    _labels = [PULL_REQUEST]
+
     @classmethod
     def setUpClass(cls):
         setupTestOutput(cls)
@@ -40,9 +40,9 @@ class TestCanvas(BaseTest):
             print(connectorsCoords)
 
             distances = {}
-            for i in range(len(connectorsCoords)-1):
+            for i in range(len(connectorsCoords) - 1):
                 distances[i] = self.distance(connectorsCoords[i],
-                                             connectorsCoords[i+1])
+                                             connectorsCoords[i + 1])
 
                 print(distances)
                 self.assertTrue(self.allEqual(list(distances.values())))
@@ -61,8 +61,8 @@ class TestCanvas(BaseTest):
             tb1ConnectorsCoords = tb1.getConnectorsCoordinates()
             tb2ConnectorsCoords = tb2.getConnectorsCoordinates()
             tb3ConnectorsCoords = tb3.getConnectorsCoordinates()
-            c1, c2= pyworkflow.gui.canvas.findStrictClosestConnectors(tb1, tb2)
-            c3, c4= pyworkflow.gui.canvas.findStrictClosestConnectors(tb1, tb3)
+            c1, c2 = pyworkflow.gui.canvas.findStrictClosestConnectors(tb1, tb2)
+            c3, c4 = pyworkflow.gui.canvas.findStrictClosestConnectors(tb1, tb3)
             # tb1 and tb2 are aligned vertically. tb1 and tb3, horizontally.
             # So, their closest connectors must share one coordinate (y in case of c1&c2, x i n case of c3&c4)
             self.assertEqual(c1[1], c2[1])

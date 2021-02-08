@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -58,14 +58,26 @@ class Object(object):
 
     def __init__(self, value=None, **kwargs):
         object.__init__(self)
-        self._objIsPointer = kwargs.get('objIsPointer', False)  # True if will be treated as a reference for storage
-        self._objId = kwargs.get('objId', None)  # Unique identifier of this object in some context
-        self._objParentId = kwargs.get('objParentId', None)  # identifier of the parent object
-        self._objName = kwargs.get('objName', '')  # The name of the object will contains the whole path of ancestors
-        self._objLabel = kwargs.get('objLabel', '')  # This will serve to label the objects
-        self._objComment = kwargs.get('objComment', '')
-        self._objTag = kwargs.get('objTag', None)  # This attribute serve to make some annotation on the object.
-        self._objDoStore = kwargs.get('objDoStore', True)  # True if this object will be stored from his parent
+        if len(kwargs) == 0:
+            self._objIsPointer =  False  # True if will be treated as a reference for storage
+            self._objId =  None  # Unique identifier of this object in some context
+            self._objParentId =  None  # identifier of the parent object
+            self._objName = ''  # The name of the object will contains the whole path of ancestors
+            self._objLabel =  ''  # This will serve to label the objects
+            self._objComment = ''
+            # Performance: self._objTag =  None  # This attribute serve to make some annotation on the object.
+            self._objDoStore = True
+        else:
+
+            self._objIsPointer = kwargs.get('objIsPointer', False)  # True if will be treated as a reference for storage
+            self._objId = kwargs.get('objId', None)  # Unique identifier of this object in some context
+            self._objParentId = kwargs.get('objParentId', None)  # identifier of the parent object
+            self._objName = kwargs.get('objName', '')  # The name of the object will contains the whole path of ancestors
+            self._objLabel = kwargs.get('objLabel', '')  # This will serve to label the objects
+            self._objComment = kwargs.get('objComment', '')
+            #Performance: self._objTag = kwargs.get('objTag', None)  # This attribute serve to make some annotation on the object.
+            self._objDoStore = kwargs.get('objDoStore', True)  # True if this object will be stored from his parent
+
         self._objCreation = None
         self._objParent = None  # Reference to parent object
         self._objEnabled = True
@@ -116,7 +128,7 @@ class Object(object):
         Equivalent to setattr(self, name).set(value) 
         If the attrName contains dot: x.y
         it will be equivalent to getattr(getattr(self, 'x'), 'y').set(value)
-        If ignoreMissing is True, unexisting attrName will not raise an
+        If ignoreMissing is True, non-existing attrName will not raise an
         exception.
         """
         attrList = attrName.split('.')
@@ -131,24 +143,25 @@ class Object(object):
         obj.set(value)
         
     def getAttributes(self):
-        """Return the list of attributes than are
+        """Return the list of attributes that are
         subclasses of Object"""
-        for key, attr in self.__dict__.items():
-            if issubclass(attr.__class__, Object):
-                yield key, attr
+        for name in vars(self):
+            value = getattr(self, name)
+            if isinstance(value, Object):
+                yield name, value
                 
     def getAttributesToStore(self):
         """Return the list of attributes than are
         subclasses of Object and will be stored"""
         for key, attr in self.getAttributes():
-            if not hasattr(attr, '_objDoStore'):
+            try:
+                if attr is not None and attr._objDoStore:
+                    yield key, attr
+            except:
                 print("Object.getAttributesToStore: attribute '%s' seems to "
                       "be overwritten," % key)
                 print("   since '_objDoStore' was not found. "
                       "Ignoring attribute. ")
-            else:
-                if attr is not None and attr._objDoStore:
-                    yield key, attr
 
     def isPointer(self):
         """If this is true, the value field is a pointer 
@@ -339,7 +352,7 @@ class Object(object):
         If the name X is in attrNames, it would be equivalent to:
         self.X.set(other.X.get())
         This method is more useful for Scalar attributes.
-        There are two patchs for Pointer and PointerList.
+        There are two paths for Pointer and PointerList.
         """
         for name in attrNames:
             attr = getattr(self, name, None)
@@ -359,15 +372,20 @@ class Object(object):
         if prefix:
             prefix += '.'
         for k, v in self.getAttributesToStore():
-            if not v.isPointer():
-                kPrefix = prefix + k
-                if includeClass:
-                    objDict[kPrefix] = (v.getClassName(), v.getObjValue())
-                else:
-                    objDict[kPrefix] = v.getObjValue()
-                if not isinstance(v, Scalar):
-                    v.__getObjDict(kPrefix, objDict, includeClass)
-            
+            self.fillObjDict(prefix, objDict, includeClass, k, v)
+
+    @staticmethod
+    def fillObjDict(prefix, objDict, includeClass, k, v):
+
+        if not v.isPointer():
+            kPrefix = prefix + k
+            if includeClass:
+                objDict[kPrefix] = (v.getClassName(), v.getObjValue())
+            else:
+                objDict[kPrefix] = v.getObjValue()
+            if not isinstance(v, Scalar):
+                v.__getObjDict(kPrefix, objDict, includeClass)
+
     def getObjDict(self, includeClass=False, includeBasic=False):
         """ Return all attributes and values in a dictionary.
         Nested attributes will be separated with a dot in the dict key.
@@ -545,49 +563,9 @@ class Object(object):
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(dict(self.getObjDict(includeClasses)))        
 
-
 class OrderedObject(Object):
-    """This is based on Object, but keep the list
-    of the attributes to store in the same order
-    of insertion, this can be useful where order matters"""
-    def __init__(self, value=None, **kwargs):
-        object.__setattr__(self, '_attributes', [])
-        Object.__init__(self, value, **kwargs)
-
-    def __attrPointed(self, name, value):
-        """ Check if a value is already pointed by other
-        attribute. This will prevent to storing pointed
-        attributes such as:
-        self.inputMics = self.inputMicrographs.get()
-        In this case we want to avoid to store self.inputMics as 
-        another attribute of this object.
-        """
-        for key in self._attributes:
-            attr = getattr(self, key)
-            if attr is not None and attr.isPointer():
-                if attr.get() is value:
-                    return True
-        return False
-    
-    def __setattr__(self, name, value):
-        if (name not in self._attributes and
-            issubclass(value.__class__, Object) and
-                not self.__attrPointed(name, value) and value._objDoStore):
-            self._attributes.append(name)
-        Object.__setattr__(self, name, value)
-    
-    def getAttributes(self):
-        """Return the list of attributes than are
-        subclasses of Object and will be stored"""
-        for key in self._attributes:
-            yield key, getattr(self, key)
-                
-    def deleteAttribute(self, attrName):
-        """ Delete an attribute. """
-        if attrName in self._attributes:
-            self._attributes.remove(attrName)
-            delattr(self, attrName)
-
+    """Legacy class, to be removed. Object should give same functionality and is faster"""
+    pass
                 
 class Scalar(Object):
     """Base class for basic types"""
@@ -962,7 +940,7 @@ class List(Object, list):
     
     def _stringToIndex(self, strIndex):
         """ From the string index representation obtain the index.
-        For symetry the number in the index string will be
+        For symmetry the number in the index string will be
         decreased in 1.
         """
         return int(strIndex.split(self.ITEM_PREFIX)[1]) - 1
@@ -1058,7 +1036,7 @@ class CsvList(Scalar, list):
         return all(a == b for a, b in zip(self, other))
 
 
-class Set(OrderedObject):
+class Set(Object):
     """ This class will be a container implementation for elements.
     It will use an extra sqlite file to store the elements.
     All items will have an unique id that identifies each element in the set.
@@ -1075,12 +1053,12 @@ class Set(OrderedObject):
     def __init__(self, filename=None, prefix='', 
                  mapperClass=None, classesDict=None, **kwargs):
         # Use the object value to store the filename
-        OrderedObject.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self._mapper = None
         self._idCount = 0
         self._size = Integer(0)  # cached value of the number of images
         # It is a bit contradictory that initially a set is Closed
-        # but this is the default behaviour of the Set before Streamming extension
+        # but this is the default behaviour of the Set before Streaming extension
         self._streamState = Integer(self.STREAM_CLOSED)  
         self.setMapperClass(mapperClass)
         self._mapperPath = CsvList()  # sqlite filename
@@ -1125,11 +1103,12 @@ class Set(OrderedObject):
         return self._getMapper().exists(itemId)
 
     def iterItems(self, orderBy='id', direction='ASC', where='1',
-                  limit=None):
+                  limit=None, iterate=True):
         return self._getMapper().selectAll(orderBy=orderBy,
                                            direction=direction,
                                            where=where,
-                                           limit=limit)  # has flat mapper, iterate is true
+                                           limit=limit,
+                                           iterate=iterate)  # has flat mapper, iterate is true
 
     def getFirstItem(self):
         """ Return the first item in the Set. """
@@ -1343,6 +1322,7 @@ class Set(OrderedObject):
         pwmapper.SqliteDb.closeConnection(setFn)
         setObj = cls(filename=setFn, **kwargs)
         return setObj
+
 
 def ObjectWrap(value):
     """This function will act as a simple Factory

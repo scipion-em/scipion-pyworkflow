@@ -23,7 +23,6 @@
 # **************************************************************************
 
 
-
 import os
 import webbrowser
 import tkinter as tk
@@ -160,7 +159,7 @@ class ProjectBaseWindow(Window):
 
     def onOnlineHelp(self):
         # Help -> Online help
-        webbrowser.open_new("http://scipion.cnb.csic.es/docs/")
+        webbrowser.open_new("https://scipion-em.github.io/docs/")
 
     def onAbout(self):
         # Help -> About
@@ -175,9 +174,8 @@ class ProjectBaseWindow(Window):
             "physicists, mathematicians, biologists and computer scientists. "
             "It is produced mainly by people at the "
             "[[http://biocomputingunit.es//][CNB Biocomputing Unit]], "
-            "[[https://www.scilifelab.se/][SciLifeLab]], "
-            "[[https://www2.mrc-lmb.cam.ac.uk/][MRC LMB]] and "
-            "[[https://www.mcgill.ca/][McGill university]], "
+            "[[https://www.scilifelab.se/][SciLifeLab]] and "
+            "[[https://www2.mrc-lmb.cam.ac.uk/][MRC LMB]], "
             "but with many contributions across the globe.")
 
     def onContactSupport(self):

@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -26,7 +26,6 @@
 # **************************************************************************
 
 
-
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -43,64 +42,64 @@ FIRST_TREE_COLUMN = '#0'
 class Tree(ttk.Treeview, Scrollable):
     """ This widget acts as a wrapper around the ttk.Treeview"""
     _images = {}
-    
+
     def __init__(self, master, frame=True, **opts):
         """Create a new Tree, if frame=True, a container
         frame will be created and an scrollbar will be added"""
         Scrollable.__init__(self, master, ttk.Treeview, frame, **opts)
-        
+
     def getImage(self, img):
         return gui.getImage(img, Tree._images)
-    
+
     def getFirst(self):
         """ Return first selected item or None if selection empty"""
         selection = self.selection()
         if len(selection):
             return selection[0]
         return None
-    
+
     def _moveSelection(self, moveFunc):
         item = self.selection_first()
         if item:
             item = moveFunc(item)
             if item != '':
                 self.selection_set(item)
-        
+
     def moveSelectionUp(self, e=None):
         """ change selection to previous item """
         self._moveSelection(self.prev)
-    
+
     def moveSelectionDown(self, e=None):
         """ change selection to to next item """
         self._moveSelection(self.next)
-        
+
     def moveItemUp(self, e=None):
         """if selected item is not the first move up one position"""
         item = self.selection_first()
         if item:
             index = self.index(item)
             if index > 0:
-                self.move(item, '', index-1)
-                
+                self.move(item, '', index - 1)
+
     def moveItemDown(self, e=None):
         """if selected item is not the first move up one position"""
         item = self.selection_first()
         if item:
             index = self.index(item)
             if self.next(item) != '':
-                self.move(item, '', index+1)
-                
+                self.move(item, '', index + 1)
+
     def clear(self):
         """ remove all items """
         childs = self.get_children('')
         for c in childs:
             self.delete(c)
-            
+
     def selectChildByIndex(self, index):
         """ Select the item at the position index """
         child = self.get_children('')[index]
         self.selection_set(child)
-        
+
     def selectChild(self, child):
         self.selection_set(child)
 
@@ -153,6 +152,26 @@ class Tree(ttk.Treeview, Scrollable):
         if fromSelected:
             return self.search(initial, False)
 
+    # From: https://stackoverflow.com/questions/1966929/tk-treeview-column-sort
+    def sortByColumn(self, col, reverse, casting=str):
+        """
+        Function to sort a treeview
+        :param self: treview
+        :param col:  column to apply the sorting on
+        :param reverse: sorting direction
+        :param casting: optional - casting operation to apply on the column value: str is default. int, float are other options
+        :return:
+        """
+        l = [(casting(self.set(k, col)), k) for k in self.get_children('')]
+        l.sort(reverse=reverse)
+
+        # rearrange items in sorted positions
+        for index, (val, k) in enumerate(l):
+            self.move(k, '', index)
+
+        # reverse sort next time
+        self.heading(col, command=lambda: self.sortByColumn(col, not reverse, casting))
+
 
 class TreeProvider:
     """ Class class will serve to separate the logic of feed data
@@ -170,11 +189,11 @@ class TreeProvider:
         w: is the column width
         """
         pass
-    
+
     def getObjects(self):
         """Return the objects that will be inserted in the Tree"""
         pass
-    
+
     def getObjectInfo(self, obj):
         """ This function will be called by the Tree with each
         object that will be inserted. A dictionary should be 
@@ -187,14 +206,14 @@ class TreeProvider:
         'tags': list of tags names (optional)
         """
         pass
-    
+
     def getObjectPreview(self, obj):
         """ Should return a tuple (img, desc),
         where img is the preview image and 
         desc the description string. 
         """
         return None, None
-    
+
     def getObjectActions(self, obj):
         """ Return a list of tuples (key, action)
         were keys are the string
@@ -265,7 +284,7 @@ class BoundTree(Tree):
             self.column(c, width=w)
             self.heading(c, text=c, command=lambda _c=c: self.sortTree(_c, _c))
         self.grid(row=0, column=0, sticky='news')
-        
+
         self.menu = tk.Menu(self, tearoff=0)
 
         self.setProvider(provider)
@@ -298,15 +317,15 @@ class BoundTree(Tree):
     def _unpostMenu(self, e=None):
 
         self.menu.unpost()
-        
+
     def _onSelect(self, e=None):
         if hasattr(self, 'itemClick'):
             selected = self.getFirst()
             if selected:
                 obj = self._objDict[selected]
                 self.itemClick(obj)
-            
-    def _onDoubleClick(self, e=None):  
+
+    def _onDoubleClick(self, e=None):
         selected = self.getFirst()
         if selected:
             obj = self._objDict[selected]
@@ -317,7 +336,7 @@ class BoundTree(Tree):
                 if len(actions):
                     # actions[0] = first Action, [1] = the action callback
                     actions[0][1]()
-            
+
     def _onRightClick(self, e=None):
         item = self.identify('item', e.x, e.y)
         unpost = True
@@ -328,25 +347,25 @@ class BoundTree(Tree):
             if len(actions):
                 self.menu.delete(0, tk.END)
                 for a in actions:
-                    if a is None: 
+                    if a is None:
                         self.menu.add_separator()
                     else:
                         img = ''
                         if len(a) > 2:  # image for the action
                             img = self.getImage(a[2])
-                        self.menu.add_command(label=a[0], command=a[1], 
+                        self.menu.add_command(label=a[0], command=a[1],
                                               image=img, compound=tk.LEFT)
                 self.menu.post(e.x_root, e.y_root)
                 unpost = False
         if unpost:
-            self._unpostMenu()        
-                    
+            self._unpostMenu()
+
     def update(self):
         self.clear()
         self.provider.configureTags(self)
         self._objDict = {}  # Store the mapping between Tree ids and objects
         self._objects = self.provider.getObjects()
-        
+
         for obj in self._objects:
             # If the object is a pointer that has a null value do not show
             # if ((not obj.isPointer()) or (obj.isPointer() and obj.get() is not None)):
@@ -355,7 +374,7 @@ class BoundTree(Tree):
                 key = objDict.get('key')
                 text = objDict.get('text', key)
                 parent = objDict.get('parent', None)
-                
+
                 if parent is None:
                     parentId = ''
                 else:
@@ -377,10 +396,10 @@ class BoundTree(Tree):
                     obj._treeId = self.insert(parentId, 'end', key,
                                               text=text, image=image, values=values, tags=tags)
                     self._objDict[obj._treeId] = obj
-                    
+
                     if objDict.get('open', False):
                         self.itemConfig(obj, open=True)
-                    
+
                     if objDict.get('selected', False):
                         self.selectChild(obj._treeId)
 
@@ -434,27 +453,28 @@ class BoundTree(Tree):
     def itemConfig(self, obj, **args):
         """ Configure inserted items. """
         self.item(obj._treeId, **args)
-        
+
     def iterSelectedObjects(self):
         for treeId in self.selection():
             yield self.getObjectFromId(treeId)
-            
+
     def getSelectedObjects(self):
         return [obj for obj in self.iterSelectedObjects()]
-            
+
     def getObjectFromId(self, treeId):
         """ Return the corresponding object from a given Tree item id. """
         return self._objDict[treeId]
-        
-              
+
+
 class ObjectTreeProvider(TreeProvider):
     """ Populate Tree from Objects. """
+
     def __init__(self, objList=None):
         TreeProvider.__init__(self)
         self.objList = objList
         self.getColumns = lambda: [('Object', 300), ('Id', 70), ('Class', 150)]
         self._parentDict = {}
-    
+
     def getObjectInfo(self, obj):
         # if obj.isPointer() and not obj.hasValue():
         #    return None
@@ -462,10 +482,10 @@ class ObjectTreeProvider(TreeProvider):
         if obj.getName() is None:
             t = cls
         else:
-            t = obj.getName().split('.')[-1] 
+            t = obj.getName().split('.')[-1]
             if t.startswith('__item__'):
                 t = "%s [%s]" % (cls, t.replace('__item__', ''))
-                
+
         value = obj.get()
         if value is None:
             if obj.isPointer():
@@ -474,25 +494,25 @@ class ObjectTreeProvider(TreeProvider):
                 t += " = None"
         else:
             t += " = %s" % str(obj)
-            
+
         info = {'key': obj.getObjId(),
                 'parent': self._parentDict.get(obj.getObjId(), None),
                 'text': t, 'values': (obj.strId(), cls)}
         if issubclass(obj.__class__, Scalar):
             info['image'] = 'step.gif'
-            
+
         return info
-    
+
     def getObjectPreview(self, obj):
         return None, None
-    
+
     def getObjectActions(self, obj):
         return []
-        
+
     def _getObjectList(self):
         """Retrieve the object list"""
         return self.objList
-    
+
     def getObjects(self):
         objList = self._getObjectList()
         self._parentDict = {}
@@ -501,11 +521,11 @@ class ObjectTreeProvider(TreeProvider):
             childs += self._getChilds(obj)
         objList += childs
         return objList
-        
+
     def _getChilds(self, obj):
         childs = []
         grandchilds = []
-        
+
         for a, v in obj.getAttributesToStore():
             childs.append(v)
             self._parentDict[v.getObjId()] = obj
@@ -513,17 +533,18 @@ class ObjectTreeProvider(TreeProvider):
         childs += grandchilds
         return childs
 
-    
+
 class DbTreeProvider(ObjectTreeProvider):
     """Retrieve the elements from the database"""
+
     def __init__(self, dbName, classesDict):
         ObjectTreeProvider.__init__(self)
         self.mapper = SqliteMapper(dbName, classesDict)
-    
+
     def _getObjectList(self):
         return self.mapper.selectAll()
-    
-    
+
+
 class ProjectRunsTreeProvider(TreeProvider):
     """ Provide run list from a project
     to populate a tree.
@@ -534,15 +555,15 @@ class ProjectRunsTreeProvider(TreeProvider):
     TIME_COLUMN = 'Time'
 
     def __init__(self, project, **kwargs):
-        TreeProvider.__init__(self,  sortingColumnName=ProjectRunsTreeProvider.ID_COLUMN)
+        TreeProvider.__init__(self, sortingColumnName=ProjectRunsTreeProvider.ID_COLUMN)
         self.project = project
         self._objDict = {}
         self._refresh = True
         self._checkPids = False
-        
+
     def setRefresh(self, value):
         self._refresh = value
-    
+
     def getObjects(self):
         runs = self.project.getRuns(refresh=self._refresh,
                                     checkPids=self._checkPids)
@@ -558,13 +579,13 @@ class ProjectRunsTreeProvider(TreeProvider):
                     ProjectRunsTreeProvider.RUN_COLUMN: 'getRunName',
                     ProjectRunsTreeProvider.STATE_COLUMN: 'getStatusMessage'}
         return getattr(run, sortDict.get(self._sortingColumnName))()
-        
+
     def getColumns(self):
         return [(ProjectRunsTreeProvider.ID_COLUMN, 5),
                 (ProjectRunsTreeProvider.RUN_COLUMN, 300),
                 (ProjectRunsTreeProvider.STATE_COLUMN, 50),
                 (ProjectRunsTreeProvider.TIME_COLUMN, 50)]
-    
+
     def getObjectInfo(self, obj):
         objId = obj.getObjId()
         self._objDict[objId] = obj
@@ -575,9 +596,9 @@ class ProjectRunsTreeProvider(TreeProvider):
         objPid = obj.getObjParentId()
         if objPid in self._objDict:
             info['parent'] = self._objDict[objPid]
-      
+
         return info
-    
+
     def getObjectFromId(self, objId):
         return self._objDict[objId]
 
@@ -629,4 +650,4 @@ class ListTreeProviderTemplate(ListTreeProviderString):
         return obj.pluginName + '-' + obj.templateName
 
     def getValues(self, obj):
-        return (obj.description, )
+        return (obj.description,)

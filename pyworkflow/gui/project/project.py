@@ -31,7 +31,6 @@ It is composed by three panels:
 """
 
 
-
 import os
 import threading
 import shlex
@@ -168,7 +167,6 @@ class ProjectWindow(ProjectBaseWindow):
             self.settings = proj.createSettings()
 
         self.generalCfg = self.settings.getConfig()
-        self.protCfg = proj.getCurrentProtocolView()
 
         return proj
 

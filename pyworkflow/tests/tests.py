@@ -1,4 +1,3 @@
-
 import sys
 import os
 import time
@@ -11,7 +10,6 @@ import pyworkflow.utils as pwutils
 from pyworkflow.project import Manager
 from pyworkflow.protocol import MODE_RESTART, getProtocolFromDb
 
-
 SMALL = 'small'
 PULL_REQUEST = 'pull'
 DAILY = 'daily'
@@ -21,7 +19,6 @@ WEEKLY = 'weekly'
 # Procedure to check if a test class has an attribute called _labels and if so
 # then it checks if the class test matches any of the labels in input label parameter.
 def hasLabel(TestClass, labels):
-    
     # Get _labels attributes in class if any.
     classLabels = getattr(TestClass, '_labels', None)
 
@@ -30,7 +27,6 @@ def hasLabel(TestClass, labels):
 
 
 class DataSet:
-
     _datasetDict = {}  # store all created datasets
 
     def __init__(self, name, folder, files, url=None):
@@ -44,15 +40,15 @@ class DataSet:
         self.path = join(pw.Config.SCIPION_TESTS, folder)
         self.filesDict = files
         self.url = url
-        
+
     def getFile(self, key):
         if key in self.filesDict:
             return join(self.path, self.filesDict[key])
         return join(self.path, key)
-    
+
     def getPath(self):
         return self.path
-    
+
     @classmethod
     def getDataSet(cls, name):
         """
@@ -63,7 +59,7 @@ class DataSet:
         ds = cls._datasetDict[name]
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
-        
+
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s --download %s %s"
                        % (pw.PYTHON, pw.getSyncDataScript(), folder, url))
@@ -71,24 +67,23 @@ class DataSet:
             os.system(command)
 
         return cls._datasetDict[name]
-    
+
 
 class BaseTest(unittest.TestCase):
-    
     _labels = [WEEKLY]
-     
+
     @classmethod
     def getOutputPath(cls, *filenames):
         """Return the path to the SCIPION_HOME/tests/output dir
         joined with filename"""
-        return join(cls.outputPath, *filenames)   
-    
+        return join(cls.outputPath, *filenames)
+
     @classmethod
     def getRelPath(cls, basedir, filename):
         """Return the path relative to SCIPION_HOME/tests"""
         return relpath(filename, basedir)
-    
-    @classmethod 
+
+    @classmethod
     def launchProtocol(cls, prot, **kwargs):
         """ Launch a given protocol using cls.proj.
         Accepted **kwargs:
@@ -111,21 +106,16 @@ class BaseTest(unittest.TestCase):
                     prot = cls.updateProtocol(prot)
                     if all(prot.hasAttribute(o) for o in waitForOutputs):
                         return prot
-        
+
         if prot.isFailed():
-            print("\n>>> ERROR running protocol %s" % prot.getRunName())
-            print("    FAILED with error: %s\n" % prot.getErrorMessage())
 
-            BaseTest.printLastLogLines(prot)
-
-            raise Exception("ERROR launching protocol.")
+            cls.printLastLogLines(prot)
+            raise Exception("Protocol %s execution failed. See last log lines above for more details." % prot.getRunName())
 
         if not prot.isFinished() and not prot.useQueue():  # when queued is not finished yet
-            print("\n>>> ERROR running protocol %s" % prot.getRunName())
 
-            BaseTest.printLastLogLines(prot)
-
-            raise Exception("ERROR: Protocol not finished")
+            cls.printLastLogLines(prot)
+            raise Exception("Protocol %s didn't finish. See last log lines above for more details." % prot.getRunName())
 
         return prot
 
@@ -140,8 +130,8 @@ class BaseTest(unittest.TestCase):
         print(pwutils.cyanStr("\n*************** END OF THE LOG *********************\n"))
 
         sys.stdout.flush()
-    
-    @classmethod    
+
+    @classmethod
     def saveProtocol(cls, prot):
         """ Save protocol using cls.proj """
         cls.proj.saveProtocol(prot)
@@ -153,8 +143,8 @@ class BaseTest(unittest.TestCase):
         def _loadProt():
             # Load the last version of the protocol from its own database
             loadedProt = getProtocolFromDb(prot.getProject().path,
-                                      prot.getDbPath(),
-                                      prot.getObjId())
+                                           prot.getDbPath(),
+                                           prot.getObjId())
             # Close DB connections
             loadedProt.getProject().closeMapper()
             loadedProt.closeMappers()
@@ -172,7 +162,7 @@ class BaseTest(unittest.TestCase):
 
         # Update the protocol instance to get latest changes
         cls.proj._updateProtocol(prot)
-        
+
     @classmethod
     def newProtocol(cls, protocolClass, **kwargs):
         """ Create new protocols instances through the project
@@ -192,7 +182,7 @@ class BaseTest(unittest.TestCase):
 
     @classmethod
     def compareSets(cls, test, set1, set2):
-        """ Iterate the elements of boths sets and check
+        """ Iterate the elements of both sets and check
         that all elements have equal attributes. """
         for item1, item2 in zip(set1, set2):
             areEqual = item1.equalAttributes(item2)
@@ -213,7 +203,7 @@ class BaseTest(unittest.TestCase):
             self.assertNotEqual(setObjSize, 0, msg)
         else:
             if diffDelta:
-                self.assertLessEqual(abs(setObjSize - size), round(diffDelta*size), msg)
+                self.assertLessEqual(abs(setObjSize - size), round(diffDelta * size), msg)
             else:
                 self.assertEqual(setObjSize, size)
 
@@ -229,7 +219,7 @@ def setupTestOutput(cls):
     cls.outputPath = join(pw.Config.SCIPION_TESTS_OUTPUT, cls.__name__)
     pwutils.cleanPath(cls.outputPath)
     pwutils.makePath(cls.outputPath)
-       
+
 
 def setupTestProject(cls, writeLocalConfig=False):
     """ Create and setup a Project for a give Test class. """
@@ -262,14 +252,14 @@ class GTestResult(unittest.TestResult):
     xml = None
     testFailed = 0
     numberTests = 0
-    
+
     def __init__(self):
         unittest.TestResult.__init__(self)
         self.startTimeAll = time.time()
-    
+
     def openXmlReport(self, classname, filename):
         pass
-        
+
     def doReport(self):
         secs = time.time() - self.startTimeAll
         sys.stderr.write("\n%s run %d tests (%0.3f secs)\n" %
@@ -285,14 +275,14 @@ class GTestResult(unittest.TestResult):
 
     def tic(self):
         self.startTime = time.time()
-        
+
     def toc(self):
         return time.time() - self.startTime
-        
+
     def startTest(self, test):
         self.tic()
-        self.numberTests += 1         
-    
+        self.numberTests += 1
+
     @staticmethod
     def getTestName(test):
         parts = str(test).split()
@@ -300,7 +290,7 @@ class GTestResult(unittest.TestResult):
         parts = parts[1].split('.')
         classname = parts[-1].replace(")", "")
         return "%s.%s" % (classname, name)
-    
+
     def addSuccess(self, test):
         secs = self.toc()
         sys.stderr.write("%s %s (%0.3f secs)\n" %
@@ -313,9 +303,9 @@ class GTestResult(unittest.TestResult):
         sys.stderr.write("\n%s"
                          % pwutils.redStr("".join(format_exception(*err))))
         self.testFailed += 1
-                
+
     def addError(self, test, err):
         self.reportError(test, err)
-        
+
     def addFailure(self, test, err):
         self.reportError(test, err)

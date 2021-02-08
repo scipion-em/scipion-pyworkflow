@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -39,7 +39,6 @@ from pyworkflow import getTestsScript, SCIPION_TESTS_CMD, Config
 
 from pyworkflow.tests import *
 
-
 MODULE = 0
 CLASS = 1
 TEST = 2
@@ -52,7 +51,7 @@ class Tester:
         # Trigger plugin's variable definition
         Config.getDomain().getPlugins()
 
-        parser = argparse.ArgumentParser(prog= self.getTestsCommand(), description=__doc__)
+        parser = argparse.ArgumentParser(prog=self.getTestsCommand(), description=__doc__)
         g = parser.add_mutually_exclusive_group()
         g.add_argument('--run', action='store_true', help='run the selected tests')
         g.add_argument('--show', action='store_true', help='show available tests',
@@ -104,7 +103,6 @@ class Tester:
                     testsDict[k] = testLoader.discover(testPath,
                                                        pattern=args.pattern,
                                                        top_level_dir=p)
-
 
         self.grep = [g.lower() for g in args.grep] if args.grep else []
         self.skip = args.skip
@@ -183,7 +181,8 @@ class Tester:
                 if testModuleName.startswith(errorStr):
                     newName = t.id().replace(errorStr, '')
                     if self._match(newName):
-                        print(pwutils.red('Error loading the test. Please, run the test for more information:'), newName)
+                        print(pwutils.red('Error loading the test. Please, run the test for more information:'),
+                              newName)
                     continue
 
                 if testModuleName != lastModule:
