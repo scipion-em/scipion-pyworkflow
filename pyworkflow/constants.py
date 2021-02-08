@@ -109,8 +109,11 @@ VIEWERS = 'VIEWERS'
 
 
 class DOCSITEURLS:
-    """Documentation site URL usefull when exceptions happens and you want to point to some pages"""
+    """Documentation site URL useful when exceptions happens and you want to point to some pages"""
     HOME = 'https://scipion-em.github.io/docs/'
-    CONFIG = HOME + 'docs/scipion-modes/scipion-configuration.html'
+    DOCS = HOME + 'docs/'
+    CONFIG = DOCS + 'scipion-modes/scipion-configuration.html'
     CONFIG_SECTION = CONFIG + '#%s'
     CONTACTUS = 'http://scipion.i2pc.es/contact'
+    USER = DOCS + 'user/'
+    PLUGIN_MANAGER = USER + 'plugin-manager.html'

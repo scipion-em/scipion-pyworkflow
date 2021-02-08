@@ -587,7 +587,10 @@ class Plugin:
             missing = ["%s: %s" % (var, cls.getVar(var))
                        for var in cls._pathVars if not os.path.exists(cls.getVar(var))]
 
-            return (["Missing variables:"] + missing) if missing else []
+            return (["Missing paths: the variables bellow point to non existing paths."]
+                    + missing + [
+                     "Either install the software ( %s )" % DOCSITEURLS.PLUGIN_MANAGER,
+                    "or edit the config file ( %s )" % DOCSITEURLS.CONFIG]) if missing else []
         except Exception as e:
             return ["validateInstallation fails: %s" % e]
 
