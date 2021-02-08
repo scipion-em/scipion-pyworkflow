@@ -33,10 +33,10 @@ import pyworkflow.object as pwobj
 NO_INDEX = 0
 
 
-class MockObject(pwobj.OrderedObject):
+class MockObject(pwobj.Object):
     """Base object for all Mock classes"""
     def __init__(self, **kwargs):
-        pwobj.OrderedObject.__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
     def __str__(self):
         return self.getClassName()

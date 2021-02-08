@@ -172,14 +172,13 @@ class ThreadStepExecutor(StepExecutor):
             nGpu = len(self.gpuList)
 
             if nGpu > nThreads:
-                chunk = nGpu / nThreads
+                chunk = int(nGpu / nThreads)
                 for i, node in enumerate(nodes):
                     self.gpuDict[node] = list(self.gpuList[i*chunk:(i+1)*chunk])
             else:
                 # Expand gpuList repeating until reach nThreads items
                 if nThreads > nGpu:
-                    import numpy as np
-                    newList = np.asarray(self.gpuList) * (nThreads/nGpu+1)
+                    newList = self.gpuList * (int(nThreads/nGpu)+1)
                     self.gpuList = newList[:nThreads]
 
                 for node, gpu in zip(nodes, self.gpuList):

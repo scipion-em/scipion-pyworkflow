@@ -108,19 +108,14 @@ class BaseTest(unittest.TestCase):
                         return prot
 
         if prot.isFailed():
-            print("\n>>> ERROR running protocol %s" % prot.getRunName())
-            print("    FAILED with error: %s\n" % prot.getErrorMessage())
 
-            BaseTest.printLastLogLines(prot)
-
-            raise Exception("ERROR launching protocol.")
+            cls.printLastLogLines(prot)
+            raise Exception("Protocol %s execution failed. See last log lines above for more details." % prot.getRunName())
 
         if not prot.isFinished() and not prot.useQueue():  # when queued is not finished yet
-            print("\n>>> ERROR running protocol %s" % prot.getRunName())
 
-            BaseTest.printLastLogLines(prot)
-
-            raise Exception("ERROR: Protocol not finished")
+            cls.printLastLogLines(prot)
+            raise Exception("Protocol %s didn't finish. See last log lines above for more details." % prot.getRunName())
 
         return prot
 

@@ -31,13 +31,11 @@ import datetime as dt
 from collections import OrderedDict
 from configparser import ConfigParser
 
-import pyworkflow as pw
 import pyworkflow.object as pwobj
 from pyworkflow.mapper import SqliteMapper
-from pyworkflow.utils import isModuleAFolder
 
 
-class ProjectSettings(pwobj.OrderedObject):
+class ProjectSettings(pwobj.Object):
     """ Store settings related to a project. """
 
     COLOR_MODE_STATUS = 0
@@ -46,7 +44,7 @@ class ProjectSettings(pwobj.OrderedObject):
     COLOR_MODES = (COLOR_MODE_STATUS, COLOR_MODE_LABELS, COLOR_MODE_AGE)
 
     def __init__(self, confs={}, **kwargs):
-        pwobj.OrderedObject.__init__(self, **kwargs)
+        super().__init__(**kwargs)
         self.config = ProjectConfig()
         # Store the current view selected by the user
         self.currentProtocolsView = pwobj.String()
@@ -176,11 +174,11 @@ class ProjectSettings(pwobj.OrderedObject):
         return settings
 
 
-class ProjectConfig(pwobj.OrderedObject):
+class ProjectConfig(pwobj.Object):
     """A simple base class to store ordered parameters"""
 
     def __init__(self, **args):
-        pwobj.OrderedObject.__init__(self, **args)
+        super().__init__(**args)
         self.logo = pwobj.String('scipion_logo_small.gif')
         # Do not store this object, unless we implement some kind of
         # icon customization
@@ -202,13 +200,13 @@ class MenuConfig(object):
           tag: put some tags to items
         **args: pass other options to base class.
         """
-        self.text = pwobj.String(text)
-        self.value = pwobj.String(value)
-        self.icon = pwobj.String(icon)
-        self.tag = pwobj.String(tag)
-        self.shortCut = pwobj.String(kwargs.get('shortCut', None))
+        self.text = text
+        self.value = value
+        self.icon = icon
+        self.tag = tag
+        self.shortCut = kwargs.get('shortCut', None)
         self.childs = pwobj.List()
-        self.openItem = pwobj.Boolean(kwargs.get('openItem', False))
+        self.openItem = kwargs.get('openItem', False)
 
     def addSubMenu(self, text, value=None, **args):
         subMenu = type(self)(text, value, **args)

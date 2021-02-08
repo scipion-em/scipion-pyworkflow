@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.8'
+VERSION_3_0 = '3.0.9'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -114,3 +114,12 @@ class DOCSITEURLS:
     CONFIG = HOME + 'docs/scipion-modes/scipion-configuration.html'
     CONFIG_SECTION = CONFIG + '#%s'
     CONTACTUS = 'http://scipion.i2pc.es/contact'
+
+# tkinter bind constants
+class TK:
+    LEFT_CLICK = '<Button-1>'
+    RETURN = '<Return>'
+    ENTER = '<KP_Enter>'
+    LEFT_DOUBLE_CLICK = '<Double-1>'
+    TREEVIEW_OPEN = '<<TreeviewOpen>>'
+    TREEVIEW_CLOSE = '<<TreeviewClose>>'
