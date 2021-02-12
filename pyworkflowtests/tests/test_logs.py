@@ -5,7 +5,7 @@ import unittest
 
 from pyworkflow import Config
 from pyworkflow.utils import (getLineInFile,
-                              getLogConfiguration, setUpProtocolRunLogging, restoreStdoutAndErr)
+                              setupLogging, setUpProtocolRunLogging, restoreStdoutAndErr)
 from pyworkflow.tests import BaseTest, setupTestOutput
 
 
@@ -23,7 +23,7 @@ class TestLogs(BaseTest):
         # Default generic configuration
         Config.SCIPION_LOG = self.getOutputPath("general.log")
         genLogFn = Config.SCIPION_LOG
-        getLogConfiguration()
+        setupLogging()
         log1 = logging.getLogger('pyworkflow.test.log.test_scipion_log')
 
         def testMessage(message, msg_callback, file, shouldExist):

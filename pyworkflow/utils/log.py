@@ -42,9 +42,10 @@ from logging.handlers import RotatingFileHandler
 
 from pyworkflow.utils import makeFilePath, Config
 
-def getLogConfiguration():
+def setupLogging():
     if not loadCustomLoggingConfig():
-        getDefaultLogConfiguration()
+        setupDefaultLogging()
+    return logging
 
 def loadCustomLoggingConfig():
     """ Loads the custom logging configuration file"""
@@ -61,7 +62,7 @@ def loadCustomLoggingConfig():
             print("SCIPION_LOG_CONFIG variable points to a non existing file: %s." % Config.SCIPION_LOG_CONFIG)
     return False
 
-def getDefaultLogConfiguration():
+def setupDefaultLogging():
     from pyworkflow import Config
     # Log configuration
     config = {
@@ -130,7 +131,7 @@ class StreamToLogger(object):
 
 def setUpGUILogging():
     """Sets up the logging library for the GUI processes: By default all goes to SCIPION_LOG file and console."""
-    getLogConfiguration()
+    setupLogging()
 
 def setUpProtocolRunLogging(stdoutLogFile, stderrLogFile):
     """ Sets up the logging library for the protocols run processes, loads the custom configuration plus
