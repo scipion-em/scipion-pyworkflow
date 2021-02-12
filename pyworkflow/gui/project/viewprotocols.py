@@ -841,24 +841,28 @@ class ProtocolsView(tk.Frame):
         return len(self._selection) == 0
 
     def refreshRuns(self, e=None, initRefreshCounter=True, checkPids=False):
-        import threading
-        # Refresh the status of displayed runs.
-        if self.refreshSemaphore:
-            # print("Launching a thread to refresh the runs...")
-            threadRefreshRuns = threading.Thread(name="Refreshing runs",
-                                                 target=self.refreshRunsThread,
-                                                 args=(e, initRefreshCounter,
-                                                       checkPids))
-            threadRefreshRuns.start()
+        """
+        Refresh the protocol runs workflow. If the variable REFRESH_WITH_THREADS
+        exits, then use a threads to refresh, i.o.c use normal behavior
+        """
+        useThreads = os.environ.get("REFRESH_IN_THREAD", False)
+        if useThreads:
+            import threading
+            # Refresh the status of displayed runs.
+            if self.refreshSemaphore:
+                # print("Launching a thread to refresh the runs...")
+                threadRefreshRuns = threading.Thread(name="Refreshing runs",
+                                                     target=self.refreshDisplayedRuns,
+                                                     args=(e, initRefreshCounter,
+                                                           checkPids))
+                threadRefreshRuns.start()
+            else:
+                self.repeatRefresh = True
         else:
-            # print(self.refreshSemaphore)
-            self.repeatRefresh = True
-            # print("Need repeat...")
-
-
+            self.refreshDisplayedRuns(e, initRefreshCounter, checkPids)
 
     # noinspection PyUnusedLocal
-    def refreshRunsThread(self, e=None, initRefreshCounter=True, checkPids=False):
+    def refreshDisplayedRuns(self, e=None, initRefreshCounter=True, checkPids=False):
         """ Refresh the status of displayed runs.
          Params:
             e: Tk event input
