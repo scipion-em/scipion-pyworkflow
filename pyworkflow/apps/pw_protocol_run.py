@@ -31,6 +31,8 @@ import sys
 
 if __name__ == '__main__':
 
+    import time
+    time.sleep(10)
     if len(sys.argv) > 2:
         projPath = sys.argv[1]
         dbPath = sys.argv[2]

@@ -117,3 +117,12 @@ class DOCSITEURLS:
     CONTACTUS = 'http://scipion.i2pc.es/contact'
     USER = DOCS + 'user/'
     PLUGIN_MANAGER = USER + 'plugin-manager.html'
+
+# tkinter bind constants
+class TK:
+    LEFT_CLICK = '<Button-1>'
+    RETURN = '<Return>'
+    ENTER = '<KP_Enter>'
+    LEFT_DOUBLE_CLICK = '<Double-1>'
+    TREEVIEW_OPEN = '<<TreeviewOpen>>'
+    TREEVIEW_CLOSE = '<<TreeviewClose>>'
