@@ -173,8 +173,10 @@ def makeTmpPath(protocol):
                 project = protocol.getProject()
                 folderId = "_".join([project.getShortName(),project.getProtWorkingDir(protocol)])
                 tmpScratchFolder = os.path.join(scratchPath, folderId)
+                if os.path.exists(tmpScratchFolder):
+                    cleanPath(tmpScratchFolder)
                 os.makedirs(tmpScratchFolder)  # Create scratch folder
-                createAbsLink(tmpScratchFolder, tmpPath)
+                createAbsLink(tmpScratchFolder, tmpPath)  # Create a sym link
 
             except Exception as e:
                 raise PyworkflowException("Couldn't create the temporary folder %s at:\n %s\nPlease, review %s variable." %
