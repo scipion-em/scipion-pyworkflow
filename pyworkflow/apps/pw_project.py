@@ -36,6 +36,8 @@ from pyworkflow.project import Manager
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
 
+import logging
+logger = logging.getLogger(__file__)
 
 def openProject(projectName):
     """ Opens a scipion project:

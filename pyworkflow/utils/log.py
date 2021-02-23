@@ -42,6 +42,11 @@ from logging.handlers import RotatingFileHandler
 
 from pyworkflow.utils import makeFilePath, Config
 
+class STATUS:
+    START="START"
+    STOP="STOP"
+    INTERVAL="INTERVAL"
+
 def setupLogging():
     if not loadCustomLoggingConfig():
         setupDefaultLogging()
@@ -116,7 +121,7 @@ class StreamToLogger(object):
     """
     def __init__(self, logger, level):
        self.logger = logger
-       self.level = level
+       self.level = logging._checkLevel(level)
        self.linebuf = ''
 
     def write(self, buf):
@@ -150,7 +155,7 @@ def setUpProtocolRunLogging(stdoutLogFile, stderrLogFile):
 
     # Capture std out and std err and send it to the root logger
     sys.stderr = StreamToLogger(rootLogger,logging.ERROR)
-    sys.stdout = StreamToLogger(rootLogger, logging.INFO)
+    sys.stdout = StreamToLogger(rootLogger, Config.SCIPION_LOG_LEVEL)
 
     return rootLogger
 
@@ -158,4 +163,13 @@ def restoreStdoutAndErr():
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
 
+def getExtraLogInfo(project_name, status, prot_id=None, prot_name=None, step_id=None , duration=None):
+    # Add TS!! optionally
+    return {"project_name": project_name,
+            "status": status,
+            "prot_id": prot_id,
+            "prot_name": prot_name,
+            "step_id": step_id,
+            "duration": duration
+    }
 

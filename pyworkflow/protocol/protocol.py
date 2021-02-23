@@ -33,7 +33,7 @@ import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
-from pyworkflow.utils.log import setUpProtocolRunLogging
+from pyworkflow.utils.log import setUpProtocolRunLogging, getExtraLogInfo, STATUS
 from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
@@ -1131,7 +1131,12 @@ class Protocol(Step):
         has started running.
         """
         self.info(pwutils.magentaStr("STARTED") + ": %s, step %d, time %s" %
-                  (step.funcName.get(), step._index, step.initTime.datetime()))
+                  (step.funcName.get(), step._index, step.initTime.datetime()),
+                  extra=getExtraLogInfo(self.getProject().getName(),
+                                        STATUS.START,
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName(),
+                                        step_id=step._index))
         self.__updateStep(step)
 
     def _stepFinished(self, step):
@@ -1154,7 +1159,12 @@ class Protocol(Step):
         self._store(self._stepsDone)
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
-                  % (step.funcName.get(), step._index, step.endTime.datetime()))
+                  % (step.funcName.get(), step._index, step.endTime.datetime()),
+                  extra=getExtraLogInfo(self.getProject().getName(),
+                                        STATUS.STOP,
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName(),
+                                        step_id=step._index))
         if step.isFailed() and self.stepsExecutionMode == STEPS_PARALLEL:
             # In parallel mode the executor will exit to close
             # all working threads, so we need to close
@@ -1361,7 +1371,9 @@ class Protocol(Step):
             setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
 
             self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
-
+            self.info("Protocol starts", extra=getExtraLogInfo(self.getProject().getName(), STATUS.START,
+                                                               prot_id=self.getObjId(),
+                                                               prot_name=self.getClassName()))
             # Store the full machine name where the protocol is running
             # and also its PID
             self.setPid(os.getpid())
@@ -1409,7 +1421,12 @@ class Protocol(Step):
             self.cleanTmp()
 
         self.info(pwutils.greenStr('------------------- PROTOCOL ' +
-                                   self.getStatusMessage().upper()))
+                                   self.getStatusMessage().upper()),
+                  extra=getExtraLogInfo(self.getProject().getName(),
+                                        STATUS.STOP,
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName()))
+
 
     def getLogPaths(self):
         return list(map(self._getLogsPath,
@@ -1508,8 +1525,8 @@ class Protocol(Step):
     def warning(self, message, redirectStandard=True):
         self._log.warning(message)
 
-    def info(self, message, redirectStandard=True):
-        self._log.info(message)
+    def info(self, message, extra=None):
+        self._log.info(message, extra= extra)
 
     def error(self, message, redirectStandard=True):
         self._log.error(message)
