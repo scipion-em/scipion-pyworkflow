@@ -177,11 +177,13 @@ class TestObject(pwtests.BaseTest):
         o.pointer = pwobj.Pointer()
         o.pointer.set(imgSet)
 
-        o.refC = o.pointer.get()
-        attrNames = [k for k, a in o.getAttributes()]
-        # Check that 'refC' should not appear in attributes
-        # since it is only an "alias" to an existing pointed value
-        self.assertNotIn('refC', attrNames)
+        # This is not true anymore ans is allowed unless we see is needed
+        # The main reason is a boost in performance.
+        # o.refC = o.pointer.get()
+        # attrNames = [k for k, a in o.getAttributes()]
+        # # Check that 'refC' should not appear in attributes
+        # # since it is only an "alias" to an existing pointed value
+        # self.assertNotIn('refC', attrNames)
 
         self.assertFalse(o.pointer.hasExtended(),
                          'o.pointer should not have extended at this point')
@@ -207,7 +209,7 @@ class TestObject(pwtests.BaseTest):
         # retrieved by the pointer after setting the extended to 7
         self.assertEqual(imgSet[7], ptr.get())
 
-        o2 = pwobj.OrderedObject()
+        o2 = pwobj.Object()
         o2.outputImages = imgSet
         ptr2 = pwobj.Pointer()
         ptr2.set(o2)
@@ -329,7 +331,7 @@ class TestObject(pwtests.BaseTest):
                 v = "'%s'" % v
             print("('%s', %s)," % (k, v))
 
-        goldDict1 = OrderedDict([
+        goldDict1 = dict([
             ('object.id', 1),
             ('object.label', 'test micrograph'),
             ('object.comment', 'Testing store and retrieve from dict.'),

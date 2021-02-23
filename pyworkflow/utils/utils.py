@@ -143,12 +143,17 @@ class Timer(object):
     def tic(self):
         self._dt = datetime.now()
 
-    def getToc(self):
-        return prettyDelta(datetime.now() - self._dt)
+    def getElapsedTime(self):
+        return datetime.now() - self._dt
 
     def toc(self, message='Elapsed:'):
-        print(message, self.getToc())
+        print(message, self.getElapsedTime())
 
+    def __enter__(self):
+        self.tic()
+
+    def __exit__(self, type, value, traceback):
+        self.toc()
 
 def timeit(func):
     """ Decorator function to have a simple measurement
