@@ -33,7 +33,7 @@ import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
-from pyworkflow.utils.log import setUpProtocolRunLogging, getExtraLogInfo, STATUS
+from pyworkflow.utils.log import setUpProtocolRunLogging, getExtraLogInfo, STATUS, setDefaultLoggingContext
 from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
@@ -1132,8 +1132,8 @@ class Protocol(Step):
         """
         self.info(pwutils.magentaStr("STARTED") + ": %s, step %d, time %s" %
                   (step.funcName.get(), step._index, step.initTime.datetime()),
-                  extra=getExtraLogInfo(self.getProject().getName(),
-                                        STATUS.START,
+                  extra=getExtraLogInfo(STATUS.START,
+                                        project_name=self.getProject().getName(),
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName(),
                                         step_id=step._index))
@@ -1160,8 +1160,8 @@ class Protocol(Step):
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
                   % (step.funcName.get(), step._index, step.endTime.datetime()),
-                  extra=getExtraLogInfo(self.getProject().getName(),
-                                        STATUS.STOP,
+                  extra=getExtraLogInfo(STATUS.STOP,
+                                        project_name=self.getProject().getName(),
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName(),
                                         step_id=step._index))
@@ -1371,7 +1371,8 @@ class Protocol(Step):
             setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
 
             self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
-            self.info("Protocol starts", extra=getExtraLogInfo(self.getProject().getName(), STATUS.START,
+            self.info("Protocol starts", extra=getExtraLogInfo(STATUS.START,
+                                                               project_name=self.getProject().getName(),
                                                                prot_id=self.getObjId(),
                                                                prot_name=self.getClassName()))
             # Store the full machine name where the protocol is running
@@ -1422,8 +1423,8 @@ class Protocol(Step):
 
         self.info(pwutils.greenStr('------------------- PROTOCOL ' +
                                    self.getStatusMessage().upper()),
-                  extra=getExtraLogInfo(self.getProject().getName(),
-                                        STATUS.STOP,
+                  extra=getExtraLogInfo(STATUS.STOP,
+                                        project_name=self.getProject().getName(),
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName()))
 
@@ -2196,6 +2197,8 @@ def runProtocolMain(projectPath, protDbPath, protId):
     """
     # Enter to the project directory and load protocol from db
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
+
+    setDefaultLoggingContext(protId, protocol.getProject().getName())
 
     hostConfig = protocol.getHostConfig()
 

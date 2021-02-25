@@ -42,6 +42,10 @@ from logging.handlers import RotatingFileHandler
 
 from pyworkflow.utils import makeFilePath, Config
 
+SCIPION_PROT_ID = "SCIPION_PROT_ID"
+SCIPION_PROJ_ID = "SCIPION_PROJ_ID"
+
+
 class STATUS:
     START="START"
     STOP="STOP"
@@ -50,7 +54,6 @@ class STATUS:
 def setupLogging():
     if not loadCustomLoggingConfig():
         setupDefaultLogging()
-    return logging
 
 def loadCustomLoggingConfig():
     """ Loads the custom logging configuration file"""
@@ -163,13 +166,24 @@ def restoreStdoutAndErr():
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
 
-def getExtraLogInfo(project_name, status, prot_id=None, prot_name=None, step_id=None , duration=None):
+def setDefaultLoggingContext(protId, projId):
+    os.environ[SCIPION_PROT_ID] = str(protId)
+    os.environ[SCIPION_PROJ_ID] = projId
+
+def getFinalProtId(protId):
+    return protId if protId is not None else int(os.environ.get(SCIPION_PROT_ID, "-1"))
+
+def getFinalProjId(projId):
+    return projId if projId is not None else os.environ.get(SCIPION_PROJ_ID, "unknown")
+
+def getExtraLogInfo(status, project_name =None, prot_id=None, prot_name=None, step_id=None , duration=None, dbfilename=None):
     # Add TS!! optionally
-    return {"project_name": project_name,
-            "status": status,
-            "prot_id": prot_id,
+    return {"status": status,
+            "project_name": getFinalProjId(project_name),
+            "prot_id": getFinalProtId(prot_id),
             "prot_name": prot_name,
             "step_id": step_id,
-            "duration": duration
+            "duration": duration,
+            "dbfilename": dbfilename
     }
 
