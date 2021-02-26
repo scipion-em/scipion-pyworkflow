@@ -37,7 +37,7 @@ from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
 
 import logging
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 def openProject(projectName):
     """ Opens a scipion project:
@@ -82,14 +82,16 @@ def openProject(projectName):
         projName = projects[0].projName
 
     projPath = manager.getProjectPath(projName)
-    projWindow = ProjectWindow(projPath)
 
-    projWindow.show()
-
+    if os.path.exists(projPath):
+        projWindow = ProjectWindow(projPath)
+        projWindow.show()
+    else:
+        logger.error("Can't open project %s. It does not exist" % projPath)
 
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
         openProject(sys.argv[1])
     else:
-        print("usage: pw_project.py PROJECT_NAME or here or last")
+        logger.info("usage: pw_project.py PROJECT_NAME or here or last")

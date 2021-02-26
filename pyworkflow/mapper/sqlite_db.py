@@ -29,13 +29,13 @@
 This module contains some sqlite basic tools to handle Databases.
 """
 
+import logging
+logger = logging.getLogger(__name__)
 from sqlite3 import dbapi2 as sqlite
 
 from pyworkflow import SCIPION_DEBUG_SQLITE
 from pyworkflow.utils import envVarOn, STATUS, getExtraLogInfo
 
-import logging
-logger = logging.getLogger(__file__)
 
 class SqliteDb:
     """Class to handle a Sqlite database.
@@ -55,7 +55,7 @@ class SqliteDb:
             self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
             self.connection.row_factory = sqlite.Row
             self.OPEN_CONNECTIONS[dbName] = self.connection
-            logger.info("Connection open for %s" % dbName, extra=getExtraLogInfo(
+            logger.debug("Connection open for %s" % dbName, extra=getExtraLogInfo(
                 STATUS.START,
                 dbfilename=dbName))
 
@@ -73,7 +73,7 @@ class SqliteDb:
             connection = cls.OPEN_CONNECTIONS[dbName]
             del cls.OPEN_CONNECTIONS[dbName]
             connection.close()
-            logger.info("Connection closed for %s" % dbName, extra=getExtraLogInfo(
+            logger.debug("Connection closed for %s" % dbName, extra=getExtraLogInfo(
                 STATUS.STOP,
                 dbfilename=dbName))
 
@@ -82,9 +82,9 @@ class SqliteDb:
     
     def close(self):
         self.connection.close()
-        logger.info("Connection closed for %s" % self._dbName, extra=getExtraLogInfo(
-            STATUS.STOP,
-            dbfilename=self._dbName))
+        logger.debug("Connection closed for %s" % self._dbName,
+                     extra=getExtraLogInfo(STATUS.STOP,
+                                        dbfilename=self._dbName))
         if self._dbName in self.OPEN_CONNECTIONS:
             del self.OPEN_CONNECTIONS[self._dbName]
         

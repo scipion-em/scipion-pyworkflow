@@ -43,7 +43,7 @@ SCHEDULE_LOG = 'schedule.log'
 
 import  logging
 # Get the root logger
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Step(Object):
