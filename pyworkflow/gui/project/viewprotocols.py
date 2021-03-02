@@ -1208,24 +1208,23 @@ class ProtocolsView(tk.Frame):
 
     def drawRunsGraph(self, reorganize=False):
 
-        self.runsGraphCanvas.clear()
-
         # Check if there are positions stored
         if reorganize or len(self.settings.getNodes()) == 0:
             # Create layout to arrange nodes as a level tree
             layout = pwgui.LevelTreeLayout()
+            self.runsGraphCanvas.reorganizeGraph(self.runsGraph, layout)
         else:
+            self.runsGraphCanvas.clear()
             layout = pwgui.BasicLayout()
+            # Create empty nodeInfo for new runs
+            for node in self.runsGraph.getNodes():
+                nodeId = node.run.getObjId() if node.run else 0
+                nodeInfo = self.settings.getNodeById(nodeId)
+                if nodeInfo is None:
+                    self.settings.addNode(nodeId, x=0, y=0, expanded=True)
 
-        # Create empty nodeInfo for new runs
-        for node in self.runsGraph.getNodes():
-            nodeId = node.run.getObjId() if node.run else 0
-            nodeInfo = self.settings.getNodeById(nodeId)
-            if nodeInfo is None:
-                self.settings.addNode(nodeId, x=0, y=0, expanded=True)
-
-        self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
-                                       drawNode=self.createRunItem)
+            self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
+                                           drawNode=self.createRunItem)
 
     def createRunItem(self, canvas, node):
 
@@ -2262,7 +2261,7 @@ class ProtocolsView(tk.Frame):
 
         # Following actions do not need a select run
         if action == ACTION_TREE:
-            self.updateRunsGraph(True, reorganize=True)
+            self.drawRunsGraph(reorganize=True)
         elif action == ACTION_REFRESH:
             self.refreshRuns(checkPids=True)
 
@@ -2727,7 +2726,7 @@ class ProtocolTreeConfig:
                           e, os.path.abspath(protocolsConfPath)))
 
             # Add all protocols to All view
-        cls.__addAllProtocols(Config.getDomain(), protocols)
+        cls.__addAllProtocols(domain, protocols)
 
         return protocols
 

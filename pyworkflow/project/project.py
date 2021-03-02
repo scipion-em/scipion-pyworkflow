@@ -764,8 +764,9 @@ class Project(object):
 
     def _getProtocolsDependencies(self, protocols):
         error = ''
+        runsGraph = self.getRunsGraph()
         for prot in protocols:
-            node = self.getRunsGraph().getNode(prot.strId())
+            node = runsGraph.getNode(prot.strId())
             if node:
                 childs = [node.run for node in node.getChilds() if
                           self.__validDependency(prot, node.run, protocols)]

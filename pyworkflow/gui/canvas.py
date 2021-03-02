@@ -385,11 +385,18 @@ class Canvas(tk.Canvas, Scrollable):
 
         if layout is not None:
             layout.draw(graph)
+            # Update node positions
+            self._updatePositions(graph.getRoot(), {})
 
+        self.updateScrollRegion()
+        self.__zoom(None, scale)
+
+    def reorganizeGraph(self, graph, layout=None):
+
+        layout.draw(graph)
         # Update node positions
         self._updatePositions(graph.getRoot(), {})
         self.updateScrollRegion()
-        self.__zoom(None, scale)
 
     def _drawNode(self, canvas, node):
         """ Default implementation to draw nodes as textboxes. """
@@ -410,6 +417,7 @@ class Canvas(tk.Canvas, Scrollable):
             if getattr(node, 'expanded', True):
                 for child in node.getChilds():
                     self._drawNodes(child, visitedDict)
+                    self.createEdge(item, child.item)
             else:
                 self._setupParentProperties(node, visitedDict)
 
@@ -437,7 +445,6 @@ class Canvas(tk.Canvas, Scrollable):
 
             if getattr(node, 'expanded', True):
                 for child in node.getChilds():
-                    self.createEdge(item, child.item)
                     self._updatePositions(child, visitedDict)
 
 
