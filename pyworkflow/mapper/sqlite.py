@@ -493,7 +493,7 @@ class SqliteObjectsDb(SqliteDb):
     VERSION = 1
     
     SELECT = ("SELECT id, parent_id, name, classname, value, label, comment, "
-              "datetime(creation, 'localtime') as creation FROM Objects WHERE ")
+              "datetime(creation, 'localtime') as creation FROM Objects")
     DELETE = "DELETE FROM Objects WHERE "
     DELETE_SEQUENCE = "DELETE FROM SQLITE_SEQUENCE WHERE name='Objects'"
     
@@ -503,6 +503,8 @@ class SqliteObjectsDb(SqliteDb):
     EXISTS = "SELECT EXISTS(SELECT 1 FROM Objects WHERE %s=? LIMIT 1)"
     
     def selectCmd(self, whereStr, orderByStr=' ORDER BY id'):
+
+        whereStr = " WHERE " + whereStr if whereStr is not None else ''
         return self.SELECT + whereStr + orderByStr
     
     def __init__(self, dbName, timeout=1000, pragmas=None):
@@ -938,6 +940,28 @@ class SqliteFlatMapper(Mapper):
         
         return self.__objectsFromRows(objRows, iterate, objectFilter) 
 
+    def unique(self, labels, where=None):
+        """ Returns a list (for a single label) or a dictionary with unique values for the passed labels.
+        If more than one label is passed it will be unique rows similar ti SQL unique clause.
+
+        :param labels (string or list) item attribute/s to retrieve unique row values
+        :param where (string) condition to filter the results"""
+
+        if isinstance(labels, str):
+            labels = [labels]
+
+        rows = self.db.unique(labels, where)
+        result = {label: [] for label in labels}  # Initialize the results dictionary
+        for row in rows:
+            for label in labels:
+                result[label].append(row[label])
+
+        # If there is only one label,
+        if len(labels) == 1:
+            return result[labels[0]]
+        else:
+            return result
+
     def aggregate(self, operations, operationLabel, groupByLabels=None):
         rows = self.db.aggregate(operations, operationLabel, groupByLabels)
         results = []
@@ -1019,7 +1043,7 @@ class SqliteFlatDb(SqliteDb):
 
         self.CHECK_TABLES = ("SELECT name FROM sqlite_master WHERE type='table'"
                              " AND name='%sObjects';" % tablePrefix)
-        self.SELECT = "SELECT * FROM %sObjects WHERE " % tablePrefix
+        self.SELECT = "SELECT * FROM %sObjects" % tablePrefix
         self.FROM = "FROM %sObjects" % tablePrefix
         self.DELETE = "DELETE FROM %sObjects WHERE " % tablePrefix
         self.INSERT_CLASS = ("INSERT INTO %sClasses (label_property, "
@@ -1090,6 +1114,8 @@ class SqliteFlatDb(SqliteDb):
         self.executeCommand(self.DELETE_PROPERTY, (key,))
 
     def selectCmd(self, whereStr, orderByStr=' ORDER BY ' + ID):
+
+        whereStr = "" if whereStr is None else " WHERE " + whereStr
         return self.SELECT + whereStr + orderByStr
 
     def missingTables(self):
@@ -1216,39 +1242,30 @@ class SqliteFlatDb(SqliteDb):
         one = self.cursor.fetchone()
         return one[0] == 1
 
+    def _getRealCol(self, colName):
+        """ Transform the column name taking into account
+         special columns such as: id or RANDOM(), and
+         getting the mapping translation otherwise.
+        """
+        if colName in ['id', 'RANDOM()', 'creation']:
+            return colName
+        else:
+            return self._columnsMapping[colName]
+
     def selectAll(self, iterate=True, orderBy=ID, direction='ASC',
-                  where='1', limit=None):
+                  where=None, limit=None):
         # Handle the specials orderBy values of 'id' and 'RANDOM()'
         # other columns names should be mapped to table column
         # such as: _micId -> c04
 
-        def _getRealCol(colName):
-            """ Transform the column name taking into account
-             special columns such as: id or RANDOM(), and
-             getting the mapping translation otherwise.
-            """
-            if colName in ['id', 'RANDOM()', 'creation']:
-                return colName
-            else:
-                return self._columnsMapping[colName]
-
         if isinstance(orderBy, str):
-            orderByCol = _getRealCol(orderBy)
+            orderByCol = self._getRealCol(orderBy)
         elif isinstance(orderBy, list):
-            orderByCol = ','.join([_getRealCol(c) for c in orderBy])
+            orderByCol = ','.join([self._getRealCol(c) for c in orderBy])
         else:
             raise Exception('Invalid type for orderBy: %s' % type(orderBy))
 
-        # Parse the where string to replace the column name with
-        # the real table column name ( for example: _micId -> c01 )
-        # Right now we are assuming a simple where string in the form
-        # colName=VALUE
-        if '=' in where:
-            whereCol = where.split('=')[0]
-            whereRealCol = _getRealCol(whereCol)
-            whereStr = where.replace(whereCol, whereRealCol)
-        else:
-            whereStr = where
+        whereStr = self._whereToWhereStr(where)
 
         cmd = self.selectCmd(whereStr,
                              orderByStr=' ORDER BY %s %s'
@@ -1266,6 +1283,54 @@ class SqliteFlatDb(SqliteDb):
 
         self.executeCommand(cmd)
         return self._results(iterate)
+
+    def _whereToWhereStr(self, where):
+        """ Parse the where string to replace the column name with
+        the real table column name ( for example: _micId -> c01 )
+        Right now we are assuming a simple where string in the form
+        colName=VALUE
+
+        :param where string with pair of terms separated by "=" where left
+        element is an attribute of the item
+
+        >>> Example:
+        >>> _micId=3 OR _micId=4
+        """
+        if where is None:
+            return
+
+        if '=' in where:
+            whereCol = where.split('=')[0].rstrip()
+            whereRealCol = self._getRealCol(whereCol)
+            whereStr = where.replace(whereCol, whereRealCol)
+        else:
+            whereStr = where
+        return whereStr
+
+    def unique(self, labels, where=None):
+        """ Returns the results of the execution of a UNIQUE query
+
+        :param labels: list of attributes which you want unique values from
+        :param where: condition to match in the form: attrName=value
+        :return:
+        """
+        # let us count for testing
+        selectStr = 'SELECT DISTINCT '
+        separator = ' '
+        # This cannot be like the following line should be expressed in terms
+        # of c01, c02 etc (actual fields)....
+        for label in labels:
+            selectStr += "%s %s AS %s " % (separator, self._columnsMapping[label], label)
+            separator = ', '
+
+        sqlCommand = selectStr + self.FROM
+
+        whereStr = self._whereToWhereStr(where)
+        if whereStr is not None:
+            sqlCommand += " WHERE " + whereStr
+
+        self.executeCommand(sqlCommand)
+        return self._results(iterate=False)
 
     def aggregate(self, operations, operationLabel, groupByLabels=None):
         # let us count for testing

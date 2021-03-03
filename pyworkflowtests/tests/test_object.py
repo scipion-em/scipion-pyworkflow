@@ -233,17 +233,23 @@ class TestObject(pwtests.BaseTest):
         print("Writing to sqlite: %s" % fn)
 
         imgSet = MockSetOfImages(filename=fn)
-        imgSet.setSamplingRate(1.0)
 
         for i in range(10):
             img = MockImage()
             img.setLocation(i + 1, stackFn)
+            img.setSamplingRate(i % 3)
             imgSet.append(img)
 
         imgSet.write()
 
         # Test size is 10
         self.assertSetSize(imgSet, 10)
+
+        # Test hasChangedSince
+        timeStamp = dt.datetime.now()
+        self.assertFalse(imgSet.hasChangedSince(timeStamp), "Set.hasChangedSince returns true when it hasn't changed.")
+        # Remove 10 seconds
+        self.assertTrue(imgSet.hasChangedSince(timeStamp-dt.timedelta(0,10)), "Set.hasChangedSince returns false when it has changed.")
 
         # PERFORMANCE functionality
         def checkSetIteration(limit, skipRows=None):
@@ -265,6 +271,30 @@ class TestObject(pwtests.BaseTest):
 
         # Check iteration with limit and skip rows
         checkSetIteration(3, 2)
+
+        # Tests unique method
+        # Requesting 1 unique value as string
+        result = imgSet.getUniqueValues("_samplingRate")
+        self.assertEqual(len(result), 3, "Unique values wrong for 1 attribute and 3 value")
+
+        # Requesting 1 unique value as list
+        result = imgSet.getUniqueValues(["_samplingRate"])
+        self.assertEqual(len(result), 3, "Unique values wrong for 1 attribute and one value as list")
+        
+        # Requesting several unique values as string
+        result = imgSet.getUniqueValues("_index")
+        self.assertEqual(len(result), 10, "Unique values wrong for id attribute")
+
+        # Requesting several unique values with several columns
+        result = imgSet.getUniqueValues(["_filename", "_samplingRate"])
+        # Here we should have 2 keys containing 2 list
+        self.assertEqual(len(result), 2, "Unique values dictionary length wrong")
+        self.assertEqual(len(result["_filename"]), 3, "Unique values dict item size wrong")
+
+        # Requesting unique values with where
+        result = imgSet.getUniqueValues("_index",where="_samplingRate = 2")
+        # Here we should have 2 values
+        self.assertEqual(len(result), 3, "Unique values with filter not working")
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values
