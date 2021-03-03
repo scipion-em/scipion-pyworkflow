@@ -858,7 +858,7 @@ class ProtocolsView(tk.Frame):
             print("  memory percent: ", proc.memory_percent())
 
         if self.runsView == VIEW_LIST:
-            self.updateRunsTree(False)
+            self.updateRunsTree(True)
         else:
             self.updateRunsGraph(True, checkPids=checkPids)
             self._updateSelection()
@@ -1255,8 +1255,7 @@ class ProtocolsView(tk.Frame):
         # Paint the bottom line (for now only labels are painted there).
         self._paintBottomLine(item)
 
-        if nodeId in self._selection:
-            item.setSelected(True)
+        item.setSelected(nodeId in self._selection)
         return item
 
     def _getBoxColor(self, nodeInfo, statusColor, node):
@@ -1700,7 +1699,7 @@ class ProtocolsView(tk.Frame):
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.windows,
                        hostList=self.project.getHostNames(),
-                       updateProtocolCallback=self._updateProtocol(prot))
+                       updateProtocolCallback=self._updateProtocol)
         w.adjustSize()
         w.show(center=True)
 
@@ -1879,6 +1878,7 @@ class ProtocolsView(tk.Frame):
         # Update runs list display, even in save we
         # need to get the updated copy of the protocol
         self._scheduleRunsUpdate()
+        self._selectItemProtocol(prot)
 
         return msg
 

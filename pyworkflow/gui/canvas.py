@@ -168,6 +168,8 @@ class Canvas(tk.Canvas, Scrollable):
         Return None if not Found
         """
         items = self.find_overlapping(xc - 1, yc - 1, xc + 1, yc + 1)
+        if self.lastItem is not None and self.lastItem.id in items:
+            return self.lastItem
         for i in items:
             if i in self.items:
                 return self.items[i]
@@ -653,6 +655,9 @@ class Item(object):
             bw = 2
             self.lift()
             # bc = 'Firebrick'
+        else:
+            self.lower()
+
         self.canvas.itemconfig(self.id, width=bw, outline=bc)
         self._notifySelectionListeners(value)
 
@@ -661,6 +666,9 @@ class Item(object):
 
     def lift(self):
         self.canvas.lift(self.id)
+
+    def lower(self):
+        self.canvas.lower(self.id)
 
 
 class TextItem(Item):
@@ -708,6 +716,11 @@ class TextItem(Item):
     def lift(self):
         super(TextItem, self).lift()
         self.canvas.lift(self.id_text)
+
+    def lower(self):
+        self.canvas.lower(self.id_text)
+        super(TextItem, self).lower()
+
 
 
 class TextBox(TextItem):
