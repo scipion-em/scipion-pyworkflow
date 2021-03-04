@@ -1003,7 +1003,14 @@ class SqliteFlatMapper(Mapper):
     
     def getPropertyKeys(self):
         return self.db.getPropertyKeys()
-        
+
+    @staticmethod
+    def fmtDate(date):
+        """ Formats a python date into a valid string to be used in a where term
+        Currently creation files is stored in utc time and is has no microseconds.
+
+        :param date: python date un utc. use datetime.datetime.utcnow() instead of now()"""
+        return "datetime('%s')" % date.replace(microsecond=0)
 
 class SqliteFlatMapperException(Exception):
     pass
@@ -1312,7 +1319,7 @@ class SqliteFlatDb(SqliteDb):
             whereRealCol = self._getRealCol(term)
             if whereRealCol is not  None:
                 whereStr = whereStr.replace(term, whereRealCol)
-        
+
         return whereStr
 
     def unique(self, labels, where=None):

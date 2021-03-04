@@ -1344,6 +1344,9 @@ class Set(Object):
 
         return self._getMapper().unique(attributes, where)
 
+    def fmtDate(self, date):
+        """ Formats a python date to a valid string for the mapper"""
+        return self._getMapper().fmtDate(date)
 
 def ObjectWrap(value):
     """This function will act as a simple Factory
