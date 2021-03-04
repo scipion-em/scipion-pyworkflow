@@ -26,6 +26,7 @@
 
 import os
 import datetime as dt
+from time import sleep
 
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
@@ -234,12 +235,16 @@ class TestObject(pwtests.BaseTest):
 
         imgSet = MockSetOfImages(filename=fn)
 
+        halfTimeStamp = None
+
         for i in range(10):
             img = MockImage()
             img.setLocation(i + 1, stackFn)
             img.setSamplingRate(i % 3)
             imgSet.append(img)
-
+            if i == 4:
+                sleep(1)
+                halfTimeStamp = dt.datetime.utcnow().replace(microsecond=0)
         imgSet.write()
 
         # Test size is 10
@@ -303,7 +308,8 @@ class TestObject(pwtests.BaseTest):
 
         # Use creation timestamp
         # Request id list
-        result = imgSet.getUniqueValues(ID, where=CREATION)
+        result = imgSet.getUniqueValues(ID, where="%s>=%s" % (CREATION , imgSet.fmtDate(halfTimeStamp)))
+        self.assertEqual(len(result), 5, "Unique values after a time stamp does not work")
 
         # Test getIdSet
         ids = imgSet.getIdSet()
