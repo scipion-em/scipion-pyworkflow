@@ -1733,7 +1733,7 @@ class ProtocolsView(tk.Frame):
 
     def _iterSelectedProtocols(self):
         for protId in sorted(self._selection):
-            prot = self.project.getProtocol(protId)
+            prot = self.project._runsGraph.getNode(str(protId)).run
             if prot:
                 yield prot
 
@@ -1964,7 +1964,9 @@ class ProtocolsView(tk.Frame):
             defaultModeMessage = 'Resetting the workflow...'
             message = FloatingMessage(self.root, defaultModeMessage)
             message.show()
-            errorList = self.project.resetWorkFlow(protocols[0])
+            errorsList, workflowProtocolList = self.project._checkWorkflowErrors(protocols[0],
+                                                                                 False)
+            errorList = self.project.resetWorkFlow(workflowProtocolList)
             self.refreshRuns()
             message.close()
         if errorList:
@@ -2009,9 +2011,7 @@ class ProtocolsView(tk.Frame):
         if errorList:
             msg = ''
             for errorProt in errorList:
-                error = ("The protocol: %s  is active\n" %
-                         (self.project.getProtocol(errorProt).getRunName()))
-                msg += str(error)
+                msg += str(errorProt) + '\n'
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
                 Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" + msg,

@@ -489,7 +489,7 @@ class Project(object):
             # Fix the protocol parameters
             for pointer in oldStylePointerList:
                 auxPointer = pointer.getObjValue()
-                pointer.set(self.getProtocol(pointer.get().getObjParentId()))
+                pointer.set(self._runsGraph.getNode(str(pointer.get().getObjParentId())).run)
                 pointer.setExtended(auxPointer.getLastName())
                 protocol._store()
                 self._storeProtocol(protocol)
@@ -505,7 +505,8 @@ class Project(object):
         :param initialProtocol: selected protocol
         """
         if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
+            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol,
+                                                                         False)
             for protocol in workflowProtocolList:
                 if protocol.getStatus() in ACTIVE_STATUS:
                     try:
@@ -513,13 +514,12 @@ class Project(object):
                     except Exception as err:
                         print(err)
 
-    def resetWorkFlow(self, initialProtocol):
+    def resetWorkFlow(self, workflowProtocolList):
         """
         This function can reset a workflow from a selected protocol
         :param initialProtocol: selected protocol
         """
-        if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
+        if workflowProtocolList:
             for protocol in workflowProtocolList:
                 try:
                     self.resetProtocol(protocol)
@@ -789,7 +789,7 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _checkWorkflowErrors(self, protocol):
+    def _checkWorkflowErrors(self, protocol, fixProtParam=True):
         """
         This function checks if there are active protocols excluding
         interactive protocols. Also, save the workflow from "protocol"
@@ -803,11 +803,12 @@ class Project(object):
         if protocol:
             configuredProtList.append(protocol)
             auxProList.append(protocol.getObjId())
-            runGraph = self.getRunsGraph()
+            runGraph = self.getRunsGraph(False)
 
             while auxProList:
                 protocol = runGraph.getNode(str(auxProList.pop(0))).run
-                self._fixProtParamsConfiguration(protocol)
+                if fixProtParam:
+                    self._fixProtParamsConfiguration(protocol)
                 if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
                     errorsList.append(protocol.getObjId())
                 node = runGraph.getNode(protocol.strId())
