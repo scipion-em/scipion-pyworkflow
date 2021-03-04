@@ -22,6 +22,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import re
 from collections import OrderedDict
 
 from pyworkflow.utils import replaceExt, joinExt
@@ -29,6 +30,7 @@ from .mapper import Mapper
 from .sqlite_db import SqliteDb
 
 ID = 'id'
+CREATION = 'creation'
 PARENT_ID = 'parent_id'
 CLASSNAME = 'classname'
 NAME = 'name'
@@ -212,7 +214,7 @@ class SqliteMapper(Mapper):
         obj._objName = self._getStrValue(objRow['name'])
         obj._objLabel = self._getStrValue(objRow['label'])
         obj._objComment = self._getStrValue(objRow['comment'])
-        obj._objCreation = self._getStrValue(objRow['creation'])
+        obj._objCreation = self._getStrValue(objRow[CREATION])
         objValue = objRow['value']
         obj._objParentId = objRow[PARENT_ID]
         
@@ -887,7 +889,7 @@ class SqliteFlatMapper(Mapper):
         
         try:
             obj.setEnabled(objRow['enabled'])
-            obj.setObjCreation(self._getStrValue(objRow['creation']))
+            obj.setObjCreation(self._getStrValue(objRow[CREATION]))
         except Exception:
             # THIS SHOULD NOT HAPPENS
             print("WARNING: 'creation' column not found in object: %s" % obj.getObjId())
@@ -1247,11 +1249,12 @@ class SqliteFlatDb(SqliteDb):
          special columns such as: id or RANDOM(), and
          getting the mapping translation otherwise.
         """
-        if colName in ['id', 'RANDOM()', 'creation']:
+        if colName in [ID, 'RANDOM()', CREATION]:
             return colName
-        else:
+        elif colName in self._columnsMapping:
             return self._columnsMapping[colName]
-
+        else:
+            return None
     def selectAll(self, iterate=True, orderBy=ID, direction='ASC',
                   where=None, limit=None):
         # Handle the specials orderBy values of 'id' and 'RANDOM()'
@@ -1299,12 +1302,17 @@ class SqliteFlatDb(SqliteDb):
         if where is None:
             return
 
-        if '=' in where:
-            whereCol = where.split('=')[0].rstrip()
-            whereRealCol = self._getRealCol(whereCol)
-            whereStr = where.replace(whereCol, whereRealCol)
-        else:
-            whereStr = where
+        whereStr = where
+        # Split by valid where operators: =, <, >
+        result = re.split('<=|<=|=|<|>|AND|OR', where)
+        # For each item
+        for term in result:
+            # trim it
+            term = term.strip()
+            whereRealCol = self._getRealCol(term)
+            if whereRealCol is not  None:
+                whereStr = whereStr.replace(term, whereRealCol)
+        
         return whereStr
 
     def unique(self, labels, where=None):
@@ -1320,7 +1328,7 @@ class SqliteFlatDb(SqliteDb):
         # This cannot be like the following line should be expressed in terms
         # of c01, c02 etc (actual fields)....
         for label in labels:
-            selectStr += "%s %s AS %s " % (separator, self._columnsMapping[label], label)
+            selectStr += "%s %s AS %s " % (separator, self._getRealCol(label), label)
             separator = ', '
 
         sqlCommand = selectStr + self.FROM

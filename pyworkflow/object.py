@@ -33,6 +33,7 @@ from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
 
+from pyworkflow.mapper.sqlite import ID
 from pyworkflow import utils
 from pyworkflow.utils.reflection import getSubclasses
 
@@ -1274,10 +1275,7 @@ class Set(Object):
         
     def getIdSet(self):
         """ Return a Python set object containing all ids. """
-        s = set()
-        for item in self.iterItems():
-            s.add(item.getObjId())
-        return s
+        return set(self.getUniqueValues(ID))
     
     def getFiles(self):
         files = set()

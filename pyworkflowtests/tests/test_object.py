@@ -26,10 +26,10 @@
 
 import os
 import datetime as dt
-from collections import OrderedDict
 
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
+from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
 
@@ -295,6 +295,22 @@ class TestObject(pwtests.BaseTest):
         result = imgSet.getUniqueValues("_index",where="_samplingRate = 2")
         # Here we should have 2 values
         self.assertEqual(len(result), 3, "Unique values with filter not working")
+
+        # Request id list
+        result = imgSet.getUniqueValues(ID)
+        # Here we should have 10 values
+        self.assertEqual(len(result), 10, "Unique values with ID")
+
+        # Use creation timestamp
+        # Request id list
+        result = imgSet.getUniqueValues(ID, where=CREATION)
+
+        # Test getIdSet
+        ids = imgSet.getIdSet()
+        self.assertIsInstance(ids, set, "getIdSet does not return a set")
+        self.assertIsInstance(next(iter(ids)), int, "getIdSet items are not integer")
+        self.assertEqual(len(ids), 10, "getIdSet does not return 10 items")
+
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values
