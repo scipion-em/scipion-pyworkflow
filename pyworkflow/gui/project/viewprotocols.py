@@ -1998,14 +1998,12 @@ class ProtocolsView(tk.Frame):
                 message.show()
                 errorList = self.project.launchWorkflow(protocols[0],
                                                         defaultMode)
-                self.refreshRuns()
                 message.close()
         elif action == ACTION_CONTINUE_WORKFLOW:
             message = FloatingMessage(self.root, defaultModeMessage)
             message.show()
             errorList = self.project.launchWorkflow(protocols[0],
                                                     defaultMode)
-            self.refreshRuns()
             message.close()
 
         if errorList:
