@@ -810,7 +810,9 @@ class Project(object):
                 if fixProtParam:
                     self._fixProtParamsConfiguration(protocol)
                 if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                    errorsList.append(protocol.getObjId())
+                    errorsList.append("Error trying to restart a protocol: %s"
+                                      "\nERROR: the protocol is active\n" %
+                                      (protocol.getObjLabel()))
                 node = runGraph.getNode(protocol.strId())
                 if node:
                     dependencies = [node.run for node in node.getChilds()]
