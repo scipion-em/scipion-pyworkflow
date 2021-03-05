@@ -22,7 +22,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+from collections import OrderedDict
 
 from pyworkflow.utils import replaceExt, joinExt
 from .mapper import Mapper
@@ -713,6 +713,7 @@ class SqliteFlatMapper(Mapper):
                  indexes=None):
         Mapper.__init__(self, dictClasses)
         self._objTemplate = None
+        self._attributesToStore = None
         try:
             # We (ROB and JMRT) are playing with different
             # PRAGMAS (see https://www.sqlite.org/pragma.html)
@@ -764,8 +765,24 @@ class SqliteFlatMapper(Mapper):
             self.doCreateTables = False
         """Insert a new object into the system, the id will be set"""
         self.db.insertObject(obj.getObjId(), obj.isEnabled(), obj.getObjLabel(), obj.getObjComment(), 
-                             *obj.getObjDict().values())
-        
+                             *self._getValuesFromObject(obj).values())
+
+    def getAttributes2Store(self, item):
+
+        if self._attributesToStore is None:
+            self._attributesToStore = [key for key, value in item.getAttributesToStore()]
+
+        return self._attributesToStore
+
+    def _getValuesFromObject(self, item):
+
+        valuesDict = OrderedDict()
+
+        for attr in self.getAttributes2Store(item):
+            item.fillObjDict('', valuesDict, False, attr, getattr(item, attr))
+
+        return valuesDict
+
     def enableAppend(self):
         """ This will allow to append items to existing db. 
         This is by default not allow, since most sets are not 
