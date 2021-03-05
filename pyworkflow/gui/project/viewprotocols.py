@@ -661,6 +661,9 @@ class ProtocolsView(tk.Frame):
         self.__autoRefresh = None
         self.__autoRefreshCounter = INIT_REFRESH_SECONDS  # start by 3 secs
 
+        self.refreshSemaphore = True
+        self.repeatRefresh = False
+
         c = self.createContent()
         pwgui.configureWeigths(self)
         c.grid(row=0, column=0, sticky='news')
@@ -861,8 +864,29 @@ class ProtocolsView(tk.Frame):
     def _noSelection(self):
         return len(self._selection) == 0
 
-    # noinspection PyUnusedLocal
     def refreshRuns(self, e=None, initRefreshCounter=True, checkPids=False):
+        """
+        Refresh the protocol runs workflow. If the variable REFRESH_WITH_THREADS
+        exits, then use a threads to refresh, i.o.c use normal behavior
+        """
+        useThreads = Config.REFRESH_IN_THREAD
+        if useThreads:
+            import threading
+            # Refresh the status of displayed runs.
+            if self.refreshSemaphore:
+                # print("Launching a thread to refresh the runs...")
+                threadRefreshRuns = threading.Thread(name="Refreshing runs",
+                                                     target=self.refreshDisplayedRuns,
+                                                     args=(e, initRefreshCounter,
+                                                           checkPids))
+                threadRefreshRuns.start()
+            else:
+                self.repeatRefresh = True
+        else:
+            self.refreshDisplayedRuns(e, initRefreshCounter, checkPids)
+
+    # noinspection PyUnusedLocal
+    def refreshDisplayedRuns(self, e=None, initRefreshCounter=True, checkPids=False):
         """ Refresh the status of displayed runs.
          Params:
             e: Tk event input
@@ -870,6 +894,7 @@ class ProtocolsView(tk.Frame):
              then only case when False is from _automaticRefreshRuns where the
              refresh time is doubled each time to avoid refreshing too often.
         """
+        self.refreshSemaphore = False
         if Config.debugOn():
             import psutil
             proc = psutil.Process(os.getpid())
@@ -895,6 +920,10 @@ class ProtocolsView(tk.Frame):
                 self.__autoRefresh = self.runsTree.after(
                     self.__autoRefreshCounter * 1000,
                     self._automaticRefreshRuns)
+        self.refreshSemaphore = True
+        if self.repeatRefresh:
+            self.repeatRefresh = False
+            self.refreshRuns()
 
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
