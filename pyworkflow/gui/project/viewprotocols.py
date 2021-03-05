@@ -437,7 +437,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
 
     def getObjects(self):
         objs = []
-        if self.protocol:
+        if self.protocol is not None:
             # Store a dict with input parents (input, PointerList)
             self.inputParentDict = OrderedDict()
             inputs = []
@@ -579,11 +579,11 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
                     # the load of the set...and if it is missing this whole
                     # "thread" fails.
                     try:
-                        if obj.get() is None:
+                        labelObj = obj.get()
+                        if labelObj is None:
                             labelObj = obj.getObjValue()
                             suffix = ''
-                        else:
-                            labelObj = obj.get()
+
                     except Exception as e:
                         return {'parent': parent, 'image': image, 'text': name,
                                 'values': ("Couldn't read object attributes.",)}
@@ -759,7 +759,9 @@ class ProtocolsView(tk.Frame):
         dframe = tk.Frame(tab, bg='white')
         pwgui.configureWeigths(dframe, row=0)
         pwgui.configureWeigths(dframe, row=2)
-        provider = RunIOTreeProvider(self, self.getSelectedProtocol(),
+        # Just configure the provider, later bellow, in updateSelection, it will be
+        # provided with the protocols.
+        provider = RunIOTreeProvider(self, None,
                                      self.project.mapper)
 
         rowheight = pwgui.getDefaultFont().metrics()['linespace']

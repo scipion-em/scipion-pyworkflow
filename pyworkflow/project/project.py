@@ -723,6 +723,7 @@ class Project(object):
             protocol.setMapper(self.createMapper(protocol.getDbPath()))
             protocol._store()
             self._storeProtocol(protocol)
+            protocol.getMapper().close()
 
     def resetProtocol(self, protocol):
         """ Stop a running protocol """
