@@ -203,7 +203,7 @@ class StepsTreeProvider(pwgui.tree.TreeProvider):
                 s._index = i + 1
 
         self._stepsList = stepsList
-        self.getColumns = lambda: [('Index', 50), ('Step', 200),
+        self.getColumns = lambda: [('Index', 50), ('Step', 200), ('Status', 150),
                                    ('Time', 150), ('Class', 100)]
         self._parentDict = {}
 
@@ -213,7 +213,7 @@ class StepsTreeProvider(pwgui.tree.TreeProvider):
     @staticmethod
     def getObjectInfo(obj):
         info = {'key': obj._index,
-                'values': (str(obj), pwutils.prettyDelta(obj.getElapsedTime()),
+                'values': (str(obj), obj.getStatus(), pwutils.prettyDelta(obj.getElapsedTime()),
                            obj.getClassName())}
         return info
 
@@ -241,18 +241,40 @@ class StepsWindow(pwgui.browser.BrowserWindow):
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(1, weight=1)
 
-        toolbar = tk.Frame(self.root)
-        toolbar.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
-        btn = tk.Label(toolbar, text="Tree",
-                       image=self.getImage(Icon.RUNS_TREE),
-                       compound=tk.LEFT, cursor='hand2')
-        btn.bind(TK.LEFT_CLICK, self._showTree)
-        btn.grid(row=0, column=0, sticky='nw')
+        self.fillToolBar()
+
         # Create and set browser
         browser = pwgui.browser.ObjectBrowser(self.root, provider,
                                               showPreviewTop=False)
         self.setBrowser(browser, row=1, column=0)
 
+    def fillToolBar(self):
+        # Tool bar
+        toolbar = tk.Frame(self.root)
+        toolbar.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
+
+        # Tree button
+        btn = tk.Label(toolbar, text="Tree",
+                       image=self.getImage(Icon.RUNS_TREE),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.bind(TK.LEFT_CLICK, self._showTree)
+        btn.grid(row=0, column=0, sticky='nw')
+
+        # Reset status
+        btn = tk.Label(toolbar, text="Reset",
+                       image=self.getImage(Icon.ACTION_REFRESH),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.bind('<Button-1>', self._resetStep)
+        btn.grid(row=0, column=1, sticky='nw')
+
+    def _resetStep(self, e=None):
+
+        item = self.browser._lastSelected
+        if item is not None:
+            objId = item.getObjId()
+            self._protocol._updateSteps(lambda step: step.setStatus(pwprot.STATUS_NEW), where="id='%s'" % objId)
+            item.setStatus(pwprot.STATUS_NEW)
+            self.browser.tree.update()
     # noinspection PyUnusedLocal
     def _showTree(self, e=None):
         g = self._protocol.getStepsGraph()
@@ -415,7 +437,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
 
     def getObjects(self):
         objs = []
-        if self.protocol:
+        if self.protocol is not None:
             # Store a dict with input parents (input, PointerList)
             self.inputParentDict = OrderedDict()
             inputs = []
@@ -557,11 +579,11 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
                     # the load of the set...and if it is missing this whole
                     # "thread" fails.
                     try:
-                        if obj.get() is None:
+                        labelObj = obj.get()
+                        if labelObj is None:
                             labelObj = obj.getObjValue()
                             suffix = ''
-                        else:
-                            labelObj = obj.get()
+
                     except Exception as e:
                         return {'parent': parent, 'image': image, 'text': name,
                                 'values': ("Couldn't read object attributes.",)}
@@ -638,6 +660,9 @@ class ProtocolsView(tk.Frame):
 
         self.__autoRefresh = None
         self.__autoRefreshCounter = INIT_REFRESH_SECONDS  # start by 3 secs
+
+        self.refreshSemaphore = True
+        self.repeatRefresh = False
 
         c = self.createContent()
         pwgui.configureWeigths(self)
@@ -737,7 +762,9 @@ class ProtocolsView(tk.Frame):
         dframe = tk.Frame(tab, bg='white')
         pwgui.configureWeigths(dframe, row=0)
         pwgui.configureWeigths(dframe, row=2)
-        provider = RunIOTreeProvider(self, self.getSelectedProtocol(),
+        # Just configure the provider, later bellow, in updateSelection, it will be
+        # provided with the protocols.
+        provider = RunIOTreeProvider(self, None,
                                      self.project.mapper)
 
         rowheight = pwgui.getDefaultFont().metrics()['linespace']
@@ -837,8 +864,29 @@ class ProtocolsView(tk.Frame):
     def _noSelection(self):
         return len(self._selection) == 0
 
-    # noinspection PyUnusedLocal
     def refreshRuns(self, e=None, initRefreshCounter=True, checkPids=False):
+        """
+        Refresh the protocol runs workflow. If the variable REFRESH_WITH_THREADS
+        exits, then use a threads to refresh, i.o.c use normal behavior
+        """
+        useThreads = Config.REFRESH_IN_THREAD
+        if useThreads:
+            import threading
+            # Refresh the status of displayed runs.
+            if self.refreshSemaphore:
+                # print("Launching a thread to refresh the runs...")
+                threadRefreshRuns = threading.Thread(name="Refreshing runs",
+                                                     target=self.refreshDisplayedRuns,
+                                                     args=(e, initRefreshCounter,
+                                                           checkPids))
+                threadRefreshRuns.start()
+            else:
+                self.repeatRefresh = True
+        else:
+            self.refreshDisplayedRuns(e, initRefreshCounter, checkPids)
+
+    # noinspection PyUnusedLocal
+    def refreshDisplayedRuns(self, e=None, initRefreshCounter=True, checkPids=False):
         """ Refresh the status of displayed runs.
          Params:
             e: Tk event input
@@ -846,6 +894,7 @@ class ProtocolsView(tk.Frame):
              then only case when False is from _automaticRefreshRuns where the
              refresh time is doubled each time to avoid refreshing too often.
         """
+        self.refreshSemaphore = False
         if Config.debugOn():
             import psutil
             proc = psutil.Process(os.getpid())
@@ -871,6 +920,10 @@ class ProtocolsView(tk.Frame):
                 self.__autoRefresh = self.runsTree.after(
                     self.__autoRefreshCounter * 1000,
                     self._automaticRefreshRuns)
+        self.refreshSemaphore = True
+        if self.repeatRefresh:
+            self.repeatRefresh = False
+            self.refreshRuns()
 
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
@@ -1643,9 +1696,11 @@ class ProtocolsView(tk.Frame):
 
         if prot:
             tm = '*%s*\n' % prot.getRunName()
-            tm += '   Id: %s\n' % prot.getObjId()
-            tm += 'State: %s\n' % prot.getStatusMessage()
-            tm += ' Time: %s\n' % pwutils.prettyDelta(prot.getElapsedTime())
+            tm += 'Identifier :%s\n' % prot.getObjId()
+            tm += 'Status: %s\n' % prot.getStatusMessage()
+            tm += 'Wall time: %s\n' % pwutils.prettyDelta(prot.getElapsedTime())
+            tm += 'CPU time: %s\n' % pwutils.prettyDelta(dt.timedelta(seconds=prot.cpuTime))
+
             if not hasattr(tw, 'tooltipText'):
                 frame = tk.Frame(tw)
                 frame.grid(row=0, column=0)

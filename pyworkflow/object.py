@@ -1094,18 +1094,23 @@ class Set(Object):
         
     def __getitem__(self, itemId):
         """ Get the image with the given id. """
-        return self._getMapper().selectById(itemId)
+        closedMapper = self._mapper is None
+        item = self._getMapper().selectById(itemId)
+        if closedMapper:
+            self.close()
+        return item
 
     def __contains__(self, itemId):
         """ element in Set """
         return self._getMapper().exists(itemId)
 
     def iterItems(self, orderBy='id', direction='ASC', where='1',
-                  limit=None):
+                  limit=None, iterate=True):
         return self._getMapper().selectAll(orderBy=orderBy,
                                            direction=direction,
                                            where=where,
-                                           limit=limit)  # has flat mapper, iterate is true
+                                           limit=limit,
+                                           iterate=iterate)  # has flat mapper, iterate is true
 
     def getFirstItem(self):
         """ Return the first item in the Set. """
