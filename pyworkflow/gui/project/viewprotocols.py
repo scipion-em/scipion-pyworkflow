@@ -746,6 +746,9 @@ class ProtocolsView(tk.Frame):
         infoFrame = tk.Frame(v)
         infoFrame.columnconfigure(0, weight=1)
         infoFrame.rowconfigure(1, weight=1)
+        # Create the info label
+        self.infoLabel = tk.Label(infoFrame)
+        self.infoLabel.grid(row=0, column=0, sticky='w', padx=3)
         # Create the Analyze results button
         self.btnAnalyze = pwgui.Button(infoFrame, text=Message.LABEL_ANALYZE,
                                        fg='white', bg=Color.RED_COLOR,
@@ -864,6 +867,13 @@ class ProtocolsView(tk.Frame):
     def _noSelection(self):
         return len(self._selection) == 0
 
+    def info(self, message):
+        self.infoLabel.config(text=message)
+        self.infoLabel.update_idletasks()
+
+    def cleanInfo(self):
+        self.info("")
+
     def refreshRuns(self, e=None, initRefreshCounter=True, checkPids=False):
         """
         Refresh the protocol runs workflow. If the variable REFRESH_WITH_THREADS
@@ -894,6 +904,7 @@ class ProtocolsView(tk.Frame):
              then only case when False is from _automaticRefreshRuns where the
              refresh time is doubled each time to avoid refreshing too often.
         """
+        self.info('Refreshing...')
         self.refreshSemaphore = False
         if Config.debugOn():
             import psutil
@@ -924,6 +935,7 @@ class ProtocolsView(tk.Frame):
         if self.repeatRefresh:
             self.repeatRefresh = False
             self.refreshRuns()
+        self.cleanInfo()
 
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
@@ -1993,12 +2005,10 @@ class ProtocolsView(tk.Frame):
         errorList = []
         if pwgui.dialog.askYesNo(Message.TITLE_STOP_WORKFLOW_FORM,
                                  Message.TITLE_STOP_WORKFLOW, self.root):
-            defaultModeMessage = 'Stopping the workflow...'
-            message = FloatingMessage(self.root, defaultModeMessage)
-            message.show()
+            self.info('Stopping the workflow...')
             errorList = self.project.stopWorkFlow(protocols[0])
+            self.cleanInfo()
             self.refreshRuns()
-            message.close()
         if errorList:
             msg = ''
             for errorProt in errorList:
@@ -2016,14 +2026,12 @@ class ProtocolsView(tk.Frame):
         errorList = []
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
-            defaultModeMessage = 'Resetting the workflow...'
-            message = FloatingMessage(self.root, defaultModeMessage)
-            message.show()
+            self.info('Resetting the workflow...')
             errorsList, workflowProtocolList = self.project._checkWorkflowErrors(protocols[0],
                                                                                  False)
             errorList = self.project.resetWorkFlow(workflowProtocolList)
+            self.cleanInfo()
             self.refreshRuns()
-            message.close()
         if errorList:
             msg = ''
             for errorProt in errorList:
@@ -2043,25 +2051,20 @@ class ProtocolsView(tk.Frame):
         protocols = self._getSelectedProtocols()
         errorList = []
         defaultMode = pwprot.MODE_CONTINUE
-        defaultModeMessage = 'Checking the workflow to continue...'
 
         if action == ACTION_RESTART_WORKFLOW:
             if pwgui.dialog.askYesNo(Message.TITLE_RESTART_WORKFLOW_FORM,
                                      Message.TITLE_RESTART_WORKFLOW, self.root):
                 defaultMode = pwprot.MODE_RESTART
-                defaultModeMessage = 'Checking the workflow to restart...'
-
-                message = FloatingMessage(self.root, defaultModeMessage)
-                message.show()
+                self.info('Checking the workflow to restart...')
                 errorList = self.project.launchWorkflow(protocols[0],
                                                         defaultMode)
-                message.close()
+                self.cleanInfo()
         elif action == ACTION_CONTINUE_WORKFLOW:
-            message = FloatingMessage(self.root, defaultModeMessage)
-            message.show()
+            self.info('Checking the workflow to continue...')
             errorList = self.project.launchWorkflow(protocols[0],
                                                     defaultMode)
-            message.close()
+            self.cleanInfo()
 
         if errorList:
             msg = ''
