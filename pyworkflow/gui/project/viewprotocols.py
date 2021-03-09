@@ -879,7 +879,7 @@ class ProtocolsView(tk.Frame):
         Refresh the protocol runs workflow. If the variable REFRESH_WITH_THREADS
         exits, then use a threads to refresh, i.o.c use normal behavior
         """
-        useThreads = Config.REFRESH_IN_THREAD
+        useThreads = Config.refreshInThreads()
         if useThreads:
             import threading
             # Refresh the status of displayed runs.
