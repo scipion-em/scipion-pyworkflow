@@ -152,10 +152,10 @@ class StepThread(threading.Thread):
         finally:
             with self.lock:
                 if error is None:
-                    self.step.setStatus(cts.STATUS_FINISHED)
+                    self.step.setFinished()
                 else:
                     self.step.setFailed(error)
-                self.step.endTime.set(datetime.datetime.now())
+
 
 
 class ThreadStepExecutor(StepExecutor):

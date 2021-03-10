@@ -149,6 +149,9 @@ class Timer(object):
     def toc(self, message='Elapsed:'):
         print(message, self.getElapsedTime())
 
+    def getToc(self):
+        return prettyDelta(self.getElapsedTime())
+
     def __enter__(self):
         self.tic()
 

@@ -418,7 +418,7 @@ class Project(object):
                                     attr.write()
                                     attr.close()
                             protocol.setStatus(pwprot.STATUS_SAVED)
-                            protocol._setStatusSteps(pwprot.STATUS_SAVED)
+                            protocol._updateSteps(lambda step: step.setStatus(pwprot.STATUS_SAVED))
                             protocol.setMapper(self.createMapper(protocol.getDbPath()))
                             protocol._store()
                             self._storeProtocol(protocol)
@@ -723,6 +723,7 @@ class Project(object):
             protocol.setMapper(self.createMapper(protocol.getDbPath()))
             protocol._store()
             self._storeProtocol(protocol)
+            protocol.getMapper().close()
 
     def resetProtocol(self, protocol):
         """ Stop a running protocol """
