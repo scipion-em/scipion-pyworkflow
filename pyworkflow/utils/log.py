@@ -144,7 +144,6 @@ def setUpGUILogging():
 def setUpProtocolRunLogging(stdoutLogFile, stderrLogFile):
     """ Sets up the logging library for the protocols run processes, loads the custom configuration plus
     2 FileHandlers for stdout and stderr"""
-    loadCustomLoggingConfig()
 
     stdoutHandler = RotatingFileHandler(stdoutLogFile, maxBytes=100000)
     stderrHandler = RotatingFileHandler(stderrLogFile, maxBytes=100000)
