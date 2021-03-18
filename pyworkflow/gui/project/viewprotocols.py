@@ -1491,7 +1491,6 @@ class ProtocolsView(tk.Frame):
                 item.nodeInfo.getLabels().remove(labelId)
 
     def switchRunsView(self):
-        previousView = self.runsView
         viewValue = self.switchCombo.getValue()
         self.runsView = viewValue
         self.settings.setRunsView(viewValue)

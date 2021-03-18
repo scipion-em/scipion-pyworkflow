@@ -801,29 +801,24 @@ class Project(object):
         configuredProtList = []
         auxProList = []
 
-        if protocol:
-            configuredProtList.append(protocol)
-            auxProList.append(protocol.getObjId())
-            runGraph = self.getRunsGraph(False)
+        configuredProtList.append(protocol)
+        auxProList.append(protocol.getObjId())
+        runGraph = self.getRunsGraph(False)
 
-            while auxProList:
-                protocol = runGraph.getNode(str(auxProList.pop(0))).run
-                if fixProtParam:
-                    self._fixProtParamsConfiguration(protocol)
-                if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                    errorsList.append("Error trying to restart a protocol: %s"
-                                      "\nERROR: the protocol is active\n" %
-                                      (protocol.getObjLabel()))
-                node = runGraph.getNode(protocol.strId())
-                if node:
-                    dependencies = [node.run for node in node.getChilds()]
-                    for dep in dependencies:
-                        if dep.getObjId() in auxProList:
-                            auxProList.remove(dep.getObjId())
-                            auxProList.append(dep.getObjId())
-                        else:
-                            auxProList.append(dep.getObjId())
-                            configuredProtList.append(dep)
+        while auxProList:
+            protocol = runGraph.getNode(str(auxProList.pop(0))).run
+            if fixProtParam:
+                self._fixProtParamsConfiguration(protocol)
+            if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
+                errorsList.append("Error trying to restart a protocol: %s"
+                                  "\nERROR: the protocol is active\n" %
+                                  (protocol.getObjLabel()))
+            node = runGraph.getNode(protocol.strId())
+            dependencies = [node.run for node in node.getChilds()]
+            for dep in dependencies:
+                if dep.getObjId() not in auxProList:
+                    auxProList.append(dep.getObjId())
+                    configuredProtList.append(dep)
 
         return errorsList, configuredProtList
 
