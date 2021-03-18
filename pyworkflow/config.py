@@ -158,7 +158,7 @@ class Config:
     SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
 
     # Refresh the displayed runs with a thread
-    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', 'True')
+    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', 'False')
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
