@@ -245,7 +245,7 @@ class ProjectWindow(ProjectBaseWindow):
         WorkflowRepository().search()
 
     def onExportTreeGraph(self):
-        runsGraph = self.project.getRunsGraph(refresh=True)
+        runsGraph = self.project.getRunsGraph(refresh=False)
         useId = not pwutils.envVarOn('SCIPION_TREE_NAME')
         dotStr = runsGraph.printDot(useId=useId)
         with tempfile.NamedTemporaryFile(suffix='.gv', mode="w") as dotFile:

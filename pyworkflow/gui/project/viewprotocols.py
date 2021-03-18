@@ -746,6 +746,9 @@ class ProtocolsView(tk.Frame):
         infoFrame = tk.Frame(v)
         infoFrame.columnconfigure(0, weight=1)
         infoFrame.rowconfigure(1, weight=1)
+        # Create the info label
+        self.infoLabel = tk.Label(infoFrame)
+        self.infoLabel.grid(row=0, column=0, sticky='w', padx=3)
         # Create the Analyze results button
         self.btnAnalyze = pwgui.Button(infoFrame, text=Message.LABEL_ANALYZE,
                                        fg='white', bg=Color.RED_COLOR,
@@ -864,12 +867,19 @@ class ProtocolsView(tk.Frame):
     def _noSelection(self):
         return len(self._selection) == 0
 
+    def info(self, message):
+        self.infoLabel.config(text=message)
+        self.infoLabel.update_idletasks()
+
+    def cleanInfo(self):
+        self.info("")
+
     def refreshRuns(self, e=None, initRefreshCounter=True, checkPids=False):
         """
         Refresh the protocol runs workflow. If the variable REFRESH_WITH_THREADS
         exits, then use a threads to refresh, i.o.c use normal behavior
         """
-        useThreads = Config.REFRESH_IN_THREAD
+        useThreads = Config.refreshInThreads()
         if useThreads:
             import threading
             # Refresh the status of displayed runs.
@@ -894,6 +904,7 @@ class ProtocolsView(tk.Frame):
              then only case when False is from _automaticRefreshRuns where the
              refresh time is doubled each time to avoid refreshing too often.
         """
+        self.info('Refreshing...')
         self.refreshSemaphore = False
         if Config.debugOn():
             import psutil
@@ -907,7 +918,7 @@ class ProtocolsView(tk.Frame):
             print("  memory percent: ", proc.memory_percent())
 
         if self.runsView == VIEW_LIST:
-            self.updateRunsTree(False)
+            self.updateRunsTree(True)
         else:
             self.updateRunsGraph(True, checkPids=checkPids)
             self._updateSelection()
@@ -924,6 +935,7 @@ class ProtocolsView(tk.Frame):
         if self.repeatRefresh:
             self.repeatRefresh = False
             self.refreshRuns()
+        self.cleanInfo()
 
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
@@ -1261,24 +1273,26 @@ class ProtocolsView(tk.Frame):
 
     def drawRunsGraph(self, reorganize=False):
 
-        self.runsGraphCanvas.clear()
-
         # Check if there are positions stored
-        if reorganize or len(self.settings.getNodes()) == 0:
+        if reorganize:
             # Create layout to arrange nodes as a level tree
             layout = pwgui.LevelTreeLayout()
+            self.runsGraphCanvas.reorganizeGraph(self.runsGraph, layout)
         else:
-            layout = pwgui.BasicLayout()
+            self.runsGraphCanvas.clear()
 
-        # Create empty nodeInfo for new runs
-        for node in self.runsGraph.getNodes():
-            nodeId = node.run.getObjId() if node.run else 0
-            nodeInfo = self.settings.getNodeById(nodeId)
-            if nodeInfo is None:
-                self.settings.addNode(nodeId, x=0, y=0, expanded=True)
+            layout = pwgui.LevelTreeLayout() if len(
+                self.settings.getNodes()) == 0 else pwgui.BasicLayout()
 
-        self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
-                                       drawNode=self.createRunItem)
+            # Create empty nodeInfo for new runs
+            for node in self.runsGraph.getNodes():
+                nodeId = node.run.getObjId() if node.run else 0
+                nodeInfo = self.settings.getNodeById(nodeId)
+                if nodeInfo is None:
+                    self.settings.addNode(nodeId, x=0, y=0, expanded=True)
+
+            self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
+                                           drawNode=self.createRunItem)
 
     def createRunItem(self, canvas, node):
 
@@ -1309,8 +1323,7 @@ class ProtocolsView(tk.Frame):
         # Paint the bottom line (for now only labels are painted there).
         self._paintBottomLine(item)
 
-        if nodeId in self._selection:
-            item.setSelected(True)
+        item.setSelected(nodeId in self._selection)
         return item
 
     def _getBoxColor(self, nodeInfo, statusColor, node):
@@ -1478,7 +1491,6 @@ class ProtocolsView(tk.Frame):
                 item.nodeInfo.getLabels().remove(labelId)
 
     def switchRunsView(self):
-        previousView = self.runsView
         viewValue = self.switchCombo.getValue()
         self.runsView = viewValue
         self.settings.setRunsView(viewValue)
@@ -1491,7 +1503,7 @@ class ProtocolsView(tk.Frame):
             self._lastRightClickPos = None
         else:
             self.runsTree.grid_remove()
-            self.updateRunsGraph(reorganize=(previousView != VIEW_LIST))
+            self.updateRunsGraph()
             self.runsGraphCanvas.frame.grid(row=0, column=0, sticky='news')
             self.viewButtons[ACTION_TREE].grid(row=0, column=1)
 
@@ -1756,7 +1768,7 @@ class ProtocolsView(tk.Frame):
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.windows,
                        hostList=self.project.getHostNames(),
-                       updateProtocolCallback=self._updateProtocol(prot))
+                       updateProtocolCallback=self._updateProtocol)
         w.adjustSize()
         w.show(center=True)
 
@@ -1790,7 +1802,7 @@ class ProtocolsView(tk.Frame):
 
     def _iterSelectedProtocols(self):
         for protId in sorted(self._selection):
-            prot = self.project.getProtocol(protId)
+            prot = self.project.getRunsGraph(refresh=False).getNode(str(protId)).run
             if prot:
                 yield prot
 
@@ -1935,6 +1947,7 @@ class ProtocolsView(tk.Frame):
         # Update runs list display, even in save we
         # need to get the updated copy of the protocol
         self._scheduleRunsUpdate()
+        self._selectItemProtocol(prot)
 
         return msg
 
@@ -1994,12 +2007,10 @@ class ProtocolsView(tk.Frame):
         errorList = []
         if pwgui.dialog.askYesNo(Message.TITLE_STOP_WORKFLOW_FORM,
                                  Message.TITLE_STOP_WORKFLOW, self.root):
-            defaultModeMessage = 'Stopping the workflow...'
-            message = FloatingMessage(self.root, defaultModeMessage)
-            message.show()
+            self.info('Stopping the workflow...')
             errorList = self.project.stopWorkFlow(protocols[0])
+            self.cleanInfo()
             self.refreshRuns()
-            message.close()
         if errorList:
             msg = ''
             for errorProt in errorList:
@@ -2017,12 +2028,12 @@ class ProtocolsView(tk.Frame):
         errorList = []
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
-            defaultModeMessage = 'Resetting the workflow...'
-            message = FloatingMessage(self.root, defaultModeMessage)
-            message.show()
-            errorList = self.project.resetWorkFlow(protocols[0])
+            self.info('Resetting the workflow...')
+            errorsList, workflowProtocolList = self.project._checkWorkflowErrors(protocols[0],
+                                                                                 False)
+            errorList = self.project.resetWorkFlow(workflowProtocolList)
+            self.cleanInfo()
             self.refreshRuns()
-            message.close()
         if errorList:
             msg = ''
             for errorProt in errorList:
@@ -2042,34 +2053,25 @@ class ProtocolsView(tk.Frame):
         protocols = self._getSelectedProtocols()
         errorList = []
         defaultMode = pwprot.MODE_CONTINUE
-        defaultModeMessage = 'Checking the workflow to continue...'
 
         if action == ACTION_RESTART_WORKFLOW:
             if pwgui.dialog.askYesNo(Message.TITLE_RESTART_WORKFLOW_FORM,
                                      Message.TITLE_RESTART_WORKFLOW, self.root):
                 defaultMode = pwprot.MODE_RESTART
-                defaultModeMessage = 'Checking the workflow to restart...'
-
-                message = FloatingMessage(self.root, defaultModeMessage)
-                message.show()
+                self.info('Checking the workflow to restart...')
                 errorList = self.project.launchWorkflow(protocols[0],
                                                         defaultMode)
-                self.refreshRuns()
-                message.close()
+                self.cleanInfo()
         elif action == ACTION_CONTINUE_WORKFLOW:
-            message = FloatingMessage(self.root, defaultModeMessage)
-            message.show()
+            self.info('Checking the workflow to continue...')
             errorList = self.project.launchWorkflow(protocols[0],
                                                     defaultMode)
-            self.refreshRuns()
-            message.close()
+            self.cleanInfo()
 
         if errorList:
             msg = ''
             for errorProt in errorList:
-                error = ("The protocol: %s  is active\n" %
-                         (self.project.getProtocol(errorProt).getRunName()))
-                msg += str(error)
+                msg += str(errorProt) + '\n'
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
                 Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" + msg,
@@ -2317,7 +2319,7 @@ class ProtocolsView(tk.Frame):
 
         # Following actions do not need a select run
         if action == ACTION_TREE:
-            self.updateRunsGraph(True, reorganize=True)
+            self.drawRunsGraph(reorganize=True)
         elif action == ACTION_REFRESH:
             self.refreshRuns(checkPids=True)
 
@@ -2782,7 +2784,7 @@ class ProtocolTreeConfig:
                           e, os.path.abspath(protocolsConfPath)))
 
             # Add all protocols to All view
-        cls.__addAllProtocols(Config.getDomain(), protocols)
+        cls.__addAllProtocols(domain, protocols)
 
         return protocols
 
