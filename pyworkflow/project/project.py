@@ -489,7 +489,7 @@ class Project(object):
             # Fix the protocol parameters
             for pointer in oldStylePointerList:
                 auxPointer = pointer.getObjValue()
-                pointer.set(self._runsGraph.getNode(str(pointer.get().getObjParentId())).run)
+                pointer.set(self.getRunsGraph(refresh=False).getNode(str(pointer.get().getObjParentId())).run)
                 pointer.setExtended(auxPointer.getLastName())
                 protocol._store()
                 self._storeProtocol(protocol)
@@ -756,7 +756,7 @@ class Project(object):
 
     def _getProtocolsDependencies(self, protocols):
         error = ''
-        runsGraph = self.getRunsGraph()
+        runsGraph = self.getRunsGraph(refresh=False)
         for prot in protocols:
             node = runsGraph.getNode(prot.strId())
             if node:
@@ -848,7 +848,7 @@ class Project(object):
         """ Delete a given object from the project.
         Usually to clean up some outputs.
         """
-        node = self.getRunsGraph().getNode(protocol.strId())
+        node = self.getRunsGraph(refresh=False).getNode(protocol.strId())
         deps = []
 
         for node in node.getChilds():
@@ -1291,6 +1291,9 @@ class Project(object):
             # self.runs = self.mapper.selectAll(iterate=False,
             #               objectFilter=lambda o: isinstance(o, pwprot.Protocol))
             self.runs = self.mapper.selectAllBatch(objectFilter=lambda o: isinstance(o, pwprot.Protocol))
+
+            # Invalidate _runsGraph because the runs are updated
+            self._runsGraph = None
 
             for r in self.runs:
 

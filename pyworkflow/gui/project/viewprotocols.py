@@ -1274,13 +1274,16 @@ class ProtocolsView(tk.Frame):
     def drawRunsGraph(self, reorganize=False):
 
         # Check if there are positions stored
-        if reorganize or len(self.settings.getNodes()) == 0:
+        if reorganize:
             # Create layout to arrange nodes as a level tree
             layout = pwgui.LevelTreeLayout()
             self.runsGraphCanvas.reorganizeGraph(self.runsGraph, layout)
         else:
             self.runsGraphCanvas.clear()
-            layout = pwgui.BasicLayout()
+
+            layout = pwgui.LevelTreeLayout() if len(
+                self.settings.getNodes()) == 0 else pwgui.BasicLayout()
+
             # Create empty nodeInfo for new runs
             for node in self.runsGraph.getNodes():
                 nodeId = node.run.getObjId() if node.run else 0
@@ -1501,7 +1504,7 @@ class ProtocolsView(tk.Frame):
             self._lastRightClickPos = None
         else:
             self.runsTree.grid_remove()
-            self.updateRunsGraph(reorganize=(previousView != VIEW_LIST))
+            self.updateRunsGraph()
             self.runsGraphCanvas.frame.grid(row=0, column=0, sticky='news')
             self.viewButtons[ACTION_TREE].grid(row=0, column=1)
 
@@ -1800,7 +1803,7 @@ class ProtocolsView(tk.Frame):
 
     def _iterSelectedProtocols(self):
         for protId in sorted(self._selection):
-            prot = self.project._runsGraph.getNode(str(protId)).run
+            prot = self.project.getRunsGraph(refresh=False).getNode(str(protId)).run
             if prot:
                 yield prot
 
