@@ -1096,7 +1096,11 @@ class Set(Object):
         
     def __getitem__(self, itemId):
         """ Get the image with the given id. """
-        return self._getMapper().selectById(itemId)
+        closedMapper = self._mapper is None
+        item = self._getMapper().selectById(itemId)
+        if closedMapper:
+            self.close()
+        return item
 
     def __contains__(self, itemId):
         """ element in Set """

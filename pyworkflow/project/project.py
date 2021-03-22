@@ -405,8 +405,7 @@ class Project(object):
                    at least one protocol in streaming has been launched
         """
         if continuedProtList is not None:
-            for protocolId in continuedProtList:
-                protocol = self.getProtocol(protocolId)
+            for protocol in continuedProtList:
                 if not protocol.isInteractive():
                     if protocol.worksInStreaming():
                         attrSet = [attr for name, attr in
@@ -418,7 +417,7 @@ class Project(object):
                                     attr.write()
                                     attr.close()
                             protocol.setStatus(pwprot.STATUS_SAVED)
-                            protocol._setStatusSteps(pwprot.STATUS_SAVED)
+                            protocol._updateSteps(lambda step: step.setStatus(pwprot.STATUS_SAVED))
                             protocol.setMapper(self.createMapper(protocol.getDbPath()))
                             protocol._store()
                             self._storeProtocol(protocol)
@@ -429,10 +428,10 @@ class Project(object):
                                               (protocol.getObjLabel(), ex))
                             break
                     else:
-                        if protocolId != continuedProtList[0]:
+                        if protocol.getObjId() != continuedProtList[0].getObjId():
                             # we make sure that at least one protocol in streaming
                             # has been launched
-                            self._restartWorkflow([protocolId], errorsList)
+                            self._restartWorkflow([protocol], errorsList)
 
                         else:
                             errorsList.append(("Error trying to launch the "
@@ -452,8 +451,7 @@ class Project(object):
         3. For each of the dependents protocols, repeat from step 1
         """
         if restartedProtList is not None:
-            for protocolId in restartedProtList:
-                protocol = self.getProtocol(protocolId)
+            for protocol in restartedProtList:
                 if not protocol.isInteractive():
                     try:
                         protocol.runMode.set(MODE_RESTART)
@@ -475,35 +473,31 @@ class Project(object):
                     self.mapper.store(protocol)
                     self.mapper.commit()
 
-    def _fixWorkflowConfiguration(self, protocolList=None):
+    def _fixProtParamsConfiguration(self, protocol=None):
         """
         This function fix:
-        1. The old parameters configuration in the protocols list.
+        1. The old parameters configuration in the protocols.
            Now, dependent protocols have a pointer to the parent protocol, and
            the extended parameter has a parent output value
         """
-        if protocolList is not None:
-            for protocolId in protocolList:
-                protocol = self.getProtocol(protocolId)
-
-                # Take the old configuration attributes and fix the pointer
-                oldStylePointerList = [item for key, item in
-                                       protocol.iterInputAttributes()
-                                       if not isinstance(item.getObjValue(),
-                                                         pwprot.Protocol)]
-                if oldStylePointerList:
-                    # Fix the protocol parameters
-                    for pointer in oldStylePointerList:
-                        auxPointer = pointer.getObjValue()
-                        pointer.set(self.getProtocol(pointer.get().getObjParentId()))
-                        pointer.setExtended(auxPointer.getLastName())
-                        protocol._store()
-                        self._storeProtocol(protocol)
-                        self._updateProtocol(protocol)
-                        self.mapper.commit()
-                        print("The parameters configuration in the "
-                              "protocol \"%s\" has been modified \n" %
-                              protocol.getObjLabel())
+        # Take the old configuration attributes and fix the pointer
+        oldStylePointerList = [item for key, item in
+                               protocol.iterInputAttributes()
+                               if not isinstance(item.getObjValue(),
+                                                 pwprot.Protocol)]
+        if oldStylePointerList:
+            # Fix the protocol parameters
+            for pointer in oldStylePointerList:
+                auxPointer = pointer.getObjValue()
+                pointer.set(self.getRunsGraph(refresh=False).getNode(str(pointer.get().getObjParentId())).run)
+                pointer.setExtended(auxPointer.getLastName())
+                protocol._store()
+                self._storeProtocol(protocol)
+                self._updateProtocol(protocol)
+                self.mapper.commit()
+                print("The parameters configuration in the "
+                      "protocol \"%s\" has been modified \n" %
+                      protocol.getObjLabel())
 
     def stopWorkFlow(self, initialProtocol):
         """
@@ -511,24 +505,22 @@ class Project(object):
         :param initialProtocol: selected protocol
         """
         if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
-            for protocolId in workflowProtocolList:
-                protocol = self.getProtocol(protocolId)
+            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol,
+                                                                         False)
+            for protocol in workflowProtocolList:
                 if protocol.getStatus() in ACTIVE_STATUS:
                     try:
                         self.stopProtocol(protocol)
                     except Exception as err:
                         print(err)
 
-    def resetWorkFlow(self, initialProtocol):
+    def resetWorkFlow(self, workflowProtocolList):
         """
         This function can reset a workflow from a selected protocol
         :param initialProtocol: selected protocol
         """
-        if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
-            for protocolId in workflowProtocolList:
-                protocol = self.getProtocol(protocolId)
+        if workflowProtocolList:
+            for protocol in workflowProtocolList:
                 try:
                     self.resetProtocol(protocol)
                 except Exception as err:
@@ -547,7 +539,6 @@ class Project(object):
         if initialProtocol:
             errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
             if not errorsList:
-                self._fixWorkflowConfiguration(workflowProtocolList)
                 if mode == MODE_RESTART:
                     self._restartWorkflow(workflowProtocolList, errorsList)
                 else:
@@ -723,6 +714,7 @@ class Project(object):
             protocol.setMapper(self.createMapper(protocol.getDbPath()))
             protocol._store()
             self._storeProtocol(protocol)
+            protocol.getMapper().close()
 
     def resetProtocol(self, protocol):
         """ Stop a running protocol """
@@ -764,8 +756,9 @@ class Project(object):
 
     def _getProtocolsDependencies(self, protocols):
         error = ''
+        runsGraph = self.getRunsGraph(refresh=False)
         for prot in protocols:
-            node = self.getRunsGraph().getNode(prot.strId())
+            node = runsGraph.getNode(prot.strId())
             if node:
                 childs = [node.run for node in node.getChilds() if
                           self.__validDependency(prot, node.run, protocols)]
@@ -797,37 +790,36 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _checkWorkflowErrors(self, protocol):
+    def _checkWorkflowErrors(self, protocol, fixProtParam=True):
         """
         This function checks if there are active protocols excluding
         interactive protocols. Also, save the workflow from "protocol"
-        If there are no errors, the function return None
+        :param protocol: the workflow initial protocol
+        :return: an errorsList if there are errors, e.o.c the workflow protocols
         """
         errorsList = []
         configuredProtList = []
-        if protocol:
-            auxProList = []
-            configuredProtList.append(protocol.getObjId())
-            auxProList.append(protocol.getObjId())
-            while auxProList:
-                protocol = self.getProtocol(auxProList.pop(0))
-                if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                    errorsList.append(protocol.getObjId())
-                node = self.getRunsGraph().getNode(protocol.strId())
-                if node:
-                    dependencies = [node.run for node in node.getChilds()]
-                    for dep in dependencies:
-                        if dep.getObjId() in auxProList:
-                            auxProList.remove(dep.getObjId())
-                            auxProList.append(dep.getObjId())
-                        else:
-                            auxProList.append(dep.getObjId())
+        auxProList = []
 
-                        if dep.getObjId() in configuredProtList:
-                            configuredProtList.remove(dep.getObjId())
-                            configuredProtList.append(dep.getObjId())
-                        else:
-                            configuredProtList.append(dep.getObjId())
+        configuredProtList.append(protocol)
+        auxProList.append(protocol.getObjId())
+        runGraph = self.getRunsGraph(False)
+
+        while auxProList:
+            protocol = runGraph.getNode(str(auxProList.pop(0))).run
+            if fixProtParam:
+                self._fixProtParamsConfiguration(protocol)
+            if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
+                errorsList.append("Error trying to restart a protocol: %s"
+                                  "\nERROR: the protocol is active\n" %
+                                  (protocol.getObjLabel()))
+            node = runGraph.getNode(protocol.strId())
+            dependencies = [node.run for node in node.getChilds()]
+            for dep in dependencies:
+                if dep.getObjId() not in auxProList:
+                    auxProList.append(dep.getObjId())
+                    configuredProtList.append(dep)
+
         return errorsList, configuredProtList
 
     def deleteProtocol(self, *protocols):
@@ -851,7 +843,7 @@ class Project(object):
         """ Delete a given object from the project.
         Usually to clean up some outputs.
         """
-        node = self.getRunsGraph().getNode(protocol.strId())
+        node = self.getRunsGraph(refresh=False).getNode(protocol.strId())
         deps = []
 
         for node in node.getChilds():
@@ -1294,6 +1286,9 @@ class Project(object):
             # self.runs = self.mapper.selectAll(iterate=False,
             #               objectFilter=lambda o: isinstance(o, pwprot.Protocol))
             self.runs = self.mapper.selectAllBatch(objectFilter=lambda o: isinstance(o, pwprot.Protocol))
+
+            # Invalidate _runsGraph because the runs are updated
+            self._runsGraph = None
 
             for r in self.runs:
 
