@@ -2200,9 +2200,9 @@ class FormWindow(Window):
             protocolList = ""
             if self.protocol.getObjId():
                 project = self.protocol.getProject()
-                errorProList, workflowProtocolList = self.protocol.getProject()._checkWorkflowErrors(self.protocol)
+                errorProList, workflowProtocolList = project._checkWorkflowErrors(self.protocol)
                 for prot in workflowProtocolList:
-                    protocolList += ("\n* " + self.protocol.getProject().getProtocol(prot).getRunName())
+                    protocolList += ("\n* " + prot.getRunName())
                 if len(workflowProtocolList) > 1:
                     result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
                                                 pwutils.Message.LABEL_RESTART_FORM % ('%s\n' % protocolList),
@@ -2210,11 +2210,11 @@ class FormWindow(Window):
                     if result == RESULT_RUN_ALL:
                         self.protocol._store()
                         self.protocol.getProject()._storeProtocol(self.protocol)
-                        project.launchWorkflow(self.protocol, mode=MODE_RESTART)
+                        project._restartWorkflow(workflowProtocolList)
                         self.close()
                         return
                     elif result == RESULT_RUN_SINGLE and not self.protocol.isSaved():
-                        project.resetWorkFlow(self.protocol)
+                        project.resetWorkFlow(workflowProtocolList)
                     elif result == RESULT_CANCEL:
                         return
                 elif not askYesNo(pwutils.Message.TITLE_RESTART_FORM,

@@ -145,7 +145,10 @@ class LevelTreeLayout(GraphLayout):
             node.y = level * self.DY
             layout['level'] = level
             layout['parent'] = parent
-            half = node.width / 2
+            if hasattr(node, 'width'):
+                half = node.width / 2
+            else:
+                half = 50
             layout['half'] = half
             layout['hLimits'] = [[-half, half]]
             layout['offset'] = 0
