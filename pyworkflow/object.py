@@ -1331,6 +1331,10 @@ class Set(Object):
         the last modified time of the file this set uses to persists.
 
         :parameter time: timestamp to compare to the last modification time  """
+
+        if time is None:
+            return True
+
         # Get the file name
         localFile = self.getFileName()
 
