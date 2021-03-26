@@ -1609,11 +1609,14 @@ class Project(object):
         self.settings.setReadOnly(value)
 
     def fixLinks(self, searchDir):
+        print("Fixing project links. Searching at %s" % searchDir)
         runs = self.getRuns()
 
         for prot in runs:
+            print (prot)
             broken = False
-            if isinstance(prot, ProtImportBase):
+            if isinstance(prot, ProtImportBase) or prot.getClassName() == "ProtImportMovies":
+                print("Import detected")
                 for _, attr in prot.iterOutputAttributes():
                     fn = attr.getFiles()
                     for f in attr.getFiles():
