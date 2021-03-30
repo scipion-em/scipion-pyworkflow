@@ -316,7 +316,7 @@ colorName = {'30': 'gray',
 
 
 def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
-                   maxSize=400, headSize=40, tailSize=None, notifyLine=None):
+                   maxSize=400, headSize=40, tailSize=None, notifyLine=None, errors='strict'):
     """
     Call callback function add() on each fragment of text from file fname,
     delimited by lines and/or color codes.
@@ -325,7 +325,7 @@ def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
       lineNo: lines will be numbered from this value on
       numberLines: whether to prepend the line numbers
     """
-    textfile = open(fname, encoding='utf-8')
+    textfile = open(fname, encoding='utf-8', errors=errors)
     size = (os.stat(fname).st_size - offset) / 1024  # in kB
 
     for line in iterBigFile(textfile, offset, size,
