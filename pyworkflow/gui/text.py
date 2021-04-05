@@ -460,7 +460,8 @@ class OutputText(Text):
                                                       offset=self.offset, 
                                                       lineNo=self.lineNo,
                                                       maxSize=self.maxSize, 
-                                                      notifyLine=self._notifyLine)
+                                                      notifyLine=self._notifyLine,
+                                                      errors='replace')
         else:
             self.insert(tk.END, "File '%s' doesn't exist" % self.filename)
 
