@@ -39,7 +39,8 @@ import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
-                                           STATUS_INTERACTIVE, ACTIVE_STATUS, UNKNOWN_JOBID)
+                                           STATUS_INTERACTIVE, ACTIVE_STATUS,
+                                           UNKNOWN_JOBID, INITIAL_SLEEP_TIME)
 from pyworkflow.protocol.protocol import ProtImportBase
 
 from . import config
@@ -421,7 +422,8 @@ class Project(object):
                             protocol.setMapper(self.createMapper(protocol.getDbPath()))
                             protocol._store()
                             self._storeProtocol(protocol)
-                            self.scheduleProtocol(protocol)
+                            self.scheduleProtocol(protocol,
+                                                  continuedProtList[protocol]*INITIAL_SLEEP_TIME)
                         except Exception as ex:
                             errorsList.append("Error trying to launch the "
                                               "protocol: %s\nERROR: %s\n" %
@@ -431,7 +433,9 @@ class Project(object):
                         if protocol.getObjId() != continuedProtList[0].getObjId():
                             # we make sure that at least one protocol in streaming
                             # has been launched
-                            self._restartWorkflow([protocol], errorsList)
+                            self._restartWorkflow([(protocol,
+                                                    continuedProtList[protocol])],
+                                                  errorsList)
 
                         else:
                             errorsList.append(("Error trying to launch the "
@@ -455,7 +459,8 @@ class Project(object):
                 if not protocol.isInteractive():
                     try:
                         protocol.runMode.set(MODE_RESTART)
-                        self.scheduleProtocol(protocol)
+                        self.scheduleProtocol(protocol,
+                                              restartedProtList[protocol]*INITIAL_SLEEP_TIME)
                     except Exception as ex:
                         errorsList.append("Error trying to restart a protocol: %s"
                                           "\nERROR: %s\n" % (protocol.getObjLabel(),
@@ -505,8 +510,8 @@ class Project(object):
         :param initialProtocol: selected protocol
         """
         if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol,
-                                                                         False)
+            workflowProtocolList, errorsList = self._getWorkflowFromProtocol(initialProtocol,
+                                                                             False)
             for protocol in workflowProtocolList:
                 if protocol.getStatus() in ACTIVE_STATUS:
                     try:
@@ -537,7 +542,7 @@ class Project(object):
            of the 'mode' value
         """
         if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
+            workflowProtocolList, errorsList = self._getWorkflowFromProtocol(initialProtocol)
             if not errorsList:
                 if mode == MODE_RESTART:
                     self._restartWorkflow(workflowProtocolList, errorsList)
@@ -598,7 +603,7 @@ class Project(object):
             self.mapper.store(protocol)
         self.mapper.commit()
 
-    def scheduleProtocol(self, protocol, prerequisites=[]):
+    def scheduleProtocol(self, protocol, initialSleepTime=0, prerequisites=[]):
         """ Schedule a new protocol that will run when the input data
         is available and the prerequisites are finished.
         Params:
@@ -623,7 +628,7 @@ class Project(object):
         # changed later to only create a subset of the db need for the run
         pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
         # Launch the protocol, the jobId should be set after this call
-        pwprot.schedule(protocol)
+        pwprot.schedule(protocol, initialSleepTime)
         self.mapper.store(protocol)
         self.mapper.commit()
 
@@ -790,23 +795,23 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _checkWorkflowErrors(self, protocol, fixProtParam=True):
+    def _getWorkflowFromProtocol(self, protocol, fixProtParam=True):
         """
-        This function checks if there are active protocols excluding
-        interactive protocols. Also, save the workflow from "protocol"
-        :param protocol: the workflow initial protocol
-        :return: an errorsList if there are errors, e.o.c the workflow protocols
+        This function get the workflow from "protocol" and determine the
+        protocol level into the graph. Also, checks if there are active
+        protocols excluding interactive protocols.
         """
         errorsList = []
-        configuredProtList = []
-        auxProList = []
+        configuredProtList = {}
+        auxProtList = []
 
-        configuredProtList.append(protocol)
-        auxProList.append(protocol.getObjId())
+        configuredProtList[protocol] = 0
+        auxProtList.append(protocol.getObjId())
         runGraph = self.getRunsGraph(False)
 
-        while auxProList:
-            protocol = runGraph.getNode(str(auxProList.pop(0))).run
+        while auxProtList:
+            protocol = runGraph.getNode(str(auxProtList.pop(0))).run
+            level = configuredProtList[protocol] + 1
             if fixProtParam:
                 self._fixProtParamsConfiguration(protocol)
             if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
@@ -816,11 +821,14 @@ class Project(object):
             node = runGraph.getNode(protocol.strId())
             dependencies = [node.run for node in node.getChilds()]
             for dep in dependencies:
-                if dep.getObjId() not in auxProList:
-                    auxProList.append(dep.getObjId())
-                    configuredProtList.append(dep)
+                if not dep.getObjId() in auxProtList:
+                    auxProtList.append(dep.getObjId())
+                if not dep in configuredProtList.keys():
+                    configuredProtList[dep] = level
+                elif level > configuredProtList[dep]:
+                    configuredProtList[dep] = level
 
-        return errorsList, configuredProtList
+        return configuredProtList, errorsList
 
     def deleteProtocol(self, *protocols):
         self._checkModificationAllowed(protocols, 'Cannot DELETE protocols')

@@ -78,14 +78,14 @@ def stop(protocol):
         return _stopRemote(protocol)
 
 
-def schedule(protocol, wait=False):
+def schedule(protocol, initialSleepTime=0, wait=False):
     """ Use this function to schedule protocols that are not ready to
     run yet. Right now it only make sense to schedule jobs locally.
     """
     cmd = '%s %s' % (pw.PYTHON, pw.getScheduleScript())
-    cmd += ' "%s" "%s" %s' % (protocol.getProject().path,
+    cmd += ' "%s" "%s" %s --initial_sleep %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
-                              protocol.strId())
+                              protocol.strId(), initialSleepTime)
     jobId = _run(cmd, wait)
     protocol.setJobId(jobId)
 
