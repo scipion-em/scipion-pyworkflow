@@ -29,6 +29,7 @@ import pyworkflow as pw
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
 import pyworkflow.mapper as pwmapper
+from pyworkflow.mapper.sqlite import ID
 from pyworkflowtests.objects import Complex, MockImage
 import pyworkflowtests
 
@@ -97,10 +98,6 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper.commit()
         self.assertEqual(1, mapper.db.getVersion())
         mapper.close()
-
-        # TODO: Maybe some mapper test for backward compatibility can be
-        # include in scipion-em, where we already have defined datasets
-        # and reference old sqlite files
 
         # Test using SqliteDb class
         db = pwmapper.SqliteDb()
@@ -293,9 +290,24 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         mapper.deleteProperty('defocusV')  # Test delete a property
         mapper.commit()
         self.assertEqual(1, mapper.db.getVersion())
+
+        # Test where parsing
+        self.assertIsNone(mapper.db._whereToWhereStr(None), "A where = None does not return None")
+        self.assertEqual(mapper.db._whereToWhereStr("missing1=missing2"), "missing1=missing2", "a where with missing fields does not work")
+        self.assertEqual(mapper.db._whereToWhereStr("_samplingRate=value2"), "c03=value2", "simple = where does not work")
+        self.assertEqual(mapper.db._whereToWhereStr("_samplingRate=_samplingRate"), "c03=c03", "simple = where with 2 fields does not work")
+        self.assertEqual(mapper.db._whereToWhereStr("_samplingRate = _samplingRate"), "c03 = c03", "simple = spaced where with 2 fields does not work")
+        self.assertEqual(mapper.db._whereToWhereStr("_samplingRate < 3"), "c03 < 3", "a where with < does not work")
+        self.assertEqual(mapper.db._whereToWhereStr("_samplingRate >= 4"), "c03 >= 4", "a where with >= does not work")
+        self.assertEqual(mapper.db._whereToWhereStr("5 <= _samplingRate"), "5 <= c03", "a where with <= does not work")
+        self.assertEqual(mapper.db._whereToWhereStr("5 <= _samplingRate OR 3=_index"), "5 <= c03 OR 3=c01", "a where with OR does not work")
+
+        # Tests actual where used in queries
+        self.assertEqual(len(mapper.unique(ID, "_index = 1 OR _index = 2")), 2, "unique with OR in where does not work.")
+        self.assertEqual(len(mapper.unique(ID, ID + " >= 20 ")), 2, "unique >= in where does not work.")
         mapper.close()
 
-        # Test that values where stored properly
+        # Test that values were stored properly
         mapper2 = pwmapper.SqliteFlatMapper(dbName, pw.Config.getDomain().getMapperDict())
         indexes.extend([bigId, bigId + 1])
         for i, obj in enumerate(mapper2.selectAll(iterate=True)):
