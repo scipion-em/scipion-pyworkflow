@@ -1886,33 +1886,38 @@ class ProtocolsView(tk.Frame):
             self.methodText.addLine('Could not load all methods:' + str(e))
 
     def _fillLogs(self):
-        prot = self.getSelectedProtocol()
+        try:
+            prot = self.getSelectedProtocol()
 
-        if not self._isSingleSelection() or not prot:
-            self.outputViewer.clear()
-            self._lastStatus = None
-        elif prot.getObjId() != self._lastSelectedProtId:
-            self._lastStatus = prot.getStatus()
-            i = self.outputViewer.getIndex()
-            self.outputViewer.clear()
-            # Right now skip the err tab since we are redirecting
-            # stderr to stdout
-            out, _, log, schedule = prot.getLogPaths()
-            self.outputViewer.addFile(out)
-            self.outputViewer.addFile(log)
-            if os.path.exists(schedule):
-                self.outputViewer.addFile(schedule)
-            self.outputViewer.setIndex(i)  # Preserve the last selected tab
-            self.outputViewer.selectedText().goEnd()
-            # when there are not logs, force re-load next time
-            if (not os.path.exists(out) or
-                    not os.path.exists(log)):
+            if not self._isSingleSelection() or not prot:
+                self.outputViewer.clear()
                 self._lastStatus = None
+            elif prot.getObjId() != self._lastSelectedProtId:
+                self._lastStatus = prot.getStatus()
+                i = self.outputViewer.getIndex()
+                self.outputViewer.clear()
+                # Right now skip the err tab since we are redirecting
+                # stderr to stdout
+                out, _, log, schedule = prot.getLogPaths()
+                self.outputViewer.addFile(out)
+                self.outputViewer.addFile(log)
+                if os.path.exists(schedule):
+                    self.outputViewer.addFile(schedule)
+                self.outputViewer.setIndex(i)  # Preserve the last selected tab
+                self.outputViewer.selectedText().goEnd()
+                # when there are not logs, force re-load next time
+                if (not os.path.exists(out) or
+                        not os.path.exists(log)):
+                    self._lastStatus = None
 
-        elif prot.isActive() or prot.getStatus() != self._lastStatus:
-            doClear = self._lastStatus is None
-            self._lastStatus = prot.getStatus()
-            self.outputViewer.refreshAll(clear=doClear, goEnd=doClear)
+            elif prot.isActive() or prot.getStatus() != self._lastStatus:
+                doClear = self._lastStatus is None
+                self._lastStatus = prot.getStatus()
+                self.outputViewer.refreshAll(clear=doClear, goEnd=doClear)
+        except Exception as e:
+            self.info("Something went wrong filling %s's logs: %s. Check terminal for details" % (prot, e))
+            import traceback
+            traceback.print_exc()
 
     def _scheduleRunsUpdate(self, secs=1):
         # self.runsTree.after(secs*1000, self.refreshRuns)
