@@ -132,6 +132,14 @@ def prettyDelta(timedelta):
     """ Remove the milliseconds of the timedelta. """
     return str(timedelta).split('.')[0]
 
+class UtcConverter:
+    """ Class to make date conversions to utc"""
+    utc_delta = datetime.utcnow() - datetime.now()
+
+    def __call__(cls, t):
+        return t + cls.utc_delta
+# Use to_utc like a function: to_utc(date)
+to_utc = UtcConverter()
 
 def prettyLog(msg):
     print(cyan(prettyTime(datetime.now(), secs=True)), msg)

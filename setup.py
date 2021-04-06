@@ -199,6 +199,9 @@ setup(
     # For example, the following would provide a command called `sample` which
     # executes the function `main` from this package when invoked:
     entry_points={
+        'console_scripts': [
+            'fix_links = pyworkflow.project.scripts.fix_links:main',
+        ],
         'pyworkflow.plugin': 'pyworkflowtests = pyworkflowtests'
     },
 
