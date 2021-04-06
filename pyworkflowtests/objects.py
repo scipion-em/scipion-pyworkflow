@@ -27,13 +27,14 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 """
 
 import os
-
-import pyworkflow.object as pwobj
+# This dos not allow expose basic Objects (Float, Scalar, ...) in the globals() and therefore
+# The Set (_classesDict dos not have it) --- pwobj.vars() could work too instead ofclassDict.update(globals()) in MockSet
+# import pyworkflow.object as pwobj
+from pyworkflow.object import Object, Float, CsvList, Integer, String, Set, Boolean, Pointer
 
 NO_INDEX = 0
 
-
-class MockObject(pwobj.Object):
+class MockObject(Object):
     """Base object for all Mock classes"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -53,8 +54,8 @@ class Complex(MockObject):
 
     def __init__(self, imag=0., real=0., **args):
         MockObject.__init__(self, **args)
-        self.imag = pwobj.Float(imag)
-        self.real = pwobj.Float(real)
+        self.imag = Float(imag)
+        self.real = Float(real)
         # Create reference complex values
 
     def __str__(self):
@@ -81,15 +82,15 @@ class MockAcquisition(MockObject):
     """Acquisition information"""
     def __init__(self, **kwargs):
         MockObject.__init__(self, **kwargs)
-        self._magnification = pwobj.Float(kwargs.get('magnification', None))
+        self._magnification = Float(kwargs.get('magnification', None))
         # Microscope voltage in kV
-        self._voltage = pwobj.Float(kwargs.get('voltage', None))
+        self._voltage = Float(kwargs.get('voltage', None))
         # Spherical aberration in mm
-        self._sphericalAberration = pwobj.Float(kwargs.get('sphericalAberration',
+        self._sphericalAberration = Float(kwargs.get('sphericalAberration',
                                                            None))
-        self._amplitudeContrast = pwobj.Float(kwargs.get('amplitudeContrast', None))
-        self._doseInitial = pwobj.Float(kwargs.get('doseInitial', 0))
-        self._dosePerFrame = pwobj.Float(kwargs.get('dosePerFrame', None))
+        self._amplitudeContrast = Float(kwargs.get('amplitudeContrast', None))
+        self._doseInitial = Float(kwargs.get('doseInitial', 0))
+        self._dosePerFrame = Float(kwargs.get('dosePerFrame', None))
 
     def copyInfo(self, other):
         self.copyAttributes(other, '_magnification', '_voltage',
@@ -140,12 +141,12 @@ class MockAcquisition(MockObject):
                 self._amplitudeContrast.get())
 
 
-class MockImageDim(pwobj.CsvList):
+class MockImageDim(CsvList):
     """ Just a wrapper to a pwobj.CsvList to store image dimensions
     as X, Y and Z.
     """
     def __init__(self, x=None, y=None, z=None):
-        pwobj.CsvList.__init__(self, pType=int)
+        CsvList.__init__(self, pType=int)
         if x is not None and y is not None:
             self.append(x)
             self.append(y)
@@ -181,9 +182,9 @@ class MockImage(MockObject):
         """
         MockObject.__init__(self, **kwargs)
         # Image location is composed by an index and a filename
-        self._index = pwobj.Integer(0)
-        self._filename = pwobj.String()
-        self._samplingRate = pwobj.Float()
+        self._index = Integer(0)
+        self._filename = String()
+        self._samplingRate = Float()
         self._ctfModel = None
         self._acquisition = None
         if location:
@@ -366,7 +367,7 @@ class MockMicrograph(MockImage):
     """ Represents an EM Micrograph object """
     def __init__(self, location=None, **kwargs):
         MockImage.__init__(self, location, **kwargs)
-        self._micName = pwobj.String()
+        self._micName = String()
 
     def setMicName(self, micName):
         self._micName.set(micName)
@@ -390,8 +391,8 @@ class MockParticle(MockImage):
         # This may be redundant, but make the Particle
         # object more independent for tracking coordinates
         self._coordinate = None
-        self._micId = pwobj.Integer()
-        self._classId = pwobj.Integer()
+        self._micId = Integer()
+        self._classId = Integer()
 
     def hasCoordinate(self):
         return self._coordinate is not None
@@ -432,10 +433,10 @@ class MockParticle(MockImage):
         return self._classId.hasValue()
 
 
-class MockSet(pwobj.Set, MockObject):
+class MockSet(Set, MockObject):
 
     def _loadClassesDict(self):
-        from pyworkflow.plugin import Domain
+        from pyworkflowtests import Domain
         classDict = Domain.getObjects()
         classDict.update(globals())
 
@@ -481,7 +482,7 @@ class MockSet(pwobj.Set, MockObject):
                     next(itemDataIterator)  # just skip disabled data row
 
     def getFiles(self):
-        return pwobj.Set.getFiles(self)
+        return Set.getFiles(self)
 
 
 class MockSetOfImages(MockSet):
@@ -490,10 +491,10 @@ class MockSetOfImages(MockSet):
 
     def __init__(self, **kwargs):
         MockSet.__init__(self, **kwargs)
-        self._samplingRate = pwobj.Float()
-        self._hasCtf = pwobj.Boolean(kwargs.get('ctf', False))
-        self._isPhaseFlipped = pwobj.Boolean(False)
-        self._isAmplitudeCorrected = pwobj.Boolean(False)
+        self._samplingRate = Float()
+        self._hasCtf = Boolean(kwargs.get('ctf', False))
+        self._isPhaseFlipped = Boolean(False)
+        self._isAmplitudeCorrected = Boolean(False)
         self._acquisition = MockAcquisition()
         self._firstDim = MockImageDim()  # Dimensions of the first image
 
@@ -603,7 +604,7 @@ class MockSetOfImages(MockSet):
 
     def iterItems(self, orderBy='id', direction='ASC', where=None, limit=None):
         """ Redefine iteration to set the acquisition to images. """
-        for img in pwobj.Set.iterItems(self, orderBy=orderBy, direction=direction,
+        for img in Set.iterItems(self, orderBy=orderBy, direction=direction,
                                        where=where, limit=limit):
 
             # Sometimes the images items in the set could
@@ -640,7 +641,7 @@ class MockSetOfMicrographs(MockSetOfImages):
 
     def __init__(self, **kwargs):
         MockSetOfImages.__init__(self, **kwargs)
-        self._scannedPixelSize = pwobj.Float()
+        self._scannedPixelSize = Float()
 
     def copyInfo(self, other):
         """ Copy basic information (voltage, spherical aberration and
@@ -682,7 +683,7 @@ class MockSetOfParticles(MockSetOfImages):
 
     def __init__(self, **kwargs):
         MockSetOfImages.__init__(self, **kwargs)
-        self._coordsPointer = pwobj.Pointer()
+        self._coordsPointer = Pointer()
 
     def hasCoordinates(self):
         return self._coordsPointer.hasValue()
@@ -711,11 +712,11 @@ class MockCoordinate(MockObject):
     associated with a coordinate"""
     def __init__(self, **kwargs):
         MockObject.__init__(self, **kwargs)
-        self._micrographPointer = pwobj.Pointer(objDoStore=False)
-        self._x = pwobj.Integer(kwargs.get('x', None))
-        self._y = pwobj.Integer(kwargs.get('y', None))
-        self._micId = pwobj.Integer()
-        self._micName = pwobj.String()
+        self._micrographPointer = Pointer(objDoStore=False)
+        self._x = Integer(kwargs.get('x', None))
+        self._y = Integer(kwargs.get('y', None))
+        self._micId = Integer()
+        self._micName = String()
 
     def getX(self):
         return self._x.get()
@@ -799,8 +800,8 @@ class SetOfCoordinates(MockSet):
 
     def __init__(self, **kwargs):
         MockSet.__init__(self, **kwargs)
-        self._micrographsPointer = pwobj.Pointer()
-        self._boxSize = pwobj.Integer()
+        self._micrographsPointer = Pointer()
+        self._boxSize = Integer()
 
     def getBoxSize(self):
         """ Return the box size of the particles.

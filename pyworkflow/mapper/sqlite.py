@@ -993,8 +993,20 @@ class SqliteFlatMapper(Mapper):
         return self.db.hasProperty(key)
         
     def getProperty(self, key, defaultValue=None):
-        return self.db.getProperty(key, defaultValue)
-        
+
+        classname, value = self.db.getProperty(key, defaultValue)
+
+        # Version 1 didn't have classname so after a migration
+        # classname comes as None.
+        if classname not in  ["str", "NoneType"] and value is not None:
+            # Instantiate the class
+            object = self._buildObjectFromClass(classname)
+            object.set(value)
+            return object
+
+        # str cases: just return the value
+        return value
+
     def setProperty(self, key, value):
         return self.db.setProperty(key, value)
     
@@ -1018,14 +1030,15 @@ class SqliteFlatMapperException(Exception):
 
 SELF = 'self'
 
-
 class SqliteFlatDb(SqliteDb):
     """Class to handle a Sqlite database.
     It will create connection, execute queries and commands"""
     # Maintain the current version of the DB schema
     # useful for future updates and backward compatibility
     # version should be an integer number
-    VERSION = 1
+    VERSION_1 = 1
+    VERSION_2 = 2
+    VERSION = VERSION_2 # This is the current (latest) operative versions
     
     CLASS_MAP = {'Integer': 'INTEGER',
                  'Float': 'REAL',
@@ -1037,6 +1050,7 @@ class SqliteFlatDb(SqliteDb):
         SqliteDb.__init__(self)
         self._pragmas = pragmas or {}
         self._indexes = indexes or []
+        self._tables = None
         tablePrefix = tablePrefix.strip()
         # Avoid having _ for empty prefix
         if tablePrefix and not tablePrefix.endswith('_'):
@@ -1066,11 +1080,14 @@ class SqliteFlatDb(SqliteDb):
         self.UPDATE_OBJECT = None
         self._columnsMapping = {}
 
-        self.INSERT_PROPERTY = "INSERT INTO Properties (key, value) VALUES (?, ?)"
+        self.INSERT_PROPERTY = "INSERT INTO Properties (key, value, classname) VALUES (?, ?, ?)"
         self.DELETE_PROPERTY = "DELETE FROM Properties WHERE key=?"
         self.UPDATE_PROPERTY = "UPDATE Properties SET value=? WHERE key=?"
-        self.SELECT_PROPERTY = "SELECT value FROM Properties WHERE key=?"
+        self.SELECT_PROPERTY = "SELECT value, classname FROM Properties WHERE key=?"
         self.SELECT_PROPERTY_KEYS = "SELECT key FROM Properties"
+
+        # Migrate schema if apply
+        self.migrate()
 
     def hasProperty(self, key):
         """ Return true if a property with this value is registered. """
@@ -1081,6 +1098,11 @@ class SqliteFlatDb(SqliteDb):
         self.executeCommand(self.SELECT_PROPERTY, (key,))
         result = self.cursor.fetchone()
         return result is not None
+
+    def getTables(self, tablePattern=None):
+        if self._tables is None:
+            self._tables = super().getTables(tablePattern=tablePattern)
+        return self._tables
 
     def getProperty(self, key, defaultValue=None):
         """ Return the value of a given property with this key.
@@ -1095,15 +1117,32 @@ class SqliteFlatDb(SqliteDb):
         result = self.cursor.fetchone()
 
         if result:
-            return result['value']
+            classname = result['classname']
+            value = result['value']
+            # classname appeared in version2 of the schema. For previous sets (v1) this value is None
+            if not classname:
+                # Get the class name from the value: compatible with v1 behaviour
+                classname = value.__class__.__name__
+            return classname, result['value']
         else:
-            return defaultValue
+            return defaultValue.__class__.__name__, defaultValue
 
     def setProperty(self, key, value):
-        """ Insert or update the property with a value. """
+        """ Insert or update the property with a value.
+
+         :param key key of the property. For nested properties will have . joining property names
+         :param value tuple with type and value"""
         # Just ignore the set property for empty sets
         if not self.hasTable('Properties'):
             return
+
+        # If value is a tuple is coming form getObjDict with classes
+        if isinstance(value, tuple):
+            type = value[0]
+            value = value[1] if len(value) == 2 else None
+        else:
+            # keep the type before loosing it in the next line
+            type = value.__class__.__name__
 
         # All properties are stored as string, except for None type
         value = str(value) if value is not None else None
@@ -1111,7 +1150,7 @@ class SqliteFlatDb(SqliteDb):
         if self.hasProperty(key):
             self.executeCommand(self.UPDATE_PROPERTY, (value, key))
         else:
-            self.executeCommand(self.INSERT_PROPERTY, (key, value))
+            self.executeCommand(self.INSERT_PROPERTY, (key, value, type))
             
     def getPropertyKeys(self):
         """ Return all properties stored of this object. """
@@ -1141,6 +1180,7 @@ class SqliteFlatDb(SqliteDb):
                             % self.tablePrefix)
         self.executeCommand("DROP TABLE IF EXISTS %sObjects;"
                             % self.tablePrefix)
+        self._tables = None
 
     def createTables(self, objDict):
         """Create the Classes and Object table to store items of a Set.
@@ -1154,8 +1194,9 @@ class SqliteFlatDb(SqliteDb):
         # Create a general Properties table to store some needed values
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Properties
                      (key       TEXT UNIQUE, -- property key                 
-                      value     TEXT  DEFAULT NULL -- property value
-                      )""")
+                      value     TEXT  DEFAULT NULL, -- property value
+                      classname TEXT DEFAULT NULL --Type of the property
+                       )""")
         # Create the Classes table to store each column name and type
         self.executeCommand("""CREATE TABLE IF NOT EXISTS %sClasses
                      (id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1195,6 +1236,22 @@ class SqliteFlatDb(SqliteDb):
         self.commit()
         # Prepare the INSERT and UPDATE commands
         self.setupCommands(objDict)
+        self._tables = None
+
+    def migrate(self):
+        """ migrates schema from the current """
+        dbVersion = self.getVersion()
+
+        # Case for version1 to version2 migration
+        if dbVersion == self.VERSION_1:
+            self.__migrateV1toV2()
+
+        self.setVersion(self.VERSION)
+
+    def __migrateV1toV2(self):
+        """  migrates db schema from version1 to version 2.
+        Here we just added a new column classname to the properties table"""
+        self.executeCommand("ALTER TABLE Properties ADD COLUMN classname TEXT default NULL")
 
     def setupCommands(self, objDict):
         """ Setup the INSERT and UPDATE commands base on the object dictionary. """
@@ -1407,4 +1464,17 @@ class SqliteFlatDb(SqliteDb):
         """ Delete all objects from the db. """
         if not self.missingTables():
             self.executeCommand(self.DELETE + "1")
+
+    def downgrade(self,version):
+        """ Downgrades database schema to previous version. Useful in test
+        VERSION 1: Base version.
+        VERSION 2: Properties table has an extra column "classname" to store the
+        class of the value to be use latter. Needed to extend set's properties
+        """
+        if version == self.VERSION_1:
+            # HACK: Although sqlite documentation documents DROP COLUMN I haven't
+            # been able to make it work, so we are renaming the field that is "like" moving it away
+            self.executeCommand("ALTER TABLE Properties RENAME COLUMN classname to classnameghost")
+
+        self.setVersion(version)
 

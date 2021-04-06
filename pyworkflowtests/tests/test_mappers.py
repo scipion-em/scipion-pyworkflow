@@ -156,8 +156,8 @@ class TestSqliteMapper(pwtests.BaseTest):
                              "Childs of object i, should be the parents of object p")
 
         relations = mapper2.getRelationsByCreator(creator)
-        for row in relations:
-            print(dict(row))
+        # for row in relations:
+        #     print(dict(row))
 
     def test_StorePointers(self):
         """ Check that pointers are correctly stored. """
@@ -283,13 +283,14 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         mapper.insert(img)
         self.assertEqual(bigId + 1, mapper.maxId())
 
-        mapper.setProperty('samplingRate', '3.0')
-        mapper.setProperty('defocusU', 1000)
-        mapper.setProperty('defocusV', 1000)
-        mapper.setProperty('defocusU', 2000)  # Test update a property value
+        mapper.setProperty('samplingRate', pwobj.Integer(3.0))
+        mapper.setProperty('defocusU', pwobj.Integer(1000))
+        mapper.setProperty('defocusV', pwobj.Integer(1000))
+        mapper.setProperty('defocusU', pwobj.Integer(2000))  # Test update a property value
+        mapper.setProperty("integer", pwobj.Integer(10)) # Test Object model properties
         mapper.deleteProperty('defocusV')  # Test delete a property
         mapper.commit()
-        self.assertEqual(1, mapper.db.getVersion())
+        self.assertEqual(mapper.db.VERSION, mapper.db.getVersion())
 
         # Test where parsing
         self.assertIsNone(mapper.db._whereToWhereStr(None), "A where = None does not return None")
@@ -318,11 +319,24 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         self.assertTrue(mapper2.hasProperty('defocusU'))
         self.assertFalse(mapper2.hasProperty('defocusV'))
 
-        self.assertEqual(mapper2.getProperty('samplingRate'), '3.0')
-        self.assertEqual(mapper2.getProperty('defocusU'), '2000')
+        self.assertEqual(mapper2.getProperty('samplingRate'), 3.0)
+        self.assertEqual(mapper2.getProperty('defocusU'), 2000)
+
+        intProperty = mapper2.getProperty("integer")
+        self.assertTrue(isinstance(intProperty, pwobj.Integer), "SqliteFlatMapper does not keep the type of domain objects")
 
         # Make sure that maxId() returns the proper value after loading db
         self.assertEqual(bigId + 1, mapper2.maxId())
+
+        # Now we need to test old version of mappers (version 1) where "properties table did not have a "classname" column
+        # and didn't allow for extended attributes
+        mapper2.db.downgrade(pwmapper.SqliteFlatDb.VERSION_1)
+
+        # Migration dose happen at initialization (connection) time. Therefore we need a new mapper
+        mapper3 = pwmapper.SqliteFlatMapper(dbName, pw.Config.getDomain().getMapperDict())
+        # Now, there is a missing column, so it should patch the table and property types are primitive types
+        sr = mapper3.getProperty("samplingRate")
+        self.assertTrue(isinstance(sr,str), "Flatmapper does not recover type properties from version 1.")
 
     def test_emtpySet(self):
         dbName = self.getOutputPath('empty.sqlite')
@@ -388,7 +402,7 @@ class TestDataSet(pwtests.BaseTest):
         # Expect an exception, since name is not provided and have not default
         self.assertRaises(Exception, table.addRow, 100, y=3.0)
         row = table.getRow(1)
-        print(row)
+        # print(row)
         self.assertEqual(table.getSize(), 3, "Bad table size")
 
         # Update a value of a row

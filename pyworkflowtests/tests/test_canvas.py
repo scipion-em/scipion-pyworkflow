@@ -37,14 +37,14 @@ class TestCanvas(BaseTest):
             connectorsCoords = tb1.getConnectorsCoordinates()
             self.assertTrue(self.allDifferent(connectorsCoords))
 
-            print(connectorsCoords)
+            # print(connectorsCoords)
 
             distances = {}
             for i in range(len(connectorsCoords) - 1):
                 distances[i] = self.distance(connectorsCoords[i],
                                              connectorsCoords[i + 1])
 
-                print(distances)
+                # print(distances)
                 self.assertTrue(self.allEqual(list(distances.values())))
                 self.assertNotEqual(distances[0], 0)
         except tkinter.TclError as ex:

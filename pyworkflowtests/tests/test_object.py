@@ -28,8 +28,10 @@ import os
 import datetime as dt
 from time import sleep
 
+import pyworkflow
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
+import pyworkflowtests
 from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
@@ -45,6 +47,10 @@ class TestObject(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
         pwtests.setupTestOutput(cls)
+        # This isSet the application domain
+        pyworkflowtests.Domain = pyworkflowtests.TestDomain
+        pyworkflow.Config.setDomain("pyworkflowtests")
+
 
     def test_ObjectsDict(self):
         # Validate that the object dict is populated correctly
@@ -228,12 +234,37 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(imgSet[7], ptr4.get())
         self.assertEqual(ptr4.getExtended(), 'outputImages.7')
 
+    def test_set_properties(self):
+        fn = self.getOutputPath('test_set_properties.sqlite')
+        print("Writing to sqlite: %s" % fn)
+
+        imgSet = MockSetOfImages(filename=fn)
+
+        # We need to append at least one item
+        imgSet.append(MockImage("foo.stk"))
+
+        # Add an extra attributes:
+        imgSet.extraAttr = pwobj.Integer(10)
+
+        imgSet.write()
+        imgSet.close()
+
+        # Check it can load the new property back
+        loadedSet = MockSetOfImages(filename=fn)
+        loadedSet.loadAllProperties()
+        self.assertTrue(hasattr(loadedSet, "extraAttr"), "Extra property in set does not load")
+        self.assertTrue(isinstance(loadedSet.extraAttr, pwobj.Integer), "Extra property in set is of wrong type")
+        self.assertEqual(loadedSet.extraAttr.get(), 10, "Extra property loaded but has wrong value")
+
     def test_Sets(self):
         stackFn = "images.stk"
         fn = self.getOutputPath('test_images2.sqlite')
         print("Writing to sqlite: %s" % fn)
 
         imgSet = MockSetOfImages(filename=fn)
+
+        # Add an extra attributes:
+        imgSet.extraAttr = pwobj.Integer(10)
 
         halfTimeStamp = None
 
@@ -317,7 +348,6 @@ class TestObject(pwtests.BaseTest):
         self.assertIsInstance(next(iter(ids)), int, "getIdSet items are not integer")
         self.assertEqual(len(ids), 10, "getIdSet does not return 10 items")
 
-
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values
         were properly copied.
@@ -378,10 +408,12 @@ class TestObject(pwtests.BaseTest):
         m1.setSamplingRate(1.6)
         m1.setAcquisition(acq1)
         m1Dict = m1.getObjDict(includeBasic=True)
-        for k, v in m1Dict.items():
-            if isinstance(v, str):
-                v = "'%s'" % v
-            print("('%s', %s)," % (k, v))
+
+        # For debugging purposes?
+        # for k, v in m1Dict.items():
+        #     if isinstance(v, str):
+        #         v = "'%s'" % v
+        #     print("('%s', %s)," % (k, v))
 
         goldDict1 = dict([
             ('object.id', 1),

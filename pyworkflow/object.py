@@ -125,23 +125,30 @@ class Object(object):
             value = attr  # behave well for non-Object attributes
         return value
     
-    def setAttributeValue(self, attrName, value, ignoreMissing=False):
+    def setAttributeValue(self, attrName, value, ignoreMissing=False, force=False):
         """ Set the attribute value given its name.
         Equivalent to setattr(self, name).set(value) 
         If the attrName contains dot: x.y
         it will be equivalent to getattr(getattr(self, 'x'), 'y').set(value)
         If ignoreMissing is True, non-existing attrName will not raise an
         exception.
+
+        :param force Will force the creation of the attribute
         """
         attrList = attrName.split('.')
         obj = self
         for partName in attrList:
-            obj = getattr(obj, partName, None)
-            if obj is None:
+            currentValue = getattr(obj, partName, None)
+            if currentValue is None:
+                if force:
+                    setattr(obj, partName, value)
+                    return
                 if ignoreMissing:
                     return
                 raise Exception("Object.setAttributeValue: obj is None! attrName: "
                                 "%s, part: %s" % (attrName, partName))
+            # Set obj for next loop. e.g:  root.attr1.subattr1
+            obj = currentValue
         obj.set(value)
         
     def getAttributes(self):
@@ -1160,8 +1167,8 @@ class Set(Object):
                 properties.
         """
         if properties:
-            self._getMapper().setProperty('self', self.getClassName())
-            objDict = self.getObjDict()
+            # self._getMapper().setProperty('self', (self.getClassName(), None))
+            objDict = self.getObjDict(includeClass=True)
             for key, value in objDict.items():
                 self._getMapper().setProperty(key, value)
         self._getMapper().commit()
@@ -1268,8 +1275,10 @@ class Set(Object):
     def loadProperty(self, propertyName, defaultValue=None):
         """ Get the value of a property and
         set its value as an object attribute.
+        If attribute is missing it creates the attribute
         """
-        self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue))
+
+        self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue), force=True)
         
     def loadAllProperties(self):
         """ Retrieve all properties stored by the mapper. """
