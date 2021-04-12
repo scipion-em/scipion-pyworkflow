@@ -637,12 +637,12 @@ class Project(object):
 
         # If this is read only exit
         if self.openedAsReadOnly():
-            return
+            return pw.NOT_UPDATED_READ_ONLY
 
         if skipUpdatedProtocols:
             # If we are already updated, comparing timestamps
             if pwprot.isProtocolUpToDate(protocol):
-                return
+                return pw.NOT_UPDATED_UNNECESSARY
 
         try:
             # Backup the values of 'jobId', 'label' and 'comment'
@@ -704,9 +704,12 @@ class Project(object):
                 # with a FAILED status
                 protocol.setFailed(str(ex))
                 self.mapper.store(protocol)
+                return pw.NOT_UPDATED_ERROR
             else:
                 time.sleep(0.5)
                 self._updateProtocol(protocol, tries + 1)
+
+        return pw.PROTOCOL_UPDATED
 
     def stopProtocol(self, protocol):
         """ Stop a running protocol """

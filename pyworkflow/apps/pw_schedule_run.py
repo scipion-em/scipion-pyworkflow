@@ -34,9 +34,10 @@ from pyworkflow.protocol import (getProtocolFromDb,
                                  STATUS_FINISHED, STATUS_ABORTED, STATUS_FAILED,
                                  STATUS_RUNNING, STATUS_SCHEDULED, STATUS_SAVED,
                                  STATUS_LAUNCHED, Set, Protocol, MAX_SLEEP_TIME)
+from pyworkflow.constants import PROTOCOL_UPDATED
 
 # Add callback for remote debugging if available.
-from pyworkflow.utils import prettyTimestamp, getFileLastModificationDate
+from pyworkflow.utils import prettyTimestamp
 
 try:
     from rpdb2 import start_embedded_debugger
@@ -63,7 +64,6 @@ class RunScheduler:
         self.prerequisites = list(map(int, self.protocol.getPrerequisites()))
         # Keep track of the last time the protocol was checked and
         # its modification date to avoid unnecessary db opening
-        self.lastCheckedDict = {}
         self.updatedProtocols = []
         self.sleepTime = self._args.sleepTime
         self.initial_sleep = self._args.initial_sleep
@@ -122,14 +122,11 @@ class RunScheduler:
         protDb = protocol.getDbPath()
 
         if os.path.exists(protDb):
-            lastChecked = self.lastCheckedDict.get(protId, None)
-            lastModified = getFileLastModificationDate(protDb)
+            updateResult = self.project._updateProtocol(protocol)
+            if updateResult == PROTOCOL_UPDATED:
+                self._log("Updated protocol: %s (%s)" % (protId, protocol))
+            self.updatedProtocols.append(protId)
 
-            if lastChecked is None or (lastModified > lastChecked):
-                self.project._updateProtocol(protocol,
-                                             skipUpdatedProtocols=False)
-                self._log("Updated protocol %s" % protId)
-                self.updatedProtocols.append(protId)
 
     def _getProtocolFromPointer(self, pointer):
         """
@@ -152,7 +149,7 @@ class RunScheduler:
             if pointer.hasExtended():  # case B
                 protocol = pointer.getObjValue()
             else:  # case C
-                protocol = self.getProject().getProtocol(output.getObjParentId())
+                protocol = self.project.getNode(str(output.getObjParentId())).run
         return protocol
 
     def _getSecondsToWait(self, inProt):
@@ -227,6 +224,12 @@ class RunScheduler:
                     self._log("Waiting for closing %s... (%s does not work in "
                               "streaming)" % (inSet, self.protocol))
                     break
+
+        if not inputMissing:
+            inputProtocolDict = self.protocol.inputProtocolDict()
+            for prot in inputProtocolDict.values():
+                self._updateProtocol(prot)
+
         return inputMissing, penalize
 
     def schedule(self):
@@ -252,11 +255,7 @@ class RunScheduler:
             missing, penalize = self._checkMissingInput()
             self.sleepTime += penalize
 
-            if not missing:
-                inputProtocolDict = self.protocol.inputProtocolDict()
-                for prot in inputProtocolDict.values():
-                    self._updateProtocol(prot)
-
+            # Check the prerequisites
             wait, penalize = self._checkPrerequisites(self.prerequisites,
                                                       self.project)
             self.sleepTime += penalize

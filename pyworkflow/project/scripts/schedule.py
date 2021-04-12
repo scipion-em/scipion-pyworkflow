@@ -101,7 +101,7 @@ for root in roots:
                     protLabelName not in sys.argv[3:]):
                 project.scheduleProtocol(prot, workflow[prot]*INITIAL_SLEEP_TIME)
                 # Wait 1 seconds to avoid concurrent activity
-                time.sleep(0.7)
+                #time.sleep(0.7)
             else:
                 print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
                                       % (protClassName, protLabelName)))
