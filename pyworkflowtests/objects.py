@@ -601,7 +601,7 @@ class MockSetOfImages(MockSet):
         """ Return the string representing the dimensions. """
         return str(self._firstDim)
 
-    def iterItems(self, orderBy='id', direction='ASC', where='1', limit=None):
+    def iterItems(self, orderBy='id', direction='ASC', where=None, limit=None):
         """ Redefine iteration to set the acquisition to images. """
         for img in pwobj.Set.iterItems(self, orderBy=orderBy, direction=direction,
                                        where=where, limit=limit):

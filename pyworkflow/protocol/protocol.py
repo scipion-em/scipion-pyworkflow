@@ -990,24 +990,25 @@ class Protocol(Step):
         """
         return self._getPath(os.path.basename(path))
 
-    def _insertFunctionStep(self, funcName, *funcArgs, **kwargs):
+    def _insertFunctionStep(self, func, *funcArgs, **kwargs):
         """
          Params:
-           funcName: the string name of the function to be run in the Step.
+           func: the function itself or, optionally, the name (string) of the function to be run in the Step.
            *funcArgs: the variable list of arguments to pass to the function.
            **kwargs: see __insertStep
         """
-        # Get the function give its name
-        func = getattr(self, funcName, None)
+        if isinstance(func, str):
+            # Get the function give its name
+            func = getattr(self, func, None)
 
         # Ensure the protocol instance have it and is callable
         if not func:
             raise Exception("Protocol._insertFunctionStep: '%s' function is "
-                            "not member of the protocol" % funcName)
+                            "not member of the protocol" % func)
         if not callable(func):
             raise Exception("Protocol._insertFunctionStep: '%s' is not callable"
-                            % funcName)
-        step = FunctionStep(func, funcName, *funcArgs, **kwargs)
+                            % func)
+        step = FunctionStep(func, func.__name__, *funcArgs, **kwargs)
 
         return self.__insertStep(step, **kwargs)
 

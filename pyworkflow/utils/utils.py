@@ -132,6 +132,14 @@ def prettyDelta(timedelta):
     """ Remove the milliseconds of the timedelta. """
     return str(timedelta).split('.')[0]
 
+class UtcConverter:
+    """ Class to make date conversions to utc"""
+    utc_delta = datetime.utcnow() - datetime.now()
+
+    def __call__(cls, t):
+        return t + cls.utc_delta
+# Use to_utc like a function: to_utc(date)
+to_utc = UtcConverter()
 
 def prettyLog(msg):
     print(cyan(prettyTime(datetime.now(), secs=True)), msg)
@@ -702,7 +710,10 @@ def environAdd(varName, newValue, valueFirst=False):
 def envVarOn(varName, env=None):
     """ Is variable set to True in the environment? """
     v = env.get(varName) if env else os.environ.get(varName)
-    return v is not None and v.lower() in ['true', 'yes', 'on', '1']
+    return strToBoolean(v)
+
+def strToBoolean(string):
+    return string is not None and string.lower() in ['true', 'yes', 'on', '1']
 
 
 def getMemoryAvailable():
