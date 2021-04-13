@@ -65,11 +65,10 @@ class RunScheduler:
         # Keep track of the last time the protocol was checked and
         # its modification date to avoid unnecessary db opening
         self.updatedProtocols = []
-        self.sleepTime = self._args.sleepTime
         self.initial_sleep = self._args.initial_sleep
 
     def getSleepTime(self):
-        return self.sleepTime
+        return self._args.sleepTime
 
     def getInitialSleepTime(self):
         return self.initial_sleep
@@ -159,20 +158,20 @@ class RunScheduler:
         If inProt status is stopped we assign a reward i.o.c a penalty
         """
         protStatus = inProt.getStatus()
-        inStreaming = inProt.isInStreaming()
-        meStreaming = self.protocol.isInStreaming()
+        inStreaming = inProt.worksInStreaming()
+        meStreaming = self.protocol.worksInStreaming()
 
         penaltyRewardValues = {
             STATUS_LAUNCHED: 5 if inStreaming else 10,
             STATUS_RUNNING: -2 if inStreaming else 3,
-            STATUS_SCHEDULED: int(self._args.sleepTime/2),
-            STATUS_SAVED: self._args.sleepTime,
+            STATUS_SCHEDULED: int(self.getSleepTime()/2),
+            STATUS_SAVED: self.getSleepTime(),
         }
 
         secondToWait = penaltyRewardValues.get(protStatus, -3)
 
         if not meStreaming:
-            secondToWait += self._args.sleepTime
+            secondToWait += 3 * self.getSleepTime()
 
         return secondToWait
 
@@ -207,8 +206,8 @@ class RunScheduler:
         # Updating input protocols
         for key, attr in self.protocol.iterInputAttributes():
             inputProt = self._getProtocolFromPointer(attr)
-            penalize += self._getSecondsToWait(inputProt)
             self._updateProtocol(inputProt)
+            penalize += self._getSecondsToWait(inputProt)
 
         validation = self.protocol.validate()
         if len(validation) > 0:
@@ -243,7 +242,7 @@ class RunScheduler:
         while True:
             # Clear the list of protocols updated in the previous loop
             self.updatedProtocols.clear()
-
+            sleepTime = self.getSleepTime()
             # FIXME: This does not cover all the cases:
             # When the user registers new coordinates after clicking the
             # "Analyze result" button, this action is registered in the project.sqlite
@@ -253,20 +252,20 @@ class RunScheduler:
 
             # Check if there are missing inputs
             missing, penalize = self._checkMissingInput()
-            self.sleepTime += penalize
+            sleepTime += penalize
 
             # Check the prerequisites
             wait, penalize = self._checkPrerequisites(self.prerequisites,
                                                       self.project)
-            self.sleepTime += penalize
+            sleepTime += penalize
 
             if not missing and not wait:
                 break
 
-            self.sleepTime = min(self.sleepTime, MAX_SLEEP_TIME)
+            sleepTime = max(min(sleepTime, MAX_SLEEP_TIME), self.getSleepTime())
 
-            self._log("Still not ready, sleeping %s seconds...\n" % self.sleepTime)
-            time.sleep(self.sleepTime)
+            self._log("Still not ready, sleeping %s seconds...\n" % sleepTime)
+            time.sleep(sleepTime)
 
         self._log("Launching the protocol >>>>")
         self.log.close()
