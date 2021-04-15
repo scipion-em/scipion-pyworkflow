@@ -175,9 +175,10 @@ def getFinalProtId(protId):
 def getFinalProjId(projId):
     return projId if projId is not None else os.environ.get(SCIPION_PROJ_ID, "unknown")
 
-def getExtraLogInfo(status, project_name =None, prot_id=None, prot_name=None, step_id=None , duration=None, dbfilename=None):
+def getExtraLogInfo(measurement, status, project_name =None, prot_id=None, prot_name=None, step_id=None , duration=None, dbfilename=None):
     # Add TS!! optionally
-    return {"status": status,
+    return {"measurement": measurement,
+            "status": status,
             "project_name": getFinalProjId(project_name),
             "prot_id": getFinalProtId(prot_id),
             "prot_name": prot_name,

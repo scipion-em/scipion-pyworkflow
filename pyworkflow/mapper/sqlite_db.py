@@ -56,6 +56,7 @@ class SqliteDb:
             self.connection.row_factory = sqlite.Row
             self.OPEN_CONNECTIONS[dbName] = self.connection
             logger.debug("Connection open for %s" % dbName, extra=getExtraLogInfo(
+                "CONNECTIONS",
                 STATUS.START,
                 dbfilename=dbName))
 
@@ -73,9 +74,8 @@ class SqliteDb:
             connection = cls.OPEN_CONNECTIONS[dbName]
             del cls.OPEN_CONNECTIONS[dbName]
             connection.close()
-            logger.debug("Connection closed for %s" % dbName, extra=getExtraLogInfo(
-                STATUS.STOP,
-                dbfilename=dbName))
+            logger.debug("Connection closed for %s" % dbName,
+                         extra=getExtraLogInfo('CONNECTIONS', STATUS.STOP, dbfilename=dbName))
 
     def getDbName(self):
         return self._dbName
@@ -83,7 +83,9 @@ class SqliteDb:
     def close(self):
         self.connection.close()
         logger.debug("Connection closed for %s" % self._dbName,
-                     extra=getExtraLogInfo(STATUS.STOP,
+                     extra=getExtraLogInfo(
+                                        "CONNECTIONS",
+                                        STATUS.STOP,
                                         dbfilename=self._dbName))
         if self._dbName in self.OPEN_CONNECTIONS:
             del self.OPEN_CONNECTIONS[self._dbName]

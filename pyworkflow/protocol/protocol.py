@@ -1157,7 +1157,7 @@ class Protocol(Step):
         """
         self.info(pwutils.magentaStr("STARTED") + ": %s, step %d, time %s" %
                   (step.funcName.get(), step._index, step.initTime.datetime()),
-                  extra=getExtraLogInfo(STATUS.START,
+                  extra=getExtraLogInfo("PROTOCOL", STATUS.START,
                                         project_name=self.getProject().getName(),
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName(),
@@ -1186,7 +1186,7 @@ class Protocol(Step):
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
                   % (step.funcName.get(), step._index, step.endTime.datetime()),
-                  extra=getExtraLogInfo(STATUS.STOP,
+                  extra=getExtraLogInfo("PROTOCOL",STATUS.STOP,
                                         project_name=self.getProject().getName(),
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName(),
@@ -1397,7 +1397,7 @@ class Protocol(Step):
             setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
 
             self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
-            self.info("Protocol starts", extra=getExtraLogInfo(STATUS.START,
+            self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
                                                                project_name=self.getProject().getName(),
                                                                prot_id=self.getObjId(),
                                                                prot_name=self.getClassName()))
@@ -1449,7 +1449,7 @@ class Protocol(Step):
 
         self.info(pwutils.greenStr('------------------- PROTOCOL ' +
                                    self.getStatusMessage().upper()),
-                  extra=getExtraLogInfo(STATUS.STOP,
+                  extra=getExtraLogInfo("PROTOCOL",STATUS.STOP,
                                         project_name=self.getProject().getName(),
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName()))
