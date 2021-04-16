@@ -155,9 +155,7 @@ class TestSqliteMapper(pwtests.BaseTest):
             self.assertEqual(c, p,
                              "Childs of object i, should be the parents of object p")
 
-        relations = mapper2.getRelationsByCreator(creator)
-        # for row in relations:
-        #     print(dict(row))
+        mapper2.getRelationsByCreator(creator)
 
     def test_StorePointers(self):
         """ Check that pointers are correctly stored. """
@@ -401,8 +399,8 @@ class TestDataSet(pwtests.BaseTest):
         table.addRow(3, x=32, y=31.0, name='pedro')
         # Expect an exception, since name is not provided and have not default
         self.assertRaises(Exception, table.addRow, 100, y=3.0)
-        row = table.getRow(1)
-        # print(row)
+        table.getRow(1)
+
         self.assertEqual(table.getSize(), 3, "Bad table size")
 
         # Update a value of a row

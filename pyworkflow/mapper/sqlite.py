@@ -1000,9 +1000,9 @@ class SqliteFlatMapper(Mapper):
         # classname comes as None.
         if classname not in  ["str", "NoneType"] and value is not None:
             # Instantiate the class
-            object = self._buildObjectFromClass(classname)
-            object.set(value)
-            return object
+            obj = self._buildObjectFromClass(classname)
+            obj.set(value)
+            return obj
 
         # str cases: just return the value
         return value
@@ -1138,11 +1138,11 @@ class SqliteFlatDb(SqliteDb):
 
         # If value is a tuple is coming form getObjDict with classes
         if isinstance(value, tuple):
-            type = value[0]
+            typeName = value[0]
             value = value[1] if len(value) == 2 else None
         else:
             # keep the type before loosing it in the next line
-            type = value.__class__.__name__
+            typeName = value.__class__.__name__
 
         # All properties are stored as string, except for None type
         value = str(value) if value is not None else None
@@ -1150,7 +1150,7 @@ class SqliteFlatDb(SqliteDb):
         if self.hasProperty(key):
             self.executeCommand(self.UPDATE_PROPERTY, (value, key))
         else:
-            self.executeCommand(self.INSERT_PROPERTY, (key, value, type))
+            self.executeCommand(self.INSERT_PROPERTY, (key, value, typeName))
             
     def getPropertyKeys(self):
         """ Return all properties stored of this object. """
