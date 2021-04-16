@@ -166,6 +166,7 @@ class Timer(object):
     def __exit__(self, type, value, traceback):
         self.toc()
 
+
 def timeit(func):
     """ Decorator function to have a simple measurement
     of the execution time of a given function.
@@ -686,6 +687,18 @@ class Environ(dict):
             self.update({'LD_LIBRARY_PATH': libraryPath}, position=position)
         else:
             print("Some paths do not exist in: % s" % libraryPath)
+
+    def setPrepend(self, prepend):
+        """ Use this method to set a prepend string that will be added at
+        the beginning of any command that will be run in this environment.
+        This can be useful for example when 'modules' need to be loaded and
+        a simple environment variables setup is not enough.
+        """
+        setattr(self, '__prepend', prepend)
+
+    def getPrepend(self):
+        """ Return if there is any prepend value. See setPrepend function. """
+        return getattr(self, '__prepend', '')
 
 
 def existsVariablePaths(variableValue):
