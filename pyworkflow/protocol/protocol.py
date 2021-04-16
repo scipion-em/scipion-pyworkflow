@@ -678,15 +678,13 @@ class Protocol(Step):
             output = attrInput.get()
             if isinstance(output, Protocol):  # case A
                 protocol = output
-                output = None
             else:
                 if attrInput.hasExtended():  # case B
                     protocol = attrInput.getObjValue()
                 else:  # case C
 
                     if self.getProject() is not None:
-
-                        protocol = self.getProject().getProtocol(output.getObjParentId())
+                        protocol = self.getProject().getRunsGraph().getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
                         # Pointers do not have the __project set.
@@ -2353,7 +2351,7 @@ def isProtocolUpToDate(protocol):
               "Protocol %s, protocol time stamp: %s, %s timeStamp: %s"
               % (protocol, protTS, protocol, dbTS))
     else:
-        return protTS > dbTS
+        return protTS >= dbTS
 
 
 class ProtImportBase(Protocol):

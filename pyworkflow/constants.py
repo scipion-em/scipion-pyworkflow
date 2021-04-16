@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.11'
+VERSION_3_0 = '3.0.12'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -106,6 +106,12 @@ TK_GRAY_DEFAULT = '#d9d9d9'
 SCIPION_TESTS_CMD = 'SCIPION_TESTS_CMD'
 CONDA_ACTIVATION_CMD_VAR = 'CONDA_ACTIVATION_CMD'
 VIEWERS = 'VIEWERS'
+
+# Results when updating a protocol
+NOT_UPDATED_READ_ONLY = 0
+NOT_UPDATED_UNNECESSARY = 1
+NOT_UPDATED_ERROR = 2
+PROTOCOL_UPDATED = 3
 
 
 class DOCSITEURLS:

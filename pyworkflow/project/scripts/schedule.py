@@ -33,6 +33,7 @@ import pyworkflow as pw
 from pyworkflow.project import Manager
 from pyworkflow.project import Project
 import pyworkflow.utils as pwutils
+from pyworkflow.protocol import INITIAL_SLEEP_TIME
 
 
 def usage(error):
@@ -73,7 +74,9 @@ if not manager.hasProject(projName):
     usage("There is no project with this name: %s"
           % pwutils.red(projName))
 
-# the project may be a soft link which may be unavailable to the cluster so get the real path
+# the project may be a soft link which may be unavailable to the cluster
+# so get the real path
+
 try:
     projectPath = os.readlink(manager.getProjectPath(projName))
 except:
@@ -82,18 +85,21 @@ except:
 project = Project(pw.Config.getDomain(), projectPath)
 project.load()
 
-runs = project.getRuns()
+runGraph = project.getRunsGraph(False)
+roots = runGraph.getRootNodes()
 
 # Now assuming that there is no dependencies between runs
 # and the graph is lineal
-for prot in runs:
-    protClassName = prot.getClassName()
-    protLabelName = prot.getObjLabel()
-    if (protClassName not in sys.argv[3:] and
-            protLabelName not in sys.argv[3:]):
-        project.scheduleProtocol(prot)
-        # Wait 1 seconds to avoid concurrent activity
-        time.sleep(0.7)
-    else:
-        print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
-                              % (protClassName, protLabelName)))
+
+for root in roots:
+    for child in root.getChilds():
+        workflow, _ = project._getWorkflowFromProtocol(child.run)
+        for prot in workflow:
+            protClassName = prot.getClassName()
+            protLabelName = prot.getObjLabel()
+            if (protClassName not in sys.argv[3:] and
+                    protLabelName not in sys.argv[3:]):
+                project.scheduleProtocol(prot, workflow[prot]*INITIAL_SLEEP_TIME)
+            else:
+                print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
+                                      % (protClassName, protLabelName)))
