@@ -745,6 +745,7 @@ class SqliteFlatMapper(Mapper):
                 # #'temp_store': 'MEMORY',
                 # PRAGMA schema.cache_size = pages;
                 # #'cache_size': '5000' # versus -2000
+                "temp_store_directory": "'.'",
             }
             self.db = SqliteFlatDb(dbName, tablePrefix,
                                    pragmas=pragmas, indexes=indexes)
