@@ -4,4 +4,4 @@ configparser<=5.0.0
 matplotlib<=3.2.2
 numpy<=1.18.4
 pillow<=7.1.2
-requests<=2.23.0
+requests<=2.25.1

@@ -81,8 +81,10 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
     if gpuList:
         params = params % {'GPU': ' '.join(str(g) for g in gpuList)}
 
+    prepend = '' if env is None else env.getPrepend()
+
     if numberOfMpi <= 1:
-        return '%s %s' % (programname, params)
+        return '%s %s %s' % (prepend, programname, params)
     else:
         assert hostConfig is not None, 'hostConfig needed to launch MPI processes.'
 
@@ -91,10 +93,11 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
             
         mpiFlags = '' if env is None else env.get('SCIPION_MPI_FLAGS', '') 
 
-        return hostConfig.mpiCommand.get() % {
+        mpiCmd = hostConfig.mpiCommand.get() % {
             'JOB_NODES': numberOfMpi,
             'COMMAND': "%s `which %s` %s" % (mpiFlags, programname, params),
         }
+        return '%s %s' % (prepend, mpiCmd)
 
 
 def killWithChilds(pid):

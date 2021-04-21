@@ -2319,12 +2319,12 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_COLLAPSE:
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(False)
-                    self.updateRunsGraph(True, reorganize=True)
+                    self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_EXPAND:
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(True)
-                    self.updateRunsGraph(True, reorganize=True)
+                    self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_LABELS:
                     self._selectLabels()
