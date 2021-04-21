@@ -61,6 +61,7 @@ class RunScheduler:
         self.log = open(self.protocol.getScheduleLog(), 'w')
         self.protPid = os.getpid()
         self.protocol.setPid(self.protPid)
+        self.protocol._store(self.protocol._pid)
         self.prerequisites = list(map(int, self.protocol.getPrerequisites()))
         # Keep track of the last time the protocol was checked and
         # its modification date to avoid unnecessary db opening
@@ -232,7 +233,7 @@ class RunScheduler:
         return inputMissing, penalize
 
     def schedule(self):
-        self._log("Scheduling protocol %s, pid: %s, prerequisites: %s" %
+        self._log("Scheduling protocol %s, PID: %s,prerequisites: %s" %
                   (self.protocol.getObjId(), self.protPid, self.prerequisites))
 
         initialSleepTime = runScheduler.getInitialSleepTime()

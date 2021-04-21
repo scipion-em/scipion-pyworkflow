@@ -30,6 +30,7 @@ This module handles process execution
 
 import sys
 from subprocess import check_call
+import psutil
 
 from .utils import greenStr
 from pyworkflow import Config
@@ -101,7 +102,6 @@ def killWithChilds(pid):
     Params:
      pid: the process id to terminate
     """
-    import psutil
     proc = psutil.Process(pid)
     for c in proc.children(recursive=True):
         if c.pid is not None:
@@ -115,9 +115,8 @@ def killWithChilds(pid):
 
 
 def isProcessAlive(pid):
-    import psutil
     try:
-        proc = psutil.Process(pid)
-        return proc.is_running()
-    except psutil.NoSuchProcess:
+        psutil.Process(pid)
+        return True
+    except Exception as e:
         return False

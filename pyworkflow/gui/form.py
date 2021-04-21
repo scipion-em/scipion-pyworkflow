@@ -1590,6 +1590,7 @@ class FormWindow(Window):
         self.callback = callback
         self.widgetDict = {}  # Store tkVars associated with params
         self.visualizeDict = kwargs.get('visualizeDict', {})
+        self.copyProtocol = kwargs.get('copyProtocol', False)
         self.bindings = []
         self.hostList = hostList
         self.protocol = protocol
@@ -1874,7 +1875,7 @@ class FormWindow(Window):
 
         modeFrame = tk.Frame(runFrame, bg='white')
 
-        if not self.protocol.isSaved():
+        if not self.copyProtocol:
             self._createHeaderLabel(runFrame, pwutils.Message.LABEL_EXECUTION,
                                     bold=True,
                                     sticky='e', row=r, pady=0)
@@ -2200,8 +2201,8 @@ class FormWindow(Window):
             protocolList = ""
             if self.protocol.getObjId():
                 project = self.protocol.getProject()
-                workflowProtocolList, errorProList = project._getWorkflowFromProtocol(self.protocol)
-                for prot in workflowProtocolList:
+                workflowProtocolList, activeProtList = project._getWorkflowFromProtocol(self.protocol)
+                for prot, level in workflowProtocolList.values():
                     protocolList += ("\n* " + prot.getRunName())
                 if len(workflowProtocolList) > 1:
                     result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
@@ -2209,7 +2210,7 @@ class FormWindow(Window):
                                                 self.root)
                     if result == RESULT_RUN_ALL:
                         self.protocol._store()
-                        self.protocol.getProject()._storeProtocol(self.protocol)
+                        project._storeProtocol(self.protocol)
                         project._restartWorkflow(workflowProtocolList)
                         self.close()
                         return
