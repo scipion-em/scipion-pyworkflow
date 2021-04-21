@@ -1161,7 +1161,7 @@ class ProtocolsView(tk.Frame):
             # Check if the attribute should be open or close
             openItem = getattr(obj, 'openItem', level < 2)
             if openItem:
-                tree.item(item, open=True)
+                tree.item(item, open=openItem)
 
             if obj.value is not None and tag == 'protocol_base':
                 if prot is not None:
