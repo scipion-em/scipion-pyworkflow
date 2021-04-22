@@ -2200,7 +2200,7 @@ class FormWindow(Window):
             protocolList = ""
             if self.protocol.getObjId():
                 project = self.protocol.getProject()
-                errorProList, workflowProtocolList = project._checkWorkflowErrors(self.protocol)
+                workflowProtocolList, errorProList = project._getWorkflowFromProtocol(self.protocol)
                 for prot in workflowProtocolList:
                     protocolList += ("\n* " + prot.getRunName())
                 if len(workflowProtocolList) > 1:

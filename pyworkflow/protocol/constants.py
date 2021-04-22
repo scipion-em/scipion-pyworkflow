@@ -54,6 +54,15 @@ MODE_CONTINUE = 2  # Continue from specific step, not widely used //DEPRECATED.
 # JMRT: We now use 'Continue' label instead of 'Resume' which is more intuitive for users.
 MODE_CHOICES = ('Continue', 'Restart')  # , 'Continue')
 
+# Initial sleeping time (in seconds) in order to launch a scheduled protocol.
+# This value is multiply to the protocol level into the workflow.
+INITIAL_SLEEP_TIME = 30
+
+# Maximum time (in seconds) waiting for a scheduled protocol to check if it
+# can be launched.
+MAX_SLEEP_TIME = 120
+
+
 # Steps execution mode
 STEPS_SERIAL = 0      # Execute steps serially, some of the steps can be mpi programs
 STEPS_PARALLEL = 1    # Execute steps in parallel, through threads or mpi
