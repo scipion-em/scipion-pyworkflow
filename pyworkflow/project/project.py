@@ -511,7 +511,7 @@ class Project(object):
         for protocol in activeProtList:
             try:
                 self.stopProtocol(protocol)
-            except Exception as err:
+            except Exception:
                 errorProtList.append(protocol)
         return errorProtList
 
@@ -520,12 +520,14 @@ class Project(object):
         This function can reset a workflow from a selected protocol
         :param initialProtocol: selected protocol
         """
+        errorProtList = []
         if workflowProtocolList:
             for protocol, level in workflowProtocolList.values():
                 try:
                     self.resetProtocol(protocol)
-                except Exception as err:
-                    print(err)
+                except Exception:
+                    errorProtList.append(protocol)
+        return errorProtList
 
     def launchWorkflow(self, workflowProtocolList, mode=MODE_CONTINUE):
         """
@@ -802,7 +804,7 @@ class Project(object):
         configuredProtList = {}
         auxProtList = []
         # store the protocol and your level into the workflow
-        configuredProtList[protocol.getObjId()] = (protocol, 0)
+        configuredProtList[protocol.getObjId()] = [protocol, 0]
         auxProtList.append(protocol.getObjId())
         runGraph = self.getRunsGraph(False)
 
@@ -819,9 +821,9 @@ class Project(object):
                 if not dep.getObjId() in auxProtList:
                     auxProtList.append(dep.getObjId())
                 if not dep.getObjId() in configuredProtList.keys():
-                    configuredProtList[dep.getObjId()] = (dep, level)
+                    configuredProtList[dep.getObjId()] = [dep, level]
                 elif level > configuredProtList[dep.getObjId()][1]:
-                    configuredProtList[dep.getObjId()] = (dep, level)
+                    configuredProtList[dep.getObjId()][1] = level
 
         return configuredProtList, activeProtList
 

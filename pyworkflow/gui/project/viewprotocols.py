@@ -1513,7 +1513,7 @@ class ProtocolsView(tk.Frame):
         protClassName = tree.getFirst().split('.')[-1]
         protClass = self.domain.getProtocols().get(protClassName)
         prot = self.project.newProtocol(protClass)
-        self._openProtocolForm(prot)
+        self._openProtocolForm(prot, disableRunMode=True)
 
     def _toggleColorScheme(self, e=None):
 
@@ -1760,14 +1760,14 @@ class ProtocolsView(tk.Frame):
         #
         # if update is not None: self._updateSelection()
 
-    def _openProtocolForm(self, prot, copyProtocol=False):
+    def _openProtocolForm(self, prot, disableRunMode=False):
         """Open the Protocol GUI Form given a Protocol instance"""
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.windows,
                        hostList=self.project.getHostNames(),
                        updateProtocolCallback=self._updateProtocol,
-                       copyProtocol=copyProtocol)
+                       disableRunMode=disableRunMode)
         w.adjustSize()
         w.show(center=True)
 
@@ -1996,10 +1996,10 @@ class ProtocolsView(tk.Frame):
             self.cleanInfo()
 
     def _editProtocol(self, protocol):
-        isCopyProtocol = False
+        disableRunMode = False
         if protocol.isSaved():
-            isCopyProtocol = True
-        self._openProtocolForm(protocol, copyProtocol=isCopyProtocol)
+            disableRunMode = True
+        self._openProtocolForm(protocol, disableRunMode=disableRunMode)
 
     def _copyProtocols(self):
         protocols = self._getSelectedProtocols()
@@ -2008,7 +2008,7 @@ class ProtocolsView(tk.Frame):
             if newProt is None:
                 self.windows.showError("Error copying protocol.!!!")
             else:
-                self._openProtocolForm(newProt, copyProtocol=True)
+                self._openProtocolForm(newProt, disableRunMode=True)
         else:
             self.info('Copying the protocols...')
             self.project.copyProtocol(protocols)
@@ -2040,24 +2040,22 @@ class ProtocolsView(tk.Frame):
     def _resetWorkFlow(self, action):
 
         protocols = self._getSelectedProtocols()
-        errorList = []
+        errorProtList = []
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
             self.info('Resetting the workflow...')
             workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0],
                                                                                          False)
-            errorList = self.project.resetWorkFlow(workflowProtocolList)
+            errorProtList = self.project.resetWorkFlow(workflowProtocolList)
             self.cleanInfo()
             self.refreshRuns()
-        if errorList:
-            msg = ''
-            for errorProt in errorList:
-                error = ("The protocol: %s  is active\n" %
-                         (self.project.getProtocol(errorProt).getRunName()))
-                msg += str(error)
+        if errorProtList:
+            msg = '\n'
+            for prot in errorProtList:
+                msg += str(prot.self.getObjLabel()) + '\n'
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_RESETED_WORKFLOW_FAILED,
-                Message.TITLE_RESETED_WORKFLOW_FAILED + msg,
+                Message.TITLE_RESETED_WORKFLOW_FAILED + 'with: ' + msg,
                 'fa-times-circle_alert.gif')
 
     def _launchWorkFlow(self, action):

@@ -1590,7 +1590,7 @@ class FormWindow(Window):
         self.callback = callback
         self.widgetDict = {}  # Store tkVars associated with params
         self.visualizeDict = kwargs.get('visualizeDict', {})
-        self.copyProtocol = kwargs.get('copyProtocol', False)
+        self.disableRunMode = kwargs.get('disableRunMode', False)
         self.bindings = []
         self.hostList = hostList
         self.protocol = protocol
@@ -1875,7 +1875,7 @@ class FormWindow(Window):
 
         modeFrame = tk.Frame(runFrame, bg='white')
 
-        if not self.copyProtocol:
+        if not self.disableRunMode:
             self._createHeaderLabel(runFrame, pwutils.Message.LABEL_EXECUTION,
                                     bold=True,
                                     sticky='e', row=r, pady=0)

@@ -1,0 +1,8 @@
+-------
+v3.0.13
+-------
+
+April 21, 2021:
+ - GUI performance and speed up
+ - Improvement of the scheduling process
+ - Fixed the options: Restart, Continue, Reset and Stop a workflow
