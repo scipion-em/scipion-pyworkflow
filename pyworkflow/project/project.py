@@ -423,7 +423,7 @@ class Project(object):
                             protocol._store()
                             self._storeProtocol(protocol)
                             self.scheduleProtocol(protocol,
-                                                  level*INITIAL_SLEEP_TIME)
+                                                  initialSleepTime=level*INITIAL_SLEEP_TIME)
                         except Exception as ex:
                             errorsList.append("Error trying to launch the "
                                               "protocol: %s\nERROR: %s\n" %
@@ -458,7 +458,8 @@ class Project(object):
                 if not protocol.isInteractive():
                     try:
                         protocol.runMode.set(MODE_RESTART)
-                        self.scheduleProtocol(protocol, level*INITIAL_SLEEP_TIME)
+                        self.scheduleProtocol(protocol,
+                                              initialSleepTime=level*INITIAL_SLEEP_TIME)
                     except Exception as ex:
                         errorsList.append("Error trying to restart a protocol: %s"
                                           "\nERROR: %s\n" % (protocol.getObjLabel(),
@@ -492,7 +493,7 @@ class Project(object):
             # Fix the protocol parameters
             for pointer in oldStylePointerList:
                 auxPointer = pointer.getObjValue()
-                pointer.set(self.getRunsGraph(refresh=False).getNode(str(pointer.get().getObjParentId())).run)
+                pointer.set(self.getRunsGraph().getNode(str(pointer.get().getObjParentId())).run)
                 pointer.setExtended(auxPointer.getLastName())
                 protocol._store()
                 self._storeProtocol(protocol)
@@ -599,7 +600,7 @@ class Project(object):
             self.mapper.store(protocol)
         self.mapper.commit()
 
-    def scheduleProtocol(self, protocol, initialSleepTime=0, prerequisites=[]):
+    def scheduleProtocol(self, protocol, prerequisites=[], initialSleepTime=0):
         """ Schedule a new protocol that will run when the input data
         is available and the prerequisites are finished.
         Params:
@@ -760,7 +761,7 @@ class Project(object):
 
     def _getProtocolsDependencies(self, protocols):
         error = ''
-        runsGraph = self.getRunsGraph(refresh=False)
+        runsGraph = self.getRunsGraph()
         for prot in protocols:
             node = runsGraph.getNode(prot.strId())
             if node:
@@ -806,7 +807,7 @@ class Project(object):
         # store the protocol and your level into the workflow
         configuredProtList[protocol.getObjId()] = [protocol, 0]
         auxProtList.append(protocol.getObjId())
-        runGraph = self.getRunsGraph(False)
+        runGraph = self.getRunsGraph()
 
         while auxProtList:
             protocol = runGraph.getNode(str(auxProtList.pop(0))).run
@@ -848,7 +849,7 @@ class Project(object):
         """ Delete a given object from the project.
         Usually to clean up some outputs.
         """
-        node = self.getRunsGraph(refresh=False).getNode(protocol.strId())
+        node = self.getRunsGraph().getNode(protocol.strId())
         deps = []
 
         for node in node.getChilds():
@@ -996,7 +997,7 @@ class Project(object):
                 newDict[prot.getObjId()] = newProt
                 self.saveProtocol(newProt)
 
-            g = self.getRunsGraph(refresh=False)
+            g = self.getRunsGraph()
 
             for prot in protocol:
                 node = g.getNode(prot.strId())
@@ -1048,7 +1049,7 @@ class Project(object):
         for prot in protocols:
             newDict[prot.getObjId()] = prot.getDefinitionDict()
 
-        g = self.getRunsGraph(refresh=False)
+        g = self.getRunsGraph()
 
         # pwutils.startDebugger('a')
         for prot in protocols:
@@ -1367,7 +1368,7 @@ class Project(object):
                                                  objectFilter=objectFilter):
                 yield obj
 
-    def getRunsGraph(self, refresh=True, checkPids=False):
+    def getRunsGraph(self, refresh=False, checkPids=False):
         """ Build a graph taking into account the dependencies between
         different runs, ie. which outputs serves as inputs of other protocols. 
         """

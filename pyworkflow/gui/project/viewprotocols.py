@@ -1611,7 +1611,7 @@ class ProtocolsView(tk.Frame):
     def _deselectItems(self, item):
         """ Deselect all items except the item one
         """
-        g = self.project.getRunsGraph(refresh=False)
+        g = self.project.getRunsGraph()
 
         for node in g.getNodes():
             if node.run and node.run.getObjId() in self._selection:
@@ -1801,7 +1801,7 @@ class ProtocolsView(tk.Frame):
 
     def _iterSelectedProtocols(self):
         for protId in sorted(self._selection):
-            prot = self.project.getRunsGraph(refresh=False).getNode(str(protId)).run
+            prot = self.project.getRunsGraph().getNode(str(protId)).run
             if prot:
                 yield prot
 
@@ -1902,6 +1902,8 @@ class ProtocolsView(tk.Frame):
                 self.outputViewer.addFile(log)
                 if os.path.exists(schedule):
                     self.outputViewer.addFile(schedule)
+                elif i == 2:
+                    i = 0
                 self.outputViewer.setIndex(i)  # Preserve the last selected tab
                 self.outputViewer.selectedText().goEnd()
                 # when there are not logs, force re-load next time

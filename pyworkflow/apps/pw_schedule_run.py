@@ -184,7 +184,21 @@ class RunScheduler:
         penalize = 0
         self._log("Checking prerequisites... %s" % prerequisites)
         for protId in prerequisites:
-            prot = project.runGraph.getNode(str(protId)).run
+            # Check if prerequisites exist. In the case of metaprotocols, it
+            # may be necessary to load them from the project database.
+            node = project.getRunsGraph().getNode(str(protId))
+
+            if node is None:
+                self._log("Updating runs graph. Missing protocol ... %s" % protId)
+                project.getRunsGraph(refresh=True)
+
+            node = project.getRunsGraph().getNode(str(protId))
+            # Check if the protocol is within our workflow
+            if node is None:
+                self._log("Protocol can't wait for %s. Missing prerequisite " % protId)
+                break
+
+            prot = project.getRunsGraph().getNode(str(protId)).run
             if prot is not None:
                 self._updateProtocol(prot)
                 penalize += self._getSecondsToWait(prot)

@@ -684,7 +684,7 @@ class Protocol(Step):
                 else:  # case C
 
                     if self.getProject() is not None:
-                        protocol = self.getProject().getRunsGraph().getNode(str(output.getObjParentId())).run
+                        protocol = self.getProject().getRunsGraph(refresh=True).getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
                         # Pointers do not have the __project set.
