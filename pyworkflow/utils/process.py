@@ -121,5 +121,5 @@ def isProcessAlive(pid):
     try:
         psutil.Process(pid)
         return True
-    except Exception as e:
+    except Exception:
         return False
