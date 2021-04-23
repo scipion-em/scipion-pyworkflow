@@ -2033,10 +2033,10 @@ class ProtocolsView(tk.Frame):
             if errorProtList:
                 msg = '\n'
                 for prot in errorProtList:
-                    msg += str(prot.self.getObjLabel()) + '\n'
+                    msg += str(prot.getObjLabel()) + '\n'
                 pwgui.dialog.MessageDialog(
                     self, Message.TITLE_STOPPED_WORKFLOW_FAILED,
-                    Message.TITLE_STOPPED_WORKFLOW_FAILED + 'with: ' + msg,
+                    Message.TITLE_STOPPED_WORKFLOW_FAILED + ' with: ' + msg,
                     'fa-times-circle_alert.gif')
 
     def _resetWorkFlow(self, action):
@@ -2054,10 +2054,10 @@ class ProtocolsView(tk.Frame):
         if errorProtList:
             msg = '\n'
             for prot in errorProtList:
-                msg += str(prot.self.getObjLabel()) + '\n'
+                msg += str(prot.getObjLabel()) + '\n'
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_RESETED_WORKFLOW_FAILED,
-                Message.TITLE_RESETED_WORKFLOW_FAILED + 'with: ' + msg,
+                Message.TITLE_RESETED_WORKFLOW_FAILED + ' with: ' + msg,
                 'fa-times-circle_alert.gif')
 
     def _launchWorkFlow(self, action):
