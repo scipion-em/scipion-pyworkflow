@@ -27,9 +27,7 @@ from collections import OrderedDict
 
 from pyworkflow.utils import replaceExt, joinExt
 from .sqlite_db import SqliteDb, OperationalError
-
 from .mapper import Mapper
-from .sqlite_db import SqliteDb
 
 ID = 'id'
 CREATION = 'creation'
