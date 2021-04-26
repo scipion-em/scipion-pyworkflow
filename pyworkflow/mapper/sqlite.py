@@ -950,7 +950,7 @@ to one that has enough free space. By default this directory is /tmp
 You may achieve this goal by defining the SQLITE_TMPDIR environment variable
 and restarting scipion. Export command:
     export SQLITE_TMPDIR=. """ % str(e)
-            raise Exception(msg)
+            raise OperationalError(msg)
         
         return self.__objectsFromRows(objRows, iterate, objectFilter) 
 
