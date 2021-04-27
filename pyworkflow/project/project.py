@@ -625,7 +625,7 @@ class Project(object):
         # changed later to only create a subset of the db need for the run
         pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
         # Launch the protocol, the jobId should be set after this call
-        pwprot.schedule(protocol, initialSleepTime)
+        pwprot.schedule(protocol, initialSleepTime=initialSleepTime)
         self.mapper.store(protocol)
         self.mapper.commit()
 
@@ -712,7 +712,8 @@ class Project(object):
         try:
             if protocol.getStatus() in ACTIVE_STATUS:
                 pwprot.stop(protocol)
-        except Exception:
+        except Exception as e:
+            print("stopProtocol: error", e)
             raise
         finally:
             protocol.setAborted()
