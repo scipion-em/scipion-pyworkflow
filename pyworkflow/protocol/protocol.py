@@ -27,6 +27,7 @@ execution and tracking like: Step and Protocol
 """
 import sys
 import json
+import threading
 import time
 
 import pyworkflow as pw
@@ -418,6 +419,8 @@ class Protocol(Step):
 
         # Store warnings here
         self.summaryWarnings = []
+        # Get a lock for threading execution
+        self._lock = threading.Lock()
 
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
