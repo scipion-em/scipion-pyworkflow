@@ -107,6 +107,12 @@ SCIPION_TESTS_CMD = 'SCIPION_TESTS_CMD'
 CONDA_ACTIVATION_CMD_VAR = 'CONDA_ACTIVATION_CMD'
 VIEWERS = 'VIEWERS'
 
+# Results when updating a protocol
+NOT_UPDATED_READ_ONLY = 0
+NOT_UPDATED_UNNECESSARY = 1
+NOT_UPDATED_ERROR = 2
+PROTOCOL_UPDATED = 3
+
 
 class DOCSITEURLS:
     """Documentation site URL useful when exceptions happens and you want to point to some pages"""

@@ -1161,7 +1161,7 @@ class ProtocolsView(tk.Frame):
             # Check if the attribute should be open or close
             openItem = getattr(obj, 'openItem', level < 2)
             if openItem:
-                tree.item(item, open=True)
+                tree.item(item, open=openItem)
 
             if obj.value is not None and tag == 'protocol_base':
                 if prot is not None:
@@ -2034,8 +2034,8 @@ class ProtocolsView(tk.Frame):
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
             self.info('Resetting the workflow...')
-            errorsList, workflowProtocolList = self.project._checkWorkflowErrors(protocols[0],
-                                                                                 False)
+            workflowProtocolList, errorsList = self.project._getWorkflowFromProtocol(protocols[0],
+                                                                                     False)
             errorList = self.project.resetWorkFlow(workflowProtocolList)
             self.cleanInfo()
             self.refreshRuns()
@@ -2296,12 +2296,12 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_COLLAPSE:
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(False)
-                    self.updateRunsGraph(True, reorganize=True)
+                    self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_EXPAND:
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(True)
-                    self.updateRunsGraph(True, reorganize=True)
+                    self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_LABELS:
                     self._selectLabels()
