@@ -288,9 +288,19 @@ class RunScheduler:
 
 
 if __name__ == '__main__':
-    try:
-        runScheduler = RunScheduler()
-        runScheduler.schedule()
-    except Exception as ex:
-        print(ex)
-        print("Schedule fail with this parameters: ", sys.argv)
+
+    # Create a child process
+    # using os.fork() method
+    pid = os.fork()
+
+    # pid greater than 0 represents
+    # the parent process
+    if pid > 0:
+        sys.exit(0)
+    else:
+        try:
+            runScheduler = RunScheduler()
+            runScheduler.schedule()
+        except Exception as ex:
+            print(ex)
+            print("Schedule fail with this parameters: ", sys.argv)
