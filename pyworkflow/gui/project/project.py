@@ -234,7 +234,7 @@ class ProjectWindow(ProjectBaseWindow):
             self.getViewWidget().updateRunsGraph(True, reorganize=False)
             self.getViewWidget().cleanInfo()
         except Exception as ex:
-            self.showError(str(ex))
+            self.showError(str(ex), exception=ex)
             
     def onImportWorkflow(self):
         FileBrowserWindow("Select workflow .json file",
