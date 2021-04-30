@@ -904,6 +904,7 @@ class ProtocolsView(tk.Frame):
              then only case when False is from _automaticRefreshRuns where the
              refresh time is doubled each time to avoid refreshing too often.
         """
+        self.viewButtons[ACTION_REFRESH]['state'] = tk.DISABLED
         self.info('Refreshing...')
         self.refreshSemaphore = False
         if Config.debugOn():
@@ -936,6 +937,7 @@ class ProtocolsView(tk.Frame):
             self.repeatRefresh = False
             self.refreshRuns()
         self.cleanInfo()
+        self.viewButtons[ACTION_REFRESH]['state'] = tk.NORMAL
 
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
@@ -943,12 +945,8 @@ class ProtocolsView(tk.Frame):
         if pwutils.envVarOn('DO_NOT_AUTO_REFRESH'):
             return
 
-        if self.project.needRefresh():
-            self.refreshRuns(initRefreshCounter=False)
-            secs = self.__autoRefreshCounter
-        else:
-            secs = INIT_REFRESH_SECONDS // 2
-
+        self.refreshRuns(initRefreshCounter=False, checkPids=True)
+        secs = self.__autoRefreshCounter
         # double the number of seconds up to 30 min
         self.__autoRefreshCounter = min(2 * secs, 1800)
         self.__autoRefresh = self.runsTree.after(secs * 1000,
@@ -1515,7 +1513,7 @@ class ProtocolsView(tk.Frame):
         protClassName = tree.getFirst().split('.')[-1]
         protClass = self.domain.getProtocols().get(protClassName)
         prot = self.project.newProtocol(protClass)
-        self._openProtocolForm(prot)
+        self._openProtocolForm(prot, disableRunMode=True)
 
     def _toggleColorScheme(self, e=None):
 
@@ -1613,7 +1611,7 @@ class ProtocolsView(tk.Frame):
     def _deselectItems(self, item):
         """ Deselect all items except the item one
         """
-        g = self.project.getRunsGraph(refresh=False)
+        g = self.project.getRunsGraph()
 
         for node in g.getNodes():
             if node.run and node.run.getObjId() in self._selection:
@@ -1762,13 +1760,14 @@ class ProtocolsView(tk.Frame):
         #
         # if update is not None: self._updateSelection()
 
-    def _openProtocolForm(self, prot):
+    def _openProtocolForm(self, prot, disableRunMode=False):
         """Open the Protocol GUI Form given a Protocol instance"""
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.windows,
                        hostList=self.project.getHostNames(),
-                       updateProtocolCallback=self._updateProtocol)
+                       updateProtocolCallback=self._updateProtocol,
+                       disableRunMode=disableRunMode)
         w.adjustSize()
         w.show(center=True)
 
@@ -1802,7 +1801,7 @@ class ProtocolsView(tk.Frame):
 
     def _iterSelectedProtocols(self):
         for protId in sorted(self._selection):
-            prot = self.project.getRunsGraph(refresh=False).getNode(str(protId)).run
+            prot = self.project.getRunsGraph().getNode(str(protId)).run
             if prot:
                 yield prot
 
@@ -1903,6 +1902,8 @@ class ProtocolsView(tk.Frame):
                 self.outputViewer.addFile(log)
                 if os.path.exists(schedule):
                     self.outputViewer.addFile(schedule)
+                elif i == 2:
+                    i = 0
                 self.outputViewer.setIndex(i)  # Preserve the last selected tab
                 self.outputViewer.selectedText().goEnd()
                 # when there are not logs, force re-load next time
@@ -1989,10 +1990,18 @@ class ProtocolsView(tk.Frame):
         if pwgui.dialog.askYesNo(Message.TITLE_DELETE_FORM,
                                  Message.LABEL_DELETE_FORM % protStr,
                                  self.root):
+            self.info('Deleting protocols...')
             self.project.deleteProtocol(*protocols)
             self._selection.clear()
             self._updateSelection()
             self._scheduleRunsUpdate()
+            self.cleanInfo()
+
+    def _editProtocol(self, protocol):
+        disableRunMode = False
+        if protocol.isSaved():
+            disableRunMode = True
+        self._openProtocolForm(protocol, disableRunMode=disableRunMode)
 
     def _copyProtocols(self):
         protocols = self._getSelectedProtocols()
@@ -2001,53 +2010,54 @@ class ProtocolsView(tk.Frame):
             if newProt is None:
                 self.windows.showError("Error copying protocol.!!!")
             else:
-                self._openProtocolForm(newProt)
+                self._openProtocolForm(newProt, disableRunMode=True)
         else:
+            self.info('Copying the protocols...')
             self.project.copyProtocol(protocols)
             self.refreshRuns()
+            self.cleanInfo()
 
     def _stopWorkFlow(self, action):
 
         protocols = self._getSelectedProtocols()
-        errorList = []
-        if pwgui.dialog.askYesNo(Message.TITLE_STOP_WORKFLOW_FORM,
-                                 Message.TITLE_STOP_WORKFLOW, self.root):
-            self.info('Stopping the workflow...')
-            errorList = self.project.stopWorkFlow(protocols[0])
-            self.cleanInfo()
-            self.refreshRuns()
-        if errorList:
-            msg = ''
-            for errorProt in errorList:
-                error = ("The protocol: %s  is active\n" %
-                         (self.project.getProtocol(errorProt).getRunName()))
-                msg += str(error)
-            pwgui.dialog.MessageDialog(
-                self, Message.TITLE_STOPPED_WORKFLOW_FAILED,
-                Message.TITLE_STOPPED_WORKFLOW_FAILED + msg,
-                'fa-times-circle_alert.gif')
+        workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0],
+                                                                                     False)
+        if activeProtList:
+            errorProtList = []
+            if pwgui.dialog.askYesNo(Message.TITLE_STOP_WORKFLOW_FORM,
+                                     Message.TITLE_STOP_WORKFLOW, self.root):
+                self.info('Stopping the workflow...')
+                errorProtList = self.project.stopWorkFlow(activeProtList)
+                self.cleanInfo()
+                self.refreshRuns()
+            if errorProtList:
+                msg = '\n'
+                for prot in errorProtList:
+                    msg += str(prot.getObjLabel()) + '\n'
+                pwgui.dialog.MessageDialog(
+                    self, Message.TITLE_STOPPED_WORKFLOW_FAILED,
+                    Message.TITLE_STOPPED_WORKFLOW_FAILED + ' with: ' + msg,
+                    'fa-times-circle_alert.gif')
 
     def _resetWorkFlow(self, action):
 
         protocols = self._getSelectedProtocols()
-        errorList = []
+        errorProtList = []
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
             self.info('Resetting the workflow...')
-            workflowProtocolList, errorsList = self.project._getWorkflowFromProtocol(protocols[0],
-                                                                                     False)
-            errorList = self.project.resetWorkFlow(workflowProtocolList)
+            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0],
+                                                                                         False)
+            errorProtList = self.project.resetWorkFlow(workflowProtocolList)
             self.cleanInfo()
             self.refreshRuns()
-        if errorList:
-            msg = ''
-            for errorProt in errorList:
-                error = ("The protocol: %s  is active\n" %
-                         (self.project.getProtocol(errorProt).getRunName()))
-                msg += str(error)
+        if errorProtList:
+            msg = '\n'
+            for prot in errorProtList:
+                msg += str(prot.getObjLabel()) + '\n'
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_RESETED_WORKFLOW_FAILED,
-                Message.TITLE_RESETED_WORKFLOW_FAILED + msg,
+                Message.TITLE_RESETED_WORKFLOW_FAILED + ' with: ' + msg,
                 'fa-times-circle_alert.gif')
 
     def _launchWorkFlow(self, action):
@@ -2058,18 +2068,30 @@ class ProtocolsView(tk.Frame):
         protocols = self._getSelectedProtocols()
         errorList = []
         defaultMode = pwprot.MODE_CONTINUE
+        workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
 
-        if action == ACTION_RESTART_WORKFLOW:
+        # Check if exists active protocols
+        if activeProtList:
+            msg = '\n'
+            for activeProt in activeProtList:
+                msg += str(activeProt.getObjLabel()) + '\n'
+            pwgui.dialog.MessageDialog(
+                self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
+                Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" +
+                Message.TITLE_ACTIVE_PROTOCOLS + "\n" + msg,
+                'fa-times-circle_alert.gif')
+
+        elif action == ACTION_RESTART_WORKFLOW:
             if pwgui.dialog.askYesNo(Message.TITLE_RESTART_WORKFLOW_FORM,
                                      Message.TITLE_RESTART_WORKFLOW, self.root):
                 defaultMode = pwprot.MODE_RESTART
-                self.info('Checking the workflow to restart...')
-                errorList = self.project.launchWorkflow(protocols[0],
+                self.info('Restarting...')
+                errorList = self.project.launchWorkflow(workflowProtocolList,
                                                         defaultMode)
                 self.cleanInfo()
         elif action == ACTION_CONTINUE_WORKFLOW:
-            self.info('Checking the workflow to continue...')
-            errorList = self.project.launchWorkflow(protocols[0],
+            self.info('Continuing...')
+            errorList = self.project.launchWorkflow(workflowProtocolList,
                                                     defaultMode)
             self.cleanInfo()
 
@@ -2081,6 +2103,7 @@ class ProtocolsView(tk.Frame):
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
                 Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" + msg,
                 'fa-times-circle_alert.gif')
+        self.refreshRuns()
 
     def _selectLabels(self):
         selectedNodes = self._getSelectedNodes()
@@ -2270,7 +2293,7 @@ class ProtocolsView(tk.Frame):
                 if action == ACTION_DEFAULT:
                     pass
                 elif action == ACTION_EDIT:
-                    self._openProtocolForm(prot)
+                    self._editProtocol(prot)
                 elif action == ACTION_RENAME:
                     self._renameProtocol(prot)
                 elif action == ACTION_COPY:

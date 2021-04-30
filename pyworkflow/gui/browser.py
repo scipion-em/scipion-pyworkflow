@@ -638,8 +638,8 @@ class FileBrowserWindow(BrowserWindow):
                               **kwargs)
         if onSelect:
             def selected(obj):
-                onSelect(obj)
                 self.close()
+                onSelect(obj)
 
             browser.onSelect = selected
         browser.onClose = self.close
