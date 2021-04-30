@@ -600,7 +600,10 @@ class TextFileViewer(tk.Frame):
         self._lastTabIndex = self.notebook.select()
         # reset the search
         self.lastSearch = None
-        self.searchEntry.focus_set()
+        # Setting the focus, captures it when selecting protocols and
+        # therefore "deleting" using keys or other future shortcut for the canvas
+        # will not work.
+        # self.searchEntry.focus_set()
 
     def addBinding(self):
 
