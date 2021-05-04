@@ -25,13 +25,13 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-
-import os
 import sys
 import json
+import threading
 import time
 
 import pyworkflow as pw
+from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import ScipionLogger
@@ -40,15 +40,17 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
 from .constants import *
 from .params import Form
 
+SCHEDULE_LOG = 'schedule.log'
 
-class Step(OrderedObject):
+
+class Step(Object):
     """ Basic execution unit.
     It should defines its Input, Output
     and define a run method.
     """
 
     def __init__(self, **kwargs):
-        OrderedObject.__init__(self, **kwargs)
+        Object.__init__(self, **kwargs)
         self._prerequisites = CsvList()  # which steps needs to be done first
         self.status = String()
         self.initTime = String()
@@ -107,15 +109,22 @@ class Step(OrderedObject):
 
     def setFailed(self, msg):
         """ Set the run failed and store an error message. """
-        self.endTime.set(dt.datetime.now())
-        self._error.set(msg)
-        self.status.set(STATUS_FAILED)
+        self._finalizeStep(STATUS_FAILED, msg=msg)
 
     def setAborted(self):
-        """ Set the status to aborted and updated the endTime. """
+        """ Set the status to aborted and updates the endTime. """
+        self._finalizeStep(STATUS_ABORTED, "Aborted by user.")
+
+    def setFinished(self):
+        """ Set the status to finish updates the end time """
+        self._finalizeStep(STATUS_FINISHED)
+
+    def _finalizeStep(self, status, msg=None):
+        """ Closes the step, setting up the endTime and optionally an error message"""
         self.endTime.set(dt.datetime.now())
-        self._error.set("Aborted by user.")
-        self.status.set(STATUS_ABORTED)
+        if msg:
+            self._error.set(msg)
+        self.status.set(status)
 
     def setSaved(self):
         """ Set the status to saved and updated the endTime. """
@@ -196,7 +205,7 @@ class Step(OrderedObject):
                     status = STATUS_FINISHED
                 self.status.set(status)
 
-        except ValidationException as e:
+        except PyworkflowException as e:
             print(pwutils.redStr(str(e)))
             self.setFailed(str(e))
         except Exception as e:
@@ -286,7 +295,7 @@ class RunJobStep(FunctionStep):
         # We know that:
         #  _func: is the runJob function
         #  _args[0]: is the program name
-        #  _args[1]: is the argumets to the program
+        #  _args[1]: is the arguments to the program
         return self._func(None, self._args[0], self._args[1],
                           numberOfMpi=self.mpi, numberOfThreads=self.threads)
         # TODO: Add the option to return resultFiles
@@ -313,6 +322,8 @@ class Protocol(Step):
     # Version where protocol appeared first time
     _lastUpdateVersion = pw.VERSION_1
     _stepsCheckSecs = 3
+    # Protocol develop status: PROD, BETA, NEW
+    _devStatus = pw.PROD
 
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
@@ -395,6 +406,7 @@ class Protocol(Step):
         self._pid = Integer()
         self._stepsExecutor = None
         self._stepsDone = Integer(0)
+        self._cpuTime = Integer(0)
         self._numberOfSteps = Integer(0)
         # For visualization
         self.allowHeader = Boolean(True)
@@ -407,6 +419,8 @@ class Protocol(Step):
 
         # Store warnings here
         self.summaryWarnings = []
+        # Get a lock for threading execution
+        self._lock = threading.Lock()
 
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
@@ -444,9 +458,9 @@ class Protocol(Step):
                          state=Set.STREAM_OPEN):
         """ Use this function when updating an Stream output set.
         """
-        self.__tryUpdateOuputSet(outputName, outputSet, state)
+        self.__tryUpdateOutputSet(outputName, outputSet, state)
 
-    def __tryUpdateOuputSet(self, outputName, outputSet,
+    def __tryUpdateOutputSet(self, outputName, outputSet,
                             state=Set.STREAM_OPEN, tries=1):
         try:
             # Update the set with the streamState value (either OPEN or CLOSED)
@@ -463,7 +477,7 @@ class Protocol(Step):
                 # Here the defineOutputs function will call the write() method
                 self._defineOutputs(**{outputName: outputSet})
                 self._store(outputSet)
-            # Close set databaset to avoid locking it
+            # Close set database to avoid locking it
             outputSet.close()
 
         except Exception as ex:
@@ -473,8 +487,8 @@ class Protocol(Step):
                 raise ex
             else:
                 time.sleep(tries)
-                self.__tryUpdateOuputSet(outputName, outputSet, state,
-                                         tries + 1)
+                self.__tryUpdateOutputSet(outputName, outputSet, state,
+                                          tries + 1)
 
     def hasExpert(self):
         """ This function checks if the protocol has
@@ -503,13 +517,15 @@ class Protocol(Step):
         return hasattr(cls, '_definition')
 
     @classmethod
-    def getLastUpdateVersion(cls):
-        return cls._lastUpdateVersion
+    def isNew(cls):
+        if cls._devStatus == pw.NEW:
+            return True
+        elif cls._devStatus == pw.PROD:
+            return cls._lastUpdateVersion not in pw.OLD_VERSIONS
 
     @classmethod
-    def isNew(cls):
-        version = cls.getLastUpdateVersion()
-        return version not in pw.OLD_VERSIONS
+    def isBeta(cls):
+        return cls._devStatus == pw.BETA
 
     def getDefinition(self):
         """ Access the protocol definition. """
@@ -533,7 +549,7 @@ class Protocol(Step):
 
     def evalParamCondition(self, paramName):
         """ Eval if the condition of paramName in _definition
-        is satified with the current values of the protocol attributes.
+        is satisfied with the current values of the protocol attributes.
         """
         return self._definition.evalParamCondition(paramName)
 
@@ -665,15 +681,13 @@ class Protocol(Step):
             output = attrInput.get()
             if isinstance(output, Protocol):  # case A
                 protocol = output
-                output = None
             else:
                 if attrInput.hasExtended():  # case B
                     protocol = attrInput.getObjValue()
                 else:  # case C
 
                     if self.getProject() is not None:
-
-                        protocol = self.getProject().getProtocol(output.getObjParentId())
+                        protocol = self.getProject().getRunsGraph(refresh=True).getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
                         # Pointers do not have the __project set.
@@ -753,7 +767,7 @@ class Protocol(Step):
             # FIX: When deleting manually an output, specially for interactive protocols.
             # The _outputs is properly deleted in projects.sqlite, not it's run.db remains.
             # When the protocol is updated from run.db it brings the outputs that were deleted
-            if hasattr(self,attrName):
+            if hasattr(self, attrName):
                 # Get it from the protocol
                 attr = getattr(self, attrName)
 
@@ -926,11 +940,27 @@ class Protocol(Step):
 
         return step.getIndex()
 
-    def _setStatusSteps(self, status):
-        """Set the status of all steps"""
+    def setRunning(self):
+        """ Do not reset the init time in RESUME_MODE"""
+        previousStart = self.initTime.get()
+        super().setRunning()
+        if self.getRunMode() == MODE_RESUME:
+            self.initTime.set(previousStart)
+        else:
+            self._cpuTime.set(0)
+
+    def setAborted(self):
+        """ Abort the protocol and finalize the steps"""
+        super().setAborted()
+        self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+
+    def _updateSteps(self, updater, where="1"):
+        """Set the status of all steps
+        :parameter updater callback/lambda receiving a step and editing it inside
+        :parameter where condition to filter the set with."""
         stepsSet = StepSet(filename=self.getStepsFile())
-        for step in stepsSet:
-            step.setStatus(status)
+        for step in stepsSet.iterItems(where=where):
+            updater(step)
             stepsSet.update(step)
         stepsSet.write()
         stepsSet.close()  # Close the connection
@@ -968,24 +998,25 @@ class Protocol(Step):
         """
         return self._getPath(os.path.basename(path))
 
-    def _insertFunctionStep(self, funcName, *funcArgs, **kwargs):
+    def _insertFunctionStep(self, func, *funcArgs, **kwargs):
         """
          Params:
-           funcName: the string name of the function to be run in the Step.
+           func: the function itself or, optionally, the name (string) of the function to be run in the Step.
            *funcArgs: the variable list of arguments to pass to the function.
            **kwargs: see __insertStep
         """
-        # Get the function give its name
-        func = getattr(self, funcName, None)
+        if isinstance(func, str):
+            # Get the function give its name
+            func = getattr(self, func, None)
 
         # Ensure the protocol instance have it and is callable
         if not func:
             raise Exception("Protocol._insertFunctionStep: '%s' function is "
-                            "not member of the protocol" % funcName)
+                            "not member of the protocol" % func)
         if not callable(func):
             raise Exception("Protocol._insertFunctionStep: '%s' is not callable"
-                            % funcName)
-        step = FunctionStep(func, funcName, *funcArgs, **kwargs)
+                            % func)
+        step = FunctionStep(func, func.__name__, *funcArgs, **kwargs)
 
         return self.__insertStep(step, **kwargs)
 
@@ -1007,7 +1038,7 @@ class Protocol(Step):
     def _enterDir(self, path):
         """ Enter into a new directory path and store the current path.
         The current path will be used in _leaveDir, but nested _enterDir
-        are not allowed since self._currentDir is overriden.
+        are not allowed since self._currentDir is overwritten.
         """
         self._currentDir = os.getcwd()
         os.chdir(path)
@@ -1027,7 +1058,7 @@ class Protocol(Step):
         self._enterDir(self.workingDir.get())
 
     def _leaveWorkingDir(self):
-        """ This funcion make sense to use in conjunction
+        """ This function make sense to use in conjunction
         with _enterWorkingDir to go back to execution path.
         """
         self._leaveDir()
@@ -1082,13 +1113,13 @@ class Protocol(Step):
 
         n = min(len(self._steps), len(self._prevSteps))
         self.debug("len(steps) %s len(prevSteps) %s "
-                  % (len(self._steps), len(self._prevSteps)))
+                   % (len(self._steps), len(self._prevSteps)))
 
         for i in range(n):
             newStep = self._steps[i]
             oldStep = self._prevSteps[i]
             if (not oldStep.isFinished() or newStep != oldStep
-                or not oldStep._postconditions()):
+                    or not oldStep._postconditions()):
                 if pw.Config.debugOn():
                     self.info("Starting at step %d" % i)
                     self.info("     Old step: %s, args: %s"
@@ -1153,7 +1184,8 @@ class Protocol(Step):
 
         self.__updateStep(step)
         self._stepsDone.increment()
-        self._store(self._stepsDone)
+        self._cpuTime.set(self._cpuTime.get() + step.getElapsedTime().total_seconds())
+        self._store(self._stepsDone,  self._cpuTime)
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
                   % (step.funcName.get(), step._index, step.endTime.datetime()))
@@ -1201,7 +1233,7 @@ class Protocol(Step):
         for attrName in attributes:
             attr = getattr(self, attrName)
             self.mapper.delete(attr)
-            self.deleteAttribute(attrName)
+            delattr(self, attrName)
 
         self._outputs.clear()
         self.mapper.store(self._outputs)
@@ -1215,7 +1247,7 @@ class Protocol(Step):
     def deleteOutput(self, output):
         attrName = self.findAttributeName(output)
         self.mapper.delete(output)
-        self.deleteAttribute(attrName)
+        delattr(self,attrName)
         if attrName in self._outputs:
             self._outputs.remove(attrName)
         self.mapper.store(self._outputs)
@@ -1281,21 +1313,38 @@ class Protocol(Step):
         if in RESTART mode.
         """
         # Clean working path if in RESTART mode
-        paths = [self._getPath(), self._getExtraPath(), self._getTmpPath(),
-                 self._getLogsPath()]
-
         if self.runMode == MODE_RESTART:
-            pwutils.cleanPath(*paths)
+            self.cleanWorkingDir()
             self.__deleteOutputs()
             # Delete the relations created by this protocol
             # (delete this in both project and protocol db)
             self.mapper.deleteRelations(self)
-        # Create workingDir, extra and tmp paths
+        self.makeWorkingDir()
+
+    def cleanWorkingDir(self):
+        """
+        Delete all files and subdirectories related with the protocol
+        """
+        self.cleanTmp()
+        pwutils.cleanPath(self._getPath())
+
+    def makeWorkingDir(self):
+        # Create workingDir, logs and extra paths
+        paths = [self._getPath(), self._getExtraPath(), self._getLogsPath()]
         pwutils.makePath(*paths)
+        # Create scratch if SCIPION_SCRATCH environment variable exist.
+        # In other case, tmp folder is created
+        pwutils.makeTmpPath(self)
 
     def cleanTmp(self):
         """ Delete all files and subdirectories under Tmp folder. """
-        pwutils.cleanPattern(self._getTmpPath('*'))
+        tmpFolder = self._getTmpPath()
+
+        if os.path.islink(tmpFolder):
+            pwutils.cleanPath(os.path.realpath(tmpFolder))
+            os.remove(tmpFolder)
+        else:
+            pwutils.cleanPath(tmpFolder)
 
     def _run(self):
         # Check that a proper Steps executor have been set
@@ -1416,7 +1465,10 @@ class Protocol(Step):
 
     def getLogPaths(self):
         return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', 'run.log']))
+                        ['run.stdout', 'run.stderr', 'run.log', SCHEDULE_LOG]))
+
+    def getScheduleLog(self):
+        return self._getLogsPath(SCHEDULE_LOG)
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
@@ -1485,22 +1537,25 @@ class Protocol(Step):
         if not lastLines:
             lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 20))
 
-        if not all(os.path.exists(p) for p in self.getLogPaths()):
+        # Get stdout
+        stdoutFn =self.getLogPaths()[0]
+
+        if not os.path.exists(stdoutFn):
             return []
 
-        self.__openLogsFiles('r')
-        iterlen = lambda it: sum(1 for _ in it)
-        numLines = iterlen(self.__fOut)
+        with  open(stdoutFn, 'r') as stdout:
 
-        lastLines = min(lastLines, numLines)
-        sk = numLines - lastLines
-        sk = max(sk, 0)
+            iterlen = lambda it: sum(1 for _ in it)
+            numLines = iterlen(stdout)
 
-        self.__fOut.seek(0, 0)
-        output = [l.strip('\n') for k, l in enumerate(self.__fOut)
-                  if k >= sk]
-        self.__closeLogsFiles()
-        return output
+            lastLines = min(lastLines, numLines)
+            sk = numLines - lastLines
+            sk = max(sk, 0)
+
+            stdout.seek(0, 0)
+            output = [l.strip('\n') for k, l in enumerate(stdout)
+                      if k >= sk]
+            return output
 
     def warning(self, message, redirectStandard=True):
         self._log.warning(message, redirectStandard)
@@ -1720,7 +1775,7 @@ class Protocol(Step):
 
     def useQueueForSteps(self):
         """ This function will return True if the protocol has been set
-        to be launched thorugh a queue by steps """
+        to be launched through a queue by steps """
         return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "Y")
 
     def getQueueParams(self):
@@ -1743,6 +1798,11 @@ class Protocol(Step):
     def stepsDone(self):
         """ Return the number of steps executed. """
         return self._stepsDone.get(0)
+
+    @property
+    def cpuTime(self):
+        """ Return the sum of all durations of the finished steps"""
+        return self._cpuTime.get()
 
     def updateSteps(self):
         """ After the steps list is modified, this methods will update steps
@@ -1796,6 +1856,7 @@ class Protocol(Step):
         Used from the public validate function.
         """
         return []
+
     @classmethod
     def getUrl(cls):
         return cls.getClassPlugin().getUrl(cls)
@@ -2096,7 +2157,7 @@ class Protocol(Step):
         root.label = 'Protocol'
 
         steps = self.loadSteps()
-        stepsDict = {str(i+1): steps[i] for i in range(0, len(steps))}
+        stepsDict = {str(i + 1): steps[i] for i in range(0, len(steps))}
         stepsDone = {}
 
         def addStep(i, step):
@@ -2159,6 +2220,7 @@ class LegacyProtocol(Protocol):
     def getClassDomain(cls):
         return pw.Config.getDomain()
 
+
 # ---------- Helper functions related to Protocols --------------------
 
 def runProtocolMain(projectPath, protDbPath, protId):
@@ -2198,10 +2260,10 @@ def runProtocolMain(projectPath, protDbPath, protId):
             if protocol.useQueueForSteps():
                 executor = QueueStepExecutor(hostConfig,
                                              protocol.getSubmitDict(),
-                                             nThreads-1,
+                                             nThreads - 1,
                                              gpuList=protocol.getGpuList())
             else:
-                executor = ThreadStepExecutor(hostConfig, nThreads-1,
+                executor = ThreadStepExecutor(hostConfig, nThreads - 1,
                                               gpuList=protocol.getGpuList())
 
     if executor is None and protocol.useQueueForSteps():
@@ -2225,7 +2287,7 @@ def runProtocolMainMPI(projectPath, protDbPath, protId, mpiComm):
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
     hostConfig = protocol.getHostConfig()
     # Create the steps executor
-    executor = MPIStepExecutor(hostConfig, protocol.numberOfMpi.get()-1,
+    executor = MPIStepExecutor(hostConfig, protocol.numberOfMpi.get() - 1,
                                mpiComm, gpuList=protocol.getGpuList())
 
     protocol.setStepsExecutor(executor)
@@ -2292,11 +2354,8 @@ def isProtocolUpToDate(protocol):
               "Protocol %s, protocol time stamp: %s, %s timeStamp: %s"
               % (protocol, protTS, protocol, dbTS))
     else:
-        return protTS > dbTS
+        return protTS >= dbTS
 
-
-class ValidationException(Exception):
-    pass
 
 class ProtImportBase(Protocol):
     """ Base Import protocol"""

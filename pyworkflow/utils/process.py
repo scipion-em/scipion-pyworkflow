@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -28,10 +28,9 @@
 This module handles process execution
 """
 
-
-
 import sys
 from subprocess import check_call
+import psutil
 
 from .utils import greenStr
 from pyworkflow import Config
@@ -82,8 +81,10 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
     if gpuList:
         params = params % {'GPU': ' '.join(str(g) for g in gpuList)}
 
+    prepend = '' if env is None else env.getPrepend()
+
     if numberOfMpi <= 1:
-        return '%s %s' % (programname, params)
+        return '%s %s %s' % (prepend, programname, params)
     else:
         assert hostConfig is not None, 'hostConfig needed to launch MPI processes.'
 
@@ -92,10 +93,11 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
             
         mpiFlags = '' if env is None else env.get('SCIPION_MPI_FLAGS', '') 
 
-        return hostConfig.mpiCommand.get() % {
+        mpiCmd = hostConfig.mpiCommand.get() % {
             'JOB_NODES': numberOfMpi,
             'COMMAND': "%s `which %s` %s" % (mpiFlags, programname, params),
         }
+        return '%s %s' % (prepend, mpiCmd)
 
 
 def killWithChilds(pid):
@@ -103,7 +105,6 @@ def killWithChilds(pid):
     Params:
      pid: the process id to terminate
     """
-    import psutil
     proc = psutil.Process(pid)
     for c in proc.children(recursive=True):
         if c.pid is not None:
@@ -117,10 +118,8 @@ def killWithChilds(pid):
 
 
 def isProcessAlive(pid):
-    import psutil
     try:
-        proc = psutil.Process(pid)
-        return proc.is_running()
-    except psutil.NoSuchProcess:
+        psutil.Process(pid)
+        return True
+    except Exception:
         return False
-

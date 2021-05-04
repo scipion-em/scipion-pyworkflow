@@ -1,4 +1,4 @@
-    # **************************************************************************
+# **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (jmdelarosa@cnb.csic.es) [1]
 # *              Jose Gutierrez (jose.gutierrez@cnb.csic.es) [2]
@@ -53,7 +53,8 @@ class ObjectBrowser(tk.Frame):
     each element such as: icon, preview and description.
     A TreeProvider will be used to populate the list (Tree).
     """
-    def __init__(self, parent, treeProvider, 
+
+    def __init__(self, parent, treeProvider,
                  showPreview=True, showPreviewTop=True,
                  **args):
         tk.Frame.__init__(self, parent, **args)
@@ -66,31 +67,31 @@ class ObjectBrowser(tk.Frame):
         # and the right containing the preview and description
         p = tk.PanedWindow(self, orient=tk.HORIZONTAL)
         p.grid(row=0, column=0, sticky='news')
-        
+
         leftPanel = tk.Frame(p)
         self._fillLeftPanel(leftPanel)
         p.add(leftPanel, padx=5, pady=5)
         p.paneconfig(leftPanel, minsize=300)
-        
+
         if showPreview:
-            rightPanel = tk.Frame(p)            
+            rightPanel = tk.Frame(p)
             self._fillRightPanel(rightPanel)
-            p.add(rightPanel, padx=5, pady=5)    
-            p.paneconfig(rightPanel, minsize=200)    
-        
+            p.add(rightPanel, padx=5, pady=5)
+            p.paneconfig(rightPanel, minsize=200)
+
             # Register a callback when the item is clicked
             self.tree.itemClick = self._itemClicked
-        
+
     def _fillLeftPanel(self, frame):
         gui.configureWeigths(frame)
         self.tree = BoundTree(frame, self.treeProvider)
         self.tree.grid(row=0, column=0, sticky='news')
         self.itemConfig = self.tree.itemConfig
         self.getImage = self.tree.getImage
-    
+
     def _fillRightPanel(self, frame):
         frame.columnconfigure(0, weight=1)
-        
+
         if self.showPreviewTop:
             top = tk.Frame(frame)
             top.grid(row=0, column=0, sticky='news')
@@ -98,24 +99,24 @@ class ObjectBrowser(tk.Frame):
             gui.configureWeigths(top)
             top.rowconfigure(0, minsize=200)
             self._fillRightTop(top)
-        
+
         bottom = tk.Frame(frame)
         bottom.grid(row=1, column=0, sticky='news')
         frame.rowconfigure(1, weight=1)
         gui.configureWeigths(bottom)
         bottom.rowconfigure(1, weight=1)
         self._fillRightBottom(bottom)
-        
+
     def _fillRightTop(self, top):
         self.noImage = self.getImage('no-image128.gif')
         self.label = tk.Label(top, image=self.noImage)
         self.label.grid(row=0, column=0, sticky='news')
-        
+
     def _fillRightBottom(self, bottom):
         self.text = TaggedText(bottom, width=40, height=15, bg='white',
                                takefocus=0)
         self.text.grid(row=0, column=0, sticky='news')
-        
+
     def _itemClicked(self, obj):
         self._lastSelected = obj
         img, desc = self.treeProvider.getObjectPreview(obj)
@@ -138,7 +139,7 @@ class ObjectBrowser(tk.Frame):
     def getSelected(self):
         """ Return the selected object. """
         return self._lastSelected
-      
+
 
 # ------------ Classes and Functions related to File browsing --------------
 
@@ -146,6 +147,7 @@ class FileInfo(object):
     """ This class will store some information about a file.
     It will serve to display files items in the Tree.
     """
+
     def __init__(self, path, filename):
         self._fullpath = os.path.join(path, filename)
         self._filename = filename
@@ -153,19 +155,19 @@ class FileInfo(object):
             self._stat = os.stat(self._fullpath)
         else:
             self._stat = None
-        
+
     def isDir(self):
         return stat.S_ISDIR(self._stat.st_mode) if self._stat else False
-    
+
     def getFileName(self):
         return self._filename
-    
+
     def getPath(self):
         return self._fullpath
-    
+
     def getSize(self):
         return self._stat.st_size if self._stat else 0
-    
+
     def getSizeStr(self):
         """ Return a human readable string of the file size."""
         return pwutils.prettySize(self.getSize()) if self._stat else '0'
@@ -183,46 +185,47 @@ class FileHandler(object):
     It should be used with FileTreeProvider, where different
     types of handlers can be registered.
     """
+
     def getFileIcon(self, objFile):
         """ Return the icon name for a given file. """
         if objFile.isDir():
             icon = 'file_folder.gif'
         else:
             icon = 'file_generic.gif'
-        
+
         return icon
-    
+
     def getFilePreview(self, objFile):
         """ Return the preview image and description for the specific object."""
         if objFile.isDir():
             return 'fa-folder-open.gif', None
         return None, None
-    
+
     def getFileActions(self, objFile):
         """ Return actions that can be done with this object.
         Actions will be displayed in the context menu 
         and the first one will be the default when double-click.
         """
         return []
-    
-    
-class TextFileHandler(FileHandler):   
+
+
+class TextFileHandler(FileHandler):
     def __init__(self, textIcon):
         FileHandler.__init__(self)
         self._icon = textIcon
-         
+
     def getFileIcon(self, objFile):
         return self._icon
-    
-    
+
+
 class SqlFileHandler(FileHandler):
     def getFileIcon(self, objFile):
-        return 'file_sqlite.gif'    
+        return 'file_sqlite.gif'
 
 
 class FileTreeProvider(TreeProvider):
     """ Populate a tree with files and folders of a given path """
-    
+
     _FILE_HANDLERS = {}
     _DEFAULT_HANDLER = FileHandler()
     FILE_COLUMN = 'File'
@@ -238,7 +241,7 @@ class FileTreeProvider(TreeProvider):
         """
         for fileExt in extensions:
             cls._FILE_HANDLERS[fileExt] = fileHandler
-        
+
     def __init__(self, currentDir=None, showHidden=False, onlyFolders=False):
         TreeProvider.__init__(self, sortingColumnName=self.FILE_COLUMN)
         self._currentDir = os.path.abspath(currentDir)
@@ -246,38 +249,38 @@ class FileTreeProvider(TreeProvider):
         self._onlyFolders = onlyFolders
         self.getColumns = lambda: [(self.FILE_COLUMN, 300),
                                    (self.SIZE_COLUMN, 70), ('Time', 150)]
-    
+
     def getFileHandler(self, obj):
         filename = obj.getFileName()
         fileExt = pwutils.getExt(filename)
         return self._FILE_HANDLERS.get(fileExt, self._DEFAULT_HANDLER)
-        
+
     def getObjectInfo(self, obj):
         filename = obj.getFileName()
         fileHandler = self.getFileHandler(obj)
         icon = fileHandler.getFileIcon(obj)
-        
-        info = {'key': filename, 'text': filename, 
+
+        info = {'key': filename, 'text': filename,
                 'values': (obj.getSizeStr(), obj.getDateStr()), 'image': icon
                 }
-            
+
         return info
-    
+
     def getObjectPreview(self, obj):
         fileHandler = self.getFileHandler(obj)
         return fileHandler.getFilePreview(obj)
-    
+
     def getObjectActions(self, obj):
         fileHandler = self.getFileHandler(obj)
         actions = fileHandler.getFileActions(obj)
         # Always allow the option to open as text
         # specially useful for unknown formats
         fn = obj.getPath()
-        actions.append(("Open external Editor", 
+        actions.append(("Open external Editor",
                         lambda: openTextFileEditor(fn), pwutils.Icon.ACTION_REFERENCES))
-        
+
         return actions
-    
+
     def getObjects(self):
 
         fileInfoList = []
@@ -316,10 +319,11 @@ class FileTreeProvider(TreeProvider):
 
     def getDir(self):
         return self._currentDir
-    
+
     def setDir(self, newPath):
         self._currentDir = newPath
-        
+
+
 # Some constants for the type of selection
 # when the file browser is opened
 
@@ -333,11 +337,12 @@ class FileBrowser(ObjectBrowser):
     """ The FileBrowser is a particular class of ObjectBrowser
     where the "objects" are just files and directories.
     """
+
     def __init__(self, parent, initialDir='.',
-                 selectionType=SELECT_FILE, 
-                 selectionSingle=True, 
-                 allowFilter=True, 
-                 filterFunction=None, 
+                 selectionType=SELECT_FILE,
+                 selectionSingle=True,
+                 allowFilter=True,
+                 filterFunction=None,
                  previewDim=144,
                  showHidden=False,  # Show hidden files or not?
                  selectButton='Select',  # Change the Select button text
@@ -362,7 +367,7 @@ class FileBrowser(ObjectBrowser):
         self.showInfo = showInfo or self._showInfo
 
         ObjectBrowser.__init__(self, parent, self._provider)
-        
+
         # focuses on the browser in order to allow to move with the keyboard
         self._goDir(os.path.abspath(initialDir))
 
@@ -384,7 +389,7 @@ class FileBrowser(ObjectBrowser):
         """
         # Tree with files
         frame.columnconfigure(0, weight=1)
-        
+
         treeFrame = tk.Frame(frame)
         ObjectBrowser._fillLeftPanel(self, treeFrame)
         # Register the double-click event
@@ -420,7 +425,7 @@ class FileBrowser(ObjectBrowser):
                      textvariable=self.entryVar,
                      bg='white',
                      width=65).grid(row=0, column=1, sticky='nw', pady=3)
-        
+
         frame.rowconfigure(treeRow, weight=1)
 
     def _addButton(self, frame, text, image, command):
@@ -455,20 +460,20 @@ class FileBrowser(ObjectBrowser):
                                 shortCut.name,
                                 shortCut.icon,
                                 lambda e: self._goDir(shortCut.path))
-        
+
     def _fillButtonsFrame(self, frame):
         """ Add button to the bottom frame if the selectMode
         is distinct from SELECT_NONE.
         """
-        Button(frame, "Close", pwutils.Icon.BUTTON_CLOSE, 
+        Button(frame, "Close", pwutils.Icon.BUTTON_CLOSE,
                command=self._close).grid(row=0, column=0, padx=(0, 5))
-        if self.selectButton:                     
+        if self.selectButton:
             HotButton(frame, self.selectButton, pwutils.Icon.BUTTON_SELECT,
                       command=self._select).grid(row=0, column=1)
-                
+
     def _actionRefresh(self, e=None):
         self.tree.update()
-        
+
     def _goDir(self, newDir):
 
         newDir = os.path.abspath(newDir)
@@ -492,11 +497,11 @@ class FileBrowser(ObjectBrowser):
         self._lastSelected = FileInfo(os.path.dirname(newDir),
                                       os.path.basename(newDir))
         self.tree.focus(itemKeyToFocus)
-        
+
     def _actionUp(self, e=None):
         parentFolder = pwutils.getParentFolder(self.treeProvider.getDir())
         self._goDir(parentFolder)
-        
+
     def _actionHome(self, e=None):
         self._goDir(pwutils.getHomePath())
 
@@ -558,32 +563,33 @@ class FileBrowser(ObjectBrowser):
         else:
             self.showInfo("Path '%s' does not exists. " % path)
             self.pathEntry.focus()
-            
+
     def onClose(self):
         pass
-    
+
     def onSelect(self, obj):
         print(obj, "type: ", type(obj))
-    
+
     def _close(self, e=None):
         self.onClose()
-        
+
     def _select(self, e=None):
         _lastSelected = self.getSelected()
         if _lastSelected is not None:
             self.onSelect(_lastSelected)
         else:
             print('Select a valid file/folder')
-        
+
     def getEntryValue(self):
         return self.entryVar.get()
-    
+
     def getCurrentDir(self):
         return self.treeProvider.getDir()
 
 
 class ShortCut:
     """ Shortcuts to paths to be displayed in the file browser"""
+
     @staticmethod
     def factory(path, name, icon=None, toolTip=""):
         """ Factory method to create shortcuts"""
@@ -598,17 +604,18 @@ class ShortCut:
 
 class BrowserWindow(gui.Window):
     """ Windows to hold a browser frame inside. """
+
     def __init__(self, title, master=None, **kwargs):
         if 'minsize' not in kwargs:
             kwargs['minsize'] = (800, 400)
         gui.Window.__init__(self, title, master, **kwargs)
-        
+
     def setBrowser(self, browser, row=0, column=0):
         self.browser = browser
         browser.grid(row=row, column=column, sticky='news')
         self.itemConfig = browser.tree.itemConfig
-        
- 
+
+
 STANDARD_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg']
 
 
@@ -617,7 +624,7 @@ def isStandardImage(filename):
     fnLower = filename.lower()
     return any(fnLower.endswith(ext) for ext in STANDARD_IMAGE_EXTENSIONS)
 
-       
+
 class FileBrowserWindow(BrowserWindow):
     """ Windows to hold a file browser frame inside. """
 
@@ -631,18 +638,19 @@ class FileBrowserWindow(BrowserWindow):
                               **kwargs)
         if onSelect:
             def selected(obj):
-                onSelect(obj)
                 self.close()
+                onSelect(obj)
+
             browser.onSelect = selected
         browser.onClose = self.close
-        self.setBrowser(browser) 
-        
+        self.setBrowser(browser)
+
     def getEntryValue(self):
         return self.browser.getEntryValue()
-        
+
     def getCurrentDir(self):
         return self.browser.getCurrentDir()
-        
+
     def registerHandlers(self):
         register = FileTreeProvider.registerFileHandler  # shortcut
 

@@ -81,6 +81,7 @@ class Config:
 
     class Root:
         """ Simple helper to return path from a root. """
+
         def __init__(self, root):
             self._root = root
 
@@ -112,7 +113,9 @@ class Config:
     SCIPION_TMP = _get('SCIPION_TMP', _join(SCIPION_USER_DATA, 'tmp'))
     # LOGS PATHS
     # Path for Scipion logs
-    SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA,'logs'))
+    SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA, 'logs'))
+    # Scratch path
+    SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
 
     # Get general log file path
     SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
@@ -135,7 +138,7 @@ class Config:
                                    'http://scipion.i2pc.es/getplugins/')
 
     # REMOTE Section
-    SCIPION_URL = _get('SCIPION_URL' , 'http://scipion.cnb.csic.es/downloads/scipion')
+    SCIPION_URL = _get('SCIPION_URL', 'http://scipion.cnb.csic.es/downloads/scipion')
     SCIPION_URL_SOFTWARE = _get('SCIPION_URL_SOFTWARE', SCIPION_URL + '/software')
     SCIPION_URL_TESTDATA = _get('SCIPION_URL_TESTDATA', SCIPION_URL + '/data/tests')
 
@@ -153,6 +156,9 @@ class Config:
     SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
 
     SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
+
+    # Refresh the displayed runs with a thread
+    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', 'False')
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
@@ -255,6 +261,11 @@ class Config:
         newValue = not Config.debugOn()
         os.environ[SCIPION_DEBUG] = str(newValue)
         os.environ[SCIPION_DEBUG_NOCLEAN] = str(newValue)
+
+    @classmethod
+    def refreshInThreads(cls):
+        from .utils import strToBoolean
+        return strToBoolean(cls.SCIPION_GUI_REFRESH_IN_THREAD)
 
     @classmethod
     def getExternalJsonTemplates(cls):

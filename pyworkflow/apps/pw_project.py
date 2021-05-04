@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -52,6 +52,11 @@ def openProject(projectName):
     # from the current directory
     if projName == 'here':
         cwd = Config.SCIPION_CWD
+
+        if " " in cwd:
+            print("Projects can't have spaces in the name: %s" % cwd)
+            sys.exit(1)
+
         print("\nYou are trying to create a project here:",
               pwutils.cyan(cwd))
 
@@ -66,7 +71,7 @@ def openProject(projectName):
             print("\nCreating project....")
             projName = os.path.basename(cwd)
             projDir = os.path.dirname(cwd)
-            proj = manager.createProject(projName, location=projDir)
+            manager.createProject(projName, location=projDir)
 
     elif projName == 'last':  # Get last project
         projects = manager.listProjects()

@@ -22,6 +22,26 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-from .mapper import Mapper
-from .sqlite import SqliteMapper, SqliteDb, SqliteFlatMapper, SqliteFlatDb
-from .xmlmapper import XmlMapper
+
+import pyworkflow.tests as pwtests
+
+from pyworkflow import Config
+from pyworkflowtests.protocols import  ConcurrencyProtocol
+
+
+class TestConcurrency(pwtests.BaseTest):
+    
+    @classmethod
+    def setUpClass(cls):
+        pwtests.setupTestOutput(cls)
+
+    
+       # Set the application domain
+        Config.setDomain("pyworkflowtests")
+        pwtests.setupTestProject(cls)
+
+
+    def test_simple_steps_concurrency(self):
+        prot = self.newProtocol(ConcurrencyProtocol, numberOfThreads=3)
+
+        self.launchProtocol(prot)

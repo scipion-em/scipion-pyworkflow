@@ -26,10 +26,11 @@
 
 import os
 import datetime as dt
-from collections import OrderedDict
+from time import sleep
 
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
+from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
 
@@ -113,7 +114,7 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(obj.get(), 20, "Integer.get() fails with a pointer.")
 
     def test_String(self):
-        value = 'thisisanstring'
+        value = 'thisisastring'
         s = pwobj.String(value)
         self.assertEqual(value, s.get())
         self.assertEqual(s.hasValue(), True)
@@ -177,11 +178,13 @@ class TestObject(pwtests.BaseTest):
         o.pointer = pwobj.Pointer()
         o.pointer.set(imgSet)
 
-        o.refC = o.pointer.get()
-        attrNames = [k for k, a in o.getAttributes()]
-        # Check that 'refC' should not appear in attributes
-        # since it is only an "alias" to an existing pointed value
-        self.assertNotIn('refC', attrNames)
+        # This is not true anymore ans is allowed unless we see is needed
+        # The main reason is a boost in performance.
+        # o.refC = o.pointer.get()
+        # attrNames = [k for k, a in o.getAttributes()]
+        # # Check that 'refC' should not appear in attributes
+        # # since it is only an "alias" to an existing pointed value
+        # self.assertNotIn('refC', attrNames)
 
         self.assertFalse(o.pointer.hasExtended(),
                          'o.pointer should not have extended at this point')
@@ -196,7 +199,7 @@ class TestObject(pwtests.BaseTest):
         # retrieved by the pointer after setting the extended to 7
         self.assertEqual(imgSet[7], o.pointer.get())
 
-        # Test the keyword arguments of Pointer contructor
+        # Test the keyword arguments of Pointer constructor
         # repeat above tests with new pointer
         ptr = pwobj.Pointer(value=imgSet, extended=7)
         self.assertTrue(ptr.hasExtended())
@@ -207,7 +210,7 @@ class TestObject(pwtests.BaseTest):
         # retrieved by the pointer after setting the extended to 7
         self.assertEqual(imgSet[7], ptr.get())
 
-        o2 = pwobj.OrderedObject()
+        o2 = pwobj.Object()
         o2.outputImages = imgSet
         ptr2 = pwobj.Pointer()
         ptr2.set(o2)
@@ -231,17 +234,27 @@ class TestObject(pwtests.BaseTest):
         print("Writing to sqlite: %s" % fn)
 
         imgSet = MockSetOfImages(filename=fn)
-        imgSet.setSamplingRate(1.0)
+
+        halfTimeStamp = None
 
         for i in range(10):
             img = MockImage()
             img.setLocation(i + 1, stackFn)
+            img.setSamplingRate(i % 3)
             imgSet.append(img)
-
+            if i == 4:
+                sleep(1)
+                halfTimeStamp = dt.datetime.utcnow().replace(microsecond=0)
         imgSet.write()
 
         # Test size is 10
         self.assertSetSize(imgSet, 10)
+
+        # Test hasChangedSince
+        timeStamp = dt.datetime.now()
+        self.assertFalse(imgSet.hasChangedSince(timeStamp), "Set.hasChangedSince returns true when it hasn't changed.")
+        # Remove 10 seconds
+        self.assertTrue(imgSet.hasChangedSince(timeStamp-dt.timedelta(0,10)), "Set.hasChangedSince returns false when it has changed.")
 
         # PERFORMANCE functionality
         def checkSetIteration(limit, skipRows=None):
@@ -263,6 +276,47 @@ class TestObject(pwtests.BaseTest):
 
         # Check iteration with limit and skip rows
         checkSetIteration(3, 2)
+
+        # Tests unique method
+        # Requesting 1 unique value as string
+        result = imgSet.getUniqueValues("_samplingRate")
+        self.assertEqual(len(result), 3, "Unique values wrong for 1 attribute and 3 value")
+
+        # Requesting 1 unique value as list
+        result = imgSet.getUniqueValues(["_samplingRate"])
+        self.assertEqual(len(result), 3, "Unique values wrong for 1 attribute and one value as list")
+        
+        # Requesting several unique values as string
+        result = imgSet.getUniqueValues("_index")
+        self.assertEqual(len(result), 10, "Unique values wrong for id attribute")
+
+        # Requesting several unique values with several columns
+        result = imgSet.getUniqueValues(["_filename", "_samplingRate"])
+        # Here we should have 2 keys containing 2 list
+        self.assertEqual(len(result), 2, "Unique values dictionary length wrong")
+        self.assertEqual(len(result["_filename"]), 3, "Unique values dict item size wrong")
+
+        # Requesting unique values with where
+        result = imgSet.getUniqueValues("_index",where="_samplingRate = 2")
+        # Here we should have 2 values
+        self.assertEqual(len(result), 3, "Unique values with filter not working")
+
+        # Request id list
+        result = imgSet.getUniqueValues(ID)
+        # Here we should have 10 values
+        self.assertEqual(len(result), 10, "Unique values with ID")
+
+        # Use creation timestamp
+        # Request id list
+        result = imgSet.getUniqueValues(ID, where="%s>=%s" % (CREATION , imgSet.fmtDate(halfTimeStamp)))
+        self.assertEqual(len(result), 5, "Unique values after a time stamp does not work")
+
+        # Test getIdSet
+        ids = imgSet.getIdSet()
+        self.assertIsInstance(ids, set, "getIdSet does not return a set")
+        self.assertIsInstance(next(iter(ids)), int, "getIdSet items are not integer")
+        self.assertEqual(len(ids), 10, "getIdSet does not return 10 items")
+
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values
@@ -329,7 +383,7 @@ class TestObject(pwtests.BaseTest):
                 v = "'%s'" % v
             print("('%s', %s)," % (k, v))
 
-        goldDict1 = OrderedDict([
+        goldDict1 = dict([
             ('object.id', 1),
             ('object.label', 'test micrograph'),
             ('object.comment', 'Testing store and retrieve from dict.'),

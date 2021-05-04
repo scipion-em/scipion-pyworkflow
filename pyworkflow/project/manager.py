@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -36,18 +36,32 @@ from .project import Project
 
 class ProjectInfo(object):
     """Class to store some information about the project"""
-    def __init__(self, projName, mTime):
+    def __init__(self, projName, mTime, cTime, path):
         """At least it receives the Project Name and its modification time"""
         self.projName = projName
         self.mTime = mTime
-        
+        self.cTime = cTime
+        self.path = path
+
+    def __str__(self):
+        return "%s - %s" % (self.projName, self.path)
+
     def getName(self):
         return self.projName
     
     def getModificationTime(self):
         return self.mTime
-        
-        
+
+    def getCreationTime(self):
+        return self.cTime
+
+    def isLink(self):
+        return os.path.islink(self.path)
+
+    def realPath(self):
+        return os.path.realpath(self.path)
+
+
 class Manager(object):
     """ Manage all projects of a given workspace, for a given Domain.
      (i.e, listing projects, creating, deleting or querying info)
@@ -76,7 +90,7 @@ class Manager(object):
             p = self.getProjectPath(f)
             if os.path.isdir(p):
                 stat = os.stat(p)
-                projList.append(ProjectInfo(f, stat.st_mtime))
+                projList.append(ProjectInfo(f, stat.st_mtime, stat.st_ctime, p))
                 
         if sortByDate:
             projList.sort(key=lambda k: k.mTime, reverse=True)
@@ -88,6 +102,9 @@ class Manager(object):
         confs dict can contains customs .conf files 
         for: menus, protocols, or hosts
         """
+        # Clean project name from undesired characters
+        projectName = Project.cleanProjectName(projectName)
+
         # If location is not None create project on it (if exists)
         if location is None:
             projectPath = self.getProjectPath(projectName)
@@ -109,7 +126,7 @@ class Manager(object):
             pw.utils.createAbsLink(os.path.abspath(projectPath),
                                    self.getProjectPath(projectName))
 
-        os.chdir(cwd)  # Retore cwd before project creation
+        os.chdir(cwd)  # Restore cwd before project creation
 
         return project
 

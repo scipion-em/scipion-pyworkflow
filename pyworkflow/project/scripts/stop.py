@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -38,7 +38,7 @@ def usage(error):
     print("""
     ERROR: %s
 
-    Usage: scipion python scripts/stop.py project_name
+    Usage: python -m pyworkflow.project.scripts.stop project_name
         This script will stop all running protocols of the specified project.
         e.g.
         scipion python scripts/stop.py MyProject

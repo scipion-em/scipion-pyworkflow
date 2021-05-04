@@ -24,7 +24,7 @@ class TestLogs(BaseTest):
 
         genLogFn = Config.SCIPION_LOG
         getLogConfiguration()
-        log1 = logging.getLogger('pyworkflow.test.log.test_scipon_log')
+        log1 = logging.getLogger('pyworkflow.test.log.test_scipion_log')
         genInfoTest = 'Testing general info [%d]' % logTestCode
         genDebugTest = 'Testing general debug [%d]' % logTestCode
         genWarningTest = 'Testing general warning [%d]' % logTestCode

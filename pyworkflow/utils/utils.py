@@ -29,6 +29,7 @@ from datetime import datetime
 import traceback
 from enum import Enum
 
+import bibtexparser
 import numpy as np
 import math
 
@@ -47,7 +48,7 @@ def prettyDate(time=False):
     elif type(time) is float:
         diff = now - datetime.fromtimestamp(int(time))
     elif isinstance(time, datetime):
-        diff = now - time 
+        diff = now - time
     elif not time:
         # Avoid now - now (sonar cloud bug)
         copy = now
@@ -66,20 +67,20 @@ def prettyDate(time=False):
         if second_diff < 120:
             return "a minute ago"
         if second_diff < 3600:
-            return str(int(second_diff/60)) + " minutes ago"
+            return str(int(second_diff / 60)) + " minutes ago"
         if second_diff < 7200:
             return "an hour ago"
         if second_diff < 86400:
-            return str(int(second_diff/3600)) + " hours ago"
+            return str(int(second_diff / 3600)) + " hours ago"
     if day_diff == 1:
         return "Yesterday"
     if day_diff < 7:
         return str(day_diff) + " days ago"
     if day_diff < 31:
-        return str(int(day_diff/7)) + " weeks ago"
+        return str(int(day_diff / 7)) + " weeks ago"
     if day_diff < 365:
-        return str(int(day_diff/30)) + " months ago"
-    return str(int(day_diff/365)) + " years ago"
+        return str(int(day_diff / 30)) + " months ago"
+    return str(int(day_diff / 365)) + " years ago"
 
 
 def dateStr(dt=None, time=True, secs=False, dateFormat=None):
@@ -117,7 +118,7 @@ def prettySize(size):
                          [0, 0, 1, 2, 2, 2]))
     if size > 1:
         exponent = min(int(math.log(size, 1024)), len(unit_list) - 1)
-        quotient = float(size) / 1024**exponent
+        quotient = float(size) / 1024 ** exponent
         unit, num_decimals = unit_list[exponent]
         format_string = '{:.%sf} {}' % num_decimals
         return format_string.format(quotient, unit)
@@ -125,12 +126,20 @@ def prettySize(size):
         return '0 bytes'
     if size == 1:
         return '1 byte'
-    
+
 
 def prettyDelta(timedelta):
     """ Remove the milliseconds of the timedelta. """
     return str(timedelta).split('.')[0]
 
+class UtcConverter:
+    """ Class to make date conversions to utc"""
+    utc_delta = datetime.utcnow() - datetime.now()
+
+    def __call__(cls, t):
+        return t + cls.utc_delta
+# Use to_utc like a function: to_utc(date)
+to_utc = UtcConverter()
 
 def prettyLog(msg):
     print(cyan(prettyTime(datetime.now(), secs=True)), msg)
@@ -138,15 +147,25 @@ def prettyLog(msg):
 
 class Timer(object):
     """ Simple Timer base in datetime.now and timedelta. """
+
     def tic(self):
         self._dt = datetime.now()
-        
-    def getToc(self):
-        return prettyDelta(datetime.now()-self._dt)
-        
+
+    def getElapsedTime(self):
+        return datetime.now() - self._dt
+
     def toc(self, message='Elapsed:'):
-        print(message, self.getToc())
-        
+        print(message, self.getElapsedTime())
+
+    def getToc(self):
+        return prettyDelta(self.getElapsedTime())
+
+    def __enter__(self):
+        self.tic()
+
+    def __exit__(self, type, value, traceback):
+        self.toc()
+
 
 def timeit(func):
     """ Decorator function to have a simple measurement
@@ -157,14 +176,15 @@ def timeit(func):
         ...
     to use it.
     """
+
     def timedFunc(*args, **kwargs):
         t = Timer()
         t.tic()
         result = func(*args, **kwargs)
         t.toc("Function '%s' took" % func)
-        
+
         return result
-        
+
     return timedFunc
 
 
@@ -178,17 +198,19 @@ def trace(nlevels, separator=' --> ', stream=sys.stdout):
     def realTrace(f):
         """ Decorator function to print stack call in a human-readable way.
         """
+
         def tracedFunc(*args, **kwargs):
-            stack = traceback.extract_stack()[-nlevels-1:-1]
+            stack = traceback.extract_stack()[-nlevels - 1:-1]
             fmt = lambda x: '%s:%d %s' % (os.path.basename(x[0]), x[1], x[2])
             stList = list(map(fmt, stack))
             stream.write(separator.join(stList + [f.__name__]) + '\n')
             return f(*args, **kwargs)
 
         return tracedFunc
+
     return realTrace
 
-    
+
 def prettyDict(d):
     print("{")
     for k, v in d.items():
@@ -198,23 +220,23 @@ def prettyDict(d):
 
 def prettyXml(elem, level=0):
     """ Add indentation for XML elements for more human readable text. """
-    i = "\n" + level*"  "
+    i = "\n" + level * "  "
     if len(elem):
         if not elem.text or not elem.text.strip():
             elem.text = i + "  "
         if not elem.tail or not elem.tail.strip():
             elem.tail = i
         for _elem in elem:
-            prettyXml(_elem, level+1)
+            prettyXml(_elem, level + 1)
         if not _elem.tail or not _elem.tail.strip():
             _elem.tail = i
-    
-    
+
+
 def getUniqueItems(originalList):
     """ Method to remove repeated items from one list 
     originalList -- Original list with repeated items, or not.
     returns -- New list with the content of original list without repeated items
-    """  
+    """
     auxDict = {}
     resultList = [auxDict.setdefault(x, x) for x in originalList if x not in auxDict]
     return resultList
@@ -256,8 +278,8 @@ def executeRemote(command, hostName, userName, password):
     stdin, stdout, stderr = ssh.exec_command(command)
     ssh.close()
     return stdin, stdout, stderr
-    
-    
+
+
 def executeLongRemote(command, hostName, userName, password):
     """ Execute a remote command.
     Params:
@@ -345,6 +367,7 @@ class StrColors(Enum):
     magenta = 35
     cyan = 36
 
+
 def getColorStr(text, color, bold=False):
     """ Add ANSI color codes to the string if there is a terminal sys.stdout.
     Params:
@@ -354,10 +377,9 @@ def getColorStr(text, color, bold=False):
     """
     if envVarOn('SCIPION_SAFE_COLORS') and not sys.stdout.isatty():
         return text
-    
 
     attr = [str(color.value)]
-    
+
     if bold:
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), text)
@@ -366,20 +388,26 @@ def getColorStr(text, color, bold=False):
 def grayStr(text):
     return getColorStr(text, color=StrColors.gray)
 
+
 def redStr(text):
     return getColorStr(text, color=StrColors.red)
+
 
 def greenStr(text):
     return getColorStr(text, color=StrColors.green)
 
+
 def yellowStr(text):
     return getColorStr(text, color=StrColors.yellow)
+
 
 def blueStr(text):
     return getColorStr(text, color=StrColors.blue)
 
+
 def magentaStr(text):
     return getColorStr(text, color=StrColors.magenta)
+
 
 def cyanStr(text):
     return getColorStr(text, color=StrColors.cyan)
@@ -393,7 +421,6 @@ def ansi(n, bold=False):
 black, red, green, yellow, blue, magenta, cyan, white = map(ansi, range(30, 38))
 blackB, redB, greenB, yellowB, blueB, magentaB, cyanB, whiteB = [
     ansi(i, bold=True) for i in range(30, 38)]
-
 
 # -------------- Hyper text highlighting ----------------------------
 """
@@ -418,7 +445,7 @@ PATTERN_BOLD = "(^|[\s])[*](?P<bold>[^\s*][^*]*[^\s*]|[^\s*])[*]"
 # PATTERN_BOLD = r"[\s]+[*]([^\s][^*]+[^\s])[*][\s]+"
 PATTERN_ITALIC = "(^|[\s])[_](?P<italic>[^\s_][^_]*[^\s_]|[^\s_])[_]"
 # PATTERN_ITALIC = r"[\s]+[_]([^\s][^_]+[^\s])[_][\s]+"
-PATTERN_LINK1 = '(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
+PATTERN_LINK1 = '(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+#]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
 PATTERN_LINK2 = "[\[]{2}(?P<link2>[^\s][^\]]+[^\s])[\]][\[](?P<link2_label>[^\s][^\]]+[^\s])[\]]{2}"
 # __PATTERN_LINK2 should be first since it could contain __PATTERN_LINK1
 PATTERN_ALL = '|'.join([PATTERN_BOLD, PATTERN_ITALIC, PATTERN_LINK2, PATTERN_LINK1])
@@ -442,6 +469,7 @@ def parseHyperText(text, matchCallback):
     Return:
         The input text with the replacements made by matchCallback
     """
+
     def _match(match):
         """ Call the proper matchCallback with some extra info. """
         m = match.group().strip()
@@ -456,31 +484,52 @@ def parseHyperText(text, matchCallback):
         else:
             raise Exception("Bad prefix for HyperText match")
         return matchCallback(match, tag)
-        
+
     return HYPER_ALL_RE.sub(_match, text)
+
+
 #    for hyperMode, hyperRegex in HYPER_REGEX.iteritems():
 #        text = hyperRegex.sub(lambda match: matchCallback(match, hyperMode), text)
 #
 #    return text
 
+class LazyDict(object):
+    """ Dictionary to be initialized in the moment it is accessed for the first time.
+    Initialization is done by a callback passed at instantiation"""
+    def __init__(self, callback=dict):
+        """ :param callback: method to initialize the dictionary. SHould return a dictionary"""
+        self.data = None
+        self.callback = callback
+
+    def evaluate_callback(self):
+        self.data = self.callback()
+
+    def __getitem__(self, name):
+        if self.data is None:
+            self.evaluate_callback()
+        return self.data.__getitem__(name)
+
+    def __setitem__(self, name, value):
+        if self.data is None:
+            self.evaluate_callback()
+        return self.data.__setitem__(name, value)
+
+    def __getattr__(self, name):
+        if self.data is None:
+            self.evaluate_callback()
+        return getattr(self.data, name)
+
+    def __iter__(self):
+        if self.data is None:
+            self.evaluate_callback()
+        return self.data.__iter__()
+
 
 def parseBibTex(bibtexStr):
     """ Parse a bibtex file and return a dictionary. """
-    import bibtexparser
 
-    if hasattr(bibtexparser, 'loads'):
-        return bibtexparser.loads(bibtexStr).entries_dict
+    return bibtexparser.loads(bibtexStr).entries_dict
 
-    # For older bibtexparser version 0.5
-    from bibtexparser.bparser import BibTexParser
-    from io import StringIO
-
-    f = StringIO()
-    f.write(bibtexStr)
-    f.seek(0, 0)
-    parser = BibTexParser(f)
-
-    return parser.bib_database.get_entry_dict()
 
 
 def isPower2(num):
@@ -500,12 +549,12 @@ def getListFromRangeString(rangeStr):
     "2 5, 6-8" -> [2,5,6,7,8]
     """
     # Split elements by command or space
-    elements = re.split(',| ', rangeStr)
+    elements = re.split(',|\s', rangeStr)
     values = []
     for e in elements:
         if '-' in e:
             limits = e.split('-')
-            values += range(int(limits[0]), int(limits[1])+1)
+            values += range(int(limits[0]), int(limits[1]) + 1)
         else:
             # If values are separated by comma also splitted 
             values += map(int, e.split())
@@ -522,7 +571,7 @@ def getRangeStringFromList(list):
             ranges.append("%d" % right)
         else:
             ranges.append("%(left)d-%(right)d" % locals())
-    
+
     for item in list:
         if right is None:
             left = right = item
@@ -546,7 +595,7 @@ def getListFromValues(valuesStr, length=None):
     '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']
     """
     result = []
-    
+
     for chunk in valuesStr.split():
         values = chunk.split('x')
         n = len(values)
@@ -556,16 +605,16 @@ def getListFromValues(valuesStr, length=None):
             result += [values[1]] * int(values[0])
         else:
             raise Exception("More than one 'x' is not allowed in list string value.")
-            
+
     # If length is passed, we fill the list with 
     # the last element until length is reached
     if length is not None and length > len(result):
         item = result[-1]
         result += [item] * (length - len(result))
-        
+
     return result
-        
-    
+
+
 def getFloatListFromValues(valuesStr, length=None):
     """ Convert a string to a list of floats"""
     return [float(v) for v in getListFromValues(valuesStr, length)]
@@ -621,7 +670,7 @@ class Environ(dict):
                 self[varName] = self[varName] + os.pathsep + varValue
         else:
             self[varName] = varValue
-            
+
     def update(self, valuesDict, position=REPLACE):
         """ Use set for each key, value pair in valuesDict. """
         for k, v in valuesDict.items():
@@ -638,6 +687,18 @@ class Environ(dict):
             self.update({'LD_LIBRARY_PATH': libraryPath}, position=position)
         else:
             print("Some paths do not exist in: % s" % libraryPath)
+
+    def setPrepend(self, prepend):
+        """ Use this method to set a prepend string that will be added at
+        the beginning of any command that will be run in this environment.
+        This can be useful for example when 'modules' need to be loaded and
+        a simple environment variables setup is not enough.
+        """
+        setattr(self, '__prepend', prepend)
+
+    def getPrepend(self):
+        """ Return if there is any prepend value. See setPrepend function. """
+        return getattr(self, '__prepend', '')
 
 
 def existsVariablePaths(variableValue):
@@ -662,18 +723,22 @@ def environAdd(varName, newValue, valueFirst=False):
 def envVarOn(varName, env=None):
     """ Is variable set to True in the environment? """
     v = env.get(varName) if env else os.environ.get(varName)
-    return v is not None and v.lower() in ['true', 'yes', 'on', '1']
+    return strToBoolean(v)
+
+def strToBoolean(string):
+    return string is not None and string.lower() in ['true', 'yes', 'on', '1']
 
 
 def getMemoryAvailable():
     """ Return the total memory of the system in MB """
     from psutil import virtual_memory
-    return virtual_memory().total // 1024**2
+    return virtual_memory().total // 1024 ** 2
 
 
 def startDebugger(password='a'):
     if Config.debugOn():
         try:
+            # FIXME: rpdb2 does not support python 3
             from rpdb2 import start_embedded_debugger
             print("Starting debugger...")
             start_embedded_debugger(password)
@@ -693,19 +758,19 @@ def getFreePort(basePort=0, host=''):
         print(e)
         return 0
     return port
-    
-    
+
+
 def readProperties(propsFile):
     myprops = {}
     with open(propsFile, 'r') as f:
         for line in f:
             line = line.rstrip()  # removes trailing whitespace and '\n' chars
-    
+
             if "=" not in line:
                 continue  # skips blanks and comments w/o =
             if line.startswith("#"):
                 continue  # skips comments which contain =
-    
+
             k, v = line.split("=", 1)
             myprops[k] = v
     return myprops
@@ -761,5 +826,3 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
             return default
     else:
         return value
-
-

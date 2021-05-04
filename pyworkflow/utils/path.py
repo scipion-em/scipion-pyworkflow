@@ -27,13 +27,15 @@ inside the utils module
 """
 
 
-
 import os
 import shutil
 import sys
 from glob import glob
 import datetime
 
+from pyworkflow import SCIPION_SCRATCH, DOCSITEURLS
+from pyworkflow.exceptions import PyworkflowException
+from pyworkflow.config import Config
 
 ROOT = "/"
 
@@ -74,7 +76,7 @@ def findRootFrom(referenceFile, searchFile):
     absPath = os.path.dirname(os.path.abspath(referenceFile))
     
     while absPath is not None and absPath != '/':
-        if os.path.os.path.exists(os.path.join(absPath, searchFile)):
+        if os.path.exists(os.path.join(absPath, searchFile)):
             return absPath
         absPath = os.path.dirname(absPath)
         
@@ -116,7 +118,7 @@ def joinExt(*extensions):
 
 
 def getExt(filePath):
-    """ Return the extesion given a file. """
+    """ Return the extension given a file. """
     return os.path.splitext(filePath)[1]
 
 
@@ -153,6 +155,32 @@ def makePath(*paths):
     for p in paths:
         if not os.path.exists(p) and len(p):
             os.makedirs(p)
+
+
+def makeTmpPath(protocol):
+    """
+    Create the scratch folder if SCIPION_SCRATCH variable is defined into the
+    Scipion config, i.o.c create tmp folder
+    """
+    tmpPath = protocol._getTmpPath()
+    if not os.path.exists(tmpPath) and len(tmpPath):
+        scratchPath = Config.SCIPION_SCRATCH
+
+        if scratchPath is None:  # Case when SCIPION_SCRATCH doesn't exist. TMP folder is created
+            os.makedirs(tmpPath)
+        else:
+            try:
+                project = protocol.getProject()
+                folderId = "_".join([project.getShortName(),project.getProtWorkingDir(protocol)])
+                tmpScratchFolder = os.path.join(scratchPath, folderId)
+                if os.path.exists(tmpScratchFolder):
+                    cleanPath(tmpScratchFolder)
+                os.makedirs(tmpScratchFolder)  # Create scratch folder
+                createAbsLink(tmpScratchFolder, tmpPath)  # Create a sym link
+
+            except Exception as e:
+                raise PyworkflowException("Couldn't create the temporary folder %s at:\n %s\nPlease, review %s variable." %
+                                (folderId, scratchPath, SCIPION_SCRATCH), url=DOCSITEURLS.CONFIG_SECTION % "scratch-folder") from e
 
 
 def makeFilePath(*files):
@@ -288,7 +316,7 @@ colorName = {'30': 'gray',
 
 
 def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
-                   maxSize=400, headSize=40, tailSize=None, notifyLine=None):
+                   maxSize=400, headSize=40, tailSize=None, notifyLine=None, errors='strict'):
     """
     Call callback function add() on each fragment of text from file fname,
     delimited by lines and/or color codes.
@@ -297,7 +325,7 @@ def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
       lineNo: lines will be numbered from this value on
       numberLines: whether to prepend the line numbers
     """
-    textfile = open(fname, encoding='utf-8')
+    textfile = open(fname, encoding='utf-8', errors=errors)
     size = (os.stat(fname).st_size - offset) / 1024  # in kB
 
     for line in iterBigFile(textfile, offset, size,
@@ -431,6 +459,3 @@ def getFileLastModificationDate(fn):
     else:
         print(fn + " does not exist!!. Can't check last modification date.")
         return None
-
-
-

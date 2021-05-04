@@ -26,12 +26,11 @@ import tkinter as tk
 import tkinter.font as tkFont
 import queue
 
-from pyworkflow.object import OrderedObject
-import pyworkflow  as pw
+from pyworkflow.object import Object
+import pyworkflow as pw
 from pyworkflow.utils import Message, Color, Icon
 
 from .widgets import Button
-
 
 # --------------- GUI CONFIGURATION parameters -----------------------
 # TODO: read font size and name from config file
@@ -54,7 +53,7 @@ cfgButtonFgColor = "white"
 cfgButtonActiveFgColor = "white"
 cfgButtonBgColor = Color.RED_COLOR
 cfgButtonActiveBgColor = "#A60C0C"
-cfgEntryBgColor = "lemon chiffon" 
+cfgEntryBgColor = "lemon chiffon"
 cfgExpertLabelBgColor = "light salmon"
 cfgSectionBgColor = cfgButtonBgColor
 # Color
@@ -69,27 +68,27 @@ cfgMinFontSize = 6
 cfgWrapLenght = cfgMaxWidth - 50
 
 
-class Config(OrderedObject):
+class Config(Object):
     pass
 
 
 def saveConfig(filename):
     from pyworkflow.mapper import SqliteMapper
     from pyworkflow.object import String, Integer
-    
+
     mapper = SqliteMapper(filename)
     o = Config()
     for k, v in globals().items():
         if k.startswith('cfg'):
             if type(v) is str:
                 value = String(v)
-            else: 
+            else:
                 value = Integer(v)
             setattr(o, k, value)
     mapper.insert(o)
     mapper.commit()
-            
-   
+
+
 # --------------- FONT related variables and functions  -----------------------
 def setFont(fontKey, update=False, **opts):
     """Register a tkFont and store it in a globals of this module
@@ -97,8 +96,8 @@ def setFont(fontKey, update=False, **opts):
     created."""
     if not hasFont(fontKey) or update:
         globals()[fontKey] = tkFont.Font(**opts)
-        
-    return globals()[fontKey] 
+
+    return globals()[fontKey]
 
 
 def hasFont(fontKey):
@@ -108,7 +107,7 @@ def hasFont(fontKey):
 def aliasFont(fontAlias, fontKey):
     """Set a fontAlias as another alias name of fontKey"""
     g = globals()
-    g[fontAlias] = g[fontKey] 
+    g[fontAlias] = g[fontKey]
 
 
 def getDefaultFont():
@@ -124,7 +123,7 @@ def getBigFont():
 
 
 def setCommonFonts(windows=None):
-    """Set some predifined common fonts.
+    """Set some predefined common fonts.
     Same conditions of setFont applies here."""
     f = setFont(FONT_NORMAL, family=cfgFontName, size=cfgFontSize)
     aliasFont('fontButton', FONT_NORMAL)
@@ -144,11 +143,11 @@ def setCommonFonts(windows=None):
     # setFont('fontLabel', family=cfgFontName, size=cfgFontSize+1, weight='bold')
 
     if windows:
-        windows.fontBig = tkFont.Font(size=cfgFontSize+2, family=cfgFontName,
+        windows.fontBig = tkFont.Font(size=cfgFontSize + 2, family=cfgFontName,
                                       weight='bold')
         windows.font = f
         windows.fontBold = fb
-        windows.fontItalic = fi 
+        windows.fontItalic = fi
 
         # This adds the default value for the listbox inside a combo box
         # Which seems to not react to default font!!
@@ -189,10 +188,10 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         w, h = image.size
         newSize = None
         if percent != 100:  # Display image with other dimensions
-            fp = float(percent)/100.0
+            fp = float(percent) / 100.0
             newSize = int(fp * w), int(fp * h)
         elif maxheight and h > maxheight:
-            newSize = int(w * float(maxheight)/h), maxheight
+            newSize = int(w * float(maxheight) / h), maxheight
         if newSize:
             image.thumbnail(newSize, Image.ANTIALIAS)
         if tkImage:
@@ -223,13 +222,13 @@ def centerWindows(root, dim=None, refWindows=None):
     if refWindows:
         rw, rh, rx, ry = getGeometry(refWindows)
         x = rx + (rw - gw) / 2
-        y = ry + (rh - gh) / 2 
+        y = ry + (rh - gh) / 2
     else:
         w = root.winfo_screenwidth()
         h = root.winfo_screenheight()
         x = (w - gw) / 2
         y = (h - gh) / 2
-        
+
     root.geometry("%dx%d+%d+%d" % (gw, gh, x, y))
 
 
@@ -239,8 +238,8 @@ def configureWeigths(widget, row=0, column=0):
     for making childs widgets take the space available"""
     widget.columnconfigure(column, weight=1)
     widget.rowconfigure(row, weight=1)
-    
-    
+
+
 class Window:
     """Class to manage a Tk windows.
     It will encapsulates some basic creation and 
@@ -293,12 +292,11 @@ class Window:
         self.root.bind("<Configure>", self._configure)
         self.master = masterWindow
         setCommonFonts(self)
-        
+
         if kwargs.get('enableQueue', False):
             self.queue = queue.Queue(maxsize=0)
         else:
             self.queue = None
-
 
     def _setIcon(self, icon):
 
@@ -324,34 +322,34 @@ class Window:
             # executes graphic interface function
             func()
         self._queueTimer = self.root.after(500, self.__processQueue)
-        
+
     def enqueue(self, func):
         """ Put some function to be executed in the GUI main thread. """
         self.queue.put(func)
-        
+
     def getRoot(self):
         return self.root
-    
+
     def desiredDimensions(self):
         """Override this method to calculate desired dimensions."""
         return None
-    
+
     def _configure(self, e):
         """ Filter event and call appropriate handler. """
         if self.root != e.widget:
             return
-        
+
         _, _, x, y = getGeometry(self.root)
         w, h = e.width, e.height
-        
+
         if w != self._w or h != self._h:
             self._w, self._h = w, h
-            self.handleResize() 
-        
+            self.handleResize()
+
         if x != self._x or y != self._y:
             self._x, self._y = x, y
-            self.handleMove()    
-        
+            self.handleMove()
+
     def handleResize(self):
         """Override this method to respond to resize events."""
         pass
@@ -374,7 +372,7 @@ class Window:
         if self.queue is not None:
             self._queueTimer = self.root.after(1000, self.__processQueue)
         self.root.mainloop()
-        
+
     def close(self, e=None):
         self.root.destroy()
         # JMRT: For some reason when Tkinter has an exception
@@ -382,23 +380,23 @@ class Window:
         # remains in the mainloop, so here we are forcing
         # to exit the whole system (only applies for the main window)
         if self.master is None:
-            import sys 
+            import sys
             sys.exit()
-        
+
     def _onClosing(self):
         """Do some cleaning before closing."""
-        if self.master is None: 
+        if self.master is None:
             pass
         else:
             self.master.root.focus_set()
         if self.queue is not None:
             self.root.after_cancel(self._queueTimer)
         self.close()
-        
+
     def getImage(self, imgName, percent=100, maxheight=None):
         return getImage(imgName, self._images, percent=percent,
                         maxheight=maxheight)
-    
+
     def createMainMenu(self, menuConfig):
         """Create Main menu from the given MenuConfig object."""
         menu = tk.Menu(self.root, font=self.font)
@@ -406,13 +404,13 @@ class Window:
         self._addPluginMenus(menu)
         self.root.config(menu=menu)
         return menu
-        
+
     def _addMenuChilds(self, menu, menuConfig):
         """Add entries of menuConfig in menu
         (using add_cascade or add_command for sub-menus and final options)."""
         # Helper function to create the main menu.
         for sub in menuConfig:
-            menuLabel = sub.text.get()
+            menuLabel = sub.text
             if not menuLabel:  # empty or None label means a separator
                 menu.add_separator()
             elif len(sub) > 0:  # sub-menu
@@ -427,12 +425,12 @@ class Window:
                     f = "on%s" % "".join(x.capitalize() for x in name.split())
                     return lambda: getattr(self, f)()
 
-                if sub.shortCut.get() is not None:
-                    menuLabel += ' (' + sub.shortCut.get() + ')'
+                if sub.shortCut is not None:
+                    menuLabel += ' (' + sub.shortCut + ')'
 
                 menu.add_command(label=menuLabel, compound=tk.LEFT,
-                                 image=self.getImage(sub.icon.get()),
-                                 command=callback(name=sub.text.get()))
+                                 image=self.getImage(sub.icon),
+                                 command=callback(name=sub.text))
 
     def _addPluginMenus(self, menu):
 
@@ -443,37 +441,40 @@ class Window:
             # For each plugin menu
             for label, callback, icon in self._pluginMenus:
                 submenu.add_command(label=label, compound=tk.LEFT,
-                                 image=self.getImage(icon),
-                                 command=callback)
-
+                                    image=self.getImage(icon),
+                                    command=callback)
 
     @classmethod
     def registerPluginMenu(cls, label, callback, icon=None):
         # TODO: have a proper model instead of a tuple?
         cls._pluginMenus.append((label, callback, icon))
 
-    def showError(self, msg, header="Error"):
+    def showError(self, msg, header="Error", exception=None):
+        """Pops up a dialog with the error message
+        :param msg Message to display
+        :param header Title of the dialog
+        :param exception: Optional. exception associated"""
         from .dialog import showError
-        showError(header, msg, self.root)
-        
+        showError(header, msg, self.root, exception=exception)
+
     def showInfo(self, msg, header="Info"):
         from .dialog import showInfo
         showInfo(header, msg, self.root)
-        
+
     def showWarning(self, msg, header='Warning'):
         from .dialog import showWarning
         showWarning(header, msg, self.root)
-        
+
     def askYesNo(self, title, msg):
         from .dialog import askYesNo
         return askYesNo(title, msg, self.root)
-        
+
     def createCloseButton(self, parent):
         """ Create a button for closing the window, setting
         the proper label and icon. 
         """
-        return Button(parent, Message.LABEL_BUTTON_CLOSE, Icon.ACTION_CLOSE, 
+        return Button(parent, Message.LABEL_BUTTON_CLOSE, Icon.ACTION_CLOSE,
                       command=self.close)
-        
+
     def configureWeights(self, row=0, column=0):
         configureWeigths(self.root, row, column)

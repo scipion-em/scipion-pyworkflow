@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -125,7 +125,7 @@ class LevelTreeLayout(GraphLayout):
         
         self._applyNodeOffsets(rootNode, -m + self.DY)
         
-        # Clean temporarly _layout attributes
+        # Clean temporary _layout attributes
         for node in graph.getNodes():
             del node._layout
         
@@ -141,11 +141,14 @@ class LevelTreeLayout(GraphLayout):
         
         if level > layout.get('level', 0):
             # Calculate the y-position depending on the level
-            # and the deltha-Y (DY)
+            # and the delta-Y (DY)
             node.y = level * self.DY
             layout['level'] = level
             layout['parent'] = parent
-            half = node.width / 2
+            if hasattr(node, 'width'):
+                half = node.width / 2
+            else:
+                half = 50
             layout['half'] = half
             layout['hLimits'] = [[-half, half]]
             layout['offset'] = 0

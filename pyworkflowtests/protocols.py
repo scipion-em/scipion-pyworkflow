@@ -26,10 +26,12 @@
 Definition of Mock protocols to be used within the tests in the Mock Domain
 """
 
+import time
+import datetime
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
-
+from pyworkflowtests.objects import MockSetOfImages, MockImage
 
 class SleepingProtocol(pwprot.Protocol):
     def __init__(self, **args):
@@ -38,16 +40,14 @@ class SleepingProtocol(pwprot.Protocol):
         self.numberOfSleeps = pwobj.Integer(args.get('n', 1))
         self.runMode = pwobj.Integer(pwprot.MODE_RESUME)
 
-    def sleepStep(self, t, s):
+    def sleepStep(self, t):
         log = self._getPath("step_%02d.txt" % t)
-        import time
-        import datetime
         f = open(log, 'w+')
         f.write("Going to sleep at %s\n"
                 % pwutils.dateStr(datetime.datetime.now(), True))
         time.sleep(t)
         f.write("  Slept: %d seconds\n" % t)
-        f.write("Awaked at %s\n"
+        f.write("Awakened at %s\n"
                 % pwutils.dateStr(datetime.datetime.now(), True))
         f.close()
         return [log]
@@ -55,17 +55,51 @@ class SleepingProtocol(pwprot.Protocol):
     def _insertAllSteps(self):
         print("Inserting all steps...")
         for i in range(self.numberOfSleeps.get()):
-            self._insertFunctionStep('sleepStep', i + 1, 'sleeping %d' % i)
+            self._insertFunctionStep('sleepStep', i + 1)
 
 
 class ParallelSleepingProtocol(SleepingProtocol):
     def _insertAllSteps(self):
-        step1 = self._insertFunctionStep('sleepStep', 1, '1')
+        step1 = self._insertFunctionStep('sleepStep', 1)
         n = 2
         deps = [step1]
         for i in range(n):
             self._insertFunctionStep('sleepStep')
 
+class ConcurrencyProtocol(SleepingProtocol):
+    """ Protocol to test concurrency access to sets"""
+
+    def __init__(self):
+        super().__init__()
+        self.stepsExecutionMode = pwprot.STEPS_PARALLEL
+
+    def _defineParams(self, form):
+        form.addParallelSection(threads=2, mpi=0)
+
+    def _insertAllSteps(self):
+        n = 2
+        for i in range(n):
+            self._insertFunctionStep('sleepAndOutput', 1, prerequisites=[])
+
+    def sleepAndOutput(self, secs):
+        self.sleepStep(secs)
+
+        outputSet = self.getOutputSet("myOutput", MockSetOfImages)
+        newImage = MockImage()
+        with self._lock:
+            outputSet.append(newImage)
+            outputSet.write()
+        self._store()
+
+
+    def getOutputSet(self, attrName, setClass):
+        output = getattr(self, attrName, None)
+
+        if output is None:
+            output = setClass.create(self._getExtraPath())
+            self._defineOutputs(**{attrName: output})
+
+        return output
 
 class ProtOutputTest(pwprot.Protocol):
     """ Protocol to test scalar output and input linking"""

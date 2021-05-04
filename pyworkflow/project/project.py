@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -39,7 +39,8 @@ import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
-                                           STATUS_INTERACTIVE, ACTIVE_STATUS, UNKNOWN_JOBID)
+                                           STATUS_INTERACTIVE, ACTIVE_STATUS,
+                                           UNKNOWN_JOBID, INITIAL_SLEEP_TIME)
 from pyworkflow.protocol.protocol import ProtImportBase
 
 from . import config
@@ -58,6 +59,7 @@ PROJECT_CREATION_TIME = 'CreationTime'
 # Regex to get numbering suffix and automatically propose runName
 REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
 REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
+
 
 class Project(object):
     """This class will handle all information 
@@ -99,7 +101,6 @@ class Project(object):
         self.settings = None
         # Host configuration
         self._hosts = None
-        self._protocolViews = None
         #  Creation time should be stored in project.sqlite when the project
         # is created and then loaded with other properties from the database
         self._creationTime = None
@@ -245,7 +246,6 @@ class Project(object):
             self._loadHosts(hostsConf)
 
             if loadAllConfig:
-                self._loadProtocols(protocolsConf)
 
                 # FIXME: Handle settings argument here
 
@@ -330,26 +330,6 @@ class Project(object):
 
         self._hosts = pwprot.HostConfig.load(hostsFile)
 
-    def _loadProtocols(self, protocolsConf):
-        """ Load protocol configuration from a .conf file. """
-        # If the host file is not passed as argument...
-        configProtocols = pw.Config.SCIPION_PROTOCOLS
-        projProtConf = self.getPath(PROJECT_CONFIG, configProtocols)
-
-        if protocolsConf is None:
-            # Try first to read it from the project file .config/hosts.conf
-            if os.path.exists(projProtConf):
-                protConf = projProtConf
-            else:
-                localDir = pw.Config.SCIPION_LOCAL_CONFIG
-                protConf = os.path.join(localDir, configProtocols)
-        else:
-            pwutils.copyFile(protocolsConf, projProtConf)
-            protConf = protocolsConf
-
-        self._protocolViews = config.ProtocolTreeConfig.load(self.getDomain(),
-                                                             protConf)
-
     def getHostNames(self):
         """ Return the list of host name in the project. """
         return list(self._hosts.keys())
@@ -364,25 +344,9 @@ class Project(object):
 
         return self._hosts[hostKey]
 
-    def getProtocolViews(self):
-        return list(self._protocolViews.keys())
-
-    def getCurrentProtocolView(self):
-        """ Select the view that is currently selected.
-        Read from the settings the last selected view
-        and get the information from the self._protocolViews dict.
-        """
-        currentView = self.settings.getProtocolView()
-        if currentView in self._protocolViews:
-            viewKey = currentView
-        else:
-            viewKey = self.getProtocolViews()[0]
-            self.settings.setProtocolView(viewKey)
-            if currentView is not None:
-                print("PROJECT: Warning, protocol view '%s' not found." % currentView)
-                print("         Using '%s' instead." % viewKey)
-
-        return self._protocolViews[viewKey]
+    def getProtocolView(self):
+        """ Returns de view selected in the tree when it was persisted"""
+        return self.settings.getProtocolView()
 
     def create(self, runsView=1, readOnly=False, hostsConf=None,
                protocolsConf=None):
@@ -408,7 +372,6 @@ class Project(object):
             pwutils.path.makePath(p)
 
         self._loadHosts(hostsConf)
-        self._loadProtocols(protocolsConf)
 
     def _storeCreationTime(self, creationTime):
         """ Store the creation time in the project db. """
@@ -443,8 +406,7 @@ class Project(object):
                    at least one protocol in streaming has been launched
         """
         if continuedProtList is not None:
-            for protocolId in continuedProtList:
-                protocol = self.getProtocol(protocolId)
+            for protocol, level in continuedProtList.values():
                 if not protocol.isInteractive():
                     if protocol.worksInStreaming():
                         attrSet = [attr for name, attr in
@@ -456,21 +418,23 @@ class Project(object):
                                     attr.write()
                                     attr.close()
                             protocol.setStatus(pwprot.STATUS_SAVED)
-                            protocol._setStatusSteps(pwprot.STATUS_SAVED)
+                            protocol._updateSteps(lambda step: step.setStatus(pwprot.STATUS_SAVED))
                             protocol.setMapper(self.createMapper(protocol.getDbPath()))
                             protocol._store()
                             self._storeProtocol(protocol)
-                            self.scheduleProtocol(protocol)
+                            self.scheduleProtocol(protocol,
+                                                  initialSleepTime=level*INITIAL_SLEEP_TIME)
                         except Exception as ex:
                             errorsList.append("Error trying to launch the "
                                               "protocol: %s\nERROR: %s\n" %
                                               (protocol.getObjLabel(), ex))
                             break
                     else:
-                        if protocolId != continuedProtList[0]:
+                        if level != 0:
                             # we make sure that at least one protocol in streaming
                             # has been launched
-                            self._restartWorkflow([protocolId], errorsList)
+                            self._restartWorkflow({protocol.getObjId(): (protocol, level)},
+                                                  errorsList)
 
                         else:
                             errorsList.append(("Error trying to launch the "
@@ -490,12 +454,12 @@ class Project(object):
         3. For each of the dependents protocols, repeat from step 1
         """
         if restartedProtList is not None:
-            for protocolId in restartedProtList:
-                protocol = self.getProtocol(protocolId)
+            for protocol, level in restartedProtList.values():
                 if not protocol.isInteractive():
                     try:
                         protocol.runMode.set(MODE_RESTART)
-                        self.scheduleProtocol(protocol)
+                        self.scheduleProtocol(protocol,
+                                              initialSleepTime=level*INITIAL_SLEEP_TIME)
                     except Exception as ex:
                         errorsList.append("Error trying to restart a protocol: %s"
                                           "\nERROR: %s\n" % (protocol.getObjLabel(),
@@ -513,66 +477,60 @@ class Project(object):
                     self.mapper.store(protocol)
                     self.mapper.commit()
 
-    def _fixWorkflowConfiguration(self, protocolList=None):
+    def _fixProtParamsConfiguration(self, protocol=None):
         """
         This function fix:
-        1. The old parameters configuration in the protocols list.
+        1. The old parameters configuration in the protocols.
            Now, dependent protocols have a pointer to the parent protocol, and
            the extended parameter has a parent output value
         """
-        if protocolList is not None:
-            for protocolId in protocolList:
-                protocol = self.getProtocol(protocolId)
+        # Take the old configuration attributes and fix the pointer
+        oldStylePointerList = [item for key, item in
+                               protocol.iterInputAttributes()
+                               if not isinstance(item.getObjValue(),
+                                                 pwprot.Protocol)]
+        if oldStylePointerList:
+            # Fix the protocol parameters
+            for pointer in oldStylePointerList:
+                auxPointer = pointer.getObjValue()
+                pointer.set(self.getRunsGraph().getNode(str(pointer.get().getObjParentId())).run)
+                pointer.setExtended(auxPointer.getLastName())
+                protocol._store()
+                self._storeProtocol(protocol)
+                self._updateProtocol(protocol)
+                self.mapper.commit()
+                print("The parameters configuration in the "
+                      "protocol \"%s\" has been modified \n" %
+                      protocol.getObjLabel())
 
-                # Take the old configuration attributes and fix the pointer
-                oldStylePointerList = [item for key, item in
-                                       protocol.iterInputAttributes()
-                                       if not isinstance(item.getObjValue(),
-                                                         pwprot.Protocol)]
-                if oldStylePointerList:
-                    # Fix the protocol parameters
-                    for pointer in oldStylePointerList:
-                        auxPointer = pointer.getObjValue()
-                        pointer.set(self.getProtocol(pointer.get().getObjParentId()))
-                        pointer.setExtended(auxPointer.getLastName())
-                        protocol._store()
-                        self._storeProtocol(protocol)
-                        self._updateProtocol(protocol)
-                        self.mapper.commit()
-                        print("The parameters configuration in the "
-                              "protocol \"%s\" has been modified \n" %
-                              protocol.getObjLabel())
-
-    def stopWorkFlow(self, initialProtocol):
+    def stopWorkFlow(self, activeProtList):
         """
         This function can stop a workflow from a selected protocol
         :param initialProtocol: selected protocol
         """
-        if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
-            for protocolId in workflowProtocolList:
-                protocol = self.getProtocol(protocolId)
-                if protocol.getStatus() in ACTIVE_STATUS:
-                    try:
-                        self.stopProtocol(protocol)
-                    except Exception as err:
-                        print(err)
+        errorProtList = []
+        for protocol in activeProtList:
+            try:
+                self.stopProtocol(protocol)
+            except Exception:
+                errorProtList.append(protocol)
+        return errorProtList
 
-    def resetWorkFlow(self, initialProtocol):
+    def resetWorkFlow(self, workflowProtocolList):
         """
         This function can reset a workflow from a selected protocol
         :param initialProtocol: selected protocol
         """
-        if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
-            for protocolId in workflowProtocolList:
-                protocol = self.getProtocol(protocolId)
+        errorProtList = []
+        if workflowProtocolList:
+            for protocol, level in workflowProtocolList.values():
                 try:
                     self.resetProtocol(protocol)
-                except Exception as err:
-                    print(err)
+                except Exception:
+                    errorProtList.append(protocol)
+        return errorProtList
 
-    def launchWorkflow(self, initialProtocol, mode=MODE_CONTINUE):
+    def launchWorkflow(self, workflowProtocolList, mode=MODE_CONTINUE):
         """
         This function can launch a workflow from a selected protocol in two
         modes depending on the 'mode' value (RESTART, CONTINUE)
@@ -582,15 +540,12 @@ class Project(object):
         3. Restart or Continue a workflow starting from the protocol depending
            of the 'mode' value
         """
-        if initialProtocol:
-            errorsList, workflowProtocolList = self._checkWorkflowErrors(initialProtocol)
-            if not errorsList:
-                self._fixWorkflowConfiguration(workflowProtocolList)
-                if mode == MODE_RESTART:
-                    self._restartWorkflow(workflowProtocolList, errorsList)
-                else:
-                    self._continueWorkflow(workflowProtocolList, errorsList)
-            return errorsList
+        errorsList = []
+        if mode == MODE_RESTART:
+            self._restartWorkflow(workflowProtocolList, errorsList)
+        else:
+            self._continueWorkflow(workflowProtocolList, errorsList)
+        return errorsList
 
     def launchProtocol(self, protocol, wait=False, scheduled=False,
                        force=False):
@@ -602,7 +557,7 @@ class Project(object):
            mpi, thread, queue,
         and also take care if the execution is remotely.
 
-        If the protocol has some prerequisited (other protocols that
+        If the protocol has some prerequisites (other protocols that
         needs to be finished first), it will be scheduled.
         """
         if protocol.getPrerequisites() and not scheduled:
@@ -645,9 +600,9 @@ class Project(object):
             self.mapper.store(protocol)
         self.mapper.commit()
 
-    def scheduleProtocol(self, protocol, prerequisites=[]):
+    def scheduleProtocol(self, protocol, prerequisites=[], initialSleepTime=0):
         """ Schedule a new protocol that will run when the input data
-        is available and the prerequisited finished.
+        is available and the prerequisites are finished.
         Params:
             protocol: the protocol that will be scheduled.
             prerequisites: a list with protocols ids that the scheduled
@@ -670,7 +625,7 @@ class Project(object):
         # changed later to only create a subset of the db need for the run
         pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
         # Launch the protocol, the jobId should be set after this call
-        pwprot.schedule(protocol)
+        pwprot.schedule(protocol, initialSleepTime=initialSleepTime)
         self.mapper.store(protocol)
         self.mapper.commit()
 
@@ -679,12 +634,15 @@ class Project(object):
 
         # If this is read only exit
         if self.openedAsReadOnly():
-            return
+            return pw.NOT_UPDATED_READ_ONLY
+
+        if checkPid:
+            self.checkPid(protocol)
 
         if skipUpdatedProtocols:
             # If we are already updated, comparing timestamps
             if pwprot.isProtocolUpToDate(protocol):
-                return
+                return pw.NOT_UPDATED_UNNECESSARY
 
         try:
             # Backup the values of 'jobId', 'label' and 'comment'
@@ -692,10 +650,6 @@ class Project(object):
             jobId = protocol.getJobId()
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
-
-            # Capture the db timestamp before loading.
-            lastUpdateTime = pwutils.getFileLastModificationDate(
-                                                        protocol.getDbPath())
 
             # If the protocol database has ....
             #  Comparing date will not work unless we have a reliable
@@ -706,8 +660,8 @@ class Project(object):
                                              protocol.getDbPath(),
                                              protocol.getObjId())
 
-            if checkPid:
-                self.checkPid(prot2)
+            # Capture the db timestamp before loading.
+            lastUpdateTime = pwutils.getFileLastModificationDate(protocol.getDbPath())
 
             # Copy is only working for db restored objects
             protocol.setMapper(self.mapper)
@@ -718,7 +672,7 @@ class Project(object):
             # merge outputs: This is necessary when outputs are added from the GUI
             # e.g.: adding coordinates from analyze result and protocol is active (interactive).
             for attr in localOutputs:
-                if not attr in protocol._outputs:
+                if attr not in protocol._outputs:
                     protocol._outputs.append(attr)
 
             # Restore backup values
@@ -746,21 +700,27 @@ class Project(object):
                 # with a FAILED status
                 protocol.setFailed(str(ex))
                 self.mapper.store(protocol)
+                return pw.NOT_UPDATED_ERROR
             else:
                 time.sleep(0.5)
                 self._updateProtocol(protocol, tries + 1)
 
+        return pw.PROTOCOL_UPDATED
+
     def stopProtocol(self, protocol):
         """ Stop a running protocol """
         try:
-            pwprot.stop(protocol)
-        except Exception:
+            if protocol.getStatus() in ACTIVE_STATUS:
+                pwprot.stop(protocol)
+        except Exception as e:
+            print("stopProtocol: error", e)
             raise
         finally:
             protocol.setAborted()
             protocol.setMapper(self.createMapper(protocol.getDbPath()))
             protocol._store()
             self._storeProtocol(protocol)
+            protocol.getMapper().close()
 
     def resetProtocol(self, protocol):
         """ Stop a running protocol """
@@ -777,7 +737,6 @@ class Project(object):
             protocol.makePathsAndClean()  # Create working dir if necessary
             protocol._store()
             self._storeProtocol(protocol)
-
 
     def continueProtocol(self, protocol):
         """ This function should be called 
@@ -803,8 +762,9 @@ class Project(object):
 
     def _getProtocolsDependencies(self, protocols):
         error = ''
+        runsGraph = self.getRunsGraph()
         for prot in protocols:
-            node = self.getRunsGraph().getNode(prot.strId())
+            node = runsGraph.getNode(prot.strId())
             if node:
                 childs = [node.run for node in node.getChilds() if
                           self.__validDependency(prot, node.run, protocols)]
@@ -836,38 +796,38 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _checkWorkflowErrors(self, protocol):
+    def _getWorkflowFromProtocol(self, protocol, fixProtParam=True):
         """
-        This function checks if there are active protocols excluding
-        interactives protocols. Also, save the workflow from "protocol"
-        If there are no errors, the function return None
+        This function get the workflow from "protocol" and determine the
+        protocol level into the graph. Also, checks if there are active
+        protocols excluding interactive protocols.
         """
-        errorsList = []
-        configuredProtList = []
-        if protocol:
-            auxProList = []
-            configuredProtList.append(protocol.getObjId())
-            auxProList.append(protocol.getObjId())
-            while auxProList:
-                protocol = self.getProtocol(auxProList.pop(0))
-                if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                    errorsList.append(protocol.getObjId())
-                node = self.getRunsGraph().getNode(protocol.strId())
-                if node:
-                    dependencies = [node.run for node in node.getChilds()]
-                    for dep in dependencies:
-                        if dep.getObjId() in auxProList:
-                            auxProList.remove(dep.getObjId())
-                            auxProList.append(dep.getObjId())
-                        else:
-                            auxProList.append(dep.getObjId())
+        activeProtList = []
+        configuredProtList = {}
+        auxProtList = []
+        # store the protocol and your level into the workflow
+        configuredProtList[protocol.getObjId()] = [protocol, 0]
+        auxProtList.append(protocol.getObjId())
+        runGraph = self.getRunsGraph()
 
-                        if dep.getObjId() in configuredProtList:
-                            configuredProtList.remove(dep.getObjId())
-                            configuredProtList.append(dep.getObjId())
-                        else:
-                            configuredProtList.append(dep.getObjId())
-        return errorsList, configuredProtList
+        while auxProtList:
+            protocol = runGraph.getNode(str(auxProtList.pop(0))).run
+            level = configuredProtList[protocol.getObjId()][1] + 1
+            if fixProtParam:
+                self._fixProtParamsConfiguration(protocol)
+            if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
+                activeProtList.append(protocol)
+            node = runGraph.getNode(protocol.strId())
+            dependencies = [node.run for node in node.getChilds()]
+            for dep in dependencies:
+                if not dep.getObjId() in auxProtList:
+                    auxProtList.append(dep.getObjId())
+                if not dep.getObjId() in configuredProtList.keys():
+                    configuredProtList[dep.getObjId()] = [dep, level]
+                elif level > configuredProtList[dep.getObjId()][1]:
+                    configuredProtList[dep.getObjId()][1] = level
+
+        return configuredProtList, activeProtList
 
     def deleteProtocol(self, *protocols):
         self._checkModificationAllowed(protocols, 'Cannot DELETE protocols')
@@ -880,7 +840,7 @@ class Project(object):
             wd = prot.workingDir.get()
 
             if wd.startswith(PROJECT_RUNS):
-                pwutils.path.cleanPath(wd)
+                prot.cleanWorkingDir()
             else:
                 print("Error path: ", wd)
 
@@ -913,7 +873,7 @@ class Project(object):
     def __setProtocolLabel(self, newProt):
         """ Set a readable label to a newly created protocol.
         We will try to find another existing protocol with the default label
-        and then use an incremental labeling in parethesis (<number>++)
+        and then use an incremental labeling in parenthesis (<number>++)
         """
         defaultLabel = newProt.getClassLabel()
         maxSuffix = 0
@@ -964,7 +924,10 @@ class Project(object):
                 matches.append((oKey, iKey))
             else:
                 for oKey, oAttr in node.run.iterOutputAttributes():
-                    if oAttr.getObjId() == iAttr.get().getObjId():
+                    # If node output is "real" and iAttr is still just a pointer
+                    # the iAttr.get() will return None
+                    pointed = iAttr.get()
+                    if pointed is not None and oAttr.getObjId() == pointed.getObjId():
                         matches.append((oKey, iKey))
 
         return matches
@@ -979,7 +942,7 @@ class Project(object):
         maxSuffix = 0
 
         # if '(copy...' suffix is not in the old name, we add it in the new name
-        # and seting the newnumber 
+        # and setting the newnumber
         mOld = REGEX_NUMBER_ENDING_CP.match(oldProtName)
         if mOld:
             newProtPrefix = mOld.groupdict()['prefix']
@@ -993,7 +956,7 @@ class Project(object):
         newNumber = oldNumber + 1
 
         # looking for "<old name> (copy" prefixes in the project and
-        # seting the newNumber as the maximum+1
+        # setting the newNumber as the maximum+1
         for prot in self.getRuns(iterate=True, refresh=False):
             otherProtLabel = prot.getObjLabel()
             mOther = REGEX_NUMBER_ENDING_CP.match(otherProtLabel)
@@ -1035,7 +998,7 @@ class Project(object):
                 newDict[prot.getObjId()] = newProt
                 self.saveProtocol(newProt)
 
-            g = self.getRunsGraph(refresh=False)
+            g = self.getRunsGraph()
 
             for prot in protocol:
                 node = g.getNode(prot.strId())
@@ -1087,7 +1050,7 @@ class Project(object):
         for prot in protocols:
             newDict[prot.getObjId()] = prot.getDefinitionDict()
 
-        g = self.getRunsGraph(refresh=False)
+        g = self.getRunsGraph()
 
         # pwutils.startDebugger('a')
         for prot in protocols:
@@ -1231,7 +1194,7 @@ class Project(object):
 
         if (protocol.isRunning() or protocol.isFinished()
                 or protocol.isLaunched()):
-            raise Exception('Cannot SAVE a protocol that is %s. '
+            raise ModificationNotAllowedException('Cannot SAVE a protocol that is %s. '
                             'Copy it instead.' % protocol.getStatus())
 
         protocol.setStatus(pwprot.STATUS_SAVED)
@@ -1303,13 +1266,19 @@ class Project(object):
         if not self.openedAsReadOnly():
             self._storeProtocol(protocol)  # Store first to get a proper id
             # Set important properties of the protocol
-            workingDir = "%06d_%s" % (
-                protocol.getObjId(), protocol.getClassName())
+            workingDir = self.getProtWorkingDir(protocol)
             self._setProtocolMapper(protocol)
 
             protocol.setWorkingDir(self.getPath(PROJECT_RUNS, workingDir))
             # Update with changes
             self._storeProtocol(protocol)
+
+    @staticmethod
+    def getProtWorkingDir(protocol):
+        """
+        Return the protocol working directory
+        """
+        return "%06d_%s" % (protocol.getObjId(), protocol.getClassName())
 
     def getRuns(self, iterate=False, refresh=True, checkPids=False):
         """ Return the existing protocol runs in the project. 
@@ -1324,6 +1293,9 @@ class Project(object):
             # self.runs = self.mapper.selectAll(iterate=False,
             #               objectFilter=lambda o: isinstance(o, pwprot.Protocol))
             self.runs = self.mapper.selectAllBatch(objectFilter=lambda o: isinstance(o, pwprot.Protocol))
+
+            # Invalidate _runsGraph because the runs are updated
+            self._runsGraph = None
 
             for r in self.runs:
 
@@ -1397,7 +1369,7 @@ class Project(object):
                                                  objectFilter=objectFilter):
                 yield obj
 
-    def getRunsGraph(self, refresh=True, checkPids=False):
+    def getRunsGraph(self, refresh=False, checkPids=False):
         """ Build a graph taking into account the dependencies between
         different runs, ie. which outputs serves as inputs of other protocols. 
         """
@@ -1436,7 +1408,7 @@ class Project(object):
                     parentNode = outputDict[pointedId]
                     if parentNode is node:
                         print("WARNING: Found a cyclic dependence from node "
-                              "%s to itself, problably a bug. " % pointedId)
+                              "%s to itself, probably a bug. " % pointedId)
                     else:
                         parentNode.addChild(node)
                         return True
@@ -1551,7 +1523,7 @@ class Project(object):
         return self.mapper.getRelationParents(pwobj.RELATION_SOURCE, obj)
 
     def getTransformGraph(self, refresh=False):
-        """ Get the graph from the TRASNFORM relation. """
+        """ Get the graph from the TRANSFORM relation. """
         if refresh or not self._transformGraph:
             self._transformGraph = self._getRelationGraph(pwobj.RELATION_TRANSFORM,
                                                           refresh)
@@ -1639,11 +1611,14 @@ class Project(object):
         self.settings.setReadOnly(value)
 
     def fixLinks(self, searchDir):
+        print("Fixing project links. Searching at %s" % searchDir)
         runs = self.getRuns()
 
         for prot in runs:
+            print (prot)
             broken = False
-            if isinstance(prot, ProtImportBase):
+            if isinstance(prot, ProtImportBase) or prot.getClassName() == "ProtImportMovies":
+                print("Import detected")
                 for _, attr in prot.iterOutputAttributes():
                     fn = attr.getFiles()
                     for f in attr.getFiles():
@@ -1665,6 +1640,13 @@ class Project(object):
                                 print("  Found file %s, creating link..." % newFile,
                                       pwutils.green("   %s -> %s" % (f, newFile)))
                                 pwutils.createAbsLink(newFile, f)
+
+    @staticmethod
+    def cleanProjectName(projectName):
+        """ Cleans a project name to avoid common errors
+        Use it whenever you want to get the final project name pyworkflow will endup.
+        Spaces will be replaced by _ """
+        return projectName.replace(" ", "_")
 
 
 class MissingProjectDbException(Exception):

@@ -26,7 +26,6 @@ Text based widgets.
 """
 
 
-
 import os
 import sys
 import time
@@ -63,11 +62,11 @@ elif os.name == 'posix':  # linux systems and so on
 
     x_open = find_prog('xdg-open', 'gnome-open', 'kde-open', 'gvfs-open')
     editor = find_prog('pluma', 'gedit', 'kwrite', 'geany', 'kate',
-                       'emacs', 'nedit', 'mousepad')
+                       'emacs', 'nedit', 'mousepad', 'code')
 
     def _open_cmd(path, tkParent=None):
         # If it is an url, open with browser.
-        if path.startswith('http://') or path.startswith('https://'):
+        if path.startswith('http://') or path.startswith('https://') or path.endswith('.html'):
             try:
                 webbrowser.open_new_tab(path)
                 return
@@ -461,7 +460,8 @@ class OutputText(Text):
                                                       offset=self.offset, 
                                                       lineNo=self.lineNo,
                                                       maxSize=self.maxSize, 
-                                                      notifyLine=self._notifyLine)
+                                                      notifyLine=self._notifyLine,
+                                                      errors='replace')
         else:
             self.insert(tk.END, "File '%s' doesn't exist" % self.filename)
 
@@ -487,7 +487,7 @@ class TextFileViewer(tk.Frame):
     
     def __init__(self, master, fileList=[],
                  allowSearch=True, allowRefresh=True, allowOpen=False,
-                 font=None, maxSize=400):
+                 font=None, maxSize=400, width=100, height=30):
         tk.Frame.__init__(self, master)
         self.searchList = None
         self.lastSearch = None
@@ -501,6 +501,8 @@ class TextFileViewer(tk.Frame):
         self._allowOpen = allowOpen
         self._font = font  # allow a font to be passed as argument to be used
         self.maxSize = maxSize
+        self.width = width
+        self.height = height
 
         self.createWidgets(fileList)
         self.master = master
@@ -528,7 +530,8 @@ class TextFileViewer(tk.Frame):
         if self._font is not None:
             kwargs['font'] = self._font
 
-        t = OutputText(tab, filename, width=100, height=30, maxSize=self.maxSize, **kwargs)
+        t = OutputText(tab, filename, width=self.width, height=self.height,
+                       maxSize=self.maxSize, **kwargs)
         t.frame.grid(column=0, row=0, padx=5, pady=5, sticky='nsew')
         self.taList.append(t)
         tabText = "   %s   " % os.path.basename(filename)
@@ -597,7 +600,10 @@ class TextFileViewer(tk.Frame):
         self._lastTabIndex = self.notebook.select()
         # reset the search
         self.lastSearch = None
-        self.searchEntry.focus_set()
+        # Setting the focus, captures it when selecting protocols and
+        # therefore "deleting" using keys or other future shortcut for the canvas
+        # will not work.
+        # self.searchEntry.focus_set()
 
     def addBinding(self):
 

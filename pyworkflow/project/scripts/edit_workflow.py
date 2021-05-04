@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -40,7 +40,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python scripts/edit_workflow.py workflow.json
+    Usage: python -m pyworkflow.project.scripts.edit_workflow workflow.json
         Edit the provide json file with scipion workflow.
         It will create a project, import the workflow and save
         the workflow back before closing the project.
@@ -69,7 +69,7 @@ manager = Manager(workspace=customUserData)
 
 projName = os.path.basename(jsonFn)
 proj = manager.createProject(projName)
-projPath = manager.getProjectPath(projName)
+projPath = manager.getProjectPath(proj.getShortName())
 proj.loadProtocols(jsonFn)
 
 
@@ -77,7 +77,7 @@ class EditorProjectWindow(ProjectWindow):
     def close(self, e=None):
         try:
             print("Writing protocols to: ", jsonFn)
-            proj.getRunsGraph()  # Build project runs graph
+            proj.getRunsGraph(refresh=True)  # Build project runs graph
             proj.exportProtocols(proj.getRuns(), jsonFn)
             print("Deleting temporary folder: ", customUserData)
             pwutils.cleanPath(customUserData)

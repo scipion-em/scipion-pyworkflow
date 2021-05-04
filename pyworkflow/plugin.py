@@ -9,7 +9,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -81,10 +81,13 @@ class Domain:
         m._bibtex = {}
         bib = cls.__getSubmodule(name, 'bibtex')
         if bib is not None:
-            try:
-                m._bibtex = pwutils.parseBibTex(bib.__doc__)
-            except Exception:
-                pass
+            if hasattr(bib, "_bibtex"):
+                print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
+            else:
+                try:
+                    m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
+                except Exception:
+                    pass
         cls._plugins[name] = m  # Register the name to as a plugin
 
     @classmethod
@@ -557,7 +560,7 @@ class Plugin:
         """ Return the version of the binaries that are currently active.
         In the current implementation it will be inferred from the *_HOME
         variable, so it should contain the version number in it. """
-        # FIXME: (JMRT) Use the basename might aleviate the issue with matching
+        # FIXME: (JMRT) Use the basename might alleviate the issue with matching
         # the binaries version, but we might consider to find a better solution
         home = os.path.basename(home or cls.getHome())
         versions = versions or cls.getSupportedVersions()
@@ -587,6 +590,7 @@ class Plugin:
             return (["Missing variables:"] + missing) if missing else []
         except Exception as e:
             return ["validateInstallation fails: %s" % e]
+
     @classmethod
     def getPluginTemplateDir(cls):
         return os.path.join(pw.getModuleFolder(cls.getName()), 'templates')
@@ -647,6 +651,3 @@ class PluginInfo:
 
     def getKeywords(self):
         return self._metadata.get('Keywords', '')
-
-
-

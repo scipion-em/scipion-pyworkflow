@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -40,7 +40,6 @@ B. Remote execution:
 4- Get the result back after launching remotely
 """
 
-
 import os
 import re
 from subprocess import Popen, PIPE
@@ -48,6 +47,7 @@ import pyworkflow as pw
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
 from pyworkflow.protocol.constants import UNKNOWN_JOBID
+
 LOCALHOST = 'localhost'
 
 
@@ -63,12 +63,12 @@ def launch(protocol, wait=False, stdin=None, stdout=None, stderr=None):
         jobId = _launchLocal(protocol, wait, stdin, stdout, stderr)
     else:
         jobId = _launchRemote(protocol, wait)
-    
+
     protocol.setJobId(jobId)
-    
+
     return jobId
-    
-    
+
+
 def stop(protocol):
     """ 
     """
@@ -78,14 +78,14 @@ def stop(protocol):
         return _stopRemote(protocol)
 
 
-def schedule(protocol, wait=False):
+def schedule(protocol, initialSleepTime=0, wait=False):
     """ Use this function to schedule protocols that are not ready to
     run yet. Right now it only make sense to schedule jobs locally.
     """
-    cmd = '%s %s' % (pw.PYTHON ,pw.getScheduleScript())
-    cmd += ' "%s" "%s" %s' % (protocol.getProject().path,
+    cmd = '%s %s' % (pw.PYTHON, pw.getScheduleScript())
+    cmd += ' "%s" "%s" %s --initial_sleep %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
-                              protocol.strId())
+                              protocol.strId(), initialSleepTime)
     jobId = _run(cmd, wait)
     protocol.setJobId(jobId)
 
@@ -104,7 +104,7 @@ def _runsLocally(protocol):
     where the PID makes sense.
     """
     return protocol.getHostFullName() == getHostFullName()
-    
+
 
 # ******************************************************************
 # *                 Function related to LAUNCH
@@ -133,8 +133,8 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
         jobId = _run(command, wait, stdin, stdout, stderr)
 
     return jobId
-    
-    
+
+
 def _runRemote(protocol, mode):
     """ Launch remotely 'pw_protocol_remote.py' script to run or stop a protocol. 
     Params:
@@ -167,11 +167,11 @@ def _runRemote(protocol, mode):
     p = Popen(cmd, shell=True, stdout=PIPE)
 
     return p
-    
-    
+
+
 def _launchRemote(protocol, wait):
     p = _runRemote(protocol, 'run')
-    jobId = UNKNOWN_JOBID    
+    jobId = UNKNOWN_JOBID
     out, err = p.communicate()
     if err:
         raise Exception(err)
@@ -180,8 +180,8 @@ def _launchRemote(protocol, wait):
         jobId = int(s.group(1))
     else:
         raise Exception("** Couldn't parse ouput: %s" % redStr(out))
-             
-    return jobId    
+
+    return jobId
 
 
 def _copyFiles(protocol, rpath):
@@ -225,7 +225,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     p = Popen(command, shell=True, stdout=PIPE, cwd=cwd, env=env)
     out = p.communicate()[0]
     # Try to parse the result of qsub, searching for a number (jobId)
-    # REview this, seems to exclusive to torque batch system
+    # Review this, seems to exclusive to torque batch system
     s = re.search('(\d+)', str(out))
     if p.returncode == 0 and s:
         job = int(s.group(0))
@@ -235,7 +235,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
         print("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
         return UNKNOWN_JOBID
 
-    
+
 def _run(command, wait, stdin=None, stdout=None, stderr=None):
     """ Execute a command in a subprocess and return the pid. """
     gcmd = greenStr(command)
@@ -247,15 +247,15 @@ def _run(command, wait, stdin=None, stdout=None, stderr=None):
 
     return jobId
 
+
 # ******************************************************************
 # *                 Function related to STOP
 # ******************************************************************
 
 
 def _stopLocal(protocol):
-    
     if protocol.useQueue() and not protocol.isScheduled():
-        jobId = protocol.getJobId()        
+        jobId = protocol.getJobId()
         host = protocol.getHostConfig()
         cancelCmd = host.getCancelCommand() % {'JOB_ID': jobId}
         _run(cancelCmd, wait=True)
@@ -265,4 +265,3 @@ def _stopLocal(protocol):
 
 def _stopRemote(protocol):
     _runRemote(protocol, 'stop')
-

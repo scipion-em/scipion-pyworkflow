@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -29,7 +29,6 @@ The basic one will run steps, one by one, after completion.
 There is one based on threads to execute steps in parallel
 using different threads and the last one with MPI processes.
 """
-
 
 
 import time
@@ -96,7 +95,7 @@ class StepExecutor:
         # Even if this will run the steps in a single thread
         # let's follow a similar approach than the parallel one
         # In this way we can take into account the steps graph
-        # dependency and also the case when using streamming
+        # dependency and also the case when using streaming
 
         delta = datetime.timedelta(seconds=stepsCheckSecs)
         lastCheck = datetime.datetime.now()
@@ -153,10 +152,10 @@ class StepThread(threading.Thread):
         finally:
             with self.lock:
                 if error is None:
-                    self.step.setStatus(cts.STATUS_FINISHED)
+                    self.step.setFinished()
                 else:
                     self.step.setFailed(error)
-                self.step.endTime.set(datetime.datetime.now())
+
 
 
 class ThreadStepExecutor(StepExecutor):
@@ -173,14 +172,13 @@ class ThreadStepExecutor(StepExecutor):
             nGpu = len(self.gpuList)
 
             if nGpu > nThreads:
-                chunk = nGpu / nThreads
+                chunk = int(nGpu / nThreads)
                 for i, node in enumerate(nodes):
                     self.gpuDict[node] = list(self.gpuList[i*chunk:(i+1)*chunk])
             else:
                 # Expand gpuList repeating until reach nThreads items
                 if nThreads > nGpu:
-                    import numpy as np
-                    newList = np.asarray(self.gpuList) * (nThreads/nGpu+1)
+                    newList = self.gpuList * (int(nThreads/nGpu)+1)
                     self.gpuList = newList[:nThreads]
 
                 for node, gpu in zip(nodes, self.gpuList):

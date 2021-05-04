@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -36,7 +36,7 @@ def usage(error):
     print("""
     ERROR: %s
 
-    Usage: scipion python scripts/create_project.py
+    Usage: scipion3 python -m pyworkflow.project.scripts.create name 
         name="project name"
         [workflow="file"] path to a Scipion json workflow
         [location="folder"] where to create it, defaults to scipion default location
@@ -68,7 +68,7 @@ if manager.hasProject(projName):
           % pwutils.red(projName))
 
 if jsonFile is not None and not os.path.exists(jsonFile):
-    usage("Unexistent json file: %s" % pwutils.red(jsonFile))
+    usage("Nonexistent json file: %s" % pwutils.red(jsonFile))
 
 project = manager.createProject(projName, location=location)
 

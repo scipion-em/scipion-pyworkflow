@@ -7,7 +7,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -25,11 +25,6 @@
 # *
 # **************************************************************************
 """
-Bibtex string file for Scipion package.
-"""
-
-_bibtexStr = """
-
 @article{delaRosaTrevin201693,
 title = "Scipion: A software framework toward integration, reproducibility and validation in 3D electron microscopy ",
 journal = "Journal of Structural Biology",
@@ -51,7 +46,3 @@ keywords = "Reproducibility "
 }
 """
 
-
-from pyworkflow.utils import parseBibTex
-
-_bibtex = parseBibTex(_bibtexStr)  

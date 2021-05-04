@@ -6,7 +6,7 @@
 # *
 # * This program is free software; you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
-# * the Free Software Foundation; either version 2 of the License, or
+# * the Free Software Foundation; either version 3 of the License, or
 # * (at your option) any later version.
 # *
 # * This program is distributed in the hope that it will be useful,
@@ -27,18 +27,20 @@
 
 import sys
 import os
+import time
 
 import pyworkflow as pw
 from pyworkflow.project import Manager
 from pyworkflow.project import Project
 import pyworkflow.utils as pwutils
+from pyworkflow.protocol import INITIAL_SLEEP_TIME
 
 
 def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python -m pyworkflow/project/scripts/schedule projectName 
+    Usage: python -m pyworkflow.project.scripts.schedule projectName 
     
               options: --ignore ProtClassName1 ProtClassName2 ProtClassLabel1 ...
               
@@ -60,10 +62,10 @@ elif n > 2 and sys.argv[2] != '--ignore':
 projName = sys.argv[1]
 
 # This fails, since it is triggering matplotlib.pyplot and then import error happens:
-# ... pyworkflow/gui/no-tkinter/_tkinter.py: invalid ELF header. If we want this back we migt need to
+# ... pyworkflow/gui/no-tkinter/_tkinter.py: invalid ELF header. If we want this back we might need to
 # invest some time "faking" tkinter again for python3.
-#path = pw.join('gui', 'no-tkinter')
-#sys.path.insert(1, path)
+# path = pw.join('gui', 'no-tkinter')
+# sys.path.insert(1, path)
 
 # Create a new project
 manager = Manager()
@@ -72,7 +74,9 @@ if not manager.hasProject(projName):
     usage("There is no project with this name: %s"
           % pwutils.red(projName))
 
-# the project may be a soft link which may be unavailable to the cluster so get the real path
+# the project may be a soft link which may be unavailable to the cluster
+# so get the real path
+
 try:
     projectPath = os.readlink(manager.getProjectPath(projName))
 except:
@@ -81,16 +85,22 @@ except:
 project = Project(pw.Config.getDomain(), projectPath)
 project.load()
 
-runs = project.getRuns()
+runGraph = project.getRunsGraph()
+roots = runGraph.getRootNodes()
 
 # Now assuming that there is no dependencies between runs
 # and the graph is lineal
-for prot in runs:
-    protClassName = prot.getClassName()
-    protLabelName = prot.getObjLabel()
-    if (protClassName not in sys.argv[3:] and
-        protLabelName not in sys.argv[3:]):
-        project.scheduleProtocol(prot)
-    else:
-        print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
-                                  % (protClassName, protLabelName)))
+
+for root in roots:
+    for child in root.getChilds():
+        workflow, _ = project._getWorkflowFromProtocol(child.run)
+        for prot, level in workflow.values():
+            protClassName = prot.getClassName()
+            protLabelName = prot.getObjLabel()
+            if (protClassName not in sys.argv[3:] and
+                    protLabelName not in sys.argv[3:]):
+                project.scheduleProtocol(prot,
+                                         initialSleepTime=level*INITIAL_SLEEP_TIME)
+            else:
+                print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
+                                      % (protClassName, protLabelName)))

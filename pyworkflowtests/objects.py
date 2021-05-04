@@ -33,10 +33,10 @@ import pyworkflow.object as pwobj
 NO_INDEX = 0
 
 
-class MockObject(pwobj.OrderedObject):
+class MockObject(pwobj.Object):
     """Base object for all Mock classes"""
     def __init__(self, **kwargs):
-        pwobj.OrderedObject.__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
     def __str__(self):
         return self.getClassName()
@@ -388,7 +388,7 @@ class MockParticle(MockImage):
     def __init__(self, location=None, **kwargs):
         MockImage.__init__(self, location, **kwargs)
         # This may be redundant, but make the Particle
-        # object more indenpent for tracking coordinates
+        # object more independent for tracking coordinates
         self._coordinate = None
         self._micId = pwobj.Integer()
         self._classId = pwobj.Integer()
@@ -512,7 +512,7 @@ class MockSetOfImages(MockSet):
         # will be set for each image added to the set
         if self.getSamplingRate() or not image.getSamplingRate():
             image.setSamplingRate(self.getSamplingRate())
-        # Copy the acquistion from the set to images
+        # Copy the acquisition from the set to images
         # only override image acquisition if setofImages acquisition
         # is not none
         if self.hasAcquisition():
@@ -601,7 +601,7 @@ class MockSetOfImages(MockSet):
         """ Return the string representing the dimensions. """
         return str(self._firstDim)
 
-    def iterItems(self, orderBy='id', direction='ASC', where='1', limit=None):
+    def iterItems(self, orderBy='id', direction='ASC', where=None, limit=None):
         """ Redefine iteration to set the acquisition to images. """
         for img in pwobj.Set.iterItems(self, orderBy=orderBy, direction=direction,
                                        where=where, limit=limit):

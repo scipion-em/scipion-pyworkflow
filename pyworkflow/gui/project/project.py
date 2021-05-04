@@ -31,7 +31,6 @@ It is composed by three panels:
 """
 
 
-
 import os
 import threading
 import shlex
@@ -168,7 +167,6 @@ class ProjectWindow(ProjectBaseWindow):
             self.settings = proj.createSettings()
 
         self.generalCfg = self.settings.getConfig()
-        self.protCfg = proj.getCurrentProtocolView()
 
         return proj
 
@@ -231,10 +229,12 @@ class ProjectWindow(ProjectBaseWindow):
         
     def _loadWorkflow(self, obj):
         try:
+            self.getViewWidget().info('Importing the workflow...')
             self.project.loadProtocols(obj.getPath())
-            self.getViewWidget().updateRunsGraph(True, reorganize=True)
+            self.getViewWidget().updateRunsGraph(True, reorganize=False)
+            self.getViewWidget().cleanInfo()
         except Exception as ex:
-            self.showError(str(ex))
+            self.showError(str(ex), exception=ex)
             
     def onImportWorkflow(self):
         FileBrowserWindow("Select workflow .json file",
@@ -247,7 +247,7 @@ class ProjectWindow(ProjectBaseWindow):
         WorkflowRepository().search()
 
     def onExportTreeGraph(self):
-        runsGraph = self.project.getRunsGraph(refresh=True)
+        runsGraph = self.project.getRunsGraph()
         useId = not pwutils.envVarOn('SCIPION_TREE_NAME')
         dotStr = runsGraph.printDot(useId=useId)
         with tempfile.NamedTemporaryFile(suffix='.gv', mode="w") as dotFile:
