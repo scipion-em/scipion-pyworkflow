@@ -30,6 +30,7 @@ This module contains some sqlite basic tools to handle Databases.
 """
 
 from sqlite3 import dbapi2 as sqlite
+from sqlite3 import OperationalError as OperationalError 
 
 from pyworkflow import SCIPION_DEBUG_SQLITE
 from pyworkflow.utils import envVarOn

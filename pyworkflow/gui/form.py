@@ -1590,6 +1590,7 @@ class FormWindow(Window):
         self.callback = callback
         self.widgetDict = {}  # Store tkVars associated with params
         self.visualizeDict = kwargs.get('visualizeDict', {})
+        self.disableRunMode = kwargs.get('disableRunMode', False)
         self.bindings = []
         self.hostList = hostList
         self.protocol = protocol
@@ -1874,7 +1875,7 @@ class FormWindow(Window):
 
         modeFrame = tk.Frame(runFrame, bg='white')
 
-        if not self.protocol.isSaved():
+        if not self.disableRunMode:
             self._createHeaderLabel(runFrame, pwutils.Message.LABEL_EXECUTION,
                                     bold=True,
                                     sticky='e', row=r, pady=0)
@@ -2200,21 +2201,21 @@ class FormWindow(Window):
             protocolList = ""
             if self.protocol.getObjId():
                 project = self.protocol.getProject()
-                errorProList, workflowProtocolList = self.protocol.getProject()._checkWorkflowErrors(self.protocol)
-                for prot in workflowProtocolList:
-                    protocolList += ("\n* " + self.protocol.getProject().getProtocol(prot).getRunName())
+                workflowProtocolList, activeProtList = project._getWorkflowFromProtocol(self.protocol)
+                for prot, level in workflowProtocolList.values():
+                    protocolList += ("\n* " + prot.getRunName())
                 if len(workflowProtocolList) > 1:
                     result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
                                                 pwutils.Message.LABEL_RESTART_FORM % ('%s\n' % protocolList),
                                                 self.root)
                     if result == RESULT_RUN_ALL:
                         self.protocol._store()
-                        self.protocol.getProject()._storeProtocol(self.protocol)
-                        project.launchWorkflow(self.protocol, mode=MODE_RESTART)
+                        project._storeProtocol(self.protocol)
+                        project._restartWorkflow(workflowProtocolList)
                         self.close()
                         return
                     elif result == RESULT_RUN_SINGLE and not self.protocol.isSaved():
-                        project.resetWorkFlow(self.protocol)
+                        project.resetWorkFlow(workflowProtocolList)
                     elif result == RESULT_CANCEL:
                         return
                 elif not askYesNo(pwutils.Message.TITLE_RESTART_FORM,

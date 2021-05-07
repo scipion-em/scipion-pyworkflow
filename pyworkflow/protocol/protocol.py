@@ -27,6 +27,7 @@ execution and tracking like: Step and Protocol
 """
 import sys
 import json
+import threading
 import time
 
 import pyworkflow as pw
@@ -108,15 +109,22 @@ class Step(Object):
 
     def setFailed(self, msg):
         """ Set the run failed and store an error message. """
-        self.endTime.set(dt.datetime.now())
-        self._error.set(msg)
-        self.status.set(STATUS_FAILED)
+        self._finalizeStep(STATUS_FAILED, msg=msg)
 
     def setAborted(self):
-        """ Set the status to aborted and updated the endTime. """
+        """ Set the status to aborted and updates the endTime. """
+        self._finalizeStep(STATUS_ABORTED, "Aborted by user.")
+
+    def setFinished(self):
+        """ Set the status to finish updates the end time """
+        self._finalizeStep(STATUS_FINISHED)
+
+    def _finalizeStep(self, status, msg=None):
+        """ Closes the step, setting up the endTime and optionally an error message"""
         self.endTime.set(dt.datetime.now())
-        self._error.set("Aborted by user.")
-        self.status.set(STATUS_ABORTED)
+        if msg:
+            self._error.set(msg)
+        self.status.set(status)
 
     def setSaved(self):
         """ Set the status to saved and updated the endTime. """
@@ -398,6 +406,7 @@ class Protocol(Step):
         self._pid = Integer()
         self._stepsExecutor = None
         self._stepsDone = Integer(0)
+        self._cpuTime = Integer(0)
         self._numberOfSteps = Integer(0)
         # For visualization
         self.allowHeader = Boolean(True)
@@ -410,6 +419,8 @@ class Protocol(Step):
 
         # Store warnings here
         self.summaryWarnings = []
+        # Get a lock for threading execution
+        self._lock = threading.Lock()
 
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
@@ -447,9 +458,9 @@ class Protocol(Step):
                          state=Set.STREAM_OPEN):
         """ Use this function when updating an Stream output set.
         """
-        self.__tryUpdateOuputSet(outputName, outputSet, state)
+        self.__tryUpdateOutputSet(outputName, outputSet, state)
 
-    def __tryUpdateOuputSet(self, outputName, outputSet,
+    def __tryUpdateOutputSet(self, outputName, outputSet,
                             state=Set.STREAM_OPEN, tries=1):
         try:
             # Update the set with the streamState value (either OPEN or CLOSED)
@@ -476,8 +487,8 @@ class Protocol(Step):
                 raise ex
             else:
                 time.sleep(tries)
-                self.__tryUpdateOuputSet(outputName, outputSet, state,
-                                         tries + 1)
+                self.__tryUpdateOutputSet(outputName, outputSet, state,
+                                          tries + 1)
 
     def hasExpert(self):
         """ This function checks if the protocol has
@@ -670,15 +681,13 @@ class Protocol(Step):
             output = attrInput.get()
             if isinstance(output, Protocol):  # case A
                 protocol = output
-                output = None
             else:
                 if attrInput.hasExtended():  # case B
                     protocol = attrInput.getObjValue()
                 else:  # case C
 
                     if self.getProject() is not None:
-
-                        protocol = self.getProject().getProtocol(output.getObjParentId())
+                        protocol = self.getProject().getRunsGraph(refresh=True).getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
                         # Pointers do not have the __project set.
@@ -931,11 +940,27 @@ class Protocol(Step):
 
         return step.getIndex()
 
-    def _setStatusSteps(self, status):
-        """Set the status of all steps"""
+    def setRunning(self):
+        """ Do not reset the init time in RESUME_MODE"""
+        previousStart = self.initTime.get()
+        super().setRunning()
+        if self.getRunMode() == MODE_RESUME:
+            self.initTime.set(previousStart)
+        else:
+            self._cpuTime.set(0)
+
+    def setAborted(self):
+        """ Abort the protocol and finalize the steps"""
+        super().setAborted()
+        self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+
+    def _updateSteps(self, updater, where="1"):
+        """Set the status of all steps
+        :parameter updater callback/lambda receiving a step and editing it inside
+        :parameter where condition to filter the set with."""
         stepsSet = StepSet(filename=self.getStepsFile())
-        for step in stepsSet:
-            step.setStatus(status)
+        for step in stepsSet.iterItems(where=where):
+            updater(step)
             stepsSet.update(step)
         stepsSet.write()
         stepsSet.close()  # Close the connection
@@ -973,24 +998,25 @@ class Protocol(Step):
         """
         return self._getPath(os.path.basename(path))
 
-    def _insertFunctionStep(self, funcName, *funcArgs, **kwargs):
+    def _insertFunctionStep(self, func, *funcArgs, **kwargs):
         """
          Params:
-           funcName: the string name of the function to be run in the Step.
+           func: the function itself or, optionally, the name (string) of the function to be run in the Step.
            *funcArgs: the variable list of arguments to pass to the function.
            **kwargs: see __insertStep
         """
-        # Get the function give its name
-        func = getattr(self, funcName, None)
+        if isinstance(func, str):
+            # Get the function give its name
+            func = getattr(self, func, None)
 
         # Ensure the protocol instance have it and is callable
         if not func:
             raise Exception("Protocol._insertFunctionStep: '%s' function is "
-                            "not member of the protocol" % funcName)
+                            "not member of the protocol" % func)
         if not callable(func):
             raise Exception("Protocol._insertFunctionStep: '%s' is not callable"
-                            % funcName)
-        step = FunctionStep(func, funcName, *funcArgs, **kwargs)
+                            % func)
+        step = FunctionStep(func, func.__name__, *funcArgs, **kwargs)
 
         return self.__insertStep(step, **kwargs)
 
@@ -1158,7 +1184,8 @@ class Protocol(Step):
 
         self.__updateStep(step)
         self._stepsDone.increment()
-        self._store(self._stepsDone)
+        self._cpuTime.set(self._cpuTime.get() + step.getElapsedTime().total_seconds())
+        self._store(self._stepsDone,  self._cpuTime)
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
                   % (step.funcName.get(), step._index, step.endTime.datetime()))
@@ -1772,6 +1799,11 @@ class Protocol(Step):
         """ Return the number of steps executed. """
         return self._stepsDone.get(0)
 
+    @property
+    def cpuTime(self):
+        """ Return the sum of all durations of the finished steps"""
+        return self._cpuTime.get()
+
     def updateSteps(self):
         """ After the steps list is modified, this methods will update steps
         information. It will save the steps list and also the number of steps.
@@ -2322,7 +2354,7 @@ def isProtocolUpToDate(protocol):
               "Protocol %s, protocol time stamp: %s, %s timeStamp: %s"
               % (protocol, protTS, protocol, dbTS))
     else:
-        return protTS > dbTS
+        return protTS >= dbTS
 
 
 class ProtImportBase(Protocol):

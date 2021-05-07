@@ -309,6 +309,7 @@ Do you really want to restart?'
     TITLE_STOPPED_WORKFLOW_FAILED = 'Error while stopping the workflow'
     TITLE_RESETED_WORKFLOW_FAILED = 'Error while resetting the workflow'
     TITLE_LAUNCHED_WORKFLOW_FAILED = 'The workflow can not be relaunched from this protocol.\n'
+    TITLE_ACTIVE_PROTOCOLS = 'The following protocols are active:'
     
     # SHOWJ_WEB
     SHOWJ_TITLE = 'Showj'
@@ -467,6 +468,7 @@ class Icon:
     FAILURE = 'fa-failure.gif'
     DELETE_OPERATION = 'fa-delete-operation.gif'
     TO_UPDATE = 'fa-update.gif'
+    WAITING = 'wait.gif'
     ACTION_UNDO = 'fa-undo.gif'
 
     PLUGIN_AUTHORS = 'users.gif'

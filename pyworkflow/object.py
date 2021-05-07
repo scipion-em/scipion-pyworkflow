@@ -31,6 +31,7 @@ basic classes.
 import os
 from collections import OrderedDict
 import datetime as dt
+from os.path import getmtime
 
 from pyworkflow import utils
 from pyworkflow.utils.reflection import getSubclasses
@@ -1094,13 +1095,17 @@ class Set(Object):
         
     def __getitem__(self, itemId):
         """ Get the image with the given id. """
-        return self._getMapper().selectById(itemId)
+        closedMapper = self._mapper is None
+        item = self._getMapper().selectById(itemId)
+        if closedMapper:
+            self.close()
+        return item
 
     def __contains__(self, itemId):
         """ element in Set """
         return self._getMapper().exists(itemId)
 
-    def iterItems(self, orderBy='id', direction='ASC', where='1',
+    def iterItems(self, orderBy='id', direction='ASC', where=None,
                   limit=None, iterate=True):
         return self._getMapper().selectAll(orderBy=orderBy,
                                            direction=direction,
@@ -1273,10 +1278,7 @@ class Set(Object):
         
     def getIdSet(self):
         """ Return a Python set object containing all ids. """
-        s = set()
-        for item in self.iterItems():
-            s.add(item.getObjId())
-        return s
+        return set(self.getUniqueValues('id'))
     
     def getFiles(self):
         files = set()
@@ -1321,6 +1323,37 @@ class Set(Object):
         setObj = cls(filename=setFn, **kwargs)
         return setObj
 
+
+    # ******* Streaming helpers to deal with sets **********
+    def hasChangedSince(self, time):
+        """ Returns if the set has changed since the timestamp passed as parameter. It will check the
+        the last modified time of the file this set uses to persists.
+
+        :parameter time: timestamp to compare to the last modification time  """
+
+        if time is None:
+            return True
+
+        # Get the file name
+        localFile = self.getFileName()
+
+        #self.lastCheck = getattr(self, 'lastCheck', now)
+        # Get the last time it was modified
+        modTime = dt.datetime.fromtimestamp(getmtime(localFile))
+        return time < modTime
+
+    def getUniqueValues(self, attributes, where=None):
+        """ Returns a list (for a single label) or a dictionary with unique values for the passed labels.
+        If more than one label is passed it will be unique rows similar ti SQL unique clause.
+
+        :param attributes (string or list) item attribute/s to retrieve unique row values
+        :param where (string) condition to filter the results"""
+
+        return self._getMapper().unique(attributes, where)
+
+    def fmtDate(self, date):
+        """ Formats a python date to a valid string for the mapper"""
+        return self._getMapper().fmtDate(date)
 
 def ObjectWrap(value):
     """This function will act as a simple Factory

@@ -58,6 +58,7 @@ class ProgressBar(object):
                  output=None, extraArgs=None):
         """
         Create a new ProgressBar object.
+
         :param total: The total amount that will be running the progress bar.
             The value in the update() method can no go greater than this value.
         :param width: progress bar width (without the percentage and number of
@@ -118,6 +119,7 @@ class ProgressBar(object):
     def update(self, value):
         """
         Update the current value and print the progress.
+
         :param value: New value, should be greater than the previous
             value and less or equal the total value
         :return:
