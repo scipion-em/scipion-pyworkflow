@@ -11,7 +11,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: fixlinks.py PROJECT SEARCH_DIR
+    Usage: python -m pyworkflow.project.script.fix_links PROJECT SEARCH_DIR
         PROJECT: provide the project name to fix broken links in the imports.
         SEARCH_DIR: provide a directory where to look for the files.
         and fix the links.    

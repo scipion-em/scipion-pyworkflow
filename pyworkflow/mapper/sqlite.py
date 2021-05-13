@@ -26,8 +26,8 @@ import re
 from collections import OrderedDict
 
 from pyworkflow.utils import replaceExt, joinExt
+from .sqlite_db import SqliteDb, OperationalError
 from .mapper import Mapper
-from .sqlite_db import SqliteDb
 
 ID = 'id'
 CREATION = 'creation'
@@ -745,6 +745,7 @@ class SqliteFlatMapper(Mapper):
                 # #'temp_store': 'MEMORY',
                 # PRAGMA schema.cache_size = pages;
                 # #'cache_size': '5000' # versus -2000
+                # "temp_store_directory": "'.'",
             }
             self.db = SqliteFlatDb(dbName, tablePrefix,
                                    pragmas=pragmas, indexes=indexes)
@@ -935,10 +936,19 @@ class SqliteFlatMapper(Mapper):
             
         if self._objTemplate is None:
             self.__loadObjDict()
-        objRows = self.db.selectAll(orderBy=orderBy,
-                                    direction=direction,
-                                    where=where,
-                                    limit=limit)
+        try:
+            objRows = self.db.selectAll(orderBy=orderBy,
+                                        direction=direction,
+                                        where=where,
+                                        limit=limit)
+        except OperationalError as e:
+            msg="""Error executing selectAll command: %s.
+You may want to change the directory used by sqlite to create temporary files
+to one that has enough free space. By default this directory is /tmp
+You may achieve this goal by defining the SQLITE_TMPDIR environment variable
+and restarting scipion. Export command:
+    export SQLITE_TMPDIR=. """ % str(e)
+            raise OperationalError(msg)
         
         return self.__objectsFromRows(objRows, iterate, objectFilter) 
 

@@ -38,7 +38,7 @@ def usage(error):
     print("""
     ERROR: %s
 
-    Usage: scipion python scripts/stop.py project_name
+    Usage: python -m pyworkflow.project.scripts.stop project_name
         This script will stop all running protocols of the specified project.
         e.g.
         scipion python scripts/stop.py MyProject

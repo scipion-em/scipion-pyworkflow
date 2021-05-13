@@ -61,6 +61,7 @@ class RunScheduler:
         self.log = open(self.protocol.getScheduleLog(), 'w')
         self.protPid = os.getpid()
         self.protocol.setPid(self.protPid)
+        self.protocol._store(self.protocol._pid)
         self.prerequisites = list(map(int, self.protocol.getPrerequisites()))
         # Keep track of the last time the protocol was checked and
         # its modification date to avoid unnecessary db opening
@@ -183,7 +184,21 @@ class RunScheduler:
         penalize = 0
         self._log("Checking prerequisites... %s" % prerequisites)
         for protId in prerequisites:
-            prot = project.runGraph.getNode(str(protId)).run
+            # Check if prerequisites exist. In the case of metaprotocols, it
+            # may be necessary to load them from the project database.
+            node = project.getRunsGraph().getNode(str(protId))
+
+            if node is None:
+                self._log("Updating runs graph. Missing protocol ... %s" % protId)
+                project.getRunsGraph(refresh=True)
+
+            node = project.getRunsGraph().getNode(str(protId))
+            # Check if the protocol is within our workflow
+            if node is None:
+                self._log("Protocol can't wait for %s. Missing prerequisite " % protId)
+                break
+
+            prot = project.getRunsGraph().getNode(str(protId)).run
             if prot is not None:
                 self._updateProtocol(prot)
                 penalize += self._getSecondsToWait(prot)
@@ -232,7 +247,7 @@ class RunScheduler:
         return inputMissing, penalize
 
     def schedule(self):
-        self._log("Scheduling protocol %s, pid: %s, prerequisites: %s" %
+        self._log("Scheduling protocol %s, PID: %s,prerequisites: %s" %
                   (self.protocol.getObjId(), self.protPid, self.prerequisites))
 
         initialSleepTime = runScheduler.getInitialSleepTime()
@@ -273,9 +288,19 @@ class RunScheduler:
 
 
 if __name__ == '__main__':
-    try:
-        runScheduler = RunScheduler()
-        runScheduler.schedule()
-    except Exception as ex:
-        print(ex)
-        print("Schedule fail with this parameters: ", sys.argv)
+
+    # Create a child process
+    # using os.fork() method
+    pid = os.fork()
+
+    # pid greater than 0 represents
+    # the parent process
+    if pid > 0:
+        sys.exit(0)
+    else:
+        try:
+            runScheduler = RunScheduler()
+            runScheduler.schedule()
+        except Exception as ex:
+            print(ex)
+            print("Schedule fail with this parameters: ", sys.argv)

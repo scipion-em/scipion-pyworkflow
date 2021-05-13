@@ -36,7 +36,7 @@ def usage(error):
     print("""
     ERROR: %s
 
-    Usage: scipion python scripts/create_project.py
+    Usage: scipion3 python -m pyworkflow.project.scripts.create name 
         name="project name"
         [workflow="file"] path to a Scipion json workflow
         [location="folder"] where to create it, defaults to scipion default location
