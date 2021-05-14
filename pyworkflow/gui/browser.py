@@ -178,6 +178,9 @@ class FileInfo(object):
     def getDate(self):
         return self._stat.st_mtime if self._stat else 0
 
+    def isLink(self):
+        return os.path.islink(self._fullpath)
+
 
 class FileHandler(object):
     """ This class will be used to get the icon, preview and info
@@ -189,9 +192,9 @@ class FileHandler(object):
     def getFileIcon(self, objFile):
         """ Return the icon name for a given file. """
         if objFile.isDir():
-            icon = 'file_folder.gif'
+            icon = 'file_folder.gif' if not objFile.isLink() else 'file_folder_link.gif'
         else:
-            icon = 'file_generic.gif'
+            icon = 'file_generic.gif' if not objFile.isLink() else 'file_generic_link.gif'
 
         return icon
 
