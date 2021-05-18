@@ -876,12 +876,13 @@ class Protocol(Step):
         If not objects are passed, the whole protocol is stored.
         """
         if self.mapper is not None:
-            if len(objs) == 0:
-                self.mapper.store(self)
-            else:
-                for obj in objs:
-                    self.mapper.store(obj)
-            self.mapper.commit()
+            with self._lock:
+                if len(objs) == 0:
+                    self.mapper.store(self)
+                else:
+                    for obj in objs:
+                        self.mapper.store(obj)
+                self.mapper.commit()
 
     def _insertChild(self, key, child):
         """ Insert a new child not stored previously.
