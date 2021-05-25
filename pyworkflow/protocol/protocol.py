@@ -2231,7 +2231,7 @@ def runProtocolMain(projectPath, protDbPath, protId):
     # Enter to the project directory and load protocol from db
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
 
-    setDefaultLoggingContext(protId, protocol.getProject().getName())
+    setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 
     hostConfig = protocol.getHostConfig()
 

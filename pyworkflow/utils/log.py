@@ -50,6 +50,7 @@ class STATUS:
     START="START"
     STOP="STOP"
     INTERVAL="INTERVAL"
+    EVENT="EVENT"
 
 def setupLogging():
     if not loadCustomLoggingConfig():
@@ -177,6 +178,10 @@ def getFinalProjId(projId):
 
 def getExtraLogInfo(measurement, status, project_name =None, prot_id=None, prot_name=None, step_id=None , duration=None, dbfilename=None):
     # Add TS!! optionally
+    if dbfilename:
+        dbfilename = os.path.basename(dbfilename)
+        # dbfilename = dbfilename.replace(Config.SCIPION_USER_DATA, "").replace("Runs", "").replace("logs", "")
+
     return {"measurement": measurement,
             "status": status,
             "project_name": getFinalProjId(project_name),

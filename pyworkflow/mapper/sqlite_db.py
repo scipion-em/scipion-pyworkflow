@@ -93,8 +93,10 @@ class SqliteDb:
         
     def _debugExecute(self, *args):
         try:
-            print("COMMAND: ", args[0], self._dbName)
-            print("ARGUMENTS: ", args[1:])
+            logger.debug("COMMAND: " + args[0] + self._dbName,
+                extra=getExtraLogInfo("QUERY", STATUS.EVENT, dbfilename=self._dbName)
+            )
+            logger.debug("ARGUMENTS: " + str(args[1:]))
             return self.cursor.execute(*args)
         except Exception as ex:
             print(">>>> FAILED cursor.execute on db: '%s'" % self._dbName)
