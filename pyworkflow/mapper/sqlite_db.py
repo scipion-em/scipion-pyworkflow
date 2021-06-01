@@ -94,7 +94,7 @@ class SqliteDb:
         
     def _debugExecute(self, *args):
         try:
-            logger.debug("COMMAND: " + args[0] + self._dbName,
+            logger.debug("COMMAND: %; %s" %(args[0] , self._dbName),
                 extra=getExtraLogInfo("QUERY", STATUS.EVENT, dbfilename=self._dbName)
             )
             logger.debug("ARGUMENTS: " + str(args[1:]))
