@@ -2213,7 +2213,7 @@ class FormWindow(Window):
                     protocolList += ("\n* " + prot.getRunName())
                 if len(workflowProtocolList) > 1:
                     result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
-                                                pwutils.Message.LABEL_RESTART_FORM % ('%s\n' % protocolList),
+                                                pwutils.Message.LABEL_RESTART_FORM_MANY % ('%s\n' % protocolList),
                                                 self.root)
                     if result == RESULT_RUN_ALL:
                         self.protocol._store()
