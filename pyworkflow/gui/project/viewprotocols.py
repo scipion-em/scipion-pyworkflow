@@ -2211,7 +2211,11 @@ class ProtocolsView(tk.Frame):
             else:
                 firstViewer.visualize(prot)
         else:
+            outputList = []
             for _, output in prot.iterOutputAttributes():
+                outputList.append(output)
+
+            for output in outputList:
                 viewers = self.domain.findViewers(output.getClassName(), DESKTOP_TKINTER)
                 if len(viewers):
                     # Instantiate the first available viewer

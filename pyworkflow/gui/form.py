@@ -1652,8 +1652,15 @@ class FormWindow(Window):
         logoPath = prot.getPluginLogoPath() or getattr(package, '_logo', '')
 
         if logoPath and os.path.exists(logoPath):
+            # Tolerate error loading icons
+            try:
+                img = self.getImage(logoPath, maxheight=40)
+            except Exception as e:
+                print("Can't load plugin icon (%s): %s" % (logoPath, e))
+                img = None
+
             headerLabel = tk.Label(headerFrame, text=t, font=self.fontBig,
-                                   image=self.getImage(logoPath, maxheight=40),
+                                   image=img,
                                    compound=tk.LEFT)
         else:
             headerLabel = tk.Label(headerFrame, text=t, font=self.fontBig)
@@ -2206,7 +2213,7 @@ class FormWindow(Window):
                     protocolList += ("\n* " + prot.getRunName())
                 if len(workflowProtocolList) > 1:
                     result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
-                                                pwutils.Message.LABEL_RESTART_FORM % ('%s\n' % protocolList),
+                                                pwutils.Message.LABEL_RESTART_FORM_MANY % ('%s\n' % protocolList),
                                                 self.root)
                     if result == RESULT_RUN_ALL:
                         self.protocol._store()
