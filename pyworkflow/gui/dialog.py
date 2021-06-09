@@ -44,6 +44,7 @@ RESULT_NO = 1
 RESULT_CANCEL = 2
 RESULT_RUN_SINGLE = 3
 RESULT_RUN_ALL = 4
+RESULT_CLOSE = 5
 
 
 class Dialog(tk.Toplevel):
@@ -95,7 +96,8 @@ class Dialog(tk.Toplevel):
         self.icons = kwargs.get('icons',
                                 {RESULT_YES: Icon.BUTTON_SELECT,
                                  RESULT_NO: Icon.BUTTON_CLOSE,
-                                 RESULT_CANCEL: Icon.BUTTON_CANCEL})
+                                 RESULT_CANCEL: Icon.BUTTON_CANCEL,
+                                 RESULT_CLOSE: Icon.BUTTON_CLOSE})
 
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
@@ -172,7 +174,7 @@ class Dialog(tk.Toplevel):
         It will set the resultValue associated with the button
         and close the Dialog"""
         self.result = resultValue
-        noCancel = self.result != RESULT_CANCEL
+        noCancel = self.result != RESULT_CANCEL and self.result != RESULT_CLOSE
 
         if noCancel and not self.validate():
             self.initial_focus.focus_set()  # put focus back
@@ -558,7 +560,10 @@ class ListDialog(Dialog):
         buttons = []
         if kwargs.get('allowSelect', True):
             buttons.append(('Select', RESULT_YES))
-        buttons.append(('Cancel', RESULT_CANCEL))
+        if kwargs.get('cancelButton', False):
+            buttons.append(('Close', RESULT_CLOSE))
+        else:
+            buttons.append(('Cancel', RESULT_CANCEL))
 
         Dialog.__init__(self, parent, title, buttons=buttons, **kwargs)
 
