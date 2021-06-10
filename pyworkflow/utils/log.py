@@ -179,7 +179,9 @@ def getFinalProjId(projId):
 def getExtraLogInfo(measurement, status, project_name =None, prot_id=None, prot_name=None, step_id=None , duration=None, dbfilename=None):
     # Add TS!! optionally
     if dbfilename:
-        dbfilename = os.path.basename(dbfilename)
+
+        splitDb = dbfilename.split("/")
+        dbfilename = os.path.join(splitDb[-1].split(".")[0], splitDb[1])
         # dbfilename = dbfilename.replace(Config.SCIPION_USER_DATA, "").replace("Runs", "").replace("logs", "")
 
     return {"measurement": measurement,
