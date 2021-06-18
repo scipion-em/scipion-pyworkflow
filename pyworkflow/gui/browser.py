@@ -243,7 +243,9 @@ class FileTreeProvider(TreeProvider):
                 FileHandler.
         """
         for fileExt in extensions:
-            cls._FILE_HANDLERS[fileExt] = fileHandler
+            handlersList = cls._FILE_HANDLERS.get(fileExt, [])
+            handlersList.append(fileHandler)
+            cls._FILE_HANDLERS[fileExt] = handlersList
 
     def __init__(self, currentDir=None, showHidden=False, onlyFolders=False):
         TreeProvider.__init__(self, sortingColumnName=self.FILE_COLUMN)
@@ -253,15 +255,15 @@ class FileTreeProvider(TreeProvider):
         self.getColumns = lambda: [(self.FILE_COLUMN, 300),
                                    (self.SIZE_COLUMN, 70), ('Time', 150)]
 
-    def getFileHandler(self, obj):
+    def getFileHandlers(self, obj):
         filename = obj.getFileName()
         fileExt = pwutils.getExt(filename)
-        return self._FILE_HANDLERS.get(fileExt, self._DEFAULT_HANDLER)
+        return self._FILE_HANDLERS.get(fileExt, [self._DEFAULT_HANDLER])
 
     def getObjectInfo(self, obj):
         filename = obj.getFileName()
-        fileHandler = self.getFileHandler(obj)
-        icon = fileHandler.getFileIcon(obj)
+        fileHandlers = self.getFileHandlers(obj)
+        icon = fileHandlers[0].getFileIcon(obj)
 
         info = {'key': filename, 'text': filename,
                 'values': (obj.getSizeStr(), obj.getDateStr()), 'image': icon
@@ -270,12 +272,19 @@ class FileTreeProvider(TreeProvider):
         return info
 
     def getObjectPreview(self, obj):
-        fileHandler = self.getFileHandler(obj)
-        return fileHandler.getFilePreview(obj)
+        # Look for any preview available
+        fileHandlers = self.getFileHandlers(obj)
+
+        for fileHandler in fileHandlers:
+            preview = fileHandler.getFilePreview(obj)
+            if preview:
+                return preview
 
     def getObjectActions(self, obj):
-        fileHandler = self.getFileHandler(obj)
-        actions = fileHandler.getFileActions(obj)
+        fileHandlers = self.getFileHandlers(obj)
+        actions = []
+        for fileHandler in fileHandlers:
+            actions += fileHandler.getFileActions(obj)
         # Always allow the option to open as text
         # specially useful for unknown formats
         fn = obj.getPath()
