@@ -30,7 +30,8 @@ some code was taken from tkSimpleDialog
 """
 import tkinter as tk
 import traceback
-from tkinter.colorchooser import askcolor as _askColor
+# from tkinter.colorchooser import askcolor as _askColor
+from tkcolorpicker import askcolor as _askColor
 
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon
@@ -526,8 +527,8 @@ def askString(title, label, parent, entryWidth=20, defaultValue='', headerLabel=
     return d.value
 
 
-def askColor(defaultColor='black'):
-    (rgbcolor, hexcolor) = _askColor(defaultColor)
+def askColor(parent, defaultColor='black'):
+    (rgbcolor, hexcolor) = _askColor(defaultColor, parent=parent)
     return hexcolor
 
 
