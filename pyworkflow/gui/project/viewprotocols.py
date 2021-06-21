@@ -46,7 +46,6 @@ import pyworkflow.object as pwobj
 import pyworkflow.utils as pwutils
 import pyworkflow.protocol as pwprot
 import pyworkflow.gui as pwgui
-from pyworkflow.gui.dialog import askColor, FloatingMessage
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
 from pyworkflow.utils.properties import Message, Icon, Color, KEYSYM
 from pyworkflow.gui.project.utils import getStatusColorFromNode
