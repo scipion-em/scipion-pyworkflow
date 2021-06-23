@@ -40,6 +40,7 @@ import logging.config
 import json
 from logging.handlers import RotatingFileHandler
 
+from pyworkflow.constants import PROJECT_SETTINGS, PROJECT_DBNAME
 from pyworkflow.utils import makeFilePath, Config
 
 SCIPION_PROT_ID = "SCIPION_PROT_ID"
@@ -177,20 +178,26 @@ def getFinalProjId(projId):
     return projId if projId is not None else os.environ.get(SCIPION_PROJ_ID, "unknown")
 
 def getExtraLogInfo(measurement, status, project_name =None, prot_id=None, prot_name=None, step_id=None , duration=None, dbfilename=None):
-    # Add TS!! optionally
-    if dbfilename:
+    try:
+        # Add TS!! optionally
+        if dbfilename:
+            splitDb = dbfilename.split("/")
+            dbName = splitDb[-1]
+            runName = ""
+            # project.sqlite and settings.sqlite may not have elements
+            if dbName not in [PROJECT_SETTINGS, PROJECT_DBNAME]:
+                runName = splitDb[1]
+            dbfilename = os.path.join(runName, dbName)
 
-        splitDb = dbfilename.split("/")
-        dbfilename = os.path.join(splitDb[-1].split(".")[0], splitDb[1])
-        # dbfilename = dbfilename.replace(Config.SCIPION_USER_DATA, "").replace("Runs", "").replace("logs", "")
+        return {"measurement": measurement,
+                "status": status,
+                "project_name": getFinalProjId(project_name),
+                "prot_id": getFinalProtId(prot_id),
+                "prot_name": prot_name,
+                "step_id": step_id,
+                "duration": duration,
+                "dbfilename": dbfilename
+        }
 
-    return {"measurement": measurement,
-            "status": status,
-            "project_name": getFinalProjId(project_name),
-            "prot_id": getFinalProtId(prot_id),
-            "prot_name": prot_name,
-            "step_id": step_id,
-            "duration": duration,
-            "dbfilename": dbfilename
-    }
-
+    except Exception as e:
+        print("getExtraLogInfo failed: %s" % e)

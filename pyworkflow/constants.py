@@ -113,6 +113,11 @@ NOT_UPDATED_UNNECESSARY = 1
 NOT_UPDATED_ERROR = 2
 PROTOCOL_UPDATED = 3
 
+# Db names
+PROJECT_DBNAME = 'project.sqlite'
+PROJECT_SETTINGS = 'settings.sqlite'
+
+
 
 class DOCSITEURLS:
     """Documentation site URL useful when exceptions happens and you want to point to some pages"""
