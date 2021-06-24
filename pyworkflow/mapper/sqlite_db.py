@@ -64,7 +64,7 @@ class SqliteDb:
 
         self.cursor = self.connection.cursor()
         # Define some shortcuts functions
-        if envVarOn(SCIPION_DEBUG_SQLITE):
+        if logger.level == logging.DEBUG:
             self.executeCommand = self._debugExecute
         else:
             self.executeCommand = self.cursor.execute
