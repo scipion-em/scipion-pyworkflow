@@ -1014,6 +1014,9 @@ and restarting scipion. Export command:
     def getPropertyKeys(self):
         return self.db.getPropertyKeys()
 
+    def getAllProperties(self):
+        return self.db.getAllProperties()
+
     @staticmethod
     def fmtDate(date):
         """ Formats a python date into a valid string to be used in a where term
@@ -1062,6 +1065,8 @@ class SqliteFlatDb(SqliteDb):
 
         self.CHECK_TABLES = ("SELECT name FROM sqlite_master WHERE type='table'"
                              " AND name='%sObjects';" % tablePrefix)
+        self._missingTables = None
+
         self.SELECT = "SELECT * FROM %sObjects" % tablePrefix
         self.FROM = "FROM %sObjects" % tablePrefix
         self.DELETE = "DELETE FROM %sObjects WHERE " % tablePrefix
@@ -1081,6 +1086,7 @@ class SqliteFlatDb(SqliteDb):
         self.UPDATE_PROPERTY = "UPDATE Properties SET value=? WHERE key=?"
         self.SELECT_PROPERTY = "SELECT value FROM Properties WHERE key=?"
         self.SELECT_PROPERTY_KEYS = "SELECT key FROM Properties"
+        self.SELECT_PROPERTIES = "SELECT key, value FROM Properties"
 
     def hasProperty(self, key):
         """ Return true if a property with this value is registered. """
@@ -1129,6 +1135,12 @@ class SqliteFlatDb(SqliteDb):
         keys = [r[0] for r in self.cursor.fetchall()]
         return keys        
 
+    def getAllProperties(self):
+        """ Return all properties (key, value) stored in a list . """
+        self.executeCommand(self.SELECT_PROPERTIES)
+        props = [(r[0], r[1]) for r in self.cursor.fetchall()]
+        return props
+
     def deleteProperty(self, key):
         self.executeCommand(self.DELETE_PROPERTY, (key,))
 
@@ -1140,10 +1152,16 @@ class SqliteFlatDb(SqliteDb):
     def missingTables(self):
         """ Return True is the needed Objects and Classes table are not
         created yet. """
-        self.executeCommand(self.CHECK_TABLES)
-        result = self.cursor.fetchone()
 
-        return result is None
+        if not self._missingTables:
+            self.executeCommand(self.CHECK_TABLES)
+            result = self.cursor.fetchone()
+            if result is None:
+                return True
+            else:
+                self._missingTables = False
+
+        return self._missingTables
 
     def clear(self):
         self.executeCommand("DROP TABLE IF EXISTS Properties;")
@@ -1384,12 +1402,12 @@ class SqliteFlatDb(SqliteDb):
 
     def count(self):
         """ Return the number of element in the table. """
-        self.executeCommand(self.selectCmd('1').replace('*', 'COUNT(id)'))
+        self.executeCommand(self.selectCmd(None, orderByStr="").replace('*', 'COUNT(id)'))
         return self.cursor.fetchone()[0]
 
     def maxId(self):
         """ Return the maximum id from the Objects table. """
-        self.executeCommand(self.selectCmd('1').replace('*', 'MAX(id)'))
+        self.executeCommand(self.selectCmd(None, orderByStr="").replace('*', 'MAX(id)'))
         return self.cursor.fetchone()[0]
 
     # FIXME: Seems to be duplicated and a subset of selectAll

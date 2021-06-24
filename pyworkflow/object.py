@@ -1072,6 +1072,9 @@ class Set(Object):
         if filename:
             self._mapperPath.set('%s, %s' % (filename, prefix))
             self.load()
+
+        # Flag to mark properties are loaded
+        self._propertiesLoaded = False
             
     def _getMapper(self):
         """ This method will open the connection to the items
@@ -1271,10 +1274,12 @@ class Set(Object):
         
     def loadAllProperties(self):
         """ Retrieve all properties stored by the mapper. """
-        for key in self._getMapper().getPropertyKeys():
-            if key != 'self':
-                self.loadProperty(key)
-        
+        if not self._propertiesLoaded:
+            for key, value in self._getMapper().getAllProperties():
+                if key != 'self':
+                    self.setAttributeValue(key, value)
+            self._propertiesLoaded = True
+
     def getIdSet(self):
         """ Return a Python set object containing all ids. """
         return set(self.getUniqueValues('id'))

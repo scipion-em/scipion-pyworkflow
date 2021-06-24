@@ -34,8 +34,7 @@ logger = logging.getLogger(__name__)
 from sqlite3 import dbapi2 as sqlite
 from sqlite3 import OperationalError as OperationalError 
 
-from pyworkflow import SCIPION_DEBUG_SQLITE
-from pyworkflow.utils import envVarOn, STATUS, getExtraLogInfo
+from pyworkflow.utils import STATUS, getExtraLogInfo
 
 
 class SqliteDb:
@@ -46,6 +45,7 @@ class SqliteDb:
 
     def __init__(self):
         self._reuseConnections = False
+        self._tablesFound = None  # List to cache all tables found and prevent further queries
         
     def _createConnection(self, dbName, timeout):
         """Establish db connection"""
@@ -122,11 +122,14 @@ class SqliteDb:
         If  tablePattern is not None, only tables matching 
         the pattern will be returned.
         """
-        self.executeCommand("SELECT name FROM sqlite_master "
-                            "WHERE type='table' "
-                            "AND name NOT LIKE 'sqlite_%';")
-        return [str(row['name']) for row in self._iterResults()]
-    
+        if self._tablesFound is None:
+            self.executeCommand("SELECT name FROM sqlite_master "
+                                "WHERE type='table' "
+                                "AND name NOT LIKE 'sqlite_%';")
+            self._tablesFound = [str(row['name']) for row in self._iterResults()]
+
+        return self._tablesFound
+
     def hasTable(self, tableName):
         return tableName in self.getTables()
     

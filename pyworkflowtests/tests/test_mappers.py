@@ -291,6 +291,12 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         mapper.commit()
         self.assertEqual(1, mapper.db.getVersion())
 
+        # test getting all properties at once
+        props = mapper.getAllProperties()
+        self.assertEqual(2, len(props), "Mapper does not load all properties.")
+        self.assertEqual(("samplingRate", '3.0'), props[0], "Property tuple is wrong")
+        self.assertEqual(("defocusU", '2000'), props[1], "Property tuple is wrong")
+
         # Test where parsing
         self.assertIsNone(mapper.db._whereToWhereStr(None), "A where = None does not return None")
         self.assertEqual(mapper.db._whereToWhereStr("missing1=missing2"), "missing1=missing2", "a where with missing fields does not work")
