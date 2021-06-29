@@ -1,4 +1,9 @@
 -------
+v3.0.15
+-------
+ Developers:
+ - Allow renaming parameters using pyworkflow.protocol.params.DeprecatedParam
+-------
 v3.0.13
 -------
 
