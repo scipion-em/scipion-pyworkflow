@@ -26,6 +26,7 @@
 
 import os
 import datetime as dt
+from logging import DEBUG, lastResort
 from time import sleep
 
 import pyworkflow.object as pwobj
@@ -317,6 +318,12 @@ class TestObject(pwtests.BaseTest):
         self.assertIsInstance(next(iter(ids)), int, "getIdSet items are not integer")
         self.assertEqual(len(ids), 10, "getIdSet does not return 10 items")
 
+        # Test load properties queries
+        from pyworkflow.mapper.sqlite_db import logger
+        logger.setLevel(DEBUG)
+        lastResort.setLevel(DEBUG)
+        imgSetVerbose = MockSetOfImages(filename=fn)
+        imgSetVerbose.loadAllProperties()
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values

@@ -5,12 +5,10 @@ import unittest
 
 from pyworkflow import Config
 from pyworkflow.utils import (getLineInFile,
-                              setupLogging, setUpProtocolRunLogging, restoreStdoutAndErr)
+                              LoggingConfigurator, restoreStdoutAndErr)
 from pyworkflow.tests import BaseTest, setupTestOutput
+from pyworkflow.utils.process import runJob
 
-
-# FIXME:Nacho
-# Ok, Nacho and Airen, explain what you have to fix! :)
 
 class TestLogs(BaseTest):
     
@@ -23,7 +21,8 @@ class TestLogs(BaseTest):
         # Default generic configuration
         Config.SCIPION_LOG = self.getOutputPath("general.log")
         genLogFn = Config.SCIPION_LOG
-        setupLogging()
+        print("General log file at %s" % genLogFn)
+        LoggingConfigurator.setupLogging()
         log1 = logging.getLogger('pyworkflow.test.log.test_scipion_log')
 
         def testMessage(message, msg_callback, file, shouldExist):
@@ -40,25 +39,34 @@ class TestLogs(BaseTest):
 
         # Protocol run logging configuration (this is propagating the messages,
         # so messages end un in general log too). This is to allow custom configurations to receive running protocol messages)
-        logFn = self.getOutputPath('fileLog.log')
-        logErrFn = self.getOutputPath('errLog.log')
-        log2 = setUpProtocolRunLogging(logFn, logErrFn)
+        logFn = self.getOutputPath('stdout.log')
+        logErrFn = self.getOutputPath('stdErr.log')
+        log2 = LoggingConfigurator.setUpProtocolRunLogging(logFn, logErrFn)
 
-        fileInfoTest = 'INFO to FILE and GEN'
+        fileInfoTest = 'INFO to FILE'
         testMessage(fileInfoTest, log2.info, logFn, True)
-        testMessage(fileInfoTest, None, genLogFn, True)
+        testMessage(fileInfoTest, None, genLogFn, False)
 
-        fileDebugMsg = "DEBUG to FILE and GEN"
+        fileDebugMsg = "DEBUG does not reach FILE nor GEN"
         testMessage(fileDebugMsg, log2.debug, logFn, False)
         testMessage(fileDebugMsg, None, genLogFn, False)
 
-        fileWarningTest = 'WARNING to FILE and GEN'
+        fileWarningTest = 'WARNING to FILE and not GEN'
         testMessage(fileWarningTest, log2.warning, logFn, True)
-        testMessage(fileWarningTest, None, genLogFn, True)
+        testMessage(fileWarningTest, None, genLogFn, False)
 
-        fileErrorTest = 'ERROR to FILE and GEN'
+        fileErrorTest = 'ERROR to FILE and not GEN'
         testMessage(fileErrorTest, log2.error, logFn, True)
-        testMessage(fileErrorTest, None, genLogFn, True)
+        testMessage(fileErrorTest, None, genLogFn, False)
+
+        # Test print goes to the log file (stdout is captured)
+        printStdOut = "Print ends up in stdout FILE"
+        print(printStdOut, flush=True)
+        testMessage(printStdOut,None, logFn, True)
+
+        subprocessOut = "subprocess output in stdout FILE"
+        runJob(None,"echo", subprocessOut)
+        testMessage(subprocessOut,None, logFn, True)
 
         restoreStdoutAndErr()
 
