@@ -1,4 +1,13 @@
 -------
+v3.0.?
+-------
+ - Second tab of logs have just error messages (stderr output)
+
+ Developers:
+ - Logging mechanism closer to a standard way. import logging + logging.getLogger() whould work in any module
+
+
+-------
 v3.0.15
 -------
  - Allow multiple file handlers for the same extension
