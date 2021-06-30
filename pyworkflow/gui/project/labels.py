@@ -177,7 +177,7 @@ class EditLabelDialog(dialog.Dialog):
         self.label.setColor(self.colorVar.get())
 
     def _changeColor(self, e=None):
-        hexColor = dialog.askColor(self.colorVar.get())
+        hexColor = dialog.askColor(parent=self, defaultColor=self.colorVar.get())
         if hexColor is not None:
             self.colorBox.config(bg=hexColor)
             self.colorVar.set(hexColor)

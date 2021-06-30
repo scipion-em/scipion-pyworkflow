@@ -65,7 +65,7 @@ class RunScheduler:
         self.prerequisites = list(map(int, self.protocol.getPrerequisites()))
         # Keep track of the last time the protocol was checked and
         # its modification date to avoid unnecessary db opening
-        self.updatedProtocols = []
+        self.updatedProtocols = dict()
         self.initial_sleep = self._args.initial_sleep
 
     def getSleepTime(self):
@@ -117,7 +117,7 @@ class RunScheduler:
         protId = protocol.getObjId()
 
         if protId in self.updatedProtocols:
-            return
+            return self.updatedProtocols[protId]
 
         protDb = protocol.getDbPath()
 
@@ -125,8 +125,9 @@ class RunScheduler:
             updateResult = self.project._updateProtocol(protocol)
             if updateResult == PROTOCOL_UPDATED:
                 self._log("Updated protocol: %s (%s)" % (protId, protocol))
-            self.updatedProtocols.append(protId)
+            self.updatedProtocols[protId] = protocol
 
+        return protocol
 
     def _getProtocolFromPointer(self, pointer):
         """
@@ -200,7 +201,7 @@ class RunScheduler:
 
             prot = project.getRunsGraph().getNode(str(protId)).run
             if prot is not None:
-                self._updateProtocol(prot)
+                prot = self._updateProtocol(prot)
                 penalize += self._getSecondsToWait(prot)
                 if prot.getStatus() not in stopStatuses:
                     wait = True
@@ -221,7 +222,7 @@ class RunScheduler:
         # Updating input protocols
         for key, attr in self.protocol.iterInputAttributes():
             inputProt = self._getProtocolFromPointer(attr)
-            self._updateProtocol(inputProt)
+            inputProt = self._updateProtocol(inputProt)
             penalize += self._getSecondsToWait(inputProt)
 
         validation = self.protocol.validate()

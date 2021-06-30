@@ -46,7 +46,6 @@ import pyworkflow.object as pwobj
 import pyworkflow.utils as pwutils
 import pyworkflow.protocol as pwprot
 import pyworkflow.gui as pwgui
-from pyworkflow.gui.dialog import askColor, FloatingMessage
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
 from pyworkflow.utils.properties import Message, Icon, Color, KEYSYM
 from pyworkflow.gui.project.utils import getStatusColorFromNode
@@ -2211,7 +2210,11 @@ class ProtocolsView(tk.Frame):
             else:
                 firstViewer.visualize(prot)
         else:
+            outputList = []
             for _, output in prot.iterOutputAttributes():
+                outputList.append(output)
+
+            for output in outputList:
                 viewers = self.domain.findViewers(output.getClassName(), DESKTOP_TKINTER)
                 if len(viewers):
                     # Instantiate the first available viewer

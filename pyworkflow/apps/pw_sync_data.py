@@ -319,7 +319,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
             else:
                 if not downloadingPrinted:
                     verboseMsg = " Next time use -v for more details." if not verbose else ""
-                    print("Differences detected. Downloading data.%s" % verboseMsg)
+                    print("%s differs. Downloading new version.%s" % (fname, verboseMsg))
 
                 vlog("\r  %s  %s  (downloading... " % (red("XX"), fname))
                 if not isdir(dirname(fpath)):
@@ -395,8 +395,9 @@ def createMANIFEST(path):
         for root, dirs, files in os.walk(path):
             for filename in set(files) - {'MANIFEST'}:  # all but ourselves
                 fn = join(root, filename)  # file to check
+                print("Calculating md5 for local %s ... " % filename, end="")
                 manifest.write('%s %s\n' % (relpath(fn, path), md5sum(fn)))
-
+                print(green("DONE!"))
 
 def md5sum(fname):
     """ Return the md5 hash of file fname """
