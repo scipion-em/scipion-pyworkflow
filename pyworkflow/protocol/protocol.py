@@ -345,10 +345,6 @@ class Protocol(Step):
         self._definition = Form(self)
         self._defineParams(self._definition)
         self._createVarsFromDefinition(**kwargs)
-        self.__stdOut = None
-        self.__stdErr = None
-        self.__fOut = None
-        self.__fErr = None
         self._log = logger
         self._buffer = ''  # text buffer for reading log files
         # Project to which the protocol belongs
