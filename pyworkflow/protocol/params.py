@@ -540,6 +540,45 @@ class TupleParam(Param):
     def __init__(self, **args):
         Param.__init__(self, **args)
 
+class DeprecatedParam:
+    """ Deprecated param. To be used when you want to rename an existing param
+    and still be able to recover old param value. It acts like a redirector, passing the
+    value received when its value is set to the new renamed parameter
+
+    usage: In defineParams method, before the renamed param definition line add the following:
+
+    self.oldName = DeprecatedParam("newName", self)
+    form.addParam('newName', ...)
+
+    """
+    def __init__(self, newParamName, prot):
+        """
+
+        :param newParamName: Name of the renamed param
+        :param prot: Protocol hosting this and the renamed param
+
+        """
+        self._newParamName = newParamName
+        self.prot = prot
+        # Need to fake being a Object at loading time
+        self._objId = None
+        self._objIsPointer = False
+
+    def set(self, value):
+        if hasattr(self.prot, self._newParamName):
+            newParam = self._getNewParam()
+            newParam.set(value)
+            if newParam.isPointer():
+                self._extended = newParam._extended
+
+    def isPointer(self):
+        return self._getNewParam().isPointer()
+
+    def getObjValue(self):
+        return None
+
+    def _getNewParam(self):
+        return getattr(self.prot, self._newParamName)
 
 # -----------------------------------------------------------------------------
 #         Validators
