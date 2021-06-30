@@ -34,7 +34,7 @@ import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
-from pyworkflow.utils.log import setUpProtocolRunLogging, getExtraLogInfo, STATUS, setDefaultLoggingContext
+from pyworkflow.utils.log import LoggingConfigurator, getExtraLogInfo, STATUS, setDefaultLoggingContext
 from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
@@ -345,10 +345,6 @@ class Protocol(Step):
         self._definition = Form(self)
         self._defineParams(self._definition)
         self._createVarsFromDefinition(**kwargs)
-        self.__stdOut = None
-        self.__stdErr = None
-        self.__fOut = None
-        self.__fErr = None
         self._log = logger
         self._buffer = ''  # text buffer for reading log files
         # Project to which the protocol belongs
@@ -1396,7 +1392,7 @@ class Protocol(Step):
         to run should exists.
         """
         try:
-            setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
+            LoggingConfigurator.setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
 
             self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
             self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
@@ -1472,20 +1468,6 @@ class Protocol(Step):
         """ Return the steps.sqlite file under logs directory. """
         return self._getLogsPath('steps.sqlite')
 
-    def __openLogsFiles(self, mode):
-        self.__fOut = open(self.getLogPaths()[0], mode)
-        self.__fErr = open(self.getLogPaths()[1], mode)
-
-    def __closeLogsFiles(self):
-        self.__fOut.close()
-        self.__fErr.close()
-
-    def __closeLogs(self):
-        self._log.close()
-        # Restore system streams
-        sys.stderr = self.__stdErr
-        sys.stdout = self.__stdOut
-        self.__closeLogsFiles()
 
     def _addChunk(self, txt, fmt=None):
         """
@@ -1561,10 +1543,7 @@ class Protocol(Step):
         self._log.error(message)
 
     def debug(self, message):
-        if pw.Config.debugOn():
-            self.info(message)
-        else:
-            self._log.debug(message)
+        self._log.debug(message)
 
     def getWorkingDir(self):
         return self.workingDir.get()

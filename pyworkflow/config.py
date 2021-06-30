@@ -266,6 +266,16 @@ class Config:
         os.environ[SCIPION_DEBUG] = str(newValue)
         os.environ[SCIPION_DEBUG_NOCLEAN] = str(newValue)
 
+    @staticmethod
+    def debugSQLOn():
+        from .utils import envVarOn
+        return bool(envVarOn(SCIPION_DEBUG_SQLITE))
+
+    @staticmethod
+    def toggleDebugSQL():
+        newValue = not Config.debugSQLOn()
+        os.environ[SCIPION_DEBUG_SQLITE] = str(newValue)
+
     @classmethod
     def refreshInThreads(cls):
         from .utils import strToBoolean

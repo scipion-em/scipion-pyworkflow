@@ -38,146 +38,152 @@ import sys
 import logging
 import logging.config
 import json
-from logging.handlers import RotatingFileHandler
+from logging import FileHandler
 
 from pyworkflow.constants import PROJECT_SETTINGS, PROJECT_DBNAME
-from pyworkflow.utils import makeFilePath, Config
+from pyworkflow.utils import Config
 
 SCIPION_PROT_ID = "SCIPION_PROT_ID"
 SCIPION_PROJ_ID = "SCIPION_PROJ_ID"
 
 
+# Constant for extra logging data
 class STATUS:
-    START="START"
-    STOP="STOP"
-    INTERVAL="INTERVAL"
-    EVENT="EVENT"
+    START = "START"
+    STOP = "STOP"
+    INTERVAL = "INTERVAL"
+    EVENT = "EVENT"
 
-def setupLogging():
-    if not loadCustomLoggingConfig():
-        setupDefaultLogging()
 
-def loadCustomLoggingConfig():
-    """ Loads the custom logging configuration file"""
-    from pyworkflow import Config
+class LoggingConfigurator:
+    """ Class to configure logging scenarios:
 
-    if Config.SCIPION_LOG_CONFIG:
-        if os.path.exists(Config.SCIPION_LOG_CONFIG):
-            with open(Config.SCIPION_LOG_CONFIG, 'r') as stream:
-                config = json.load(stream)
+    1.- GUI logging
 
-            logging.config.dictConfig(config)
-            return True
-        else:
-            print("SCIPION_LOG_CONFIG variable points to a non existing file: %s." % Config.SCIPION_LOG_CONFIG)
-    return False
+    2.- Protocol run logging"""
 
-def setupDefaultLogging():
-    from pyworkflow import Config
-    # Log configuration
-    config = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'standard': {
-                'format': '%(asctime)s %(name)s %(levelname)s:  %(message)s'
-                # TODO: use formattime to show the time less verbose
+    customLoggingActive = False  # Holds if a custom logging configuration has taken place.
+
+    @classmethod
+    def setupLogging(cls):
+        if not cls.loadCustomLoggingConfig():
+            cls.setupDefaultLogging()
+
+    @classmethod
+    def loadCustomLoggingConfig(cls):
+        """ Loads the custom logging configuration file"""
+        from pyworkflow import Config
+
+        if Config.SCIPION_LOG_CONFIG:
+            if os.path.exists(Config.SCIPION_LOG_CONFIG):
+                with open(Config.SCIPION_LOG_CONFIG, 'r') as stream:
+                    config = json.load(stream)
+
+                logging.config.dictConfig(config)
+                cls.customLoggingActive = True
+                return True
+            else:
+                print("SCIPION_LOG_CONFIG variable points to a non existing file: %s." % Config.SCIPION_LOG_CONFIG)
+        return False
+
+    @staticmethod
+    def setupDefaultLogging():
+        from pyworkflow import Config
+        # Log configuration
+        config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'standard': {
+                    'format': '%(asctime)s %(name)s %(levelname)s:  %(message)s'
+                    # TODO: use formattime to show the time less verbose
+                }
+            },
+            'handlers': {
+                'fileHandler': {
+                    'level': Config.SCIPION_LOG_LEVEL,
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'formatter': 'standard',
+                    'filename': Config.SCIPION_LOG,
+                    'maxBytes': 100000,
+                },
+                'consoleHandler': {
+                    'level': Config.SCIPION_LOG_LEVEL,
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'standard',
+                },
+            },
+            'loggers': {
+                '': {
+                    'handlers': ['consoleHandler', 'fileHandler'],
+                    'level': Config.SCIPION_LOG_LEVEL,
+                    'propagate': False,
+                    'qualname': 'pyworkflow',
+                },
             }
-        },
-        'handlers': {
-            'fileHandler': {
-                'level': Config.SCIPION_LOG_LEVEL,
-                'class': 'logging.handlers.RotatingFileHandler',
-                'formatter': 'standard',
-                'filename': Config.SCIPION_LOG,
-                'maxBytes': 100000,
-            },
-            'consoleHandler': {
-                'level': Config.SCIPION_LOG_LEVEL,
-                'class': 'logging.StreamHandler',
-                'formatter': 'standard',
-            },
-        },
-        'loggers': {
-            '': {
-                'handlers': ['consoleHandler', 'fileHandler'],
-                'level': Config.SCIPION_LOG_LEVEL,
-                'propagate': False,
-                'qualname': 'pyworkflow',
-            },
         }
-    }
 
-    # Create the log folder
-    os.makedirs(Config.SCIPION_LOGS, exist_ok=True)
+        # Create the log folder
+        os.makedirs(Config.SCIPION_LOGS, exist_ok=True)
 
-    logging.config.dictConfig(config)
+        logging.config.dictConfig(config)
 
-def getRotatingFileLogger(name, path):
-    logger = logging.getLogger(name)
-    makeFilePath(path)
-    handler = RotatingFileHandler(filename=path, maxBytes=100000)
-    handler.setLevel(Config.SCIPION_LOG_LEVEL)
-    return logger
+    @classmethod
+    def setUpGUILogging(cls):
+        """Sets up the logging library for the GUI processes: By default all goes to SCIPION_LOG file and console."""
+        cls.setupLogging()
 
-class StreamToLogger(object):
-    """
-    Fake file-like stream object that redirects writes to a logger instance.
-    """
-    def __init__(self, logger, level):
-       self.logger = logger
-       self.level = logging._checkLevel(level)
-       self.linebuf = ''
+    @classmethod
+    def setUpProtocolRunLogging(cls, stdoutLogFile, stderrLogFile):
+        """ Sets up the logging library for the protocols run processes, loads the custom configuration plus
+        2 FileHandlers for stdout and stderr"""
 
-    def write(self, buf):
-       for line in buf.rstrip().splitlines():
-          self.logger.log(self.level, line.rstrip())
+        stdoutHandler = FileHandler(stdoutLogFile)
+        stderrHandler = FileHandler(stderrLogFile)
+        stderrHandler.setLevel(logging.ERROR)
 
-    def flush(self):
-        pass
-    def fileno(self):
-        # Mimic filehandle, this is used by subprocess.
-        return 1
+        # Get the roo logger
+        rootLogger = logging.getLogger()
 
-def setUpGUILogging():
-    """Sets up the logging library for the GUI processes: By default all goes to SCIPION_LOG file and console."""
-    setupLogging()
+        # If there wasn't any custom logging
+        if not cls.customLoggingActive:
+            # Remove the default handler that goes to the terminal
+            rootLogger.handlers.clear()
 
-def setUpProtocolRunLogging(stdoutLogFile, stderrLogFile):
-    """ Sets up the logging library for the protocols run processes, loads the custom configuration plus
-    2 FileHandlers for stdout and stderr"""
+        # Add the 2 handlers, remove the
+        rootLogger.addHandler(stderrHandler)
+        rootLogger.addHandler(stdoutHandler)
+        rootLogger.setLevel(Config.SCIPION_LOG_LEVEL)
 
-    stdoutHandler = RotatingFileHandler(stdoutLogFile, maxBytes=100000)
-    stderrHandler = RotatingFileHandler(stderrLogFile, maxBytes=100000)
-    stderrHandler.setLevel(logging.ERROR)
+        # Capture std out and std err and send it to the file handlers
+        rootLogger.info("Logging configured. STDOUT --> %s , STDERR --> %s" % (stdoutLogFile, stderrLogFile))
+        sys.stderr = stderrHandler.stream
+        sys.stdout = stdoutHandler.stream
 
-    # Add the 3 handlers
-    rootLogger = logging.getLogger()
-    rootLogger.addHandler(stderrHandler)
-    rootLogger.addHandler(stdoutHandler)
-    rootLogger.setLevel(Config.SCIPION_LOG_LEVEL)
+        return rootLogger
 
-    # Capture std out and std err and send it to the root logger
-    sys.stderr = StreamToLogger(rootLogger,logging.ERROR)
-    sys.stdout = StreamToLogger(rootLogger, Config.SCIPION_LOG_LEVEL)
-
-    return rootLogger
 
 def restoreStdoutAndErr():
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
 
+
+# ******** Extra code to send some log lines to an external performance analysis tool ***********
 def setDefaultLoggingContext(protId, projId):
     os.environ[SCIPION_PROT_ID] = str(protId)
     os.environ[SCIPION_PROJ_ID] = projId
 
+
 def getFinalProtId(protId):
     return protId if protId is not None else int(os.environ.get(SCIPION_PROT_ID, "-1"))
+
 
 def getFinalProjId(projId):
     return projId if projId is not None else os.environ.get(SCIPION_PROJ_ID, "unknown")
 
-def getExtraLogInfo(measurement, status, project_name =None, prot_id=None, prot_name=None, step_id=None , duration=None, dbfilename=None):
+
+def getExtraLogInfo(measurement, status, project_name=None, prot_id=None, prot_name=None, step_id=None, duration=None,
+                    dbfilename=None):
     try:
         # Add TS!! optionally
         if dbfilename:
@@ -197,7 +203,7 @@ def getExtraLogInfo(measurement, status, project_name =None, prot_id=None, prot_
                 "step_id": step_id,
                 "duration": duration,
                 "dbfilename": dbfilename
-        }
+                }
 
     except Exception as e:
         print("getExtraLogInfo failed: %s" % e)
