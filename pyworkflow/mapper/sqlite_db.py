@@ -32,10 +32,8 @@ This module contains some sqlite basic tools to handle Databases.
 import logging
 logger = logging.getLogger(__name__)
 from sqlite3 import dbapi2 as sqlite
-from sqlite3 import OperationalError as OperationalError 
-
-from pyworkflow import SCIPION_DEBUG_SQLITE
-from pyworkflow.utils import envVarOn, STATUS, getExtraLogInfo
+from sqlite3 import OperationalError as OperationalError
+from pyworkflow.utils import STATUS, getExtraLogInfo, Config
 
 
 class SqliteDb:
@@ -46,7 +44,7 @@ class SqliteDb:
 
     def __init__(self):
         self._reuseConnections = False
-        
+
     def _createConnection(self, dbName, timeout):
         """Establish db connection"""
         self._dbName = dbName
@@ -64,7 +62,7 @@ class SqliteDb:
 
         self.cursor = self.connection.cursor()
         # Define some shortcuts functions
-        if logger.level == logging.DEBUG:
+        if Config.debugSQLOn():
             self.executeCommand = self._debugExecute
         else:
             self.executeCommand = self.cursor.execute
