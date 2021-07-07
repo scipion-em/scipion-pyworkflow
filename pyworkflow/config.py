@@ -3,6 +3,7 @@ import importlib
 import inspect
 import json
 import os
+import shutil
 import sys
 import types
 
@@ -164,6 +165,10 @@ class Config:
     # Refresh the displayed runs with a thread
     SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', 'False')
 
+    # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not fallback on the slow copy.
+    SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', None)
+
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:
@@ -292,3 +297,7 @@ class Config:
 
 # Add bindings folder to sys.path
 sys.path.append(Config.getBindingsFolder())
+
+# Cancel fast copy
+if Config.SCIPION_CANCEL_FASTCOPY:
+    shutil._USE_CP_SENDFILE = False

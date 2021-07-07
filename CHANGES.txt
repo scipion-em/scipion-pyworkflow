@@ -2,6 +2,8 @@
 v3.0.?
 -------
  - Second tab of logs have just error messages (stderr output)
+ - Allow multiple file handlers for the same extension
+ - Do not suggest deleteing hosts-conf when parsing fails
 
  Developers:
  - Logging mechanism closer to a standard way. import logging + logging.getLogger() whould work in any module
@@ -10,8 +12,9 @@ v3.0.?
 -------
 v3.0.15
 -------
- - Allow multiple file handlers for the same extension
- - Do not suggest deleteing hosts-conf when parsing fails
+ - Cancel fastcopy of shutil if SCIPION_CANCEL_FASTCOPY is defined (fix GPFS copying errors)
+ Developers:
+ - Allow renaming parameters using pyworkflow.protocol.params.DeprecatedParam
 
 -------
 v3.0.13
