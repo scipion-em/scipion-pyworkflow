@@ -332,6 +332,7 @@ class Protocol(Step):
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._steps = []  # List of steps that will be executed
+        self._stepsSet = None # Set to save the steps
         # All generated filePaths should be inside workingDir
         self.workingDir = String(kwargs.get('workingDir', '.'))
         self.mapper = kwargs.get('mapper', None)
@@ -1131,10 +1132,7 @@ class Protocol(Step):
         """ Store the new steps list that can be retrieved
         in further execution of this protocol.
         """
-        stepsFn = self.getStepsFile()
-
-        self._stepsSet = StepSet(filename=stepsFn)
-        self._stepsSet.setStore(False)
+        self._loadStepsSet()
         self._stepsSet.clear()
 
         for step in self._steps:
@@ -1143,6 +1141,16 @@ class Protocol(Step):
             self._stepsSet.append(step)
 
         self._stepsSet.write()
+
+    def _loadStepsSet(self):
+        """ Loads and returns the steps set in self._stepsSet creating it if not done yet"""
+        if self._stepsSet is None:
+            stepsFn = self.getStepsFile()
+
+            self._stepsSet = StepSet(filename=stepsFn)
+            self._stepsSet.setStore(False)
+
+        return self._stepsSet
 
     def __updateStep(self, step):
         """ Store a given step and write changes. """
