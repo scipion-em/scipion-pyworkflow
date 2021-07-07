@@ -56,6 +56,7 @@ DEFAULT_BOX_COLOR = '#f8f8f8'
 
 ACTION_EDIT = Message.LABEL_EDIT
 ACTION_RENAME = Message.LABEL_RENAME
+ACTION_SELECT_FROM = Message.LABEL_SELECT_FROM
 ACTION_SELECT_TO = Message.LABEL_SELECT_TO
 ACTION_COPY = Message.LABEL_COPY
 ACTION_DELETE = Message.LABEL_DELETE
@@ -89,6 +90,7 @@ VIEW_TREE_SMALL = 2
 
 ActionIcons = {
     ACTION_EDIT: Icon.ACTION_EDIT,
+    ACTION_SELECT_FROM: Icon.ACTION_SELECT_FROM,
     ACTION_SELECT_TO: Icon.ACTION_SELECT_TO,
     ACTION_COPY: Icon.ACTION_COPY,
     ACTION_DELETE: Icon.ACTION_DELETE,
@@ -150,6 +152,7 @@ class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
                 (ACTION_COLLAPSE, single and status and expanded),
                 (ACTION_EXPAND, single and status and not expanded),
                 (ACTION_LABELS, True),
+                (ACTION_SELECT_FROM, True),
                 (ACTION_SELECT_TO, True),
                 (ACTION_RESTART_WORKFLOW, single),
                 (ACTION_CONTINUE_WORKFLOW, single),
@@ -2117,17 +2120,23 @@ class ProtocolsView(tk.Frame):
                 # self.updateRunsGraph()
                 self.drawRunsGraph()
 
-    def _selectAncestors(self, childRun=None):
+    def _selectAncestors(self):
+        self._selectNodes(down=False)
 
-        children = []
+    def _selectDescendants(self):
+        self._selectNodes(down=True)
+
+    def _selectNodes(self, down=True, fromRun=None):
+        """ Selects all nodes in the specified direction, defaults to down."""
+        nodesToSelect = []
         # If parent param not passed...
-        if childRun is None:
+        if fromRun is None:
             # ..use selection, must be first call
             for protId in self._selection:
                 run = self.runsGraph.getNode(str(protId))
-                children.append(run)
+                nodesToSelect.append(run)
         else:
-            name = childRun.getName()
+            name = fromRun.getName()
 
             if not name.isdigit():
                 return
@@ -2136,18 +2145,24 @@ class ProtocolsView(tk.Frame):
 
             # If already selected (may be this should be centralized)
             if name not in self._selection:
-                children = (childRun,)
+                nodesToSelect = (fromRun,)
                 self._selection.append(name)
-        # Go up .
-        for run in children:
+
+        # Go in the direction .
+        for run in nodesToSelect:
+            # Choose the direction: down or up.
+            direction = run.getChilds if down else run.getParents
+
             # Select himself plus ancestors
-            for parent in run.getParents():
-                self._selectAncestors(parent)
+            for parent in direction():
+                self._selectNodes(down, parent)
+
         # Only update selection at the end, avoid recursion
-        if childRun is None:
+        if fromRun is None:
             self._lastSelectedProtId = None
             self._updateSelection()
             self.drawRunsGraph()
+
 
     def _exportProtocols(self, defaultPath=None, defaultBasename=None):
         protocols = self._getSelectedProtocols()
@@ -2331,6 +2346,8 @@ class ProtocolsView(tk.Frame):
                     self._updateActionToolbar()
                 elif action == ACTION_LABELS:
                     self._selectLabels()
+                elif action == ACTION_SELECT_FROM:
+                    self._selectDescendants()
                 elif action == ACTION_SELECT_TO:
                     self._selectAncestors()
                 elif action == ACTION_RESTART_WORKFLOW:
