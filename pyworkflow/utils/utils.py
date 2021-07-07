@@ -148,6 +148,9 @@ def prettyLog(msg):
 class Timer(object):
     """ Simple Timer base in datetime.now and timedelta. """
 
+    def __init__(self, message=""):
+        self._message = message
+
     def tic(self):
         self._dt = datetime.now()
 
@@ -164,7 +167,7 @@ class Timer(object):
         self.tic()
 
     def __exit__(self, type, value, traceback):
-        self.toc()
+        self.toc(self._message)
 
 
 def timeit(func):
