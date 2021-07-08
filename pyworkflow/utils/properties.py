@@ -390,6 +390,7 @@ class PluginStates:
     TO_UPDATE = 'to_update'
     SUCCESS = 'success'
     ERRORS = 'errors'
+    WAITING = 'waiting'
 
 
 class PluginInformation:
