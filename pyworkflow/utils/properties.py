@@ -283,14 +283,18 @@ Do you really want to continue?'
 You are going to *RESTART* the run: 
   %s
 
-Do you really want to restart?'
+Do you really want to restart it?'
 """
-    LABEL_RESTART_PROTOCOL = """
-    Do you want to *RESTART* ONLY the run: 
-      %s 
-    *ALL DATA* related with the rest of protocols that depends on this, 
-    will be permanently removed.  
-    """
+    LABEL_RESTART_FORM_MANY = """
+Following data will be *REMOVED* : 
+  %s
+
+What do you want to restart?
+
+  *Single* : Just this protocol, rest will be reset.
+  *All*: All above listed protocols will be restarted.
+"""
+
     TITLE_STOP_FORM = 'Confirm STOP'
     LABEL_STOP_FORM = 'Do you really want to *STOP* this run?'
     
@@ -386,6 +390,7 @@ class PluginStates:
     TO_UPDATE = 'to_update'
     SUCCESS = 'success'
     ERRORS = 'errors'
+    WAITING = 'waiting'
 
 
 class PluginInformation:
@@ -404,6 +409,7 @@ class Icon:
     RUNS_LIST = 'fa-bars.gif'
     ACTION_NEW = 'fa-plus-circle.gif'
     ACTION_EDIT = 'fa-pencil.gif'
+    ACTION_SELECT_FROM = 'fa-arrow-down.gif'
     ACTION_SELECT_TO = 'fa-arrow-up.gif'
     ACTION_COPY = 'fa-files-o.gif'
     ACTION_DELETE = 'fa-trash-o.gif'

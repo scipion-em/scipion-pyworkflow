@@ -90,7 +90,9 @@ class ProjectBaseWindow(Window):
         logoLabel = tk.Label(header, image=logoImg, 
                              borderwidth=0, anchor='nw', bg='white')
         logoLabel.grid(row=0, column=0, sticky='nw', padx=(5, 0), pady=5)
-        versionLabel = tk.Label(header, text=os.environ['SCIPION_VERSION'],
+        version = "%s - %s (core)" % (os.environ.get('SCIPION_VERSION', ""), pw.LAST_VERSION)
+
+        versionLabel = tk.Label(header, text=version,
                                 bg='white')
         versionLabel.grid(row=0, column=1, sticky='sw', pady=20)
         

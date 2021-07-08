@@ -1048,7 +1048,6 @@ class Set(Object):
     STREAM_OPEN = 1
     STREAM_CLOSED = 2
 
-    FILE_TEMPLATE_NAME = 'set%s.sqlite'
     indexes = ['_index']
     
     def __init__(self, filename=None, prefix='', 
@@ -1306,22 +1305,7 @@ class Set(Object):
         """
         self._getMapper().enableAppend()
 
-    @classmethod
-    def create(cls, path, template=None, suffix='', **kwargs):
-        """ Create a set and set the filename using the suffix.
-        If the file exists, it will be delete. """
 
-        if template is None:
-            template = cls.FILE_TEMPLATE_NAME
-
-        setFn = os.path.join(path, template % suffix)
-        # Close the connection to the database if
-        # it is open before deleting the file
-        utils.cleanPath(setFn)
-        import pyworkflow.mapper as pwmapper
-        pwmapper.SqliteDb.closeConnection(setFn)
-        setObj = cls(filename=setFn, **kwargs)
-        return setObj
 
 
     # ******* Streaming helpers to deal with sets **********
