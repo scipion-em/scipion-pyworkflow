@@ -21,7 +21,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import contextlib
 import sys
 import os
 import re
@@ -148,6 +148,9 @@ def prettyLog(msg):
 class Timer(object):
     """ Simple Timer base in datetime.now and timedelta. """
 
+    def __init__(self, message=""):
+        self._message = message
+
     def tic(self):
         self._dt = datetime.now()
 
@@ -164,7 +167,7 @@ class Timer(object):
         self.tic()
 
     def __exit__(self, type, value, traceback):
-        self.toc()
+        self.toc(self._message)
 
 
 def timeit(func):
@@ -826,3 +829,24 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
             return default
     else:
         return value
+
+
+@contextlib.contextmanager
+def weakImport(package):
+    """
+    This method can be use to tolerate imports that may fail, e.g imports
+
+    from .protocol_ctffind import CistemProtCTFFind
+    with weakImport('tomo'):
+        from .protocol_ts_ctffind import CistemProtTsCtffind
+
+    in this case CistemProtTsCtffind should fail if tomo package is missing,
+    but exception is captured and all the imports above should be available
+
+    :param package: name of the package that is expected to fail
+    """
+    try:
+        yield
+    except ImportError as e:
+        if "'%s'" % package not in str(e):
+            raise e

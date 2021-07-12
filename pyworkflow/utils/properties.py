@@ -390,6 +390,7 @@ class PluginStates:
     TO_UPDATE = 'to_update'
     SUCCESS = 'success'
     ERRORS = 'errors'
+    WAITING = 'waiting'
 
 
 class PluginInformation:
@@ -408,6 +409,7 @@ class Icon:
     RUNS_LIST = 'fa-bars.gif'
     ACTION_NEW = 'fa-plus-circle.gif'
     ACTION_EDIT = 'fa-pencil.gif'
+    ACTION_SELECT_FROM = 'fa-arrow-down.gif'
     ACTION_SELECT_TO = 'fa-arrow-up.gif'
     ACTION_COPY = 'fa-files-o.gif'
     ACTION_DELETE = 'fa-trash-o.gif'
