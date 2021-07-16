@@ -28,9 +28,11 @@
 This module is responsible for launching protocol executions.
 """
 import sys
+from pyworkflow.utils import LoggingConfigurator
 
 if __name__ == '__main__':
 
+    LoggingConfigurator.loadCustomLoggingConfig()
     if len(sys.argv) > 2:
         projPath = sys.argv[1]
         dbPath = sys.argv[2]
