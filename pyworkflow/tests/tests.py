@@ -121,19 +121,29 @@ class BaseTest(unittest.TestCase):
 
     @staticmethod
     def printLastLogLines(prot):
+        """ Prints the last log lines (50 or  'PROT_LOGS_LAST_LINES' env variable) from stdout and stderr log files
+
+        :param prot: Protocol to take the logs from
+
+        """
+        logs = {"STD OUT": 0, "STD ERR":1}
 
         lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 50))
-        print(pwutils.cyanStr("\n*************** LAST %s LINES OF THE LOG *********************\n" % lastLines))
-        logLines = prot.getLogsLastLines(lastLines)
-        for i in range(0, len(logLines)):
-            print(logLines[i])
-        print(pwutils.cyanStr("\n*************** END OF THE LOG *********************\n"))
 
-        sys.stdout.flush()
+        # For each log file to print
+        for key in logs:
+
+            print(pwutils.cyanStr("\n*************** last %s lines of %s *********************\n" % (lastLines, key)))
+            logLines = prot.getLogsLastLines(lastLines, logFile=logs[key])
+            for i in range(0, len(logLines)):
+                print(logLines[i])
+            print(pwutils.cyanStr("\n*************** end of %s *********************\n" % key))
+
+            sys.stdout.flush()
 
     @classmethod
     def saveProtocol(cls, prot):
-        """ Save protocol using cls.proj """
+        """ Saves a protocol using cls.proj """
         cls.proj.saveProtocol(prot)
 
     @classmethod
