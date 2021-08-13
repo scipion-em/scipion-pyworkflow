@@ -649,6 +649,8 @@ class ProtocolsView(tk.Frame):
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
         self.root.bind("<Control-d>", self._toggleDebug)
+        self.root.bind("<F2>", self._F2Pressed)
+
         if Config.debugOn():
             self.root.bind("<Control-i>", self._inspectProtocols)
 
@@ -1998,6 +2000,10 @@ class ProtocolsView(tk.Frame):
             self._updateSelection()
             self._scheduleRunsUpdate()
             self.cleanInfo()
+
+    def _F2Pressed(self, event):
+        """ Invoked then F2 if pressed: Protocol rename"""
+        self._runActionClicked(ACTION_RENAME)
 
     def _editProtocol(self, protocol):
         disableRunMode = False
