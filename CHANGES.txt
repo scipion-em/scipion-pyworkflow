@@ -1,6 +1,7 @@
-v3.0.?
+v3.0.17
 -------
  - Second tab of logs have just error messages (stderr output)
+ - Tests show stderr output too (last lines)
 
  Developers:
  - Logging mechanism closer to a standard way. import logging + logging.getLogger() whould work in any module

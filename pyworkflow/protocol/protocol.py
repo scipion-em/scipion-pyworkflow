@@ -1506,15 +1506,18 @@ class Protocol(Step):
                 outputs.append('File "%s" does not exist' % fname)
         return outputs
 
-    def getLogsLastLines(self, lastLines=None):
+    def getLogsLastLines(self, lastLines=None, logFile=0):
         """
-        Get the log last(lastLines) lines
+        Get the last(lastLines) lines of a log file.
+
+        :param lastLines, if None, will try 'PROT_LOGS_LAST_LINES' env variable, otherwise 20
+        :param logFile: Log file to take the lines from, default = 0 (std.out). 1 for stdErr.
         """
         if not lastLines:
             lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 20))
 
         # Get stdout
-        stdoutFn =self.getLogPaths()[0]
+        stdoutFn =self.getLogPaths()[logFile]
 
         if not os.path.exists(stdoutFn):
             return []
