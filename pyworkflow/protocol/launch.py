@@ -223,7 +223,6 @@ def analyzeFormattingTypeError(string, dictionary):
         return PyworkflowException('Following lines in %s seems to be problematic. '
                                    'Please review its format or content.\n%s' % (pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
                                    url=pw.DOCSITEURLS.HOST_CONFIG)
-    return
 
 def _submit(hostConfig, submitDict, cwd=None, env=None):
     """ Submit a protocol to a queue system. Return its job id.
