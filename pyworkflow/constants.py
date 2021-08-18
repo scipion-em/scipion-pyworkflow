@@ -128,6 +128,7 @@ class DOCSITEURLS:
     CONTACTUS = 'http://scipion.i2pc.es/contact'
     USER = DOCS + 'user/'
     PLUGIN_MANAGER = USER + 'plugin-manager.html'
+    HOST_CONFIG = DOCS + "scipion-modes/host-configuration.html"
 
 # tkinter bind constants
 class TK:
