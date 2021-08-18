@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.16'
+VERSION_3_0 = '3.0.17'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -113,13 +113,22 @@ NOT_UPDATED_UNNECESSARY = 1
 NOT_UPDATED_ERROR = 2
 PROTOCOL_UPDATED = 3
 
+# Db names
+PROJECT_DBNAME = 'project.sqlite'
+PROJECT_SETTINGS = 'settings.sqlite'
+
+
 
 class DOCSITEURLS:
-    """Documentation site URL usefull when exceptions happens and you want to point to some pages"""
+    """Documentation site URL useful when exceptions happens and you want to point to some pages"""
     HOME = 'https://scipion-em.github.io/docs/'
-    CONFIG = HOME + 'docs/scipion-modes/scipion-configuration.html'
+    DOCS = HOME + 'docs/'
+    CONFIG = DOCS + 'scipion-modes/scipion-configuration.html'
     CONFIG_SECTION = CONFIG + '#%s'
     CONTACTUS = 'http://scipion.i2pc.es/contact'
+    USER = DOCS + 'user/'
+    PLUGIN_MANAGER = USER + 'plugin-manager.html'
+    HOST_CONFIG = DOCS + "scipion-modes/host-configuration.html"
 
 # tkinter bind constants
 class TK:

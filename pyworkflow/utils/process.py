@@ -47,7 +47,7 @@ def runJob(log, programname, params,
     if log is None:
         print("** Running command: %s" % greenStr(command))
     else:
-        log.info(greenStr(command), True)
+        log.info(greenStr(command))
 
     return runCommand(command, env, cwd)
         

@@ -44,6 +44,7 @@ import os
 import re
 from subprocess import Popen, PIPE
 import pyworkflow as pw
+from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
 from pyworkflow.protocol.constants import UNKNOWN_JOBID
@@ -201,12 +202,47 @@ def _copyFiles(protocol, rpath):
         rpath.putFile(f, remoteFile)
 
 
+def analyzeFormattingTypeError(string, dictionary):
+    """ receives a string with %(VARS) to be replaced with a dictionary
+     it splits te string by \n and test the formatting per line. Raises an exception if any line fails
+     with all problems found"""
+
+    # Do the replace line by line
+    lines = string.split("\n")
+
+    problematicLines = []
+    for line in lines:
+        try:
+            line % dictionary
+        except KeyError as e:
+            problematicLines.append(line + " --> variable not present in this context.")
+        except Exception as e:
+            problematicLines.append(line + " --> " + str(e))
+
+    if problematicLines:
+        return PyworkflowException('Following lines in %s seems to be problematic. '
+                                   'Please review its format or content.\n%s' % (pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
+                                   url=pw.DOCSITEURLS.HOST_CONFIG)
+
 def _submit(hostConfig, submitDict, cwd=None, env=None):
     """ Submit a protocol to a queue system. Return its job id.
     """
     # Create first the submission script to be launched
     # formatting using the template
-    template = hostConfig.getSubmitTemplate() % submitDict
+    template = hostConfig.getSubmitTemplate()
+
+    try:
+        template = template % submitDict
+    except Exception as e:
+        # Capture parsing errors
+        exception = analyzeFormattingTypeError(template, submitDict)
+
+        if exception:
+            raise exception
+        else:
+            # If there is no exception, then raise actual one
+            raise e
+
     # FIXME: CREATE THE PATH FIRST
     scripPath = submitDict['JOB_SCRIPT']
     f = open(scripPath, 'w')

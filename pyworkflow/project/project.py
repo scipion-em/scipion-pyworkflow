@@ -34,6 +34,7 @@ import traceback
 from collections import OrderedDict
 
 import pyworkflow as pw
+from pyworkflow.constants import PROJECT_DBNAME, PROJECT_SETTINGS
 import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
@@ -47,12 +48,10 @@ from . import config
 
 
 OBJECT_PARENT_ID = pwobj.OBJECT_PARENT_ID
-PROJECT_DBNAME = 'project.sqlite'
 PROJECT_LOGS = 'Logs'
 PROJECT_RUNS = 'Runs'
 PROJECT_TMP = 'Tmp'
 PROJECT_UPLOAD = 'Uploads'
-PROJECT_SETTINGS = 'settings.sqlite'
 PROJECT_CONFIG = '.config'
 PROJECT_CREATION_TIME = 'CreationTime'
 

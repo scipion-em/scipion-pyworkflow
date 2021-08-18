@@ -34,13 +34,17 @@ import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
-from pyworkflow.utils.log import ScipionLogger
+from pyworkflow.utils.log import LoggingConfigurator, getExtraLogInfo, STATUS, setDefaultLoggingContext
 from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
 from .params import Form
 
 SCHEDULE_LOG = 'schedule.log'
+
+import  logging
+# Get the root logger
+logger = logging.getLogger(__name__)
 
 
 class Step(Object):
@@ -341,22 +345,7 @@ class Protocol(Step):
         self._definition = Form(self)
         self._defineParams(self._definition)
         self._createVarsFromDefinition(**kwargs)
-        self.__stdOut = None
-        self.__stdErr = None
-        self.__fOut = None
-        self.__fErr = None
-
-        class BasicLog:
-            def warning(self, message, redirectStandard=True):
-                print("WARNING", message)
-
-            def info(self, message, redirectStandard=True):
-                print("INFO", message)
-
-            def error(self, message, redirectStandard=True):
-                print("ERROR", message)
-
-        self._log = BasicLog()
+        self._log = logger
         self._buffer = ''  # text buffer for reading log files
         # Project to which the protocol belongs
         self.__project = kwargs.get('project', None)
@@ -1165,7 +1154,12 @@ class Protocol(Step):
         has started running.
         """
         self.info(pwutils.magentaStr("STARTED") + ": %s, step %d, time %s" %
-                  (step.funcName.get(), step._index, step.initTime.datetime()))
+                  (step.funcName.get(), step._index, step.initTime.datetime()),
+                  extra=getExtraLogInfo("PROTOCOL", STATUS.START,
+                                        project_name=self.getProject().getName(),
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName(),
+                                        step_id=step._index))
         self.__updateStep(step)
 
     def _stepFinished(self, step):
@@ -1189,7 +1183,12 @@ class Protocol(Step):
         self._store(self._stepsDone,  self._cpuTime)
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
-                  % (step.funcName.get(), step._index, step.endTime.datetime()))
+                  % (step.funcName.get(), step._index, step.endTime.datetime()),
+                  extra=getExtraLogInfo("PROTOCOL",STATUS.STOP,
+                                        project_name=self.getProject().getName(),
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName(),
+                                        step_id=step._index))
         if step.isFailed() and self.stepsExecutionMode == STEPS_PARALLEL:
             # In parallel mode the executor will exit to close
             # all working threads, so we need to close
@@ -1392,29 +1391,40 @@ class Protocol(Step):
         """ Before calling this method, the working dir for the protocol
         to run should exists.
         """
-        self.__initLogs()
-
-        self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
-
-        # Store the full machine name where the protocol is running
-        # and also its PID
-        self.setPid(os.getpid())
-        self.setHostFullName(pwutils.getHostFullName())
-
-        self.info('Hostname: %s' % self.getHostFullName())
-        self.info('PID: %s' % self.getPid())
-        self.info('pyworkflow: %s' % pw.__version__)
-        self.info('plugin: %s' % self.getClassPackageName())
-        if hasattr(self.getClassPackage(), "__version__"):
-            self.info('plugin v: %s' % self.getClassPackage().__version__)
-        self.info('currentDir: %s' % os.getcwd())
-        self.info('workingDir: %s' % self.workingDir)
-        self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
         try:
-            self.info('          MPI: %d' % self.numberOfMpi)
-            self.info('      threads: %d' % self.numberOfThreads)
+            LoggingConfigurator.setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
+
+            self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
+            self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
+                                                               project_name=self.getProject().getName(),
+                                                               prot_id=self.getObjId(),
+                                                               prot_name=self.getClassName()))
+            # Store the full machine name where the protocol is running
+            # and also its PID
+            self.setPid(os.getpid())
+            self.setHostFullName(pwutils.getHostFullName())
+
+            self.info('Hostname: %s' % self.getHostFullName())
+            self.info('PID: %s' % self.getPid())
+            self.info('pyworkflow: %s' % pw.__version__)
+            self.info('plugin: %s' % self.getClassPackageName())
+            if hasattr(self.getClassPackage(), "__version__"):
+                self.info('plugin v: %s' % self.getClassPackage().__version__)
+            self.info('currentDir: %s' % os.getcwd())
+            self.info('workingDir: %s' % self.workingDir)
+            self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
+            try:
+                self.info('          MPI: %d' % self.numberOfMpi)
+                self.info('      threads: %d' % self.numberOfThreads)
+            except Exception as e:
+                self.info('  * Cannot get information about MPI/threads (%s)' % e)
+        # Something went wrong ans at this point status is launched. We mark it as failed.
         except Exception as e:
-            self.info('  * Cannot get information about MPI/threads (%s)' % e)
+            print(e)
+            self.setFailed(str(e))
+            self._store(self.status, self.getError())
+            self._endRun()
+            return
 
         Step.run(self)
         if self.isFailed():
@@ -1436,37 +1446,16 @@ class Protocol(Step):
             self.cleanTmp()
 
         self.info(pwutils.greenStr('------------------- PROTOCOL ' +
-                                   self.getStatusMessage().upper()))
-        self.__closeLogs()
+                                   self.getStatusMessage().upper()),
+                  extra=getExtraLogInfo("PROTOCOL",STATUS.STOP,
+                                        project_name=self.getProject().getName(),
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName()))
 
-    def __initLogs(self):
-        """ Open the log file overwriting its content if the protocol is going
-        to be execute from zero.
-        Otherwise append the new content to the old one.
-        Also open logs files and redirect the systems streams.
-        """
-        self._log = ScipionLogger(self.getLogPaths()[2])
-
-        if self.runMode.get() == MODE_RESTART:
-            mode = 'w+'
-        else:
-            mode = 'a'
-        # Backup the the system streams
-        self.__stdErr = sys.stderr
-        self.__stdOut = sys.stdout
-        self.__openLogsFiles(mode)
-        # Redirect the system streams to the protocol files
-        sys.stdout = self.__fOut
-        if pwutils.envVarOn('SCIPION_SEPARATE_STDERR'):
-            sys.stderr = self.__fErr
-        else:
-            sys.stderr = self.__fOut  # send stderr to wherever stdout appears
-            # TODO: maybe do not show separate "run.stdout" and "run.stderr"
-            # in the "Output Log" section if we put them together.
 
     def getLogPaths(self):
         return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', 'run.log', SCHEDULE_LOG]))
+                        ['run.stdout', 'run.stderr', SCHEDULE_LOG]))
 
     def getScheduleLog(self):
         return self._getLogsPath(SCHEDULE_LOG)
@@ -1479,20 +1468,6 @@ class Protocol(Step):
         """ Return the steps.sqlite file under logs directory. """
         return self._getLogsPath('steps.sqlite')
 
-    def __openLogsFiles(self, mode):
-        self.__fOut = open(self.getLogPaths()[0], mode)
-        self.__fErr = open(self.getLogPaths()[1], mode)
-
-    def __closeLogsFiles(self):
-        self.__fOut.close()
-        self.__fErr.close()
-
-    def __closeLogs(self):
-        self._log.close()
-        # Restore system streams
-        sys.stderr = self.__stdErr
-        sys.stdout = self.__stdOut
-        self.__closeLogsFiles()
 
     def _addChunk(self, txt, fmt=None):
         """
@@ -1531,15 +1506,18 @@ class Protocol(Step):
                 outputs.append('File "%s" does not exist' % fname)
         return outputs
 
-    def getLogsLastLines(self, lastLines=None):
+    def getLogsLastLines(self, lastLines=None, logFile=0):
         """
-        Get the log last(lastLines) lines
+        Get the last(lastLines) lines of a log file.
+
+        :param lastLines, if None, will try 'PROT_LOGS_LAST_LINES' env variable, otherwise 20
+        :param logFile: Log file to take the lines from, default = 0 (std.out). 1 for stdErr.
         """
         if not lastLines:
             lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 20))
 
         # Get stdout
-        stdoutFn =self.getLogPaths()[0]
+        stdoutFn =self.getLogPaths()[logFile]
 
         if not os.path.exists(stdoutFn):
             return []
@@ -1559,17 +1537,16 @@ class Protocol(Step):
             return output
 
     def warning(self, message, redirectStandard=True):
-        self._log.warning(message, redirectStandard)
+        self._log.warning(message)
 
-    def info(self, message, redirectStandard=True):
-        self._log.info(message, redirectStandard)
+    def info(self, message, extra=None):
+        self._log.info(message, extra= extra)
 
     def error(self, message, redirectStandard=True):
-        self._log.error(message, redirectStandard)
+        self._log.error(message)
 
     def debug(self, message):
-        if pw.Config.debugOn():
-            self.info(message)
+        self._log.debug(message)
 
     def getWorkingDir(self):
         return self.workingDir.get()
@@ -2235,6 +2212,8 @@ def runProtocolMain(projectPath, protDbPath, protId):
     """
     # Enter to the project directory and load protocol from db
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
+
+    setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 
     hostConfig = protocol.getHostConfig()
 
