@@ -1097,22 +1097,29 @@ class ParamWidget:
         return False
 
     @staticmethod
-    def createBoolWidget(parent, **args):
+    def createBoolWidget(parent, checkbox=False, **args):
         """ Return a BoolVar associated with a yes/no selection.
         **args: extra arguments passed to tk.Radiobutton and tk.Frame
             constructors.
+
+            :param checkbox: will use a Checkbutton instead.
         """
         var = BoolVar()
         frameArgs = dict(args)
         if 'font' in frameArgs:
             del frameArgs['font']
         frame = tk.Frame(parent, **frameArgs)
-        rb1 = tk.Radiobutton(frame, text='Yes', variable=var.tkVar,
-                             highlightthickness=0, value=1, **args)
-        rb1.grid(row=0, column=0, padx=2, sticky='w')
-        rb2 = tk.Radiobutton(frame, text='No', variable=var.tkVar,
-                             highlightthickness=0, value=0, **args)
-        rb2.grid(row=0, column=1, padx=2, sticky='w')
+
+        if checkbox:
+            chk = tk.Checkbutton(frame, variable=var.tkVar, **args)
+            chk.grid(row=0, column=0, padx=2, sticky="w")
+        else:
+            rb1 = tk.Radiobutton(frame, text='Yes', variable=var.tkVar,
+                                 highlightthickness=0, value=1, **args)
+            rb1.grid(row=0, column=0, padx=2, sticky='w')
+            rb2 = tk.Radiobutton(frame, text='No', variable=var.tkVar,
+                                 highlightthickness=0, value=0, **args)
+            rb2.grid(row=0, column=1, padx=2, sticky='w')
 
         return var, frame
 
@@ -1131,7 +1138,7 @@ class ParamWidget:
             var = 0
 
         elif t is pwprot.BooleanParam:
-            var, frame = ParamWidget.createBoolWidget(content, bg='white',
+            var, frame = ParamWidget.createBoolWidget(content, checkbox=param.checkbox, bg='white',
                                                       font=self.window.font)
             frame.grid(row=0, column=0, sticky='w')
 
