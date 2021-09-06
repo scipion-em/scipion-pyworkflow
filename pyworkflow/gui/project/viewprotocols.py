@@ -2054,8 +2054,7 @@ class ProtocolsView(tk.Frame):
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
             self.info('Resetting the workflow...')
-            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0],
-                                                                                         False)
+            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
             errorProtList = self.project.resetWorkFlow(workflowProtocolList)
             self.cleanInfo()
             self.refreshRuns()
