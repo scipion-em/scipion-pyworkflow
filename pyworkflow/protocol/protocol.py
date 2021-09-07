@@ -706,10 +706,11 @@ class Protocol(Step):
 
     def hasLinkedInputs(self):
         """ Return if True if some of the input pointers are referring to
-        an output that is not ready yet.
+        an output that is not ready yet or the pointer is an open set.
         """
         linkedPointers = []
         emptyPointers = []
+        openSetPointer = False
 
         for paramName, attr in self.iterInputPointers():
 
@@ -734,7 +735,10 @@ class Protocol(Step):
                 else:
                     emptyPointers.append(paramName)
 
-        return linkedPointers and not emptyPointers
+        if not self.worksInStreaming() and isinstance(obj, Set) and obj.isStreamOpen():
+            openSetPointer = True
+
+        return (linkedPointers and not emptyPointers) or openSetPointer
 
     def iterOutputAttributes(self, outputClass=None):
         """ Iterate over the outputs produced by this protocol. """
