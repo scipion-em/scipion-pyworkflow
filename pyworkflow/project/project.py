@@ -498,9 +498,6 @@ class Project(object):
                 self._storeProtocol(protocol)
                 self._updateProtocol(protocol)
                 self.mapper.commit()
-                print("The parameters configuration in the "
-                      "protocol \"%s\" has been modified \n" %
-                      protocol.getObjLabel())
 
     def stopWorkFlow(self, activeProtList):
         """
@@ -523,10 +520,11 @@ class Project(object):
         errorProtList = []
         if workflowProtocolList:
             for protocol, level in workflowProtocolList.values():
-                try:
-                    self.resetProtocol(protocol)
-                except Exception:
-                    errorProtList.append(protocol)
+                if protocol.getStatus() != pwprot.STATUS_SAVED:
+                    try:
+                        self.resetProtocol(protocol)
+                    except Exception:
+                        errorProtList.append(protocol)
         return errorProtList
 
     def launchWorkflow(self, workflowProtocolList, mode=MODE_CONTINUE):
