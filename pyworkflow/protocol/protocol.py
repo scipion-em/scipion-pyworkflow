@@ -1944,6 +1944,9 @@ class Protocol(Step):
         try:
             baseSummary = self._summary() or ['No summary information.']
 
+            if isinstance(baseSummary, str):
+                baseSummary = [baseSummary]
+
             if not isinstance(baseSummary, list):
                 raise Exception("Developers error: _summary() is not returning "
                                 "a list")
