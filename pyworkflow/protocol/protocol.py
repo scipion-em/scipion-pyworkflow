@@ -443,6 +443,13 @@ class Protocol(Step):
         self._useOutputList.set(True)
         self._insertChild("_useOutputList", self._useOutputList)
 
+    def _closeOutputSet(self):
+        """Close all output set"""
+        for outputName, output in self.iterOutputAttributes():
+            if isinstance(output, Set) and output.isStreamOpen():
+                self._updateOutputSet(outputName, output,
+                                      state=Set.STREAM_CLOSED)
+
     def _updateOutputSet(self, outputName, outputSet,
                          state=Set.STREAM_OPEN):
         """ Use this function when updating an Stream output set.
@@ -940,9 +947,18 @@ class Protocol(Step):
             self._cpuTime.set(0)
 
     def setAborted(self):
-        """ Abort the protocol and finalize the steps"""
-        super().setAborted()
-        self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+        """ Abort the protocol, finalize the steps and close all open sets"""
+        try:
+            super().setAborted()
+            self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+            self._closeOutputSet()
+        except Exception as e:
+            print("An error occurred aborting the protocol (%s)" % e)
+
+    def setFailed(self, msg):
+        """ Set the run failed and close all open  sets. """
+        super().setFailed()
+        self._closeOutputSet()
 
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
