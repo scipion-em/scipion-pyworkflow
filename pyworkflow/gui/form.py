@@ -2534,15 +2534,20 @@ class FormWindow(Window):
         # This event can be fired even before the button is created
         if btnExecute is None:
             return
+        btnState = tk.DISABLED if (self.protocol.isActive() and not self.protocol.isInteractive()) else tk.NORMAL
+        emptyPointers, openSetPointer = self.protocol.getInputStatus()
 
-        if self.protocol.hasLinkedInputs():
+        if emptyPointers:
+            btnState = tk.DISABLED
+
+        if openSetPointer:
             btnText = 'Schedule'
             cmd = self.schedule
         else:
             btnText = pwutils.Message.LABEL_BUTTON_EXEC
             cmd = self.execute
 
-        btnExecute.config(text=btnText, command=cmd)
+        btnExecute.config(text=btnText, command=cmd, state=btnState)
 
 
 def editObject(self, title, root, obj, mapper):

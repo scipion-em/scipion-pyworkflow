@@ -711,12 +711,12 @@ class Protocol(Step):
 
         return protocolDict
 
-    def hasLinkedInputs(self):
-        """ Return if True if some of the input pointers are referring to
-        an output that is not ready yet.
+    def getInputStatus(self):
+        """ Returns if any input pointer is not ready yet and if there is
+         any pointer to an open set
         """
-        linkedPointers = []
-        emptyPointers = []
+        emptyPointers = False
+        openSetPointer = False
 
         for paramName, attr in self.iterInputPointers():
 
@@ -736,12 +736,13 @@ class Protocol(Step):
 
             obj = attr.get()
             if condition and obj is None and not param.allowsNull:
-                if attr.hasValue():
-                    linkedPointers.append(paramName)
-                else:
-                    emptyPointers.append(paramName)
+                if not attr.hasValue():
+                   emptyPointers = True
 
-        return linkedPointers and not emptyPointers
+            if not self.worksInStreaming() and isinstance(obj, Set) and obj.isStreamOpen():
+                openSetPointer = True
+
+        return emptyPointers, openSetPointer
 
     def iterOutputAttributes(self, outputClass=None):
         """ Iterate over the outputs produced by this protocol. """
@@ -1958,19 +1959,27 @@ class Protocol(Step):
         """ Return a summary message to provide some information to users. """
         try:
             baseSummary = self._summary() or ['No summary information.']
+
+            if isinstance(baseSummary, str):
+                baseSummary = [baseSummary]
+
+            if not isinstance(baseSummary, list):
+                raise Exception("Developers error: _summary() is not returning "
+                                "a list")
+
+            comments = self.getObjComment()
+            if comments:
+                baseSummary += ['', '*COMMENTS:* ', comments]
+
+            if self.getError().hasValue():
+                baseSummary += ['', '*ERROR:*', self.getError().get()]
+
+            if self.summaryWarnings:
+                baseSummary += ['', '*WARNINGS:*']
+                baseSummary += self.summaryWarnings
+
         except Exception as ex:
             baseSummary = [str(ex)]
-
-        comments = self.getObjComment()
-        if comments:
-            baseSummary += ['', '*COMMENTS:* ', comments]
-
-        if self.getError().hasValue():
-            baseSummary += ['', '*ERROR:*', self.getError().get()]
-
-        if self.summaryWarnings:
-            baseSummary += ['', '*WARNINGS:*']
-            baseSummary += self.summaryWarnings
 
         return baseSummary
 
