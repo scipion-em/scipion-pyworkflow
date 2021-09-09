@@ -1,3 +1,10 @@
+V3.0.18
+-------
+- Fixed GUI error: resetting nodes with manual subset looses the parent
+- Fixed: execute a protocol directly that is not streaming and that has an open input must be scheduled
+- Close all sets when stopping a protocol
+
+
 v3.0.17
 -------
  - Second tab of logs have just error messages (stderr output)
