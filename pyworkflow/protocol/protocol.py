@@ -958,7 +958,7 @@ class Protocol(Step):
 
     def setFailed(self, msg):
         """ Set the run failed and close all open  sets. """
-        super().setFailed()
+        super().setFailed(msg)
         self._closeOutputSet()
 
     def _updateSteps(self, updater, where="1"):
