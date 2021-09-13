@@ -39,7 +39,7 @@ import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
-from pyworkflow.protocol.constants import (MODE_RESTART, MODE_CONTINUE,
+from pyworkflow.protocol.constants import (MODE_RESTART, MODE_RESUME,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS,
                                            UNKNOWN_JOBID, INITIAL_SLEEP_TIME)
 from pyworkflow.protocol.protocol import ProtImportBase
@@ -527,7 +527,7 @@ class Project(object):
                         errorProtList.append(protocol)
         return errorProtList
 
-    def launchWorkflow(self, workflowProtocolList, mode=MODE_CONTINUE):
+    def launchWorkflow(self, workflowProtocolList, mode=MODE_RESUME):
         """
         This function can launch a workflow from a selected protocol in two
         modes depending on the 'mode' value (RESTART, CONTINUE)
@@ -974,6 +974,7 @@ class Project(object):
         newProt.setObjLabel(newProtLabel)
         newProt.copyDefinitionAttributes(protocol)
         newProt.copyAttributes(protocol, 'hostName', '_useQueue', '_queueParams')
+        newProt.runMode.set(MODE_RESTART)
 
         return newProt
 
