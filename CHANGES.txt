@@ -1,6 +1,9 @@
 V3.0.18
 -------
-- Fixed GUI error: resetting nodes with manual subset looses the parent
+- Fixed GUI errors:
+   - resetting nodes with manual subset looses the parent
+   - reporting the protocol wall time
+   - finished protocol can't be modified
 - Fixed: execute a protocol directly that is not streaming and that has an open input must be scheduled
 - Close all sets when stopping a protocol
 
