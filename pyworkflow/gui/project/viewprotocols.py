@@ -2074,7 +2074,7 @@ class ProtocolsView(tk.Frame):
         """
         protocols = self._getSelectedProtocols()
         errorList = []
-        defaultMode = pwprot.MODE_CONTINUE
+        defaultMode = pwprot.MODE_RESUME
         workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
 
         # Check if exists active protocols

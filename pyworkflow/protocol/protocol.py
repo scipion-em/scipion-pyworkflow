@@ -942,7 +942,7 @@ class Protocol(Step):
         """ Do not reset the init time in RESUME_MODE"""
         previousStart = self.initTime.get()
         super().setRunning()
-        if self.getRunMode() == MODE_RESUME:
+        if self.getRunMode() == MODE_RESUME and previousStart is not None:
             self.initTime.set(previousStart)
         else:
             self._cpuTime.set(0)
