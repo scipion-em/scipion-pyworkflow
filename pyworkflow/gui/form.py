@@ -2086,9 +2086,13 @@ class FormWindow(Window):
                                        and not self.protocol.isInteractive()) \
                 else tk.NORMAL
 
+            btnSaveState = tk.DISABLED if (btnState == tk.DISABLED or
+                                           self.protocol.getOutputsSize()) \
+                else tk.NORMAL
+
             self.btnSave = Button(btnFrame, pwutils.Message.LABEL_BUTTON_RETURN,
                                   pwutils.Icon.ACTION_SAVE, command=self.save,
-                                  state=btnState)
+                                  state=btnSaveState)
             self.btnSave.grid(row=0, column=1, padx=5, pady=5, sticky='se')
             self.btnExecute = HotButton(btnFrame, pwutils.Message.LABEL_BUTTON_EXEC,
                                         pwutils.Icon.ACTION_EXECUTE,
