@@ -267,10 +267,10 @@ class Config:
 
     @staticmethod
     def toggleDebug():
-        debugOff = not Config.debugOn()
-        os.environ[SCIPION_DEBUG] = str(debugOff)
-        os.environ[SCIPION_DEBUG_NOCLEAN] = str(debugOff)
-        os.environ[SCIPION_LOG_LEVEL] = "INFO" if debugOff else "DEBUG"
+        debugOn = not Config.debugOn()
+        os.environ[SCIPION_DEBUG] = str(debugOn)
+        os.environ[SCIPION_DEBUG_NOCLEAN] = str(debugOn)
+        os.environ[SCIPION_LOG_LEVEL] = "INFO" if not debugOn else "DEBUG"
 
     @staticmethod
     def debugSQLOn():
