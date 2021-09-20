@@ -120,7 +120,7 @@ class Config:
     # Get general log file path (for the GUI)
     SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
     # Default logging level: String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-    SCIPION_LOG_LEVEL = _get('SCIPION_LOG_LEVEL', 'INFO')
+    SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
 
     # Scratch path
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
@@ -270,6 +270,7 @@ class Config:
         newValue = not Config.debugOn()
         os.environ[SCIPION_DEBUG] = str(newValue)
         os.environ[SCIPION_DEBUG_NOCLEAN] = str(newValue)
+        os.environ[SCIPION_LOG_LEVEL] = "INFO" if False else "DEBUG"
 
     @staticmethod
     def debugSQLOn():
