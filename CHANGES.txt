@@ -1,3 +1,8 @@
+V3.0.19
+-------
+- logging DEBUG mode will be activated when toggling debug mode
+- A dramatic plugin import error will be tolerated. Plugin will not be loaded.
+
 V3.0.18
 -------
 - Fixed GUI errors:
