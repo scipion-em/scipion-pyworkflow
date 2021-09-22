@@ -329,6 +329,20 @@ class Protocol(Step):
     # Protocol develop status: PROD, BETA, NEW
     _devStatus = pw.PROD
 
+    """" Possible Outputs:
+    This is an optional but recommended attribute to fill.
+    It has to be an enum with names being the name of the output and value the class of the output:
+    
+        class MyOutput(enum.Enum):
+            outputMicrographs = SetOfMicrographs
+            outputMicrographDW = SetOfMicrographs
+    
+    When defining outputs you can, optionally, use this enum like:
+    self._defineOutputs(**{MyOutput.outputMicrographs.name, setOfMics})
+    It will help to keep output names consistently
+    """
+    _possibleOutputs = None
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._steps = []  # List of steps that will be executed
@@ -744,15 +758,22 @@ class Protocol(Step):
 
         return emptyPointers, openSetPointer
 
-    def iterOutputAttributes(self, outputClass=None):
+    def iterOutputAttributes(self, outputClass=None, includePossible=False):
         """ Iterate over the outputs produced by this protocol. """
 
         iterator = self._iterOutputsNew if self._useOutputList else self._iterOutputsOld
 
-        # Iterate
+        # Iterate through actual outputs
         for key, attr in iterator():
             if outputClass is None or isinstance(attr, outputClass):
                 yield key, attr
+
+        # NOTE: This will only happen in case there is no actual output.
+        # There is no need to avoid duplication of actual output and possible output.
+        if includePossible and self._possibleOutputs is not None:
+            for possibleOutput in self._possibleOutputs:
+                yield possibleOutput.name, possibleOutput.value
+
 
     def _iterOutputsNew(self):
         """ This methods iterates through a list where outputs have been
