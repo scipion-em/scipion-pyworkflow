@@ -89,6 +89,7 @@ class Canvas(tk.Canvas, Scrollable):
 
         self._runsFont = getDefaultFont().copy()
         self._zoomFactor = DEFAULT_ZOOM
+        self.nodeList = None
 
         if tooltipCallback:
             self.bind('<Motion>', self.onMotion)
@@ -364,7 +365,7 @@ class Canvas(tk.Canvas, Scrollable):
     def zoomerM(self, event):
         self.__zoom(event, 0.9)
 
-    def drawGraph(self, graph, layout=None, drawNode=None):
+    def drawGraph(self, graph, layout=None, drawNode=None, nodeList=None):
         """ Draw a graph in the canvas.
         nodes in the graph should have x and y.
         If layout is not None, it will be used to 
@@ -377,6 +378,7 @@ class Canvas(tk.Canvas, Scrollable):
         scale = self._zoomFactor / DEFAULT_ZOOM
         self._zoomFactor = DEFAULT_ZOOM
         self._runsFont['size'] = DEFAULT_FONT_SIZE
+        self.nodeList = nodeList
 
         if drawNode is None:
             self.drawNode = self._drawNode
@@ -418,10 +420,47 @@ class Canvas(tk.Canvas, Scrollable):
 
             if getattr(node, 'expanded', True):
                 for child in node.getChilds():
-                    self._drawNodes(child, visitedDict)
-                    self.createEdge(item, child.item)
+                    if self.nodeList.getNode(child.run.getObjId()).isVisible():
+                        self._drawNodes(child, visitedDict)
+                        self.createEdge(item, child.item)
+                    else:
+                        self.connectParents(node)
+                        self._setupParentProperties(node, visitedDict)
+
             else:
+                self.connectParents(node)
                 self._setupParentProperties(node, visitedDict)
+
+    def connectParents(self, node):
+        """
+        Establishes a connection between the visible parents of node's children
+        with node
+        """
+        visibleParents = self.visibleParents(node, [])
+        for visibleNode in visibleParents:
+            if visibleNode != node:
+                dest = self.items[node.item.id]
+                if getattr(visibleNode, 'item', None):
+                    source = self.items[visibleNode.item.id]
+                    #self.createEdge(source, dest)
+                    dest.addSocket("output1", RoundConnector, "left",
+                                   fillColor="green")
+                    source.addSocket("output2", RoundConnector, "right",
+                                     fillColor="green")
+
+                    self.createCable(source, "output2", dest, "output1")
+
+    def visibleParents(self, node, parentlist):
+        """
+        Return a list with the visible parents of the node's children
+        """
+        for child in node.getChilds():
+            parents = child.getParents()
+            for parent in parents:
+                if self.nodeList.getNode(parent.run.getObjId()).isVisible():
+                    parentlist.append(parent)
+                self.visibleParents(child, parentlist)
+        return parentlist
 
     def _setupParentProperties(self, node, visitedDict):
         """ This methods is used for collapsed nodes, in which 
@@ -447,7 +486,8 @@ class Canvas(tk.Canvas, Scrollable):
 
             if getattr(node, 'expanded', True):
                 for child in node.getChilds():
-                    self._updatePositions(child, visitedDict)
+                    if self.nodeList.getNode(child.run.getObjId()).isVisible():
+                        self._updatePositions(child, visitedDict)
 
 
 def findClosestPoints(list1, list2):
@@ -593,13 +633,21 @@ class Item(object):
     def getSocketCoordsAt(self, verticalLocation, position=1, socketsCount=1):
         x1, y1, x2, y2 = self.getCorners()
         xc = (x2 + x1) / 2.0
+        yc = (y1 + y2) / 2.0
+
         socketsGroupSize = (socketsCount - 1) * self.socketSeparation
         socketsGroupStart = xc - (socketsGroupSize / 2)
         x = socketsGroupStart + (position - 1) * self.socketSeparation
         if verticalLocation == "top":
             y = y1
-        else:
+        elif verticalLocation == 'bottom':
             y = y2
+        elif verticalLocation == 'left':
+            y = yc
+            x = x1
+        else:
+            y = yc
+            x = x2
         return x, y
 
     def relocateSockets(self, verticalLocation, count):

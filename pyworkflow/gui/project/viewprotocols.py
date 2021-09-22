@@ -1291,10 +1291,12 @@ class ProtocolsView(tk.Frame):
                 nodeId = node.run.getObjId() if node.run else 0
                 nodeInfo = self.settings.getNodeById(nodeId)
                 if nodeInfo is None:
-                    self.settings.addNode(nodeId, x=0, y=0, expanded=True)
+                    self.settings.addNode(nodeId, x=0, y=0, expanded=True,
+                                          visible=True)
 
             self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
-                                           drawNode=self.createRunItem)
+                                           drawNode=self.createRunItem,
+                                           nodeList=self.settings.nodeList)
 
     def createRunItem(self, canvas, node):
 
@@ -1304,6 +1306,7 @@ class ProtocolsView(tk.Frame):
         # Extend attributes: use some from nodeInfo
         node.expanded = nodeInfo.isExpanded()
         node.x, node.y = nodeInfo.getPosition()
+        node.visible = nodeInfo.isVisible()
         nodeText = self._getNodeText(node)
 
         # Get status color
@@ -2340,13 +2343,17 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_EXPORT_UPLOAD:
                     self._exportUploadProtocols()
                 elif action == ACTION_COLLAPSE:
+                    node = self.runsGraph.getNode(str(prot.getObjId()))
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(False)
+                    self.setVisibleNodes(node, visible=False)
                     self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_EXPAND:
+                    node = self.runsGraph.getNode(str(prot.getObjId()))
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(True)
+                    self.setVisibleNodes(node, visible=True)
                     self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_LABELS:
@@ -2378,6 +2385,25 @@ class ProtocolsView(tk.Frame):
 
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
+
+    def setVisibleNodes(self, node, visible=True):
+        hasParentHidden = False
+        for child in node.getChilds():
+            prot = child.run
+            nodeInfo = self.settings.getNodeById(prot.getObjId())
+            if visible:
+                hasParentHidden = self.hasParentHidden(child)
+            if not hasParentHidden:
+                nodeInfo.setVisible(visible)
+                self.setVisibleNodes(child, visible)
+
+    def hasParentHidden(self, node):
+        for parent in node.getParents():
+            prot = parent.run
+            nodeInfo = self.settings.getNodeById(prot.getObjId())
+            if not nodeInfo.isVisible() or not nodeInfo.isExpanded():
+                return True
+        return False
 
 
 class RunBox(pwgui.TextBox):
