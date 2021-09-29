@@ -399,7 +399,7 @@ class Canvas(tk.Canvas, Scrollable):
 
         layout.draw(graph)
         # Update node positions
-        self._updatePositions(graph.getRoot(), {})
+        self._updatePositions(graph.getRoot(), {}, createEdges=False)
         self.updateScrollRegion()
 
     def _drawNode(self, canvas, node):
@@ -422,44 +422,40 @@ class Canvas(tk.Canvas, Scrollable):
                 for child in node.getChilds():
                     if self.nodeList.getNode(child.run.getObjId()).isVisible():
                         self._drawNodes(child, visitedDict)
-                        self.createEdge(item, child.item)
                     else:
-                        self.connectParents(node)
                         self._setupParentProperties(node, visitedDict)
-
             else:
-                self.connectParents(node)
                 self._setupParentProperties(node, visitedDict)
 
-    def connectParents(self, node):
+    def _connectParents(self, item):
         """
         Establishes a connection between the visible parents of node's children
         with node
         """
-        visibleParents = self.visibleParents(node, [])
-        for visibleNode in visibleParents:
-            if visibleNode != node:
-                dest = self.items[node.item.id]
-                if getattr(visibleNode, 'item', None):
-                    source = self.items[visibleNode.item.id]
-                    #self.createEdge(source, dest)
-                    dest.addSocket("output1", RoundConnector, "left",
-                                   fillColor="green")
-                    source.addSocket("output2", RoundConnector, "right",
-                                     fillColor="green")
+        visibleParents = self._visibleParents(item, [])
+        for visibleParent in visibleParents:
+            if visibleParent != item:
+                dest = self.items[item.item.id]
+                source = self.items[visibleParent.item.id]
+                visibleParentNode = self.nodeList.getNode(visibleParent.run.getObjId())
+                itemNode = self.nodeList.getNode(item.run.getObjId())
 
-                    self.createCable(source, "output2", dest, "output1")
+                if visibleParent not in item.getParents() and visibleParentNode.isExpanded():
+                    self.createEdge(source, dest)
+                if not itemNode.isExpanded():
+                    self.createEdge(source, dest)
 
-    def visibleParents(self, node, parentlist):
+    def _visibleParents(self, node, parentlist):
         """
         Return a list with the visible parents of the node's children
         """
         for child in node.getChilds():
             parents = child.getParents()
             for parent in parents:
-                if self.nodeList.getNode(parent.run.getObjId()).isVisible():
-                    parentlist.append(parent)
-                self.visibleParents(child, parentlist)
+                parentNode = self.nodeList.getNode(parent.run.getObjId())
+                if parentNode.isVisible():
+                    if parent != node and parent not in parentlist:
+                        parentlist.append(parent)
         return parentlist
 
     def _setupParentProperties(self, node, visitedDict):
@@ -475,7 +471,7 @@ class Canvas(tk.Canvas, Scrollable):
                 child.y = node.y
                 self._setupParentProperties(child, visitedDict)
 
-    def _updatePositions(self, node, visitedDict={}):
+    def _updatePositions(self, node, visitedDict={}, createEdges=True):
         """ Update position of nodes and create the edges. """
         nodeName = node.getName()
 
@@ -487,7 +483,13 @@ class Canvas(tk.Canvas, Scrollable):
             if getattr(node, 'expanded', True):
                 for child in node.getChilds():
                     if self.nodeList.getNode(child.run.getObjId()).isVisible():
-                        self._updatePositions(child, visitedDict)
+                        if createEdges:
+                            self.createEdge(item, child.item)
+                        self._updatePositions(child, visitedDict, createEdges)
+            else:
+                if createEdges:
+                    self._connectParents(node)
+                self._updatePositions(node, visitedDict, createEdges)
 
 
 def findClosestPoints(list1, list2):

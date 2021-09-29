@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -139,13 +139,13 @@ class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
         stoppable = status in [pwprot.STATUS_RUNNING, pwprot.STATUS_SCHEDULED, 
                                pwprot.STATUS_LAUNCHED]
 
-        return [(ACTION_EDIT, single),
-                (ACTION_RENAME, single),
-                (ACTION_COPY, True),
-                (ACTION_DELETE, status != pwprot.STATUS_RUNNING),
-                (ACTION_STEPS, single and Config.debugOn()),
-                (ACTION_BROWSE, single),
-                (ACTION_DB, single and Config.debugOn()),
+        return [(ACTION_EDIT, single and status and expanded),
+                (ACTION_RENAME, single and status and expanded),
+                (ACTION_COPY, True and status and expanded),
+                (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
+                (ACTION_STEPS, single and Config.debugOn() and status and expanded),
+                (ACTION_BROWSE, single and status and expanded),
+                (ACTION_DB, single and Config.debugOn() and status and expanded),
                 (ACTION_STOP, stoppable and single),
                 (ACTION_EXPORT, not single),
                 (ACTION_EXPORT_UPLOAD, not single),
@@ -1445,11 +1445,11 @@ class ProtocolsView(tk.Frame):
             nodeText = nodeText[:37] + "..."
 
         if node.run:
-            expandedStr = '' if node.expanded else ' (+)'
+            expandedStr = '' if node.expanded else '\n ➕ %s more' % str(node.countChilds({}))
             if self.runsView == VIEW_TREE_SMALL:
                 nodeText = node.getName() + expandedStr
             else:
-                nodeText += expandedStr + '\n' + node.run.getStatusMessage()
+                nodeText += expandedStr + '\n' + node.run.getStatusMessage() if not expandedStr else expandedStr
                 if node.run.summaryWarnings:
                     nodeText += u' \u26a0'
         return nodeText
@@ -1647,7 +1647,8 @@ class ProtocolsView(tk.Frame):
         self._selectItemProtocol(prot)
 
     def _runItemDoubleClick(self, e=None):
-        self._runActionClicked(ACTION_EDIT)
+        if e.nodeInfo.isExpanded():
+            self._runActionClicked(ACTION_EDIT)
 
     def _runItemMiddleClick(self, e=None):
         self._runActionClicked(ACTION_SELECT_TO)

@@ -89,6 +89,17 @@ class Node(object):
 
         yield self
 
+    def countChilds(self, visitedNode={}, count=0):
+        """ Iterate over all childs and subchilds.
+        Nodes can be visited once
+        """
+        for child in self._childs:
+            if child._name not in visitedNode:
+                visitedNode[child._name] = True
+            child.countChilds(visitedNode)
+        return len(visitedNode)
+
+
     def iterChildsBreadth(self):
         """ Iter child nodes in a breadth-first order
         """
