@@ -141,7 +141,7 @@ class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
 
         return [(ACTION_EDIT, single and status and expanded),
                 (ACTION_RENAME, single and status and expanded),
-                (ACTION_COPY, True and status and expanded),
+                (ACTION_COPY, status and expanded),
                 (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
                 (ACTION_STEPS, single and Config.debugOn() and status and expanded),
                 (ACTION_BROWSE, single and status and expanded),

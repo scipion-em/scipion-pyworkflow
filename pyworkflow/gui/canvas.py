@@ -453,8 +453,7 @@ class Canvas(tk.Canvas, Scrollable):
             parents = child.getParents()
             for parent in parents:
                 parentNode = self.nodeList.getNode(parent.run.getObjId())
-                if parentNode.isVisible():
-                    if parent != node and parent not in parentlist:
+                if parentNode.isVisible() and parent != node and parent not in parentlist:
                         parentlist.append(parent)
         return parentlist
 
@@ -471,7 +470,7 @@ class Canvas(tk.Canvas, Scrollable):
                 child.y = node.y
                 self._setupParentProperties(child, visitedDict)
 
-    def _updatePositions(self, node, visitedDict={}, createEdges=True):
+    def _updatePositions(self, node, visitedDict=None, createEdges=True):
         """ Update position of nodes and create the edges. """
         nodeName = node.getName()
 

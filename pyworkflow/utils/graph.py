@@ -89,7 +89,7 @@ class Node(object):
 
         yield self
 
-    def countChilds(self, visitedNode={}, count=0):
+    def countChilds(self, visitedNode=None, count=0):
         """ Iterate over all childs and subchilds.
         Nodes can be visited once
         """
