@@ -8,6 +8,7 @@ V3.0.19
 V3.0.18
 -------
 - Fixed GUI errors:
+   - fixing the workflow collapse/expande nodes
    - resetting nodes with manual subset looses the parent
    - reporting the protocol wall time
    - finished protocol can't be modified
