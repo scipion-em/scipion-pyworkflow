@@ -1,5 +1,6 @@
 V3.0.19
 -------
+- fixing an error deleting a protocol by the keyboard
 - logging DEBUG mode will be activated when toggling debug mode
 - A dramatic plugin import error will be tolerated. Plugin will not be loaded.
 - Possible outputs definition is now possible. Protocols can define _posibleOutputs to enable workflow
