@@ -1985,7 +1985,10 @@ class ProtocolsView(tk.Frame):
 
         # Call the delete action only if the widget is the canvas
         if str(widget).endswith(ProtocolsView.RUNS_CANVAS_NAME):
-            self._deleteProtocol()
+            try:
+                self._deleteProtocol()
+            except Exception as ex:
+                self.windows.showError(str(ex))
 
     def _deleteProtocol(self):
         protocols = self._getSelectedProtocols()

@@ -339,10 +339,10 @@ class Domain:
                                                   doRaise=True)
                 viewers.append(prefViewer)
             except Exception as e:
-                print("Couldn't load \"%s\" as preferred viewer.\n"
+                print("Couldn't load \"%s\" as preferred viewer for %s.\n"
                       "There might be a typo in your VIEWERS variable "
                       "or an error in the viewer's plugin installation"
-                      % prefViewerStr)
+                      % (prefViewerStr, className))
                 print(e)
         return viewers
 
