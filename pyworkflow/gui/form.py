@@ -478,7 +478,7 @@ class SubclassesTreeProvider(TreeProvider):
                     # the magnifier glass (object selector of type XX)
                     paramName = None
                     attr = None
-                    for paramName, attr in prot.iterOutputAttributes():
+                    for paramName, attr in prot.iterOutputAttributes(includePossible=True):
                         def _checkParam(paramName, attr):
                             # If attr is a sub-classes of any desired one, add it to the list
                             # we should also check if there is a condition, the object
@@ -542,7 +542,7 @@ class SubclassesTreeProvider(TreeProvider):
         objects.sort(key=self.objectKey, reverse=not self.isSortingAscending())
 
     def objectKey(self, pobj):
-
+        """ Returns the value to be evaluated during sorting based on _sortingColumnName"""
         obj = self._getParentObject(pobj, pobj)
 
         if self._sortingColumnName == SubclassesTreeProvider.CREATION_COLUMN:
@@ -594,14 +594,16 @@ class SubclassesTreeProvider(TreeProvider):
 
     @staticmethod
     def _getObjectCreation(obj):
-
-        return obj.getObjCreation() if obj.getObjCreation() else "Empty"
+        """ Returns the Object creation time stamp or 'Not ready' for those not yet ready or possibleOutputs"""
+        return obj.getObjCreation() if obj is not None and obj.getObjCreation() else "Not ready"
 
     @staticmethod
     def _getObjectInfoValue(obj):
-
-        return str(obj).replace(obj.getClassName(), '')
-
+        """ Returns the best summary of the object in a string."""
+        if obj is not None:
+            return str(obj).replace(obj.getClassName(), '')
+        else: # possible Outputs are not output already so here comes None
+            return "Possible output"
     def _getPointerLabel(self, pobj, parent=None):
 
         # If parent is not provided, try to get it, it might have none.
