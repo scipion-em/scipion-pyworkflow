@@ -474,7 +474,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         viewer = ViewerClass(project=self.protocol.getProject(),
                              protocol=self.protocol,
                              parent=self.parent.windows)
-        viewer.visualize(obj)
+        viewer.visualize(obj, windows=self.parent.windows)
 
     def _editObject(self, obj):
         """Open the Edit GUI Form given an instance"""
@@ -1985,7 +1985,10 @@ class ProtocolsView(tk.Frame):
 
         # Call the delete action only if the widget is the canvas
         if str(widget).endswith(ProtocolsView.RUNS_CANVAS_NAME):
-            self._deleteProtocol()
+            try:
+                self._deleteProtocol()
+            except Exception as ex:
+                self.windows.showError(str(ex))
 
     def _deleteProtocol(self):
         protocols = self._getSelectedProtocols()

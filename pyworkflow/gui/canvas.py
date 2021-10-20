@@ -420,7 +420,9 @@ class Canvas(tk.Canvas, Scrollable):
 
             if getattr(node, 'expanded', True):
                 for child in node.getChilds():
-                    if self.nodeList.getNode(child.run.getObjId()).isVisible():
+                    if self.nodeList is None:
+                        self._drawNodes(child, visitedDict)
+                    elif self.nodeList.getNode(child.run.getObjId()).isVisible():
                         self._drawNodes(child, visitedDict)
                     else:
                         self._setupParentProperties(node, visitedDict)
@@ -481,7 +483,10 @@ class Canvas(tk.Canvas, Scrollable):
 
             if getattr(node, 'expanded', True):
                 for child in node.getChilds():
-                    if self.nodeList.getNode(child.run.getObjId()).isVisible():
+                    if self.nodeList is None:
+                        self.createEdge(item, child.item)
+                        self._updatePositions(child, visitedDict, createEdges)
+                    elif self.nodeList.getNode(child.run.getObjId()).isVisible():
                         if createEdges:
                             self.createEdge(item, child.item)
                         self._updatePositions(child, visitedDict, createEdges)
