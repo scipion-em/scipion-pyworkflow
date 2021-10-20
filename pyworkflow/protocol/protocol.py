@@ -340,6 +340,13 @@ class Protocol(Step):
     When defining outputs you can, optionally, use this enum like:
     self._defineOutputs(**{MyOutput.outputMicrographs.name, setOfMics})
     It will help to keep output names consistently
+    
+    Alternative an inline dictionary will work:
+    _possibleOutputs = {"outputMicrographs" = SetOfMicrographs}
+    
+    For a more fine detailed/dynamic output based on parameters, you can use overwrite the getter:
+    getPossibleOutputs() in your protocol.
+    
     """
     _possibleOutputs = None
 
@@ -763,17 +770,25 @@ class Protocol(Step):
 
         iterator = self._iterOutputsNew if self._useOutputList else self._iterOutputsOld
 
+        hasOutput=False
+
         # Iterate through actual outputs
         for key, attr in iterator():
             if outputClass is None or isinstance(attr, outputClass):
+                hasOutput = True
                 yield key, attr
 
         # NOTE: This will only happen in case there is no actual output.
         # There is no need to avoid duplication of actual output and possible output.
-        if includePossible and self._possibleOutputs is not None:
-            for possibleOutput in self._possibleOutputs:
-                yield possibleOutput.name, possibleOutput.value
+        if includePossible and not hasOutput and self.getPossibleOutputs() is not None:
+            for possibleOutput in self.getPossibleOutputs():
+                if isinstance(possibleOutput, str):
+                    yield possibleOutput, self._possibleOutputs[possibleOutput]
+                else:
+                    yield possibleOutput.name, possibleOutput.value
 
+    def getPossibleOutputs(self):
+        return self._possibleOutputs
 
     def _iterOutputsNew(self):
         """ This methods iterates through a list where outputs have been
