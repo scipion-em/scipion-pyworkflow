@@ -344,7 +344,7 @@ class Protocol(Step):
     Alternative an inline dictionary will work:
     _possibleOutputs = {"outputMicrographs" = SetOfMicrographs}
     
-    For a more fine detailed/dynamic output based on parameters, you can use overwrite the getter:
+    For a more fine detailed/dynamic output based on parameters, you can overwrite the getter:
     getPossibleOutputs() in your protocol.
     
     """
