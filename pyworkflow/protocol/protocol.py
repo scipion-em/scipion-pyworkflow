@@ -342,7 +342,7 @@ class Protocol(Step):
     It will help to keep output names consistently
     
     Alternative an inline dictionary will work:
-    _possibleOutputs = {"outputMicrographs" = SetOfMicrographs}
+    _possibleOutputs = {"outputMicrographs" : SetOfMicrographs}
     
     For a more fine detailed/dynamic output based on parameters, you can overwrite the getter:
     getPossibleOutputs() in your protocol.
