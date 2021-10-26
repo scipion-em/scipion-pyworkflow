@@ -468,8 +468,7 @@ class Protocol(Step):
         """Close all output set"""
         for outputName, output in self.iterOutputAttributes():
             if isinstance(output, Set) and output.isStreamOpen():
-                self._updateOutputSet(outputName, output,
-                                      state=Set.STREAM_CLOSED)
+                self.__tryUpdateOutputSet(outputName, output, state=Set.STREAM_CLOSED)
 
     def _updateOutputSet(self, outputName, outputSet,
                          state=Set.STREAM_OPEN):
