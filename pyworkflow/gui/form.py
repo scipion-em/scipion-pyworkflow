@@ -1240,9 +1240,9 @@ class ParamWidget:
                                            self.window._onPointerChanged)
                 self._selectmode = 'browse'
                 sticky = 'ew'
-
+            state = tk.DISABLED if param.readOnly else tk.NORMAL
             entry = tk.Entry(content, width=entryWidth, textvariable=var,
-                             font=self.window.font)
+                             font=self.window.font, state=state)
 
             # Select all content on focus
             entry.bind("<FocusIn>",
