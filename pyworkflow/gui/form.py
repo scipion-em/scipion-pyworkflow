@@ -484,12 +484,28 @@ class SubclassesTreeProvider(TreeProvider):
                             # we should also check if there is a condition, the object
                             # must comply with the condition
                             p = None
-                            if (any(isinstance(attr, c) for c in classes) and
-                                    (not condition or
-                                     attr.evalCondition(condition))):
-                                p = pwobj.Pointer(prot, extended=paramName)
-                                p._allowsSelection = True
-                                objects.append(p)
+
+                            match = False
+                            cancelConditionEval = False
+
+                            # Go through all compatible Classes coming from in pointerClass string
+                            for c in classes:
+                                # If attr is instance
+                                if isinstance(attr, c):
+                                    match = True
+                                    break
+                                # If it is a class already: "possibleOutput" case. In this case attr is the class and not
+                                # an instance of c. In this special case
+                                elif attr == c:
+                                    match = True
+                                    cancelConditionEval = True
+
+                            # If attr matches the class
+                            if match:
+                                if cancelConditionEval or not condition or attr.evalCondition(condition):
+                                    p = pwobj.Pointer(prot, extended=paramName)
+                                    p._allowsSelection = True
+                                    objects.append(p)
 
                             # JMRT: For all sets, we don't want to include the
                             # subitems here for performance reasons (e.g SetOfParticles)
