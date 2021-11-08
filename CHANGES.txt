@@ -1,23 +1,26 @@
 V3.0.19
 -------
-- fixing an error closing some viewers(the action of closing some viewers closes Scipion completely)
-- fixing an error drawing the protocols step tree
-- fixing an error deleting a protocol by the keyboard
-- logging DEBUG mode will be activated when toggling debug mode
-- A dramatic plugin import error will be tolerated. Plugin will not be loaded.
-- Possible outputs definition is now possible. Protocols can define Protocol._posibleOutputs to allow your
-  protocol to be used at workflow designing time without been executed (dict or enum definition possible)
-- Allow readonly parameters in protocols. Useful in combination with wizards or just informative parameters.
+ - fixing an error closing some viewers(the action of closing some viewers closes Scipion completely)
+ - fixing an error drawing the protocols step tree
+ - fixing an error deleting a protocol by the keyboard
+ - logging DEBUG mode will be activated when toggling debug mode
+ - A dramatic plugin import error will be tolerated. Plugin will not be loaded.
+ - Possible outputs definition is now possible. Protocols can define possible outputs to allow designing
+   a workflow in advance without executing them.
+
+ Developers:
+ - Possible Outputs allowed: dict or enum definition possible, see Protocol._possibleOutput
+ - Allow readonly parameters in protocols. Useful in combination with wizards or just informative parameters.
 
 V3.0.18
 -------
-- Fixed GUI errors:
+ - Fixed GUI errors:
    - fixing the workflow collapse/expande nodes
    - resetting nodes with manual subset looses the parent
    - reporting the protocol wall time
    - finished protocol can't be modified
-- Fixed: execute a protocol directly that is not streaming and that has an open input must be scheduled
-- Close all sets when stopping a protocol
+ - Fixed: execute a protocol directly that is not streaming and that has an open input must be scheduled
+ - Close all sets when stopping a protocol
 
 
 v3.0.17
