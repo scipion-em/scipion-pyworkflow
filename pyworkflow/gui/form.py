@@ -38,6 +38,7 @@ import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
+from protocol import BooleanParam
 from pyworkflow.mapper import Mapper
 from pyworkflow.viewer import DESKTOP_TKINTER
 from pyworkflow.protocol.constants import MODE_RESTART
@@ -1115,7 +1116,7 @@ class ParamWidget:
         return False
 
     @staticmethod
-    def createBoolWidget(parent, checkbox=False, **args):
+    def createBoolWidget(parent, display=BooleanParam.DISPLAY_OPTION, **args):
         """ Return a BoolVar associated with a yes/no selection.
         **args: extra arguments passed to tk.Radiobutton and tk.Frame
             constructors.
@@ -1128,7 +1129,7 @@ class ParamWidget:
             del frameArgs['font']
         frame = tk.Frame(parent, **frameArgs)
 
-        if checkbox:
+        if display == BooleanParam.DISPLAY_CHECKBOX:
             chk = tk.Checkbutton(frame, variable=var.tkVar, **args)
             chk.grid(row=0, column=0, padx=2, sticky="w")
         else:
@@ -1156,7 +1157,7 @@ class ParamWidget:
             var = 0
 
         elif t is pwprot.BooleanParam:
-            var, frame = ParamWidget.createBoolWidget(content, checkbox=param.checkbox, bg='white',
+            var, frame = ParamWidget.createBoolWidget(content, display=param.display, bg='white',
                                                       font=self.window.font)
             frame.grid(row=0, column=0, sticky='w')
 
