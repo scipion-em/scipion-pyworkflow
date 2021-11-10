@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -139,13 +139,13 @@ class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
         stoppable = status in [pwprot.STATUS_RUNNING, pwprot.STATUS_SCHEDULED, 
                                pwprot.STATUS_LAUNCHED]
 
-        return [(ACTION_EDIT, single),
-                (ACTION_RENAME, single),
-                (ACTION_COPY, True),
-                (ACTION_DELETE, status != pwprot.STATUS_RUNNING),
-                (ACTION_STEPS, single and Config.debugOn()),
-                (ACTION_BROWSE, single),
-                (ACTION_DB, single and Config.debugOn()),
+        return [(ACTION_EDIT, single and status and expanded),
+                (ACTION_RENAME, single and status and expanded),
+                (ACTION_COPY, status and expanded),
+                (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
+                (ACTION_STEPS, single and Config.debugOn() and status and expanded),
+                (ACTION_BROWSE, single and status and expanded),
+                (ACTION_DB, single and Config.debugOn() and status and expanded),
                 (ACTION_STOP, stoppable and single),
                 (ACTION_EXPORT, not single),
                 (ACTION_EXPORT_UPLOAD, not single),
@@ -474,7 +474,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         viewer = ViewerClass(project=self.protocol.getProject(),
                              protocol=self.protocol,
                              parent=self.parent.windows)
-        viewer.visualize(obj)
+        viewer.visualize(obj, windows=self.parent.windows)
 
     def _editObject(self, obj):
         """Open the Edit GUI Form given an instance"""
@@ -1291,10 +1291,12 @@ class ProtocolsView(tk.Frame):
                 nodeId = node.run.getObjId() if node.run else 0
                 nodeInfo = self.settings.getNodeById(nodeId)
                 if nodeInfo is None:
-                    self.settings.addNode(nodeId, x=0, y=0, expanded=True)
+                    self.settings.addNode(nodeId, x=0, y=0, expanded=True,
+                                          visible=True)
 
             self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
-                                           drawNode=self.createRunItem)
+                                           drawNode=self.createRunItem,
+                                           nodeList=self.settings.nodeList)
 
     def createRunItem(self, canvas, node):
 
@@ -1304,6 +1306,7 @@ class ProtocolsView(tk.Frame):
         # Extend attributes: use some from nodeInfo
         node.expanded = nodeInfo.isExpanded()
         node.x, node.y = nodeInfo.getPosition()
+        node.visible = nodeInfo.isVisible()
         nodeText = self._getNodeText(node)
 
         # Get status color
@@ -1442,11 +1445,11 @@ class ProtocolsView(tk.Frame):
             nodeText = nodeText[:37] + "..."
 
         if node.run:
-            expandedStr = '' if node.expanded else ' (+)'
+            expandedStr = '' if node.expanded else '\n ➕ %s more' % str(node.countChilds({}))
             if self.runsView == VIEW_TREE_SMALL:
                 nodeText = node.getName() + expandedStr
             else:
-                nodeText += expandedStr + '\n' + node.run.getStatusMessage()
+                nodeText += expandedStr + '\n' + node.run.getStatusMessage() if not expandedStr else expandedStr
                 if node.run.summaryWarnings:
                     nodeText += u' \u26a0'
         return nodeText
@@ -1644,7 +1647,8 @@ class ProtocolsView(tk.Frame):
         self._selectItemProtocol(prot)
 
     def _runItemDoubleClick(self, e=None):
-        self._runActionClicked(ACTION_EDIT)
+        if e.nodeInfo.isExpanded():
+            self._runActionClicked(ACTION_EDIT)
 
     def _runItemMiddleClick(self, e=None):
         self._runActionClicked(ACTION_SELECT_TO)
@@ -1981,7 +1985,10 @@ class ProtocolsView(tk.Frame):
 
         # Call the delete action only if the widget is the canvas
         if str(widget).endswith(ProtocolsView.RUNS_CANVAS_NAME):
-            self._deleteProtocol()
+            try:
+                self._deleteProtocol()
+            except Exception as ex:
+                self.windows.showError(str(ex))
 
     def _deleteProtocol(self):
         protocols = self._getSelectedProtocols()
@@ -2054,8 +2061,7 @@ class ProtocolsView(tk.Frame):
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
             self.info('Resetting the workflow...')
-            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0],
-                                                                                         False)
+            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
             errorProtList = self.project.resetWorkFlow(workflowProtocolList)
             self.cleanInfo()
             self.refreshRuns()
@@ -2075,7 +2081,7 @@ class ProtocolsView(tk.Frame):
         """
         protocols = self._getSelectedProtocols()
         errorList = []
-        defaultMode = pwprot.MODE_CONTINUE
+        defaultMode = pwprot.MODE_RESUME
         workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
 
         # Check if exists active protocols
@@ -2341,13 +2347,17 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_EXPORT_UPLOAD:
                     self._exportUploadProtocols()
                 elif action == ACTION_COLLAPSE:
+                    node = self.runsGraph.getNode(str(prot.getObjId()))
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(False)
+                    self.setVisibleNodes(node, visible=False)
                     self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_EXPAND:
+                    node = self.runsGraph.getNode(str(prot.getObjId()))
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(True)
+                    self.setVisibleNodes(node, visible=True)
                     self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_LABELS:
@@ -2379,6 +2389,25 @@ class ProtocolsView(tk.Frame):
 
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
+
+    def setVisibleNodes(self, node, visible=True):
+        hasParentHidden = False
+        for child in node.getChilds():
+            prot = child.run
+            nodeInfo = self.settings.getNodeById(prot.getObjId())
+            if visible:
+                hasParentHidden = self.hasParentHidden(child)
+            if not hasParentHidden:
+                nodeInfo.setVisible(visible)
+                self.setVisibleNodes(child, visible)
+
+    def hasParentHidden(self, node):
+        for parent in node.getParents():
+            prot = parent.run
+            nodeInfo = self.settings.getNodeById(prot.getObjId())
+            if not nodeInfo.isVisible() or not nodeInfo.isExpanded():
+                return True
+        return False
 
 
 class RunBox(pwgui.TextBox):

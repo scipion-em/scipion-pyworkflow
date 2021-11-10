@@ -478,18 +478,34 @@ class SubclassesTreeProvider(TreeProvider):
                     # the magnifier glass (object selector of type XX)
                     paramName = None
                     attr = None
-                    for paramName, attr in prot.iterOutputAttributes():
+                    for paramName, attr in prot.iterOutputAttributes(includePossible=True):
                         def _checkParam(paramName, attr):
                             # If attr is a sub-classes of any desired one, add it to the list
                             # we should also check if there is a condition, the object
                             # must comply with the condition
                             p = None
-                            if (any(isinstance(attr, c) for c in classes) and
-                                    (not condition or
-                                     attr.evalCondition(condition))):
-                                p = pwobj.Pointer(prot, extended=paramName)
-                                p._allowsSelection = True
-                                objects.append(p)
+
+                            match = False
+                            cancelConditionEval = False
+
+                            # Go through all compatible Classes coming from in pointerClass string
+                            for c in classes:
+                                # If attr is instance
+                                if isinstance(attr, c):
+                                    match = True
+                                    break
+                                # If it is a class already: "possibleOutput" case. In this case attr is the class and not
+                                # an instance of c. In this special case
+                                elif attr == c:
+                                    match = True
+                                    cancelConditionEval = True
+
+                            # If attr matches the class
+                            if match:
+                                if cancelConditionEval or not condition or attr.evalCondition(condition):
+                                    p = pwobj.Pointer(prot, extended=paramName)
+                                    p._allowsSelection = True
+                                    objects.append(p)
 
                             # JMRT: For all sets, we don't want to include the
                             # subitems here for performance reasons (e.g SetOfParticles)
@@ -542,7 +558,7 @@ class SubclassesTreeProvider(TreeProvider):
         objects.sort(key=self.objectKey, reverse=not self.isSortingAscending())
 
     def objectKey(self, pobj):
-
+        """ Returns the value to be evaluated during sorting based on _sortingColumnName"""
         obj = self._getParentObject(pobj, pobj)
 
         if self._sortingColumnName == SubclassesTreeProvider.CREATION_COLUMN:
@@ -594,14 +610,16 @@ class SubclassesTreeProvider(TreeProvider):
 
     @staticmethod
     def _getObjectCreation(obj):
-
-        return obj.getObjCreation() if obj.getObjCreation() else "Empty"
+        """ Returns the Object creation time stamp or 'Not ready' for those not yet ready or possibleOutputs"""
+        return obj.getObjCreation() if obj is not None and obj.getObjCreation() else "Not ready"
 
     @staticmethod
     def _getObjectInfoValue(obj):
-
-        return str(obj).replace(obj.getClassName(), '')
-
+        """ Returns the best summary of the object in a string."""
+        if obj is not None:
+            return str(obj).replace(obj.getClassName(), '')
+        else: # possible Outputs are not output already so here comes None
+            return "Possible output"
     def _getPointerLabel(self, pobj, parent=None):
 
         # If parent is not provided, try to get it, it might have none.
@@ -1245,9 +1263,9 @@ class ParamWidget:
                                            self.window._onPointerChanged)
                 self._selectmode = 'browse'
                 sticky = 'ew'
-
+            state = tk.DISABLED if param.readOnly else tk.NORMAL
             entry = tk.Entry(content, width=entryWidth, textvariable=var,
-                             font=self.window.font)
+                             font=self.window.font, state=state)
 
             # Select all content on focus
             entry.bind("<FocusIn>",
@@ -2093,9 +2111,13 @@ class FormWindow(Window):
                                        and not self.protocol.isInteractive()) \
                 else tk.NORMAL
 
+            btnSaveState = tk.DISABLED if (btnState == tk.DISABLED or
+                                           self.protocol.getOutputsSize()) \
+                else tk.NORMAL
+
             self.btnSave = Button(btnFrame, pwutils.Message.LABEL_BUTTON_RETURN,
                                   pwutils.Icon.ACTION_SAVE, command=self.save,
-                                  state=btnState)
+                                  state=btnSaveState)
             self.btnSave.grid(row=0, column=1, padx=5, pady=5, sticky='se')
             self.btnExecute = HotButton(btnFrame, pwutils.Message.LABEL_BUTTON_EXEC,
                                         pwutils.Icon.ACTION_EXECUTE,
@@ -2541,15 +2563,20 @@ class FormWindow(Window):
         # This event can be fired even before the button is created
         if btnExecute is None:
             return
+        btnState = tk.DISABLED if (self.protocol.isActive() and not self.protocol.isInteractive()) else tk.NORMAL
+        emptyPointers, openSetPointer = self.protocol.getInputStatus()
 
-        if self.protocol.hasLinkedInputs():
+        if emptyPointers:
+            btnState = tk.DISABLED
+
+        if openSetPointer:
             btnText = 'Schedule'
             cmd = self.schedule
         else:
             btnText = pwutils.Message.LABEL_BUTTON_EXEC
             cmd = self.execute
 
-        btnExecute.config(text=btnText, command=cmd)
+        btnExecute.config(text=btnText, command=cmd, state=btnState)
 
 
 def editObject(self, title, root, obj, mapper):
