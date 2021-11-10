@@ -1116,7 +1116,7 @@ class ParamWidget:
         return False
 
     @staticmethod
-    def createBoolWidget(parent, display=BooleanParam.DISPLAY_OPTION, **args):
+    def createBoolWidget(parent, display=BooleanParam.DISPLAY_YES_NO, **args):
         """ Return a BoolVar associated with a yes/no selection.
         **args: extra arguments passed to tk.Radiobutton and tk.Frame
             constructors.
