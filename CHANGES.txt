@@ -7,6 +7,8 @@ V3.0.19
  - A dramatic plugin import error will be tolerated. Plugin will not be loaded.
  - Possible outputs definition is now possible. Protocols can define possible outputs to allow designing
    a workflow in advance without executing them.
+ - Added a variable that is used in the view protocols in order to load first
+   the plugins that contains the main protocols.conf sections
 
  Developers:
  - Possible Outputs allowed: dict or enum definition possible, see Protocol._possibleOutput
