@@ -2849,7 +2849,8 @@ class ProtocolTreeConfig:
 
         # Read the protocols.conf of any installed plugin
         pluginDict = domain.getPlugins()
-        pluginList = pluginDict.keys()
+        pluginList = cls.__orderByPriority(pluginDict.keys(),
+                                           priorityPluginList=Config.getPriorityPackageList())
         for pluginName in pluginList:
             try:
 
@@ -2870,6 +2871,15 @@ class ProtocolTreeConfig:
         cls.__addAllProtocols(domain, protocols)
 
         return protocols
+
+    @classmethod
+    def __orderByPriority(cls, pluginList, priorityPluginList):
+        if priorityPluginList:
+            sortedPluginList = priorityPluginList + [pluginName for pluginName in pluginList
+                                                     if pluginName not in priorityPluginList]
+            return sortedPluginList
+        else:
+            return pluginList
 
 
 class ProtocolConfig(MenuConfig):

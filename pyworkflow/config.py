@@ -168,6 +168,11 @@ class Config:
     # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not fallback on the slow copy.
     SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', None)
 
+    # Priority package list: This variable is used in the view protocols in
+    # order to load first the plugins that contains the main protocols.conf
+    # sections, so other plugins can define only their sections avoiding
+    # duplicating all the sections in all plugins
+    SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', None)
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
@@ -294,6 +299,13 @@ class Config:
     @classmethod
     def getWizardMaskColor(cls):
         return json.loads(cls.WIZARD_MASK_COLOR)
+
+    @classmethod
+    def getPriorityPackageList(cls):
+        if cls.SCIPION_PRIORITY_PACKAGE_LIST is not None:
+            return cls.SCIPION_PRIORITY_PACKAGE_LIST.split(" ")
+        else:
+            return []
 
 
 # Add bindings folder to sys.path
