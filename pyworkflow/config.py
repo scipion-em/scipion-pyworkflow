@@ -174,6 +174,9 @@ class Config:
     # duplicating all the sections in all plugins
     SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', None)
 
+    # Time in seconds to check the protocols steps. The default value is 3 seconds
+    SCIPION_STEPS_CHECK_SEC = _get('SCIPION_STEPS_CHECK_SEC', 3)
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:
@@ -306,6 +309,10 @@ class Config:
             return cls.SCIPION_PRIORITY_PACKAGE_LIST.split(" ")
         else:
             return []
+
+    @classmethod
+    def getStepsCheckSeconds(cls):
+        return cls.SCIPION_STEPS_CHECK_SEC
 
 
 # Add bindings folder to sys.path
