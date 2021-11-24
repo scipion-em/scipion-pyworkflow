@@ -2855,7 +2855,7 @@ class ProtocolTreeConfig:
             try:
 
                 # if the plugin has a path
-                if pwutils.isModuleAFolder(pluginName):
+                if pwutils.isModuleLoaded(pluginName) and pwutils.isModuleAFolder(pluginName):
                     # Locate the plugin protocols.conf file
                     protocolsConfPath = os.path.join(
                         pluginDict[pluginName].__path__[0],
