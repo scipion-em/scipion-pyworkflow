@@ -7,8 +7,8 @@ V3.0.19
  - A dramatic plugin import error will be tolerated. Plugin will not be loaded.
  - Possible outputs definition is now possible. Protocols can define possible outputs to allow designing
    a workflow in advance without executing them.
- - Defining the variable SCIPION_STEPS_CHECK_SEC in order to control the time in
-   which the execution is checked between the steps of a protocol
+ - New variable added: SCIPION_STEPS_CHECK_SEC. Defaults to 3 (seconds). It represents how often new input is checked in streamified protocols. Increasing this   
+   value will relax the stress in the system, but will feel less "alive".
 
  Developers:
  - Possible Outputs allowed: dict or enum definition possible, see Protocol._possibleOutput
