@@ -442,7 +442,7 @@ class Window:
             for label, callback, icon in self._pluginMenus:
                 submenu.add_command(label=label, compound=tk.LEFT,
                                     image=self.getImage(icon),
-                                    command=callback)
+                                    command=lambda: callback(self))
 
     @classmethod
     def registerPluginMenu(cls, label, callback, icon=None):
