@@ -91,6 +91,7 @@ class Param(FormElement):
         # Allow pointers (used for scalars)
         self.allowsPointers = args.get('allowsPointers', False)
         self.validators = args.get('validators', [])
+        self.readOnly = args.get("readOnly", False)
         
     def __str__(self):
         return "    label: %s" % self.label.get()

@@ -119,3 +119,10 @@ def isModuleAFolder(modulename):
     module = sys.modules[modulename]
 
     return module.__file__.endswith("__init__.py")
+
+
+def isModuleLoaded(modulename):
+    """
+    Return True if a python module is loaded, False otherwise
+    """
+    return modulename in sys.modules

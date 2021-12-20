@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.17'
+VERSION_3_0 = '3.0.18'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -98,6 +98,7 @@ SCIPION_DEBUG = 'SCIPION_DEBUG'
 SCIPION_JSON_TEMPLATES = '.json.template'
 SCIPION_DEBUG_NOCLEAN = 'SCIPION_DEBUG_NOCLEAN'
 SCIPION_DEBUG_SQLITE = 'SCIPION_DEBUG_SQLITE'
+SCIPION_LOG_LEVEL = 'SCIPION_LOG_LEVEL'
 
 # Color and appearance constants
 TK_GRAY_DEFAULT = '#d9d9d9'

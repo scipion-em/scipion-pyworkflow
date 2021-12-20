@@ -120,7 +120,7 @@ class Config:
     # Get general log file path (for the GUI)
     SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
     # Default logging level: String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
-    SCIPION_LOG_LEVEL = _get('SCIPION_LOG_LEVEL', 'INFO')
+    SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
 
     # Scratch path
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
@@ -168,6 +168,14 @@ class Config:
     # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not fallback on the slow copy.
     SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', None)
 
+    # Priority package list: This variable is used in the view protocols in
+    # order to load first the plugins that contains the main protocols.conf
+    # sections, so other plugins can define only their sections avoiding
+    # duplicating all the sections in all plugins
+    SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', None)
+
+    # Time in seconds to check the protocols steps. The default value is 3 seconds
+    SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 3))
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
@@ -267,9 +275,10 @@ class Config:
 
     @staticmethod
     def toggleDebug():
-        newValue = not Config.debugOn()
-        os.environ[SCIPION_DEBUG] = str(newValue)
-        os.environ[SCIPION_DEBUG_NOCLEAN] = str(newValue)
+        debugOn = not Config.debugOn()
+        os.environ[SCIPION_DEBUG] = str(debugOn)
+        os.environ[SCIPION_DEBUG_NOCLEAN] = str(debugOn)
+        os.environ[SCIPION_LOG_LEVEL] = "INFO" if not debugOn else "DEBUG"
 
     @staticmethod
     def debugSQLOn():
@@ -293,6 +302,17 @@ class Config:
     @classmethod
     def getWizardMaskColor(cls):
         return json.loads(cls.WIZARD_MASK_COLOR)
+
+    @classmethod
+    def getPriorityPackageList(cls):
+        if cls.SCIPION_PRIORITY_PACKAGE_LIST is not None:
+            return cls.SCIPION_PRIORITY_PACKAGE_LIST.split(" ")
+        else:
+            return []
+
+    @classmethod
+    def getStepsCheckSeconds(cls):
+        return cls.SCIPION_STEPS_CHECK_SEC
 
 
 # Add bindings folder to sys.path
