@@ -1,3 +1,7 @@
+V3.0.19
+-------
+ - Scalar parameters pointing to outputs now works also when scheduling
+
 V3.0.18
 -------
  - Fixed GUI errors:
