@@ -621,7 +621,10 @@ class Scalar(Object):
         """Get the value, if internal value is None
         the default argument passed is returned. """
         if self.hasPointer():
-            return self._pointer.get().get(default)
+            # Get pointed value
+            pointedValue = self._pointer.get()
+
+            return default if pointedValue is None else pointedValue.get(default)
 
         if self.hasValue():
             return self._objValue
