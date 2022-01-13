@@ -25,3 +25,10 @@
 from .mapper import Mapper
 from .sqlite import SqliteMapper, SqliteDb, SqliteFlatMapper, SqliteFlatDb
 from .xmlmapper import XmlMapper
+
+def getFlatMapper():
+    """ Returns the flat mapper to be used. Before this was decided in the Set. Not is decided here"""
+    return SqliteFlatMapper
+
+def getObjectMapper():
+    return SqliteMapper

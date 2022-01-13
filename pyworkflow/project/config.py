@@ -25,14 +25,11 @@
 # **************************************************************************
 
 
-import os
 import json
 import datetime as dt
-from collections import OrderedDict
-from configparser import ConfigParser
 
 import pyworkflow.object as pwobj
-from pyworkflow.mapper import SqliteMapper
+from pyworkflow.mapper import getObjectMapper
 
 
 class ProjectSettings(pwobj.Object):
@@ -131,7 +128,7 @@ class ProjectSettings(pwobj.Object):
     def write(self, dbPath=None):
         self.setName('ProjectSettings')
         if dbPath is not None:
-            self.mapper = SqliteMapper(dbPath, globals())
+            self.mapper = getObjectMapper()(dbPath, globals())
         else:
             if self.mapper is None:
                 raise Exception("Can't write ProjectSettings without "
@@ -158,7 +155,7 @@ class ProjectSettings(pwobj.Object):
         """ Load a ProjectSettings from dbPath. """
         classDict = dict(globals())
         classDict.update(pwobj.__dict__)
-        mapper = SqliteMapper(dbPath, classDict)
+        mapper = getObjectMapper()(dbPath, classDict)
         settingList = mapper.selectByClass('ProjectSettings')
         n = len(settingList)
 

@@ -41,7 +41,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
     def test_SqliteMapper(self):
         fn = self.getOutputPath("basic.sqlite")
-        mapper = pwmapper.SqliteMapper(fn)
+        mapper = pwmapper.getObjectMapper()(fn)
 
         # Insert a Float
         f = pwobj.Float(5.4)
@@ -109,7 +109,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         db.close()
 
         # Reading test
-        mapper2 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
+        mapper2 = pwmapper.getObjectMapper()(fn, pw.Config.getDomain().getMapperDict())
         print("Checking that Relations table is updated and version to 1")
         self.assertEqual(1, mapper2.db.getVersion())
         # Check that the new column is properly added after updated to version 1
@@ -165,7 +165,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         print(">>> Using db: ", fn)
 
-        mapper = pwmapper.SqliteMapper(fn)
+        mapper = pwmapper.getObjectMapper()(fn)
         # Insert a Complex
         c = Complex.createComplex()  # real = 1, imag = 1
         mapper.insert(c)
@@ -184,7 +184,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper.store(p1)
         mapper.commit()
 
-        mapper2 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
+        mapper2 = pwmapper.getObjectMapper()(fn, pw.Config.getDomain().getMapperDict())
         p2 = mapper2.selectByClass('Pointer')[0]
 
         # Check the mapper was properly stored when
@@ -199,7 +199,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         print(">>> Using db: ", fn)
 
         # Let's create a Mapper to store a simple List containing two integers
-        mapper = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
+        mapper = pwmapper.getObjectMapper()(fn, pw.Config.getDomain().getMapperDict())
         iList = pwobj.List()
         i1 = pwobj.Integer(4)
         i2 = pwobj.Integer(3)
@@ -212,7 +212,7 @@ class TestSqliteMapper(pwtests.BaseTest):
 
         # Now let's open again the db with a different connection
         # and load the previously stored list
-        mapper2 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
+        mapper2 = pwmapper.getObjectMapper()(fn, pw.Config.getDomain().getMapperDict())
         iList2 = mapper2.selectByClass('List')[0]
         # Let's do some basic checks
         self.assertEqual(iList2.getSize(), 2)
@@ -231,7 +231,7 @@ class TestSqliteMapper(pwtests.BaseTest):
         mapper2.close()
 
         # Open the db and load the list once again
-        mapper3 = pwmapper.SqliteMapper(fn, pw.Config.getDomain().getMapperDict())
+        mapper3 = pwmapper.getObjectMapper()(fn, pw.Config.getDomain().getMapperDict())
         iList3 = mapper3.selectByClass('List')[0]
         # Check the same consistency before it was stored
         self.assertEqual(iList3.getSize(), 1)

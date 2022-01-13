@@ -38,7 +38,7 @@ from pyworkflow.constants import PROJECT_DBNAME, PROJECT_SETTINGS
 import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 import pyworkflow.utils as pwutils
-from pyworkflow.mapper import SqliteMapper
+from pyworkflow.mapper import getObjectMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_RESUME,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS,
                                            UNKNOWN_JOBID, INITIAL_SLEEP_TIME)
@@ -204,13 +204,13 @@ class Project(object):
         return self.settings
 
     def createMapper(self, sqliteFn):
-        """ Create a new SqliteMapper object and pass as classes dict
+        """ Create a new ObjectMapper object and pass as classes dict
         all globals and update with data and protocols from em.
         """
         classesDict = pwobj.Dict(default=pwprot.LegacyProtocol)
         classesDict.update(self._domain.getMapperDict())
         classesDict.update(config.__dict__)
-        return SqliteMapper(sqliteFn, classesDict)
+        return getObjectMapper()(sqliteFn, classesDict)
 
     def load(self, dbPath=None, hostsConf=None, protocolsConf=None, chdir=True,
              loadAllConfig=True):

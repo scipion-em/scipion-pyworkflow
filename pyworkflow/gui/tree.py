@@ -539,6 +539,7 @@ class DbTreeProvider(ObjectTreeProvider):
 
     def __init__(self, dbName, classesDict):
         ObjectTreeProvider.__init__(self)
+        # TODISCUSS
         self.mapper = SqliteMapper(dbName, classesDict)
 
     def _getObjectList(self):

@@ -52,7 +52,7 @@ class TestProtocolOutputs(pwtests.BaseTest):
         # Discover objects and protocols
         mapperDict = Domain.getMapperDict()
 
-        mapper = pwmapper.SqliteMapper(fn, mapperDict)
+        mapper = pwmapper.getObjectMapper()(fn, mapperDict)
         prot = ProtOutputTest(mapper=mapper, n=2,
                               workingDir=self.getOutputPath(''))
 

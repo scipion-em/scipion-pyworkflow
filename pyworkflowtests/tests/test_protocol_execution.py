@@ -48,7 +48,7 @@ class TestProtocolExecution(pwtests.BaseTest):
         mapperDict = Domain.getMapperDict()
 
         # Check that the protocol has associated package
-        mapper = pwmapper.SqliteMapper(fn, mapperDict)
+        mapper = pwmapper.getObjectMapper()(fn, mapperDict)
         prot = SleepingProtocol(mapper=mapper, n=2,
                                 workingDir=self.getOutputPath(''))
         domain = prot.getClassDomain()
@@ -61,7 +61,7 @@ class TestProtocolExecution(pwtests.BaseTest):
 
         self.assertEqual(prot._steps[0].getStatus(), pwprot.STATUS_FINISHED)
         
-        mapper2 = pwmapper.SqliteMapper(fn, mapperDict)
+        mapper2 = pwmapper.getObjectMapper()(fn, mapperDict)
         prot2 = mapper2.selectById(prot.getObjId())
         
         self.assertEqual(prot.endTime.get(), prot2.endTime.get())

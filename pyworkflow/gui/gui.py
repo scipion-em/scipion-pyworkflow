@@ -74,10 +74,10 @@ class Config(Object):
 
 
 def saveConfig(filename):
-    from pyworkflow.mapper import SqliteMapper
+    from pyworkflow.mapper import getObjectMapper
     from pyworkflow.object import String, Integer
 
-    mapper = SqliteMapper(filename)
+    mapper = getObjectMapper()(filename)
     o = Config()
     for k, v in globals().items():
         if k.startswith('cfg'):

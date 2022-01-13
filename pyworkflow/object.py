@@ -1088,8 +1088,8 @@ class Set(Object):
     def setMapperClass(self, MapperClass):
         """ Set the mapper to be used for storage. """
         if MapperClass is None:
-            from pyworkflow.mapper.sqlite import SqliteFlatMapper
-            MapperClass = SqliteFlatMapper
+            from pyworkflow.mapper import getFlatMapper
+            MapperClass = getFlatMapper()
         Object.__setattr__(self, '_MapperClass', MapperClass)
         
     def __getitem__(self, itemId):
