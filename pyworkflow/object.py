@@ -366,6 +366,8 @@ class Object(object):
             elif isinstance(attr, PointerList):
                 for pointer in otherAttr:
                     attr.append(pointer)
+            elif isinstance(attr, Scalar) and otherAttr.hasPointer():
+                attr.copy(otherAttr)
             else:
                 attr.set(otherAttr.get())
             
@@ -631,7 +633,10 @@ class Scalar(Object):
         return default
     
     def _copy(self, other, *args, **kwargs):
-        self.set(other.get())
+        if other.hasPointer():
+            self.setPointer(other.getPointer())
+        else:
+            self.set(other.get())
         
     def swap(self, other):
         """ Swap the contained value between

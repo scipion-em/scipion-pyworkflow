@@ -1014,7 +1014,13 @@ class Project(object):
                         # new workflow
                         for oKey, iKey in matches:
                             childPointer = getattr(newChildProt, iKey)
-                            if isinstance(childPointer, pwobj.PointerList):
+
+                            # Scalar with pointer case: If is a scalar with a pointer
+                            if isinstance(childPointer, pwobj.Scalar) and childPointer.hasPointer():
+                              # In this case childPointer becomes the contained Pointer
+                              childPointer = childPointer.getPointer()
+
+                            elif isinstance(childPointer, pwobj.PointerList):
                                 for p in childPointer:
                                     if p.getObjValue().getObjId() == prot.getObjId():
                                         childPointer = p
