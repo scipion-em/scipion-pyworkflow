@@ -36,6 +36,9 @@ from pyworkflowtests import Domain, MockObject
 
 
 # Protocol to output of basic scipion objects
+from pyworkflow.utils import restoreStdoutAndErr
+
+
 class TestProtocolOutputs(pwtests.BaseTest):
     @classmethod
     def setUpClass(cls):
@@ -53,8 +56,9 @@ class TestProtocolOutputs(pwtests.BaseTest):
         mapperDict = Domain.getMapperDict()
 
         mapper = pwmapper.getObjectMapper()(fn, mapperDict)
-        prot = ProtOutputTest(mapper=mapper, n=2,
-                              workingDir=self.getOutputPath(''))
+        prot = ProtOutputTest(mapper=mapper, n=2, project=self.proj,
+                              workingDir=self.getOutputPath(''),
+                              iBoxSize = 20)
 
         # Add and old style o, not in the outputs dictionary
         prot.output1 = MockObject()
@@ -66,13 +70,19 @@ class TestProtocolOutputs(pwtests.BaseTest):
         self.assertTrue(1, len(outputs))
 
         prot._stepsExecutor = pwprot.StepExecutor(hostConfig=None)
+
+        #Create the logs folder
+        prot.makeWorkingDir()
+
         prot.run()
+
+        restoreStdoutAndErr()
 
         self.assertEqual(prot._steps[0].getStatus(),
                          pwprot.STATUS_FINISHED)
 
-        # Check there is an o
-        self.assertOutput(prot)
+        # Check there is an output
+        self.assertOutput(prot, 40)
 
         outputs = [o for o in prot.iterOutputAttributes()]
 
@@ -100,6 +110,7 @@ class TestProtocolOutputs(pwtests.BaseTest):
 
         self.assertTrue(prot._useOutputList.get(),
                         "useOutputList not activated")
+
 
     def test_basicObjectInProject(self):
         prot = self.newProtocol(ProtOutputTest,
