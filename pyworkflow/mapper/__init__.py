@@ -32,3 +32,4 @@ def getFlatMapper():
 
 def getObjectMapper():
     return SqliteMapper
+

@@ -11,8 +11,16 @@ class PyworkflowException(Exception):
 
     def getUrl(self):
         return self._url
+    @classmethod
+    def raiseFromException(cls, e, message, url=DOCSITEURLS.CONTACTUS):
+        """ Creates a Pyworkflow exception from an existing exception"""
+        message = "%s \n Original error message: %s" % (message, str(e))
 
+        raise PyworkflowException(message, url) from None
 
 class ValidationException(PyworkflowException):
     """ Validation exception"""
     pass
+
+class PersistenceException(PyworkflowException):
+    """ Exceptions related to persistence"""

@@ -177,6 +177,10 @@ def setDefaultLoggingContext(protId, projId):
 def getFinalProtId(protId):
     return protId if protId is not None else int(os.environ.get(SCIPION_PROT_ID, "-1"))
 
+def setFinalProjId(projId):
+    """ Sets the environment variable that tells the code the project active.
+    This is used to reach some deep code like mapper code."""
+    os.environ[SCIPION_PROJ_ID] = projId
 
 def getFinalProjId(projId):
     return projId if projId is not None else os.environ.get(SCIPION_PROJ_ID, "unknown")

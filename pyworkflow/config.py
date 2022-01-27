@@ -187,6 +187,9 @@ class Config:
     SCIPION_DOMAIN = _get(SCIPION_DOMAIN, None)
     SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript())
 
+    # Persistence DB: None defaults to SQLITE.
+    SCIPION_CONNECTION_STRING = _get('SCIPION_CONNECTION_STRING', None)
+
     # ---- Getters ---- #
     # Getters are alternatives to offer a variable, but preventing it to be stored in the config
     @classmethod
