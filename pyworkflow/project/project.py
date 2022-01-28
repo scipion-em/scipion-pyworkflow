@@ -1142,11 +1142,13 @@ class Project(object):
         def _setPointer(pointer, value):
             # Properly setup the pointer value checking if the 
             # id is already present in the dictionary
-            parts = value.split('.')
-            target = newDict.get(parts[0], None)
-            pointer.set(target)
-            if not pointer.pointsNone():
-                pointer.setExtendedParts(parts[1:])
+            # Value to pointers could be None: Partial workflows
+            if value:
+                parts = value.split('.')
+                target = newDict.get(parts[0], None)
+                pointer.set(target)
+                if not pointer.pointsNone():
+                    pointer.setExtendedParts(parts[1:])
 
         def _setPrerequisites(prot):
             prerequisites = prot.getPrerequisites()
@@ -1183,9 +1185,17 @@ class Project(object):
                                 p = pwobj.Pointer()
                                 _setPointer(p, value)
                                 attr.append(p)
-                        # For "normal" parameters we just set the string value 
+                        # For "normal" parameters we just set the string value
                         else:
-                            attr.set(protDict[paramName])
+                            try:
+                                attr.set(protDict[paramName])
+                            # Case for Scalars with pointers. So far this will work for Numbers. With Strings (still there are no current examples)
+                            # We will need something different to test if the value look like a pointer: regex? ####.text
+                            except ValueError as e:
+                                newPointer = pwobj.Pointer()
+                                _setPointer(newPointer, protDict[paramName])
+                                attr.setPointer(newPointer)
+
                 self.mapper.store(prot)
 
         f.close()
