@@ -644,8 +644,9 @@ class Protocol(Step):
 
             # Consider here scalars with pointers inside
             elif isinstance(attr, Scalar) and attr.hasPointer():
-                if attr.get() is not None:
-                    yield key, attr.getPointer()
+                # Scheduling was stale cause this Scalar with pointers where not returned
+                #if attr.get() is not None:
+                yield key, attr.getPointer()
 
     def iterInputPointers(self):
         """ This function is similar to iterInputAttributes, but it yields

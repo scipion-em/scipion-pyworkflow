@@ -1,7 +1,11 @@
+V3.0.19
+-------
+ - Scalar parameters pointing to outputs now works also when scheduling
+
 V3.0.18
 -------
  - Fixed GUI errors:
-   - fixing the workflow collapse/expande nodes
+   - fixing the workflow collapse/expand nodes
    - resetting nodes with manual subset looses the parent
    - reporting the protocol wall time
    - finished protocol can't be modified
