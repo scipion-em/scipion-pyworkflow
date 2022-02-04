@@ -504,7 +504,7 @@ class Protocol(Step):
             else:
                 time.sleep(pw.Config.getUpdateSetAttemptsWait())
                 self.__tryUpdateOutputSet(outputName, outputSet, state,
-                                          tries - 1)
+                                          tries + 1)
 
     def hasExpert(self):
         """ This function checks if the protocol has
