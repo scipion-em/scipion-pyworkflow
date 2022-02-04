@@ -1,5 +1,6 @@
 V3.0.19
 -------
+ - Empty sections/subsection (without protocols) in the left tree will not be shown
  - Scalar parameters pointing to outputs now works also when scheduling
 
 V3.0.18
