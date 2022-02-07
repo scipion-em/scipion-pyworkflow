@@ -1,7 +1,16 @@
+V3.0.19
+-------
+ - Scalar parameters pointing to outputs now works also when scheduling
+ - Fix: outputs after a Scalar output (boxSize from pickings) weren't offered to the chosen
+ - Defining a new format to handler the log
+ - Creating in the config new constants to prevent sqlite locks when updating any set
+    - SCIPION_UPDATE_SET_ATTEMPTS: Number of attempts when trying a set update. The default value is 3
+    - SCIPION_UPDATE_SET_ATTEMPT_WAIT: Time in seconds to wait between updates. The default value is 2 seconds
+
 V3.0.18
 -------
  - Fixed GUI errors:
-   - fixing the workflow collapse/expande nodes
+   - fixing the workflow collapse/expand nodes
    - resetting nodes with manual subset looses the parent
    - reporting the protocol wall time
    - finished protocol can't be modified
