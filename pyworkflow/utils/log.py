@@ -155,6 +155,12 @@ class LoggingConfigurator:
         rootLogger.addHandler(stdoutHandler)
         rootLogger.setLevel(Config.SCIPION_LOG_LEVEL)
 
+        if Config.debugOn():
+            # create formatter and add it to the handlers
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s <-- %(name)s')
+            stdoutHandler.setFormatter(formatter)
+            stderrHandler.setFormatter(formatter)
+
         # Capture std out and std err and send it to the file handlers
         rootLogger.info("Logging configured. STDOUT --> %s , STDERR --> %s" % (stdoutLogFile, stderrLogFile))
         sys.stderr = stderrHandler.stream

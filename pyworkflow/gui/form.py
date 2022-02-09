@@ -496,7 +496,7 @@ class SubclassesTreeProvider(TreeProvider):
                                     break
                                 # If it is a class already: "possibleOutput" case. In this case attr is the class and not
                                 # an instance of c. In this special case
-                                elif attr == c:
+                                elif isinstance(attr, type) and attr == c:
                                     match = True
                                     cancelConditionEval = True
 

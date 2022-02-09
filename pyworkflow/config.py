@@ -177,6 +177,12 @@ class Config:
     # Time in seconds to check the protocols steps. The default value is 3 seconds
     SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 3))
 
+    # Number of times trying to modify the protocol output. The default value is 3
+    SCIPION_UPDATE_SET_ATTEMPTS = int(_get('SCIPION_UPDATE_SET_ATTEMPTS', 3))
+
+    # Time in seconds to check new outputs. The default value is 2 seconds
+    SCIPION_UPDATE_SET_ATTEMPT_WAIT = int(_get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2))
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:
@@ -316,6 +322,14 @@ class Config:
     @classmethod
     def getStepsCheckSeconds(cls):
         return cls.SCIPION_STEPS_CHECK_SEC
+
+    @classmethod
+    def getUpdateSetAttempts(cls):
+        return cls.SCIPION_UPDATE_SET_ATTEMPTS
+
+    @classmethod
+    def getUpdateSetAttemptsWait(cls):
+        return cls.SCIPION_UPDATE_SET_ATTEMPT_WAIT
 
 
 # Add bindings folder to sys.path

@@ -499,10 +499,10 @@ class Protocol(Step):
         except Exception as ex:
             print("Error trying to update output of protocol, tries=%d" % tries)
 
-            if tries > 3:
+            if tries > pw.Config.getUpdateSetAttempts():
                 raise ex
             else:
-                time.sleep(tries)
+                time.sleep(pw.Config.getUpdateSetAttemptsWait())
                 self.__tryUpdateOutputSet(outputName, outputSet, state,
                                           tries + 1)
 
