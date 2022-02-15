@@ -1133,6 +1133,11 @@ class ProtocolsView(tk.Frame):
         self.updateProtocolsTree(self.protCfg)
 
     def populateTree(self, tree, treeItems, prefix, obj, subclassedDict, level=0):
+
+        # If node does not have leaves (protocols) do not add it
+        if not obj.visible:
+            return
+
         text = obj.text
         if text:
             value = obj.value if obj.value is not None else text
@@ -1165,18 +1170,20 @@ class ProtocolsView(tk.Frame):
             if openItem:
                 tree.item(item, open=openItem)
 
+            # I think this mode is deprecated
             if obj.value is not None and tag == 'protocol_base':
-                if prot is not None:
-                    tree.item(item, image=self.getImage('class_obj.gif'))
-
-                    for k, v in emProtocolsDict.items():
-                        if (k not in subclassedDict and v is not prot and
-                           issubclass(v, prot)):
-                            key = '%s.%s' % (item, k)
-                            t = v.getClassLabel()
-                            tree.insert(item, 'end', key, text=t, tags='protocol')
-                else:
-                    raise Exception("Class '%s' not found" % obj.value.get())
+                print('protocol_base tags are deprecated')
+                # if prot is not None:
+                #     tree.item(item, image=self.getImage('class_obj.gif'))
+                #
+                #     for k, v in emProtocolsDict.items():
+                #         if (k not in subclassedDict and v is not prot and
+                #            issubclass(v, prot)):
+                #             key = '%s.%s' % (item, k)
+                #             t = v.getClassLabel()
+                #             tree.insert(item, 'end', key, text=t, tags='protocol')
+                # else:
+                #     raise Exception("Class '%s' not found" % obj.value.get())
         else:
             key = prefix
 
@@ -2702,7 +2709,7 @@ class ProtocolTreeConfig:
         Return True if child belongs to subMenu
         """
         for ch in subMenu:
-            if child['tag'] == cls.TAG_PROTOCOL:
+            if cls.__isProtocol(child):
                 if ch.value is not None and ch.value == child['value']:
                     return ch
             elif ch.text == child['text']:
@@ -2748,6 +2755,16 @@ class ProtocolTreeConfig:
                 cls._orderSubMenu(parent)
             elif child['tag'] == cls.TAG_PROTOCOL_GROUP or child['tag'] == cls.TAG_SECTION:
                 cls.__findTreeLocation(sm.childs, child['children'], sm)
+    @classmethod
+    def __isProtocol(cls, dict):
+        """ True inf the item has a key named tag with protocol as value"""
+        return dict["tag"] == cls.TAG_PROTOCOL
+
+    @classmethod
+    def __isProtocolNode(cls, node):
+        """ True if tag attribute is protocol"""
+        return node.tag == cls.TAG_PROTOCOL
+
 
     @classmethod
     def __checkItem(cls, item):
@@ -2756,7 +2773,7 @@ class ProtocolTreeConfig:
             item: {"tag": "protocol", "value": "ProtImportMovies",
                    "text": "import movies"}
         """
-        if item["tag"] != cls.TAG_PROTOCOL:
+        if not cls.__isProtocol(item):
             return True
 
         # It is a protocol as this point, get the class name and
@@ -2842,7 +2859,7 @@ class ProtocolTreeConfig:
         one in scipion/config/protocols.conf,
         which is the default one when no file is passed.
         """
-        protocols = OrderedDict()
+        protocols = dict()
         # Read the protocols.conf from Scipion (base) and create an initial
         # tree view
         cls.__addProtocolsFromConf(protocols, protocolsConf)
@@ -2867,11 +2884,37 @@ class ProtocolTreeConfig:
                       'To solve it, fix %s and run again.' % (
                           e, os.path.abspath(protocolsConfPath)))
 
-            # Add all protocols to All view
+        # Clean empty sections
+        cls._hideEmptySections(protocols)
+
+        # Add all protocols to All view
         cls.__addAllProtocols(domain, protocols)
 
         return protocols
 
+    @classmethod
+    def _hideEmptySections(cls, protocols):
+        """ Cleans all empty sections in the tree"""
+
+        for protConf in protocols.values():
+            cls._setVisibility(protConf)
+
+    @classmethod
+    def _setVisibility(cls, node):
+        """ Sets the visibility of a node based on the presence of a leaf hanging form it"""
+        if cls.__isProtocolNode(node):
+            # Default visibility value is true. No need to set it again
+            return True
+
+        anyLeaf = False
+
+        for child in node.childs:
+            # NOTE: since python short circuits this, _setVisibility must be called always. So not swap!!
+            anyLeaf = cls._setVisibility(child) or anyLeaf
+
+        node.visible = anyLeaf
+
+        return anyLeaf
     @classmethod
     def __orderByPriority(cls, pluginList, priorityPluginList):
         if priorityPluginList:
@@ -2899,3 +2942,5 @@ class ProtocolConfig(MenuConfig):
         args['shortCut'] = shortCut
         return MenuConfig.addSubMenu(self, text, value, **args)
 
+    def __str__(self):
+        return self.text
