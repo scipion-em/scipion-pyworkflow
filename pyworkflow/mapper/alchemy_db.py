@@ -28,14 +28,16 @@
 """
 This module contains some sqlite basic tools to handle Databases.
 """
-
+import datetime
 import logging
 import os
 import sys
 logger = logging.getLogger(__name__)
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import STATUS, getExtraLogInfo, Config, getFinalProjId
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, insert, MetaData, Integer, Table, Column, String, ForeignKey, Unicode, DateTime, \
+    Text
+
 
 class AlchemyDb:
     """Class to handle alchemy Engines.
@@ -49,6 +51,7 @@ class AlchemyDb:
         # For server DB the database should match the project name and all the "db" (*.sqlite) inside
         # a project will become prefixed
         self.tablePrefix = self.getPrefixFromDBName(dbName)
+        self.queryProvider = ObjectsQueryProvider(self.tablePrefix)
 
         # # Check database exists, if not we should create it
         # self._createDatabase()
@@ -80,7 +83,7 @@ class AlchemyDb:
         mostly letters, then numbers are valid"""
 
         # Let's assume path only come with / . or spaces. Finger cross.
-        forbiddenChars = "/. "
+        forbiddenChars = "/. -"
         for char in forbiddenChars:
             path = path.replace(char, "_")
 
@@ -89,7 +92,8 @@ class AlchemyDb:
     @classmethod
     def getPrefixFromDBName(cls, dbname):
         if EnginePool.isServer():
-            return cls.slugifyPath(dbname)
+            dbname = dbname.replace(".sqlite", "").replace(".db","")
+            return cls.slugifyPath(dbname) + "_"
         else:
             # No prefix for file base DB (sqlite)
             return ''
@@ -128,47 +132,63 @@ class AlchemyDb:
     #     except Exception as ex:
     #         print(">>>> FAILED cursor.execute on db: '%s'" % self._dbName)
     #         raise ex
+    def executeCommand(self, *args):
+        """ Executes any SQL Command"""
+        with self._engine.connect() as conn:
+            result = conn.execute(*args)
+            return result
 
-    def _iterResults(self):
-        row = self.cursor.fetchone()
+    def _iterResults(self, cursor):
+        row = cursor.fetchone()
         while row is not None:
             yield row
-            row = self.cursor.fetchone()
+            row = cursor.fetchone()
         
-    def _results(self, iterate=False):
+    def _results(self, cursor, iterate=False):
         """ Return the results to which cursor, point to. 
         If iterates=True, iterate yielding each result independently"""
         if not iterate:
-            return self.cursor.fetchall()
+            return cursor.fetchall()
         else:
-            return self._iterResults()
-        
-    def getTables(self):
-        """ Return the table names existing in the Database with a prexif.
-        If  tablePattern is not None, only tables matching 
-        the pattern will be returned.
-        """
-
-        self.executeCommand("SELECT * FROM information_schema.tables where table_type = 'BASE TABLE' and table_schema = ''")
-        return [str(row['name']) for row in self._iterResults()]
-    
-    def hasTable(self, tableName):
-        return tableName in self.getTables()
-    
-    def getTableColumns(self, tableName):
-        self.executeCommand('PRAGMA table_info(%s)' % tableName)
-        return self.cursor.fetchall()
+            return self._iterResults(cursor)
     
     def getVersion(self):
         """ Return the database 'version' that is used.
         Internally it make use of the SQLite PRAGMA database.user_version;
         """
-        self.executeCommand('PRAGMA user_version')
-        return self.cursor.fetchone()[0]
+        #TODO: handle version properly when running on a server
+        # self.executeCommand('PRAGMA user_version')
+        # return self.cursor.fetchone()[0]
     
     def setVersion(self, version):
         self.executeCommand('PRAGMA user_version=%d' % version)
         self.commit()
+
+    def getTables(self):
+        """ Return the table names existing in the Database with a prexif.
+        If  tablePattern is not None, only tables matching
+        the pattern will be returned.
+        """
+        tables = []
+        with self._engine.connect() as conn:
+
+            results = conn.execute(self.queryProvider.getTablesQuery())
+            tables = [str(row['table_name']) for row in results]
+
+        return  tables
+
+    def hasTable(self, tableName):
+        return tableName in self.getTables()
+
+
+    def getTableColumns(self, tableName):
+        """ Returns a list of all column names of a table with a prefix (schema)"""
+        columns = []
+        with self._engine.connect() as conn:
+            results = conn.execute(self.queryProvider.getTableColumnsQuery(tableName))
+            columns = [str(row['column_name']) for row in results]
+
+        return columns
 
 
 class EnginePool:
@@ -303,34 +323,191 @@ class EnginePool:
         """
         return Config.SCIPION_CONNECTION_STRING is not None
 
-class SchemaHandler:
-    """ Handles all schema operations: create tables, schema queries,..."""
-    def __init__(self, engine, prefix):
-        self._engine = engine
+
+class ObjectsQueryProvider:
+    """ Defines al needed queries and prefixes the tables with a prefix"""
+
+    TABLES = "SELECT table_name FROM information_schema.tables where table_type = 'BASE TABLE' and table_name IN ('Relations', 'Objects')"
+    COLUMNS = "SELECT column_name FROM information_schema.columns WHERE table_name = '%s'"
+    SELECT = 'SELECT id, parent_id, name, classname, value, label, comment, creation FROM public."Objects"'
+    DELETE = "DELETE FROM Objects WHERE "
+    EXISTS = 'SELECT EXISTS(SELECT 1 FROM public."Objects" WHERE %s=%%s LIMIT 1)'
+
+    # OBJECTS table Queries
+    # CREATE_OBJECTS_TABLE = """CREATE TABLE IF NOT EXISTS Objects
+    #                  (id        SERIAL PRIMARY KEY,
+    #                   parent_id INTEGER REFERENCES Objects(id),
+    #                   name      TEXT,                -- object name
+    #                   classname TEXT,                -- object's class name
+    #                   value     TEXT DEFAULT NULL,   -- object value, used for Scalars
+    #                   label     TEXT DEFAULT NULL,   -- object label, text used for display
+    #                   comment   TEXT DEFAULT NULL,   -- object comment, text used for annotations
+    #                   creation  DATE                 -- creation date and time of the object
+    #                   )"""
+
+    # Use alchqemy STYLE
+    #INSERT_OBJECT = 'INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation) VALUES (%s, %s, %s, %s, %s, %s, NOW())'
+    UPDATE_OBJECT = 'UPDATE public."Objects" SET parent_id=%s, name=%s, classname=%s, value=%s, label=%s, comment=%s WHERE id=%s'
+
+    # RELATIONS table queries
+    # CREATE_RELATIONS_TABLE = """CREATE TABLE IF NOT EXISTS Relations
+    #                  (id        SERIAL PRIMARY KEY,
+    #                   parent_id INTEGER REFERENCES Objects(id), -- object that created the relation
+    #                   name      TEXT,               -- relation name
+    #                   classname TEXT DEFAULT NULL,  -- relation's class name
+    #                   value     TEXT DEFAULT NULL,  -- relation value
+    #                   label     TEXT DEFAULT NULL,  -- relation label, text used for display
+    #                   comment   TEXT DEFAULT NULL,  -- relation comment, text used for annotations
+    #                   object_parent_id  INTEGER REFERENCES Objects(id) ON DELETE CASCADE,
+    #                   object_child_id  INTEGER REFERENCES Objects(id) ON DELETE CASCADE,
+    #                   creation  DATE,                 -- creation date and time of the object
+    #                   object_parent_extended TEXT DEFAULT NULL, -- extended property to consider internal objects
+    #                   object_child_extended TEXT DEFAULT NULL
+    #                   )"""
+    # INSERT_RELATION ="INSERT INTO Relations " \
+    #                  "(parent_id, name, object_parent_id, object_child_id, creation, object_parent_extended, object_child_extended)" \
+    #                  " VALUES (?, ?, ?, ?, datetime('now'), ?, ?)"
+
+    SELECT_RELATION = "SELECT object_%s_id AS id FROM Relations WHERE name=? AND object_%s_id=?"
+    SELECT_RELATIONS = "SELECT * FROM Relations WHERE "
+
+    ##??? SQLITE
+    # DELETE_SEQUENCE = "DELETE FROM SQLITE_SEQUENCE WHERE name='Objects'"
+
+
+    def __init__(self, prefix):
         self._prefix = prefix
+        self.objects = None
+        self.relations = None
+        self.metadata = MetaData()
 
-    def getTables(self):
-        """ Return the table names existing in the Database with a prexif.
-        If  tablePattern is not None, only tables matching
-        the pattern will be returned.
+    def getRelationsTable(self):
+        """ Returns the Relations table equivalent to:
+
+        CREATE_RELATIONS_TABLE = CREATE TABLE IF NOT EXISTS Relations
+            (id        SERIAL PRIMARY KEY,
+            parent_id INTEGER REFERENCES Objects(id), -- object that created the relation
+            name      TEXT,               -- relation name
+            classname TEXT DEFAULT NULL,  -- relation's class name
+            value     TEXT DEFAULT NULL,  -- relation value
+            label     TEXT DEFAULT NULL,  -- relation label, text used for display
+            comment   TEXT DEFAULT NULL,  -- relation comment, text used for annotations
+            object_parent_id  INTEGER REFERENCES Objects(id) ON DELETE CASCADE,
+            object_child_id  INTEGER REFERENCES Objects(id) ON DELETE CASCADE,
+            creation  DATE,                 -- creation date and time of the object
+            object_parent_extended TEXT DEFAULT NULL, -- extended property to consider internal objects
+            object_child_extended TEXT DEFAULT NULL)
         """
-        tables = []
-        with self._engine.connect() as conn:
 
-            results = conn.execute("SELECT table_name FROM information_schema.tables where table_type = 'BASE TABLE' and table_schema = '%s'" % self._prefix)
-            tables = [str(row['table_name']) for row in results]
+        if self.relations is None:
+            self.relations = Table("Relations", self.metadata,
+                Column('id', Integer, primary_key=True),
+                Column("parent_id", Integer, ForeignKey("Objects.id"),nullable=True),
+                Column("name", Text),
+                Column("classname", Unicode, nullable=True),
+                Column("value", Unicode, nullable=True),
+                Column("label", Unicode, nullable=True),
+                Column("comment", Unicode, nullable=True),
+                Column("creation", DateTime, nullable=False),
+                Column("object_parent_id", Integer, ForeignKey("Objects.id", ondelete="CASCADE"),nullable=True),
+                Column("object_child_id", Integer, ForeignKey("Objects.id", ondelete="CASCADE"), nullable=True),
+                Column("object_parent_extended", Unicode, nullable=True),
+                Column("object_child_extended", Unicode, nullable=True)
+           )
+        return self.relations
 
-        return  tables
+    def getObjectsTable(self):
+        """ returns the Objects table equivalent to:
 
-    def hasTable(self, tableName):
-        return tableName in self.getTables()
+        CREATE TABLE IF NOT EXISTS Objects
+            (id        SERIAL PRIMARY KEY,
+            parent_id INTEGER REFERENCES Objects(id),
+            name      TEXT,                -- object name
+            classname TEXT,                -- object's class name
+            value     TEXT DEFAULT NULL,   -- object value, used for Scalars
+            label     TEXT DEFAULT NULL,   -- object label, text used for display
+            comment   TEXT DEFAULT NULL,   -- object comment, text used for annotations
+            creation  DATE                 -- creation date and time of the object
+            )
+
+        """
+        if self.objects is None:
+            self.objects = Table('Objects', self.metadata,
+                Column('id', Integer, primary_key=True),
+                Column('parent_id', Integer, ForeignKey("Objects.id"),nullable=True),
+                Column('name', Unicode,nullable=False),
+                Column('classname', Unicode),
+                Column('value', Unicode, nullable=True),
+                Column('label', Unicode, nullable=True),
+                Column('comment', Unicode, nullable=True),
+                Column('creation', DateTime, nullable=False)
+            )
+
+        return  self.objects
+
+    def getExistsQuery(self, where):
+        """ Returns a query which tells if a ROW matching a where param EXISTS query with a prefix if apply"""
+        return "SELECT EXISTS(SELECT 1 FROM Objects WHERE %s=? LIMIT 1)" %  where
+
+    def getRelationQuery(self, selectColumn, whereColumn):
+        """ Returns the RELATION query with a prefix if apply"""
+        return self.SELECT_RELATION % (selectColumn, whereColumn)
+
+    def getRelationsQuery(self):
+        """ Returns the RELEATIONS query with a prefix if apply"""
+        return self.SELECT_RELATIONS
+
+    def getDeleteQuery(self):
+        """ Returns the DELETE query with a prefix if apply"""
+        return self.DELETE
+    def getSelectQuery(self):
+        """ Returns the SELECT query with a prefix if apply"""
+        return self.SELECT
+
+    def getTablesQuery(self):
+        """ Query to return the tables in a database having a prefix"""
+        return self.TABLES
+
+    def getTableColumnsQuery(self, tableName):
+        """ Returns a query with all columns of a table applying the prefix"""
+        return self.COLUMNS % tableName
+
+    def getInsertRelationQuery(self, parent_id, name, object_parent_id, object_child_id, object_parent_extended, object_child_extended):
+        """
+        return the equivalent of:
+            INSERT INTO Relations
+                (parent_id, name, object_parent_id, object_child_id, creation, object_parent_extended, object_child_extended)
+            VALUES (?, ?, ?, ?, datetime('now'), ?, ?)
+
+        :return: Insert query object
+        """
+        return insert(self.getRelationsTable()).values(
+            parent_id=parent_id,
+            name=name,
+            object_parent_id=object_parent_id,
+            object_child_id=object_child_id,
+            creation=datetime.datetime.now(),
+            object_parent_extended=object_parent_extended,
+            object_child_extended=object_child_id)
 
 
-    def getTableColumns(self, tableName):
-        """ Returns a list of all column names of a table with a prefix (schema)"""
-        columns = []
-        with self._engine.connect() as conn:
-            results = conn.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = '%s' AND table_name   = '%s'" % (self._prefix, tableName))
-            columns = [str(row['column_name']) for row in results]
-
-        return columns
+    def getInsertObjectQuery(self, name, classname, value, parent_id, label, comment):
+        """
+        return the equivalent of:
+        INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation) VALUES (?, ?, ?, ?, ?, ?, now())'
+        :param name: 
+        :param classname: 
+        :param value: 
+        :param parent_id: 
+        :param label: 
+        :param comment: 
+        :return: 
+        """
+        return insert(self.getObjectsTable()).values(
+            name=name,
+            classname=classname,
+            value=value,
+            parent_id=parent_id,
+            label=label,
+            comment=comment,
+            creation=datetime.datetime.now())
