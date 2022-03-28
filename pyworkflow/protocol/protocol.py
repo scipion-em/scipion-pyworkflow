@@ -325,9 +325,30 @@ class Protocol(Step):
 
     # Version where protocol appeared first time
     _lastUpdateVersion = pw.VERSION_1
-    _stepsCheckSecs = 3
+    _stepsCheckSecs = pw.Config.getStepsCheckSeconds()
     # Protocol develop status: PROD, BETA, NEW
     _devStatus = pw.PROD
+
+    """" Possible Outputs:
+    This is an optional but recommended attribute to fill.
+    It has to be an enum with names being the name of the output and value the class of the output:
+    
+        class MyOutput(enum.Enum):
+            outputMicrographs = SetOfMicrographs
+            outputMicrographDW = SetOfMicrographs
+    
+    When defining outputs you can, optionally, use this enum like:
+    self._defineOutputs(**{MyOutput.outputMicrographs.name, setOfMics})
+    It will help to keep output names consistently
+    
+    Alternative an inline dictionary will work:
+    _possibleOutputs = {"outputMicrographs" : SetOfMicrographs}
+    
+    For a more fine detailed/dynamic output based on parameters, you can overwrite the getter:
+    getPossibleOutputs() in your protocol.
+    
+    """
+    _possibleOutputs = None
 
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
@@ -443,6 +464,12 @@ class Protocol(Step):
         self._useOutputList.set(True)
         self._insertChild("_useOutputList", self._useOutputList)
 
+    def _closeOutputSet(self):
+        """Close all output set"""
+        for outputName, output in self.iterOutputAttributes():
+            if isinstance(output, Set) and output.isStreamOpen():
+                self.__tryUpdateOutputSet(outputName, output, state=Set.STREAM_CLOSED)
+
     def _updateOutputSet(self, outputName, outputSet,
                          state=Set.STREAM_OPEN):
         """ Use this function when updating an Stream output set.
@@ -472,10 +499,10 @@ class Protocol(Step):
         except Exception as ex:
             print("Error trying to update output of protocol, tries=%d" % tries)
 
-            if tries > 3:
+            if tries > pw.Config.getUpdateSetAttempts():
                 raise ex
             else:
-                time.sleep(tries)
+                time.sleep(pw.Config.getUpdateSetAttemptsWait())
                 self.__tryUpdateOutputSet(outputName, outputSet, state,
                                           tries + 1)
 
@@ -617,8 +644,9 @@ class Protocol(Step):
 
             # Consider here scalars with pointers inside
             elif isinstance(attr, Scalar) and attr.hasPointer():
-                if attr.get() is not None:
-                    yield key, attr.getPointer()
+                # Scheduling was stale cause this Scalar with pointers where not returned
+                #if attr.get() is not None:
+                yield key, attr.getPointer()
 
     def iterInputPointers(self):
         """ This function is similar to iterInputAttributes, but it yields
@@ -704,12 +732,12 @@ class Protocol(Step):
 
         return protocolDict
 
-    def hasLinkedInputs(self):
-        """ Return if True if some of the input pointers are referring to
-        an output that is not ready yet.
+    def getInputStatus(self):
+        """ Returns if any input pointer is not ready yet and if there is
+         any pointer to an open set
         """
-        linkedPointers = []
-        emptyPointers = []
+        emptyPointers = False
+        openSetPointer = False
 
         for paramName, attr in self.iterInputPointers():
 
@@ -729,22 +757,38 @@ class Protocol(Step):
 
             obj = attr.get()
             if condition and obj is None and not param.allowsNull:
-                if attr.hasValue():
-                    linkedPointers.append(paramName)
-                else:
-                    emptyPointers.append(paramName)
+                if not attr.hasValue():
+                   emptyPointers = True
 
-        return linkedPointers and not emptyPointers
+            if not self.worksInStreaming() and isinstance(obj, Set) and obj.isStreamOpen():
+                openSetPointer = True
 
-    def iterOutputAttributes(self, outputClass=None):
+        return emptyPointers, openSetPointer
+
+    def iterOutputAttributes(self, outputClass=None, includePossible=False):
         """ Iterate over the outputs produced by this protocol. """
 
         iterator = self._iterOutputsNew if self._useOutputList else self._iterOutputsOld
 
-        # Iterate
+        hasOutput=False
+
+        # Iterate through actual outputs
         for key, attr in iterator():
             if outputClass is None or isinstance(attr, outputClass):
+                hasOutput = True
                 yield key, attr
+
+        # NOTE: This will only happen in case there is no actual output.
+        # There is no need to avoid duplication of actual output and possible output.
+        if includePossible and not hasOutput and self.getPossibleOutputs() is not None:
+            for possibleOutput in self.getPossibleOutputs():
+                if isinstance(possibleOutput, str):
+                    yield possibleOutput, self._possibleOutputs[possibleOutput]
+                else:
+                    yield possibleOutput.name, possibleOutput.value
+
+    def getPossibleOutputs(self):
+        return self._possibleOutputs
 
     def _iterOutputsNew(self):
         """ This methods iterates through a list where outputs have been
@@ -934,15 +978,24 @@ class Protocol(Step):
         """ Do not reset the init time in RESUME_MODE"""
         previousStart = self.initTime.get()
         super().setRunning()
-        if self.getRunMode() == MODE_RESUME:
+        if self.getRunMode() == MODE_RESUME and previousStart is not None:
             self.initTime.set(previousStart)
         else:
             self._cpuTime.set(0)
 
     def setAborted(self):
-        """ Abort the protocol and finalize the steps"""
-        super().setAborted()
-        self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+        """ Abort the protocol, finalize the steps and close all open sets"""
+        try:
+            super().setAborted()
+            self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+            self._closeOutputSet()
+        except Exception as e:
+            print("An error occurred aborting the protocol (%s)" % e)
+
+    def setFailed(self, msg):
+        """ Set the run failed and close all open  sets. """
+        super().setFailed(msg)
+        self._closeOutputSet()
 
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
@@ -1942,19 +1995,27 @@ class Protocol(Step):
         """ Return a summary message to provide some information to users. """
         try:
             baseSummary = self._summary() or ['No summary information.']
+
+            if isinstance(baseSummary, str):
+                baseSummary = [baseSummary]
+
+            if not isinstance(baseSummary, list):
+                raise Exception("Developers error: _summary() is not returning "
+                                "a list")
+
+            comments = self.getObjComment()
+            if comments:
+                baseSummary += ['', '*COMMENTS:* ', comments]
+
+            if self.getError().hasValue():
+                baseSummary += ['', '*ERROR:*', self.getError().get()]
+
+            if self.summaryWarnings:
+                baseSummary += ['', '*WARNINGS:*']
+                baseSummary += self.summaryWarnings
+
         except Exception as ex:
             baseSummary = [str(ex)]
-
-        comments = self.getObjComment()
-        if comments:
-            baseSummary += ['', '*COMMENTS:* ', comments]
-
-        if self.getError().hasValue():
-            baseSummary += ['', '*ERROR:*', self.getError().get()]
-
-        if self.summaryWarnings:
-            baseSummary += ['', '*WARNINGS:*']
-            baseSummary += self.summaryWarnings
 
         return baseSummary
 

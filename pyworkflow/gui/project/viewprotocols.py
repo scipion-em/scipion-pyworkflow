@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
 # * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
@@ -139,13 +139,13 @@ class RunsTreeProvider(pwgui.tree.ProjectRunsTreeProvider):
         stoppable = status in [pwprot.STATUS_RUNNING, pwprot.STATUS_SCHEDULED, 
                                pwprot.STATUS_LAUNCHED]
 
-        return [(ACTION_EDIT, single),
-                (ACTION_RENAME, single),
-                (ACTION_COPY, True),
-                (ACTION_DELETE, status != pwprot.STATUS_RUNNING),
-                (ACTION_STEPS, single and Config.debugOn()),
-                (ACTION_BROWSE, single),
-                (ACTION_DB, single and Config.debugOn()),
+        return [(ACTION_EDIT, single and status and expanded),
+                (ACTION_RENAME, single and status and expanded),
+                (ACTION_COPY, status and expanded),
+                (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
+                (ACTION_STEPS, single and Config.debugOn() and status and expanded),
+                (ACTION_BROWSE, single and status and expanded),
+                (ACTION_DB, single and Config.debugOn() and status and expanded),
                 (ACTION_STOP, stoppable and single),
                 (ACTION_EXPORT, not single),
                 (ACTION_EXPORT_UPLOAD, not single),
@@ -474,7 +474,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         viewer = ViewerClass(project=self.protocol.getProject(),
                              protocol=self.protocol,
                              parent=self.parent.windows)
-        viewer.visualize(obj)
+        viewer.visualize(obj, windows=self.parent.windows)
 
     def _editObject(self, obj):
         """Open the Edit GUI Form given an instance"""
@@ -1133,6 +1133,11 @@ class ProtocolsView(tk.Frame):
         self.updateProtocolsTree(self.protCfg)
 
     def populateTree(self, tree, treeItems, prefix, obj, subclassedDict, level=0):
+
+        # If node does not have leaves (protocols) do not add it
+        if not obj.visible:
+            return
+
         text = obj.text
         if text:
             value = obj.value if obj.value is not None else text
@@ -1165,18 +1170,20 @@ class ProtocolsView(tk.Frame):
             if openItem:
                 tree.item(item, open=openItem)
 
+            # I think this mode is deprecated
             if obj.value is not None and tag == 'protocol_base':
-                if prot is not None:
-                    tree.item(item, image=self.getImage('class_obj.gif'))
-
-                    for k, v in emProtocolsDict.items():
-                        if (k not in subclassedDict and v is not prot and
-                           issubclass(v, prot)):
-                            key = '%s.%s' % (item, k)
-                            t = v.getClassLabel()
-                            tree.insert(item, 'end', key, text=t, tags='protocol')
-                else:
-                    raise Exception("Class '%s' not found" % obj.value.get())
+                print('protocol_base tags are deprecated')
+                # if prot is not None:
+                #     tree.item(item, image=self.getImage('class_obj.gif'))
+                #
+                #     for k, v in emProtocolsDict.items():
+                #         if (k not in subclassedDict and v is not prot and
+                #            issubclass(v, prot)):
+                #             key = '%s.%s' % (item, k)
+                #             t = v.getClassLabel()
+                #             tree.insert(item, 'end', key, text=t, tags='protocol')
+                # else:
+                #     raise Exception("Class '%s' not found" % obj.value.get())
         else:
             key = prefix
 
@@ -1291,10 +1298,12 @@ class ProtocolsView(tk.Frame):
                 nodeId = node.run.getObjId() if node.run else 0
                 nodeInfo = self.settings.getNodeById(nodeId)
                 if nodeInfo is None:
-                    self.settings.addNode(nodeId, x=0, y=0, expanded=True)
+                    self.settings.addNode(nodeId, x=0, y=0, expanded=True,
+                                          visible=True)
 
             self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
-                                           drawNode=self.createRunItem)
+                                           drawNode=self.createRunItem,
+                                           nodeList=self.settings.nodeList)
 
     def createRunItem(self, canvas, node):
 
@@ -1304,6 +1313,7 @@ class ProtocolsView(tk.Frame):
         # Extend attributes: use some from nodeInfo
         node.expanded = nodeInfo.isExpanded()
         node.x, node.y = nodeInfo.getPosition()
+        node.visible = nodeInfo.isVisible()
         nodeText = self._getNodeText(node)
 
         # Get status color
@@ -1442,11 +1452,11 @@ class ProtocolsView(tk.Frame):
             nodeText = nodeText[:37] + "..."
 
         if node.run:
-            expandedStr = '' if node.expanded else ' (+)'
+            expandedStr = '' if node.expanded else '\n ➕ %s more' % str(node.countChilds({}))
             if self.runsView == VIEW_TREE_SMALL:
                 nodeText = node.getName() + expandedStr
             else:
-                nodeText += expandedStr + '\n' + node.run.getStatusMessage()
+                nodeText += expandedStr + '\n' + node.run.getStatusMessage() if not expandedStr else expandedStr
                 if node.run.summaryWarnings:
                     nodeText += u' \u26a0'
         return nodeText
@@ -1644,7 +1654,8 @@ class ProtocolsView(tk.Frame):
         self._selectItemProtocol(prot)
 
     def _runItemDoubleClick(self, e=None):
-        self._runActionClicked(ACTION_EDIT)
+        if e.nodeInfo.isExpanded():
+            self._runActionClicked(ACTION_EDIT)
 
     def _runItemMiddleClick(self, e=None):
         self._runActionClicked(ACTION_SELECT_TO)
@@ -1981,7 +1992,10 @@ class ProtocolsView(tk.Frame):
 
         # Call the delete action only if the widget is the canvas
         if str(widget).endswith(ProtocolsView.RUNS_CANVAS_NAME):
-            self._deleteProtocol()
+            try:
+                self._deleteProtocol()
+            except Exception as ex:
+                self.windows.showError(str(ex))
 
     def _deleteProtocol(self):
         protocols = self._getSelectedProtocols()
@@ -2054,8 +2068,7 @@ class ProtocolsView(tk.Frame):
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
             self.info('Resetting the workflow...')
-            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0],
-                                                                                         False)
+            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
             errorProtList = self.project.resetWorkFlow(workflowProtocolList)
             self.cleanInfo()
             self.refreshRuns()
@@ -2075,7 +2088,7 @@ class ProtocolsView(tk.Frame):
         """
         protocols = self._getSelectedProtocols()
         errorList = []
-        defaultMode = pwprot.MODE_CONTINUE
+        defaultMode = pwprot.MODE_RESUME
         workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
 
         # Check if exists active protocols
@@ -2341,13 +2354,17 @@ class ProtocolsView(tk.Frame):
                 elif action == ACTION_EXPORT_UPLOAD:
                     self._exportUploadProtocols()
                 elif action == ACTION_COLLAPSE:
+                    node = self.runsGraph.getNode(str(prot.getObjId()))
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(False)
+                    self.setVisibleNodes(node, visible=False)
                     self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_EXPAND:
+                    node = self.runsGraph.getNode(str(prot.getObjId()))
                     nodeInfo = self.settings.getNodeById(prot.getObjId())
                     nodeInfo.setExpanded(True)
+                    self.setVisibleNodes(node, visible=True)
                     self.updateRunsGraph(True, reorganize=False)
                     self._updateActionToolbar()
                 elif action == ACTION_LABELS:
@@ -2379,6 +2396,25 @@ class ProtocolsView(tk.Frame):
 
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
+
+    def setVisibleNodes(self, node, visible=True):
+        hasParentHidden = False
+        for child in node.getChilds():
+            prot = child.run
+            nodeInfo = self.settings.getNodeById(prot.getObjId())
+            if visible:
+                hasParentHidden = self.hasParentHidden(child)
+            if not hasParentHidden:
+                nodeInfo.setVisible(visible)
+                self.setVisibleNodes(child, visible)
+
+    def hasParentHidden(self, node):
+        for parent in node.getParents():
+            prot = parent.run
+            nodeInfo = self.settings.getNodeById(prot.getObjId())
+            if not nodeInfo.isVisible() or not nodeInfo.isExpanded():
+                return True
+        return False
 
 
 class RunBox(pwgui.TextBox):
@@ -2673,7 +2709,7 @@ class ProtocolTreeConfig:
         Return True if child belongs to subMenu
         """
         for ch in subMenu:
-            if child['tag'] == cls.TAG_PROTOCOL:
+            if cls.__isProtocol(child):
                 if ch.value is not None and ch.value == child['value']:
                     return ch
             elif ch.text == child['text']:
@@ -2719,6 +2755,16 @@ class ProtocolTreeConfig:
                 cls._orderSubMenu(parent)
             elif child['tag'] == cls.TAG_PROTOCOL_GROUP or child['tag'] == cls.TAG_SECTION:
                 cls.__findTreeLocation(sm.childs, child['children'], sm)
+    @classmethod
+    def __isProtocol(cls, dict):
+        """ True inf the item has a key named tag with protocol as value"""
+        return dict["tag"] == cls.TAG_PROTOCOL
+
+    @classmethod
+    def __isProtocolNode(cls, node):
+        """ True if tag attribute is protocol"""
+        return node.tag == cls.TAG_PROTOCOL
+
 
     @classmethod
     def __checkItem(cls, item):
@@ -2727,7 +2773,7 @@ class ProtocolTreeConfig:
             item: {"tag": "protocol", "value": "ProtImportMovies",
                    "text": "import movies"}
         """
-        if item["tag"] != cls.TAG_PROTOCOL:
+        if not cls.__isProtocol(item):
             return True
 
         # It is a protocol as this point, get the class name and
@@ -2813,19 +2859,20 @@ class ProtocolTreeConfig:
         one in scipion/config/protocols.conf,
         which is the default one when no file is passed.
         """
-        protocols = OrderedDict()
+        protocols = dict()
         # Read the protocols.conf from Scipion (base) and create an initial
         # tree view
         cls.__addProtocolsFromConf(protocols, protocolsConf)
 
         # Read the protocols.conf of any installed plugin
         pluginDict = domain.getPlugins()
-        pluginList = pluginDict.keys()
+        pluginList = cls.__orderByPriority(pluginDict.keys(),
+                                           priorityPluginList=Config.getPriorityPackageList())
         for pluginName in pluginList:
             try:
 
                 # if the plugin has a path
-                if pwutils.isModuleAFolder(pluginName):
+                if pwutils.isModuleLoaded(pluginName) and pwutils.isModuleAFolder(pluginName):
                     # Locate the plugin protocols.conf file
                     protocolsConfPath = os.path.join(
                         pluginDict[pluginName].__path__[0],
@@ -2837,10 +2884,45 @@ class ProtocolTreeConfig:
                       'To solve it, fix %s and run again.' % (
                           e, os.path.abspath(protocolsConfPath)))
 
-            # Add all protocols to All view
+        # Clean empty sections
+        cls._hideEmptySections(protocols)
+
+        # Add all protocols to All view
         cls.__addAllProtocols(domain, protocols)
 
         return protocols
+
+    @classmethod
+    def _hideEmptySections(cls, protocols):
+        """ Cleans all empty sections in the tree"""
+
+        for protConf in protocols.values():
+            cls._setVisibility(protConf)
+
+    @classmethod
+    def _setVisibility(cls, node):
+        """ Sets the visibility of a node based on the presence of a leaf hanging form it"""
+        if cls.__isProtocolNode(node):
+            # Default visibility value is true. No need to set it again
+            return True
+
+        anyLeaf = False
+
+        for child in node.childs:
+            # NOTE: since python short circuits this, _setVisibility must be called always. So not swap!!
+            anyLeaf = cls._setVisibility(child) or anyLeaf
+
+        node.visible = anyLeaf
+
+        return anyLeaf
+    @classmethod
+    def __orderByPriority(cls, pluginList, priorityPluginList):
+        if priorityPluginList:
+            sortedPluginList = priorityPluginList + [pluginName for pluginName in pluginList
+                                                     if pluginName not in priorityPluginList]
+            return sortedPluginList
+        else:
+            return pluginList
 
 
 class ProtocolConfig(MenuConfig):
@@ -2860,3 +2942,5 @@ class ProtocolConfig(MenuConfig):
         args['shortCut'] = shortCut
         return MenuConfig.addSubMenu(self, text, value, **args)
 
+    def __str__(self):
+        return self.text

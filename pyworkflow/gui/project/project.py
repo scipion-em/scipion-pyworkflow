@@ -353,7 +353,7 @@ class ProjectWindow(ProjectBaseWindow):
 class ProjectManagerWindow(ProjectBaseWindow):
     """ Windows to manage all projects. """
     # To allow plugins to add their own menus
-    _pluginMenus = list()
+    _pluginMenus = dict()
 
     def __init__(self, **kwargs):
         # Load global configuration

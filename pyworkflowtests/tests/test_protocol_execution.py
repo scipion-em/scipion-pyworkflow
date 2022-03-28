@@ -26,6 +26,7 @@
 import pyworkflow.tests as pwtests
 import pyworkflow.mapper as pwmapper
 import pyworkflow.protocol as pwprot
+from pyworkflow.project import Project
 
 
 # TODO: this test seems not to be finished.
@@ -47,14 +48,18 @@ class TestProtocolExecution(pwtests.BaseTest):
         # Discover objects and protocols
         mapperDict = Domain.getMapperDict()
 
+        # Associate the project
+        proj = Project(Domain, path=self.getOutputPath(''))
+
         # Check that the protocol has associated package
         mapper = pwmapper.SqliteMapper(fn, mapperDict)
-        prot = SleepingProtocol(mapper=mapper, n=2,
+        prot = SleepingProtocol(mapper=mapper, n=2, project= proj,
                                 workingDir=self.getOutputPath(''))
         domain = prot.getClassDomain()
         domain.printInfo()
 
         prot.setStepsExecutor(pwprot.StepExecutor(hostConfig=None))
+        prot.makeWorkingDir()
         prot.run()
         mapper.commit()
         mapper.close()

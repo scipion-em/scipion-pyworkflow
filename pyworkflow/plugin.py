@@ -71,24 +71,32 @@ class Domain:
         """ Register a new plugin. This function should only be called when
         creating a class with __metaclass__=PluginMeta that will trigger this.
         """
-        m = importlib.import_module(name)
+        try:
+            m = importlib.import_module(name)
 
-        # Define variables
-        m.Plugin._defineVariables()
-        m.Domain = cls  # Register the domain class for this module
-        # TODO avoid loading bibtex here and make a lazy load like the rest.
-        # Load bibtex
-        m._bibtex = {}
-        bib = cls.__getSubmodule(name, 'bibtex')
-        if bib is not None:
-            if hasattr(bib, "_bibtex"):
-                print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
-            else:
-                try:
-                    m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
-                except Exception:
-                    pass
-        cls._plugins[name] = m  # Register the name to as a plugin
+            # Define variables
+            m.Plugin._defineVariables()
+            m.Domain = cls  # Register the domain class for this module
+            # TODO avoid loading bibtex here and make a lazy load like the rest.
+            # Load bibtex
+            m._bibtex = {}
+            bib = cls.__getSubmodule(name, 'bibtex')
+            if bib is not None:
+                if hasattr(bib, "_bibtex"):
+                    print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
+                else:
+                    try:
+                        m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
+                    except Exception:
+                        pass
+            cls._plugins[name] = m  # Register the name to as a plugin
+
+        # Catch any import exception, warn about it but continue.
+        except Exception as e:
+            print(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
+                                 "All its content will be missing in this execution." % name))
+            print("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
+            print(pwutils.yellow(traceback.format_exc()))
 
     @classmethod
     def getPlugins(cls):
@@ -339,10 +347,10 @@ class Domain:
                                                   doRaise=True)
                 viewers.append(prefViewer)
             except Exception as e:
-                print("Couldn't load \"%s\" as preferred viewer.\n"
+                print("Couldn't load \"%s\" as preferred viewer for %s.\n"
                       "There might be a typo in your VIEWERS variable "
                       "or an error in the viewer's plugin installation"
-                      % prefViewerStr)
+                      % (prefViewerStr, className))
                 print(e)
         return viewers
 
