@@ -1096,6 +1096,7 @@ class ParamWidget:
     def _showWizard(self, e=None):
         wizClass = self.window.wizards[self.wizParamName]
         wizard = wizClass()
+        self.window.wizParamName = self.wizParamName
         wizard.show(self.window)
 
     def _findParamWizard(self):
