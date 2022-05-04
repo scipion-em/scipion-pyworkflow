@@ -1096,6 +1096,9 @@ class ParamWidget:
     def _showWizard(self, e=None):
         wizClass = self.window.wizards[self.wizParamName]
         wizard = wizClass()
+        # wizParamName: form attribute, the wizard object can check from which parameter it was called
+        # Used into VariableWizard objects (scipion-chem), where input and output parameters used for each wizard are defined
+        self.window.wizParamName = self.wizParamName
         wizard.show(self.window)
 
     def _findParamWizard(self):
