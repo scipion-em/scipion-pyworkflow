@@ -191,7 +191,7 @@ class MenuConfig(object):
     Leaf elements can contain actions"""
 
     def __init__(self, text=None, value=None,
-                 icon=None, tag=None, **kwargs):
+                 icon=None, tag=None, shortCut=None, openItem=False, visible=True):
         """Constructor for the Menu config item.
         Arguments:
           text: text to be displayed
@@ -204,9 +204,10 @@ class MenuConfig(object):
         self.value = value
         self.icon = icon
         self.tag = tag
-        self.shortCut = kwargs.get('shortCut', None)
+        self.shortCut = shortCut
+        self.openItem = openItem
+        self.visible = visible
         self.childs = pwobj.List()
-        self.openItem = kwargs.get('openItem', False)
 
     def addSubMenu(self, text, value=None, **args):
         subMenu = type(self)(text, value, **args)
