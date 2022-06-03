@@ -366,7 +366,7 @@ class TaggedText(Text):
             self.insert(tk.END, g1, self.hm.add(lambda: self.openLink(g1)))
         elif tag == HYPER_LINK2:
             label = match.group('link2_label')
-            if g1.startswith('http:'):
+            if g1.startswith('http'):
                 self.insert(tk.END, label, self.hm.add(lambda: self.openLink(g1)))
             elif g1.startswith('mailto:'):
                 self.insert(tk.END, label, self.hm.add(lambda: self.mailTo(g1)))
