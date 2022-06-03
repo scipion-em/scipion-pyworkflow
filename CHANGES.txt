@@ -3,6 +3,9 @@ V3.0.20
  - New "Search protocol in graph" (Control + l) window to locate a box in the graph
  - At loading time, selected protocol is "focused" (window scrolls to it)
 
+Developers:
+ - Allow pointers to be defined with a list of classes instead of a string: "SetOfParticles, SetOfAverages" or [ SetOfParticles, SetOfAverages ]
+
 V3.0.19
 -------
  - Empty sections/subsection (without protocols) in the left tree will not be shown
