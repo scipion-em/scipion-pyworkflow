@@ -2,9 +2,12 @@ V3.0.20
 -------
  - New "Search protocol in graph" (Control + l) window to locate a box in the graph
  - At loading time, selected protocol is "focused" (window scrolls to it)
+ - Control + MouseWheel scrolls horizontally
 
 Developers:
  - Allow pointers to be defined with a list of classes instead of a string: "SetOfParticles, SetOfAverages" or [ SetOfParticles, SetOfAverages ]
+ - Two "utils" functions: hasAnyFileChanged, hasFileChangedSince to check if a file/s have changed since a "time" passed.
+ - BaseTest now has: setupTestOutput exposed --> self.setupTestOutput()
 
 V3.0.19
 -------
