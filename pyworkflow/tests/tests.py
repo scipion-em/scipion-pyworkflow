@@ -226,6 +226,10 @@ class BaseTest(unittest.TestCase):
 
         self.assertIsNotNone(setObject.get(), msg)
 
+    @classmethod
+    def setupTestOutput(cls):
+        setupTestOutput(cls)
+
 
 def setupTestOutput(cls):
     """ Create the output folder for a give Test class. """
