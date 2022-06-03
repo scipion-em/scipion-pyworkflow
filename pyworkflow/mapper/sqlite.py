@@ -1399,6 +1399,7 @@ class SqliteFlatDb(SqliteDb):
         whereList = ['%s=?' % k for k in args.keys()]
         whereStr = ' AND '.join(whereList)
         whereTuple = tuple(args.values())
+        whereStr = self._whereToWhereStr(whereStr)
         self.executeCommand(self.selectCmd(whereStr), whereTuple)
         return self._results(iterate)
 

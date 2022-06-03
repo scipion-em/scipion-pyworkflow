@@ -11,7 +11,8 @@ Developers:
  - Allow pointers to be defined with a list of classes instead of a string: "SetOfParticles, SetOfAverages" or [ SetOfParticles, SetOfAverages ]
  - Two "utils" functions: hasAnyFileChanged, hasFileChangedSince to check if a file/s have changed since a "time" passed.
  - BaseTest now has: setupTestOutput exposed --> self.setupTestOutput()
- -
+ - Allow getting an item in a set not only by id but by a query: myset["_tsId=tomo1"].
+
 
 V3.0.19
 -------
