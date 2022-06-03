@@ -4,6 +4,8 @@ V3.0.20
  - At loading time, selected protocol is "focused" (window scrolls to it)
  - Control + MouseWheel scrolls horizontally
  - Links are also detected when they are just "http"
+ - Bugfixed: Input list is shown when there are possible outputs and need to "expose details" (like selecting a specific volume in a set)
+
 
 Developers:
  - Allow pointers to be defined with a list of classes instead of a string: "SetOfParticles, SetOfAverages" or [ SetOfParticles, SetOfAverages ]
