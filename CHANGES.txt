@@ -1,3 +1,8 @@
+V3.0.21
+-------
+- Generating an interface to create the scipion log file.
+- Creating an option to display the scipion log
+
 V3.0.20
 -------
  - Empty sections/subsection (without protocols) in the left tree will not be shown
