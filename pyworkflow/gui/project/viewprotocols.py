@@ -22,8 +22,11 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+import threading
 from configparser import ConfigParser
 
+from pyworkflow.gui import TextFileViewer, getDefaultFont
 from pyworkflow.project import MenuConfig
 from pyworkflow import Config, TK
 
@@ -51,6 +54,8 @@ from pyworkflow.utils.properties import Message, Icon, Color, KEYSYM
 from pyworkflow.gui.project.utils import getStatusColorFromNode
 from pyworkflow.gui.form import FormWindow
 from pyworkflow.webservices import WorkflowRepository
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_BOX_COLOR = '#f8f8f8'
 
@@ -311,6 +316,62 @@ class StepsWindow(pwgui.browser.BrowserWindow):
             tw.tooltipText.config(bd=1, relief=tk.RAISED)
         else:
             pwgui.dialog.fillMessageText(tw.tooltipText, tm)
+
+
+class ScipionLogWindow(pwgui.Window):
+    """Class that create a windows where the system log is display """
+    def __init__(self, parentWindow, **kwargs):
+        pwgui.Window.__init__(self, title="Scipion log",
+                              masterWindow=parentWindow,
+                              minsize=(1000, 400))
+        content = tk.Frame(self.root)
+        content.grid(row=0, column=0, sticky='news')
+        pwgui.configureWeigths(content)
+        self.showScipionLog = threading.Thread(name="scipion_log",
+                                              target=self._showScipionLog,
+                                              args=(content,))
+        self.showScipionLog.start()
+
+    def _showScipionLog(self, content):
+        """
+        Create a content of the system log window
+        """
+
+        # Fill the Output Log
+        terminal = tk.Frame(content)
+        terminal.grid(row=0, column=0, sticky='news')
+        pwgui.configureWeigths(terminal)
+
+        self.textLog = TextFileViewer(terminal, font=getDefaultFont(),
+                                      height=30, width=100)
+        self.textLog.grid(row=0, column=0, sticky='news')
+
+        fileLogPath = Config.SCIPION_LOG
+        self.fileLog = open(fileLogPath, 'r')
+        # Create a tab where the log will appear
+        self.textLog.createWidgets([fileLogPath])
+        self.textLog.refreshAll(goEnd=True)
+        # Refreshing the log every 3 seconds
+        self.threadRefresh = threading.Thread(name="refresh_log",
+                                              target=self._refreshLogComponent,
+                                              args=(3,))
+        self.threadRefresh.start()
+
+    def _refreshLogComponent(self, wait=3):
+        """ Refresh the Plugin Manager log """
+        import time
+        while True:
+            time.sleep(wait)
+            # Taking the vertical scroll position. If this action fail, assume
+            # that the log window was closed and finalized the refresh thread
+            try:
+                vsPos = self.textLog.taList[0].getVScroll()
+                if vsPos[1] == 1.0:
+                    self.textLog.refreshAll(goEnd=True)
+                else:
+                    self.textLog.refreshAll(goEnd=False)
+            except Exception:
+                break
 
 
 class SearchProtocolWindow(pwgui.Window):
@@ -649,6 +710,7 @@ class ProtocolsView(tk.Frame):
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
         self.root.bind("<Control-d>", self._toggleDebug)
+        self.root.bind("<Control-l>", self._scipionLog)
         self.root.bind("<F2>", self._F2Pressed)
 
         if Config.debugOn():
@@ -961,6 +1023,10 @@ class ProtocolsView(tk.Frame):
         """ Find a desired protocol by typing some keyword. """
         window = SearchProtocolWindow(self.windows)
         window.show()
+
+    def _scipionLog(self, e=None):
+        windows = ScipionLogWindow(self.windows)
+        windows.show()
 
     def createActionToolbar(self):
         """ Prepare the buttons that will be available for protocol actions. """

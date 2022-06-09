@@ -105,7 +105,8 @@ class LoggingConfigurator:
                     'class': 'logging.handlers.RotatingFileHandler',
                     'formatter': 'standard',
                     'filename': Config.SCIPION_LOG,
-                    'maxBytes': 100000,
+                    'maxBytes': 10000,
+                    'backupCount': 10
                 },
                 'consoleHandler': {
                     'level': Config.SCIPION_LOG_LEVEL,
