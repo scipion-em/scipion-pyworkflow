@@ -33,10 +33,8 @@ import pyworkflow.object as pwobj
 import pyworkflow.utils as pwutils
 from pyworkflow.gui.project.utils import isAFinalProtocol
 from pyworkflow.project import MenuConfig
+from pyworkflow.utils import Message, Icon
 from pyworkflow.viewer import DESKTOP_TKINTER
-
-
-from pyworkflow.gui.project.constants import *
 
 
 
@@ -212,7 +210,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
                         labelObjPtr = obj.getObjValue()
                         suffix = ''
 
-                except Exception as e:
+                except Exception:
                     return {'parent': parentPtr, 'image': imagePtr, 'text': namePtr,
                             'values': ("Couldn't read object attributes.",)}
             else:
