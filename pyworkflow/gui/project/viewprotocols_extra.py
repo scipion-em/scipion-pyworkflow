@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 # **************************************************************************
 # *
 # * Authors:     Pablo Conesa [1]
@@ -162,71 +162,92 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         return label
 
     def getObjectInfo(self, obj):
+
+        def stringToInfo():
+            """ String objects converted to info dictionary for the tree"""
+
+            value = obj.get()
+            infoStr = {'key': value, 'text': value, 'values': '', 'open': True}
+            if hasattr(obj, '_parentKey'):
+                infoStr['parent'] = self.inputParentDict[obj._parentKey]
+            return infoStr
+
+        def labelToValue(label, key, name):
+            """ To tolerate str(labelObj) in case xmippLib is missing, but
+            still being able to open a project."""
+            try:
+                value = str(label)
+            except Exception as e:
+                print("Can not convert object %s - %s to string." % (key, name))
+                value = str(e)
+
+            return value
+
+        def pointerToInfo():
+            """ Converts a Pointer into an info dictionary for the tree"""
+
+            namePtr = obj.getLastName()
+            # Remove ugly item notations inside lists
+            namePtr = namePtr.replace('__item__000', '')
+            # Consider Pointer as inputs
+            imagePtr = getattr(obj, '_icon', '')
+            parentPtr = self.inputParentDict[obj._parentKey]
+
+            suffix = ''
+            if obj.hasExtended():
+                # getExtended method remove old attributes conventions.
+                extendedValue = obj.getExtended()
+                if obj.hasExtended():
+                    suffix = '[%s]' % extendedValue
+                # else:
+                #     suffix = '[Item %s]' % extendedValue
+
+                # Tolerate loading projects:
+                # When having only the project sqlite..an obj.get() will
+                # the load of the set...and if it is missing this whole
+                # "thread" fails.
+                try:
+                    labelObjPtr = obj.get()
+                    if labelObjPtr is None:
+                        labelObjPtr = obj.getObjValue()
+                        suffix = ''
+
+                except Exception as e:
+                    return {'parent': parentPtr, 'image': imagePtr, 'text': namePtr,
+                            'values': ("Couldn't read object attributes.",)}
+            else:
+                labelObjPtr = obj.get()
+
+            objKeyPtr = obj._parentKey + str(labelObjPtr.getObjId())
+            labelPtr = self.getObjectLabel(labelObjPtr,
+                                        self.mapper.getParent(labelObjPtr))
+            namePtr += '   (from %s %s)' % (labelPtr, suffix)
+            valuePtr = labelToValue(labelObjPtr, objKeyPtr, namePtr)
+            infoPtr = {'key': objKeyPtr, 'parent': parentPtr, 'image': imagePtr,
+                    'text': namePtr, 'values': (valuePtr,)}
+
+            return infoPtr
+
+
         if obj is None or not obj.hasValue():
             return None
 
         if isinstance(obj, pwobj.String):
-            value = obj.get()
-            info = {'key': value, 'text': value, 'values': '', 'open': True}
-            if hasattr(obj, '_parentKey'):
-                info['parent'] = self.inputParentDict[obj._parentKey]
+            info = stringToInfo()
         else:
             # All attributes are considered output, unless they are pointers
             image = Icon.ACTION_OUT
             parent = self.outputStr
 
             if isinstance(obj, pwobj.Pointer):
-                name = obj.getLastName()
-                # Remove ugly item notations inside lists
-                name = name.replace('__item__000', '')
-                # Consider Pointer as inputs
-                image = getattr(obj, '_icon', '')
-                parent = self.inputParentDict[obj._parentKey]
-
-                suffix = ''
-                if obj.hasExtended():
-                    # getExtended method remove old attributes conventions.
-                    extendedValue = obj.getExtended()
-                    if obj.hasExtended():
-                        suffix = '[%s]' % extendedValue
-                    # else:
-                    #     suffix = '[Item %s]' % extendedValue
-
-                    # Tolerate loading projects:
-                    # When having only the project sqlite..an obj.get() will
-                    # the load of the set...and if it is missing this whole
-                    # "thread" fails.
-                    try:
-                        labelObj = obj.get()
-                        if labelObj is None:
-                            labelObj = obj.getObjValue()
-                            suffix = ''
-
-                    except Exception as e:
-                        return {'parent': parent, 'image': image, 'text': name,
-                                'values': ("Couldn't read object attributes.",)}
-                else:
-                    labelObj = obj.get()
-
-                objKey = obj._parentKey + str(labelObj.getObjId())
-                label = self.getObjectLabel(labelObj,
-                                            self.mapper.getParent(labelObj))
-                name += '   (from %s %s)' % (label, suffix)
+                info = pointerToInfo()
             else:
                 name = self.getObjectLabel(obj, self.protocol)
                 objKey = str(obj.getObjId())
                 labelObj = obj
-
-            # To tolerate str(labelObj) in case xmippLib is missing, but
-            # still being able to open a project.
-            try:
-                value = str(labelObj)
-            except Exception as e:
-                print("Can not convert object %s - %s to string." % (objKey, name))
-                value = str(e)
-
-            info = {'key': objKey, 'parent': parent, 'image': image,
-                    'text': name, 'values': (value,)}
+                value = labelToValue(labelObj, objKey, name)
+                info = {'key': objKey, 'parent': parent, 'image': image,
+                        'text': name, 'values': (value,)}
         return info
 
 class ProtocolTreeConfig:
@@ -289,29 +310,38 @@ class ProtocolTreeConfig:
     @classmethod
     def _orderSubMenu(cls, session):
         """
-        Order all children of a given session:
-        The protocols first, then the sessions(the 'more' session at the end)
+        Sort all children of a given section:
+        The protocols first, then the sections (the 'more' section at the end)
         """
+
+        def sortWhenLastIsAProtocol():
+            """ Sorts children when the last is a protocol"""
+            for i in range(lastChildPos - 1, -1, -1):
+                if childs[i].tag == cls.TAG_PROTOCOL:
+                    break
+                else:
+                    tmp = childs[i + 1]
+                    childs[i + 1] = childs[i]
+                    childs[i] = tmp
+
+        def sortWhenLastIsNotAProtocol():
+            """ Sorts children when the last is NOT a protocol"""
+            for i in range(lastChildPos - 1, -1, -1):
+                if childs[i].tag == cls.TAG_PROTOCOL:
+                    break
+                elif 'more' in str(childs[i].text).lower():
+                    tmp = childs[i + 1]
+                    childs[i + 1] = childs[i]
+                    childs[i] = tmp
+
         lengthSession = len(session.childs)
         if lengthSession > 1:
             childs = session.childs
             lastChildPos = lengthSession - 1
             if childs[lastChildPos].tag == cls.TAG_PROTOCOL:
-                for i in range(lastChildPos - 1, -1, -1):
-                    if childs[i].tag == cls.TAG_PROTOCOL:
-                        break
-                    else:
-                        tmp = childs[i + 1]
-                        childs[i + 1] = childs[i]
-                        childs[i] = tmp
+                sortWhenLastIsAProtocol()
             else:
-                for i in range(lastChildPos - 1, -1, -1):
-                    if childs[i].tag == cls.TAG_PROTOCOL:
-                        break
-                    elif 'more' in str(childs[i].text).lower():
-                        tmp = childs[i + 1]
-                        childs[i + 1] = childs[i]
-                        childs[i] = tmp
+                sortWhenLastIsNotAProtocol()
 
     @classmethod
     def __findTreeLocation(cls, subMenu, children, parent):
@@ -403,6 +433,22 @@ class ProtocolTreeConfig:
         Load the protocols in the tree from a given protocols.conf file,
         either the global one in Scipion or defined in a plugin.
         """
+
+        def addProtocols():
+            """ Adds protocols defined in the "PROTOCOLS" section of the config file. """
+            for menuName in cp.options('PROTOCOLS'):
+                if menuName not in protocols:  # The view has not been inserted
+                    menu = ProtocolConfig(menuName)
+                    children = json.loads(cp.get('PROTOCOLS', menuName))
+                    for child in children:
+                        cls.__addToTree(menu, child, cls.__checkItem)
+                    protocols[menuName] = menu
+                else:  # The view has been inserted
+                    menu = protocols.get(menuName)
+                    children = json.loads(cp.get('PROTOCOLS',
+                                                 menuName))
+                    cls.__findTreeLocation(menu.childs, children, menu)
+
         # Populate the protocols menu from the plugin config file.
         if os.path.exists(protocolsConfPath):
             cp = ConfigParser()
@@ -410,18 +456,7 @@ class ProtocolTreeConfig:
             cp.read(protocolsConfPath)
             #  Ensure that the protocols section exists
             if cp.has_section('PROTOCOLS'):
-                for menuName in cp.options('PROTOCOLS'):
-                    if menuName not in protocols:  # The view has not been inserted
-                        menu = ProtocolConfig(menuName)
-                        children = json.loads(cp.get('PROTOCOLS', menuName))
-                        for child in children:
-                            cls.__addToTree(menu, child, cls.__checkItem)
-                        protocols[menuName] = menu
-                    else:  # The view has been inserted
-                        menu = protocols.get(menuName)
-                        children = json.loads(cp.get('PROTOCOLS',
-                                                     menuName))
-                        cls.__findTreeLocation(menu.childs, children, menu)
+                addProtocols()
 
     @classmethod
     def load(cls, domain, protocolsConf):

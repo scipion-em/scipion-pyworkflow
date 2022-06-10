@@ -73,31 +73,21 @@ class SearchProtocolWindow(SearchBaseWindow):
         return self.master.getViewWidget()._createProtocolsTree(frame, show=show, columns=columns)
 
     def _onSearchClick(self, e=None):
+
         self._resultsTree.clear()
+
+        protList = self.scoreProtocols()
+
+        # Sort by weight
+        protList.sort(reverse=True, key=lambda x: x[7])
+
+        self._addProtocolToTree(protList)
+
+    def scoreProtocols(self):
+
         keyword = self._searchVar.get().lower().strip()
         emProtocolsDict = Config.getDomain().getProtocols()
         protList = []
-
-        def addSearchWeight(line2Search, searchtext):
-            # Adds a weight value for the search
-            weight = 0
-
-            # prioritize findings in label
-            if searchtext in line2Search[1]:
-                weight += 10
-
-            for value in line2Search[2:]:
-                weight += 5 if searchtext in value else 0
-
-            if " " in searchtext:
-                for word in searchtext.split():
-                    if word in line2Search[1]:
-                        weight += 3
-
-                    for value in line2Search[2:]:
-                        weight += 1 if word in value else 0
-
-            return line2Search + (weight,)
 
         for key, prot in emProtocolsDict.items():
             if isAFinalProtocol(prot, key):
@@ -109,13 +99,39 @@ class SearchProtocolWindow(SearchBaseWindow):
                         "beta" if prot.isBeta() else "",
                         "new" if prot.isNew() else "")
 
-                line = addSearchWeight(line, keyword)
+                line = self._addSearchWeight(line, keyword)
                 # something was found: weight > 0
                 if line[7] != 0:
                     protList.append(line)
 
-        # Sort by weight
-        protList.sort(reverse=True, key=lambda x: x[7])
+        return protList
+
+    @staticmethod
+    def _addSearchWeight(line2Search, searchtext):
+        # Adds a weight value for the search
+        weight = 0
+
+        # prioritize findings in label
+        if searchtext in line2Search[1]:
+            weight += 10
+
+        for value in line2Search[2:]:
+            weight += 5 if searchtext in value else 0
+
+        if " " in searchtext:
+            for word in searchtext.split():
+                if word in line2Search[1]:
+                    weight += 3
+
+                for value in line2Search[2:]:
+                    weight += 1 if word in value else 0
+
+        return line2Search + (weight,)
+
+    def _addProtocolToTree(self, protList):
+        """ Adds the items in protList to the tree
+
+        :param protList: List of tuples with all the values/colunms used in search ans shown in the tree"""
 
         for key, label, installed, help, streamified, beta, new, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed',

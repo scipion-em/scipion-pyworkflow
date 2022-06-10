@@ -24,11 +24,13 @@
 # **************************************************************************
 import logging
 import threading
-from configparser import ConfigParser
 
 from pyworkflow.gui import TextFileViewer, getDefaultFont
-from pyworkflow.project import MenuConfig
-from pyworkflow import Config, TK
+from pyworkflow.gui.project.constants import ACTION_REFRESH, ACTION_EDIT, ACTION_COPY, ACTION_DELETE, ACTION_STEPS, \
+    ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, \
+    ACTION_COLLAPSE, ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ActionIcons, ACTION_TREE, ACTION_SWITCH_VIEW, \
+    ACTION_SELECT_TO, ACTION_RENAME, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, ACTION_DEFAULT, \
+    ACTION_SELECT_FROM, ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW
 
 INIT_REFRESH_SECONDS = 5
 
@@ -49,13 +51,12 @@ from pyworkflow import Config, TK
 import pyworkflow.utils as pwutils
 import pyworkflow.protocol as pwprot
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
-from pyworkflow.utils.properties import Color, KEYSYM
+from pyworkflow.utils.properties import Color, KEYSYM, Icon, Message
 from pyworkflow.webservices import WorkflowRepository
 
 import pyworkflow.gui as pwgui
 from pyworkflow.gui.form import FormWindow
 from pyworkflow.gui.project.utils import getStatusColorFromNode, inspectObj
-from pyworkflow.gui.project.constants import *
 from pyworkflow.gui.project.searchprotocol import SearchProtocolWindow, ProtocolTreeProvider
 from pyworkflow.gui.project.steps import StepsWindow
 from pyworkflow.gui.project.viewprotocols_extra import RunIOTreeProvider, ProtocolTreeConfig

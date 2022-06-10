@@ -889,9 +889,11 @@ class SearchBaseWindow(Window):
         return t
 
     def _click(self, event):
+        """ To be implemented, triggered on tree-view click """
         pass
 
     def _double_click(self, event):
+        """ To be implemented, triggered on tree-view double click """
         pass
 
     def addSearchWeight(self, line2Search, searchtext):
@@ -924,4 +926,5 @@ class SearchBaseWindow(Window):
                                       self._resultsTree.sortByColumn(bound_key, False, casting=bound_casting))
 
     def _onSearchClick(self, e=None):
+        """ To be implemented, triggered on search button click"""
         pass

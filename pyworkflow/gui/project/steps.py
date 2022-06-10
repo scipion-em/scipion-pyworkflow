@@ -31,8 +31,8 @@ import  pyworkflow.gui as pwgui
 import pyworkflow.utils as pwutils
 
 
-from pyworkflow.gui.project.constants import *
 from pyworkflow import TK
+from pyworkflow.utils import Icon
 
 
 class StepsTreeProvider(pwgui.tree.TreeProvider):
