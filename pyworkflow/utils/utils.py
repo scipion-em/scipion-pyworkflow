@@ -334,6 +334,8 @@ def getHostFullName():
     return socket.getfqdn()
 
 
+# ******************************File utils *******************************
+
 def isInFile(text, filePath):
     """ Checks if given text is in the given file.
     params:
@@ -357,6 +359,19 @@ def getLineInFile(text, fileName):
             if text in line:
                 return i + 1
     return None
+
+def hasAnyFileChanged(files, time):
+    """ Returns true if any of the files in files list has been changed after 'time'"""
+    for file in files:
+        if hasFileChangedSince(file, time):
+            return True
+
+    return False
+
+def hasFileChangedSince(file, time):
+    """ Returns true if the file has changed after 'time'"""
+    modTime = datetime.datetime.fromtimestamp(getmtime(file))
+    return time < modTime
 
 
 # ------------- Colored message strings -----------------------------

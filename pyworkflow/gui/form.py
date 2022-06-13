@@ -487,6 +487,7 @@ class SubclassesTreeProvider(TreeProvider):
 
                             match = False
                             cancelConditionEval = False
+                            possibleOutput = isinstance(attr, type)
 
                             # Go through all compatible Classes coming from in pointerClass string
                             for c in classes:
@@ -496,7 +497,7 @@ class SubclassesTreeProvider(TreeProvider):
                                     break
                                 # If it is a class already: "possibleOutput" case. In this case attr is the class and not
                                 # an instance of c. In this special case
-                                elif isinstance(attr, type) and attr == c:
+                                elif possibleOutput and attr == c:
                                     match = True
                                     cancelConditionEval = True
 
@@ -506,12 +507,13 @@ class SubclassesTreeProvider(TreeProvider):
                                     p = pwobj.Pointer(prot, extended=paramName)
                                     p._allowsSelection = True
                                     objects.append(p)
+                                    return
 
                             # JMRT: For all sets, we don't want to include the
                             # subitems here for performance reasons (e.g SetOfParticles)
                             # Thus, a Set class can define EXPOSE_ITEMS = True
                             # to enable the inclusion of its items here
-                            if getattr(attr, 'EXPOSE_ITEMS', False):
+                            if getattr(attr, 'EXPOSE_ITEMS', False) and not possibleOutput:
                                 # If the ITEM type match any of the desired classes
                                 # we will add some elements from the set
                                 if (attr.ITEM_TYPE is not None and
@@ -2050,17 +2052,17 @@ class FormWindow(Window):
     def _createLegacyInfo(self, parent):
         frame = tk.Frame(parent, name="legacy")
         t = tk.Label(frame,
-                     text="This protocol is missing from the installation. "
+                     text="This protocol is missing in this installation. "
                           "\nThis could be because you are opening an old "
-                          "project and some of \nthe executed protocols does "
-                          "not exist in the current version and were deprecated"
+                          "project and some of \nthe executed protocols do "
+                          "not exist anymore and were deprecated"
                           ",\n or because your scipion installation requires a "
                           "plugin where this protocol can be found.\n\n"
                           "If you are a developer, it could be the case that "
                           "you have changed \nto another branch where the "
                           "protocol does not exist.\n\n"
                           "Anyway, you can still inspect the parameters by "
-                          "opening the DB from the toolbar."
+                          "opening the DB from the toolbar activating the Debug mode."
                      )
         t.grid(row=0, column=0, padx=5, pady=5)
 

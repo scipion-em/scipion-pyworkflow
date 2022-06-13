@@ -431,6 +431,7 @@ class Protocol(Step):
         self.summaryWarnings = []
         # Get a lock for threading execution
         self._lock = threading.Lock()
+        self.forceSchedule = Boolean(False)
 
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as

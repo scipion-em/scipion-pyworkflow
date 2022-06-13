@@ -1135,6 +1135,7 @@ class Project(object):
                 prot._useQueue.set(protDict.get('_useQueue', False))
                 prot._queueParams.set(protDict.get('_queueParams', None))
                 prot._prerequisites.set(protDict.get('_prerequisites', None))
+                prot.forceSchedule.set(protDict.get('forceSchedule', False))
                 newDict[protId] = prot
                 self.saveProtocol(prot)
 

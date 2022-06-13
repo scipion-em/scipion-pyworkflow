@@ -23,6 +23,9 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+logger = logging.getLogger(__name__)
+
 from pyworkflow import Config
 
 
@@ -62,7 +65,7 @@ class BasicLayout(GraphLayout):
         try:
             parents = node.getParents()
             if not parents:
-                print("EMPTY NODE ask JM")
+                logger.info("EMPTY NODE")
                 return
             maxParent = parents[0]
 
@@ -83,11 +86,10 @@ class BasicLayout(GraphLayout):
                 node.x = rightSibling.x + rightSibling.width/2 + self.DX + node.width/2
                 node.y = rightSibling.y
         except Exception as e:
-            from pyworkflow.utils import envVarOn
             if Config.debugOn():
-                print("Can't draw node: %s" % node, e)
+                logger.debug("Can't draw node: %s" % node, e)
                 import traceback
-                traceback.print_stack()
+                logger.debug("".join(traceback.format_stack()))
             else:
                 # Do nothing
                 return
@@ -155,8 +157,9 @@ class LevelTreeLayout(GraphLayout):
     
             if self.__isNodeExpanded(node):
                 for child in node.getChilds():
+                    logger.debug("%s: Setting layout for child %s" % ("-" * level, child))
                     self._setLayoutLevel(child, level+1, node)
-    
+
     def __isNodeExpanded(self, node):
         """ Check if the status of the node is expanded or collapsed. """
         return getattr(node, 'expanded', True)
