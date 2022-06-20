@@ -956,10 +956,9 @@ class Protocol(Step):
 
     def __insertStep(self, step, **kwargs):
         """ Insert a new step in the list.
-        Params:
-         **kwargs:
-            prerequisites: a list with the steps index that need to be done
-                           previous than the current one."""
+
+        :param prerequisites: a single integer or a list with the steps index that need to be done
+                           previous to the current one."""
         prerequisites = kwargs.get('prerequisites', None)
 
         if prerequisites is None:
@@ -967,6 +966,10 @@ class Protocol(Step):
                 # By default add the previous step as prerequisite
                 step.addPrerequisites(len(self._steps))
         else:
+            # Allow passsing just an id
+            if not isinstance(prerequisites, list):
+                prerequisites = [prerequisites]
+
             step.addPrerequisites(*prerequisites)
 
         self._steps.append(step)

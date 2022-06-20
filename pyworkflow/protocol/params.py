@@ -331,6 +331,12 @@ class Form(object):
     def addParallelSection(self, threads=1, mpi=8, condition="",
                            hours=72, jobsize=0):
 
+        """ Adds the parallelization section to the form
+            pass threads=0 to disable threads parameter and mpi=0 to disable mpi params
+
+        :param threads: default value for of threads, defaults to 1
+        :param mpi: default value for mpi, defaults to 8"""
+
         self.addSection(label='Parallelization')
         self.addParam('hostName', StringParam, default="localhost",
                       label='Execution host',
