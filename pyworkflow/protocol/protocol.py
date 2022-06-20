@@ -966,7 +966,7 @@ class Protocol(Step):
                 # By default add the previous step as prerequisite
                 step.addPrerequisites(len(self._steps))
         else:
-            # Allow passsing just an id
+            # Allow passing just an id
             if not isinstance(prerequisites, list):
                 prerequisites = [prerequisites]
 

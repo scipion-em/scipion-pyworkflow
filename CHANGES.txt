@@ -1,17 +1,19 @@
 V3.0.21
 -------
-- Generating an interface to create the scipion log file.
-- Creating an option to display the scipion log
-
-V3.0.20
--------
- - Empty sections/subsection (without protocols) in the left tree will not be shown
+ - Generating an interface to create the scipion log file.
+ - Creating an option to display the scipion log
  - New "Search protocol in graph" (Control + l) window to locate a box in the graph
  - At loading time, selected protocol is "focused" (window scrolls to it)
  - Control + MouseWheel scrolls horizontally
  - Links are also detected when they are just "http"
  - Bugfixed: Input list is shown when there are possible outputs and need to "expose details" (like selecting a specific volume in a set)
 
+Developers:
+ - prerequisites could be just the id or the previous list of ids when adding a step.
+
+V3.0.20
+-------
+ - Empty sections/subsection (without protocols) in the left tree will not be shown
 
 Developers:
  - Allow pointers to be defined with a list of classes instead of a string: "SetOfParticles, SetOfAverages" or [ SetOfParticles, SetOfAverages ]
