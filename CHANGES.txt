@@ -1,3 +1,7 @@
+V3.0.22
+-------
+- Fixing an error related with the logic of the EXECUTE/SCHEDULE button
+
 V3.0.21
 -------
  - Generating an interface to create the scipion log file.

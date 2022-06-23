@@ -2562,12 +2562,12 @@ class FormWindow(Window):
         if btnExecute is None:
             return
         btnState = tk.DISABLED if (self.protocol.isActive() and not self.protocol.isInteractive()) else tk.NORMAL
-        emptyPointers, openSetPointer = self.protocol.getInputStatus()
+        emptyInput, openSetPointer, emptyPointers = self.protocol.getInputStatus()
 
-        if emptyPointers:
+        if emptyInput:
             btnState = tk.DISABLED
 
-        if openSetPointer:
+        if openSetPointer or emptyPointers:
             btnText = 'Schedule'
             cmd = self.schedule
         else:
