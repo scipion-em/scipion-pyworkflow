@@ -739,6 +739,7 @@ class Protocol(Step):
         """
         emptyPointers = False
         openSetPointer = False
+        emptyInput = False
 
         for paramName, attr in self.iterInputPointers():
 
@@ -757,14 +758,19 @@ class Protocol(Step):
             condition = self.evalParamCondition(paramName)
 
             obj = attr.get()
+            if isinstance(obj, Protocol):  # the pointer points to a protocol
+                if obj.getStatus() == STATUS_SAVED:
+                    emptyPointers = True
+            elif obj is None:
+                emptyPointers = True
             if condition and obj is None and not param.allowsNull:
                 if not attr.hasValue():
-                   emptyPointers = True
+                   emptyInput = True
 
             if not self.worksInStreaming() and isinstance(obj, Set) and obj.isStreamOpen():
                 openSetPointer = True
 
-        return emptyPointers, openSetPointer
+        return emptyInput, openSetPointer, emptyPointers
 
     def iterOutputAttributes(self, outputClass=None, includePossible=False):
         """ Iterate over the outputs produced by this protocol. """
