@@ -835,7 +835,7 @@ class Pointer(Object):
             parts = ext.split('.')
             value = self._objValue
             for p in parts:
-                if p.isdigit():
+                if hasattr(value, "__getitem__") and p.isdigit():
                     value = value[int(p)]  # item case
                 else:
                     value = getattr(value, p, None)
