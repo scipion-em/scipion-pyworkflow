@@ -1,6 +1,27 @@
+V3.0.21
+-------
+ - Generating an interface to create the scipion log file.
+ - Creating an option to display the scipion log
+ - New "Search protocol in graph" (Control + l) window to locate a box in the graph
+ - At loading time, selected protocol is "focused" (window scrolls to it)
+ - Control + MouseWheel scrolls horizontally
+ - Links are also detected when they are just "http"
+ - Bugfixed: Input list is shown when there are possible outputs and need to "expose details" (like selecting a specific volume in a set)
+ - Bugfixed: Outputs that a numeric do not break the "Browse object window"
+ - Fixing an error related with the logic of the EXECUTE/SCHEDULE button
+
+Developers:
+ - prerequisites could be just the id or the previous list of ids when adding a step.
+
 V3.0.20
 -------
  - Empty sections/subsection (without protocols) in the left tree will not be shown
+
+Developers:
+ - Allow pointers to be defined with a list of classes instead of a string: "SetOfParticles, SetOfAverages" or [ SetOfParticles, SetOfAverages ]
+ - Two "utils" functions: hasAnyFileChanged, hasFileChangedSince to check if a file/s have changed since a "time" passed.
+ - BaseTest now has: setupTestOutput exposed --> self.setupTestOutput()
+ - Allow getting an item in a set not only by id but by a query: myset["_tsId=tomo1"].
 
 
 V3.0.19
@@ -11,6 +32,9 @@ V3.0.19
  - Creating in the config new constants to prevent sqlite locks when updating any set
     - SCIPION_UPDATE_SET_ATTEMPTS: Number of attempts when trying a set update. The default value is 3
     - SCIPION_UPDATE_SET_ATTEMPT_WAIT: Time in seconds to wait between updates. The default value is 2 seconds
+
+Developers:
+ - In _showWizard, passing the paramName as a form variable so the wizard can check from which parameter it was called
 
 
 V3.0.18

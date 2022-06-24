@@ -87,8 +87,14 @@ class ProjectWindow(ProjectBaseWindow):
         projMenu.addSubMenu('Toggle color mode', 'color_mode',
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
-                            shortCut="Ctrl+a")
+                            shortCut="Ctrl+a", icon='workflow.gif')
         projMenu.addSubMenu('Find protocol to add', 'find protocol',
+                            shortCut="Ctrl+f", icon='binoculares.gif')
+        projMenu.addSubMenu('Scipion log', 'scipion log',
+                            icon='fa-file-o.gif')
+        projMenu.addSubMenu('Locate a protocol', 'locate protocol',
+                            shortCut="Ctrl+l")
+        projMenu.addSubMenu('Add a protocol', 'find protocol',
                             shortCut="Ctrl+f")
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
@@ -269,8 +275,14 @@ class ProjectWindow(ProjectBaseWindow):
     def onSelectAllProtocols(self):
         self.getViewWidget()._selectAllProtocols(None)
 
-    def onFindProtocolToAdd(self):
+    def onAddAProtocol(self):
         self.getViewWidget()._findProtocol(None)
+
+    def onLocateAProtocol(self):
+        self.getViewWidget()._locateProtocol(None)
+
+    def onScipionLog(self):
+        self.getViewWidget()._scipionLog(None)
 
     def manageLabels(self):
         return LabelsDialog(self.root,

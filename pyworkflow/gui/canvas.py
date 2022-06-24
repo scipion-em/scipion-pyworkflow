@@ -365,6 +365,26 @@ class Canvas(tk.Canvas, Scrollable):
     def zoomerM(self, event):
         self.__zoom(event, 0.9)
 
+    def moveTo(self, x, y):
+
+        if x > 1 or y > 1:
+            x0,y0,x1,y1 = self.bbox("all")
+
+            # x dim
+            x = x / (x0+x1)
+            start, end = self.xview()
+            visisble_length = end - start
+            x = x - (visisble_length/2)
+
+            # Same with y
+            y = y / (y0+y1)
+            start, end = self.yview()
+            visible_length = end - start
+            y = y - (visible_length / 2)
+
+        self.xview("moveto", x)
+        self.yview("moveto", y)
+
     def drawGraph(self, graph, layout=None, drawNode=None, nodeList=None):
         """ Draw a graph in the canvas.
         nodes in the graph should have x and y.

@@ -30,16 +30,17 @@ some code was taken from tkSimpleDialog
 """
 import tkinter as tk
 import traceback
-# from tkinter.colorchooser import askcolor as _askColor
 from tkcolorpicker import askcolor as _askColor
 
 from pyworkflow.exceptions import PyworkflowException
-from pyworkflow.utils import Message, Icon
-from . import gui
-from .tree import BoundTree
+from pyworkflow.utils import Message, Icon, Color
+from . import gui, Window, widgets, configureWeigths
+from .tree import BoundTree, Tree
 from .text import Text, TaggedText
 
 # Possible result values for a Dialog
+from .. import TK
+
 RESULT_YES = 0
 RESULT_NO = 1
 RESULT_CANCEL = 2
@@ -795,3 +796,135 @@ class FileBrowseDialog(Dialog):
             showError("Validation error", "Please select an element", self)
             return False
         return True
+
+
+
+
+
+class SearchBaseWindow(Window):
+    """ Base window for searching in a list
+    You are going to implement several elements:
+
+        columnsConfig: a dictionary with elements with this structure:
+            <column-key>: (<title>,{kwargs for tree.column method}, weight, <casting_method>(optional, otherwise str))
+
+        Example:
+
+        columnConfig = {
+            '#0': ('Status', {'width': 50, 'minwidth': 50, 'stretch': tk.NO}, 3),
+            'protocol': ('Protocol', {'width': 300, 'stretch': tk.FALSE}), 5,
+            'streaming': ('Streamified', {'width': 100, 'stretch': tk.FALSE}, 3),
+            'installed': ('Installation', {'width': 110, 'stretch': tk.FALSE}, 3),
+            'help': ('Help', {'minwidth': 300, 'stretch': tk.YES}, 3),
+            'score': ('Score', {'width': 50, 'stretch': tk.FALSE}, 3, int),
+        }
+
+        _createResultsTree method
+        _onSearchClick method
+
+        See SearchProtocolWindow as an example
+
+    """
+    COLUMN_TEXT_INDEX = 0
+    COLUMN_KWARGS_INDEX = 1
+    WEIGHT_INDEX = 2
+    CASTING_INDEX = 3
+    columnConfig = {}  # Columns configuration
+
+    def __init__(self, parentWindow, title="Search element", onClick=None, onDoubleClick=None, **kwargs):
+        super().__init__(title=title,
+                              masterWindow=parentWindow)
+
+        self.onClick = self._click if onClick is None else onClick
+        self.onDoubleClick = self._double_click if onDoubleClick is None else onDoubleClick
+
+        content = tk.Frame(self.root, bg='white')
+        self._createContent(content)
+        content.grid(row=0, column=0, sticky='news')
+        content.columnconfigure(0, weight=1)
+        content.rowconfigure(1, weight=1)
+
+    def getColumnKeys(self):
+        return self.columnConfig.keys()
+
+    def _createContent(self, content):
+        self._createSearchBox(content)
+        self._createResultsBox(content)
+
+    def _createSearchBox(self, content):
+        """ Create the Frame with Search widgets """
+        frame = tk.Frame(content, bg='white')
+
+        label = tk.Label(frame, text="Search", bg='white')
+        label.grid(row=0, column=0, sticky='nw')
+        self._searchVar = tk.StringVar()
+        entry = tk.Entry(frame, bg='white', textvariable=self._searchVar)
+        entry.bind(TK.RETURN, self._onSearchClick)
+        entry.bind(TK.ENTER, self._onSearchClick)
+        entry.focus_set()
+        entry.grid(row=0, column=1, sticky='nw')
+        btn = widgets.IconButton(frame, "Search",
+                                       imagePath=Icon.ACTION_SEARCH,
+                                       command=self._onSearchClick)
+        btn.grid(row=0, column=2, sticky='nw')
+
+        frame.grid(row=0, column=0, sticky='new', padx=5, pady=(10, 5))
+
+    def _createResultsBox(self, content):
+        frame = tk.Frame(content, bg=Color.LIGHT_GREY_COLOR, padx=5, pady=5)
+        configureWeigths(frame)
+        self._resultsTree = self._createResultsTree(frame,
+                                                    show=None,
+                                                    columns=list(self.getColumnKeys())[1:])
+        self._configureTreeColumns()
+        self._resultsTree.grid(row=0, column=0, sticky='news')
+        frame.grid(row=1, column=0, sticky='news', padx=5, pady=5)
+
+    def _createResultsTree(self, frame, show, columns):
+
+        t = Tree(frame, show=show, columns=columns)
+        t.column('#0', minwidth=100)
+        t.bind("<Button-1>", self.onClick)
+        t.bind("<Double-1>", self.onDoubleClick)
+        return t
+
+    def _click(self, event):
+        """ To be implemented, triggered on tree-view click """
+        pass
+
+    def _double_click(self, event):
+        """ To be implemented, triggered on tree-view double click """
+        pass
+
+    def addSearchWeight(self, line2Search, searchtext):
+        # Adds a weight value for the search
+        weight = 0
+
+        linelower = [str(v).lower() for v in line2Search]
+
+        for index, column in enumerate(self.columnConfig.values()):
+
+            if searchtext in linelower[index]:
+                # prioritize findings in label
+                weight += column[self.WEIGHT_INDEX]*2
+
+            elif " " in searchtext:
+                for word in searchtext.split():
+                    if word in linelower[index]:
+                        weight += column[self.WEIGHT_INDEX]
+
+        return line2Search + (weight,)
+
+    def _configureTreeColumns(self):
+
+        for key, columnConf in self.columnConfig.items():
+            casting = str if len(columnConf) <= self.CASTING_INDEX else columnConf[self.CASTING_INDEX]
+            self._resultsTree.column(key, **columnConf[self.COLUMN_KWARGS_INDEX])
+            self._resultsTree.heading(key,
+                                      text=columnConf[self.COLUMN_TEXT_INDEX],
+                                      command=lambda bound_key=key, bound_casting=casting:
+                                      self._resultsTree.sortByColumn(bound_key, False, casting=bound_casting))
+
+    def _onSearchClick(self, e=None):
+        """ To be implemented, triggered on search button click"""
+        pass

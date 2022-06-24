@@ -835,7 +835,7 @@ class Pointer(Object):
             parts = ext.split('.')
             value = self._objValue
             for p in parts:
-                if p.isdigit():
+                if hasattr(value, "__getitem__") and p.isdigit():
                     value = value[int(p)]  # item case
                 else:
                     value = getattr(value, p, None)
@@ -1103,7 +1103,14 @@ class Set(Object):
     def __getitem__(self, itemId):
         """ Get the image with the given id. """
         closedMapper = self._mapper is None
-        item = self._getMapper().selectById(itemId)
+
+        if isinstance(itemId, dict):
+            for obj in self._getMapper().selectBy(**itemId):
+                item = obj
+                break
+        else:
+            item = self._getMapper().selectById(itemId)
+
         if closedMapper:
             self.close()
         return item

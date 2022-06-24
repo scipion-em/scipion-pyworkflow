@@ -431,6 +431,7 @@ class Protocol(Step):
         self.summaryWarnings = []
         # Get a lock for threading execution
         self._lock = threading.Lock()
+        self.forceSchedule = Boolean(False)
 
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
@@ -738,6 +739,7 @@ class Protocol(Step):
         """
         emptyPointers = False
         openSetPointer = False
+        emptyInput = False
 
         for paramName, attr in self.iterInputPointers():
 
@@ -756,14 +758,16 @@ class Protocol(Step):
             condition = self.evalParamCondition(paramName)
 
             obj = attr.get()
+            if obj is None or (isinstance(obj, Protocol) and obj.getStatus() == STATUS_SAVED): # the pointer points to a protocol
+                emptyPointers = True
             if condition and obj is None and not param.allowsNull:
                 if not attr.hasValue():
-                   emptyPointers = True
+                   emptyInput = True
 
             if not self.worksInStreaming() and isinstance(obj, Set) and obj.isStreamOpen():
                 openSetPointer = True
 
-        return emptyPointers, openSetPointer
+        return emptyInput, openSetPointer, emptyPointers
 
     def iterOutputAttributes(self, outputClass=None, includePossible=False):
         """ Iterate over the outputs produced by this protocol. """
@@ -955,10 +959,9 @@ class Protocol(Step):
 
     def __insertStep(self, step, **kwargs):
         """ Insert a new step in the list.
-        Params:
-         **kwargs:
-            prerequisites: a list with the steps index that need to be done
-                           previous than the current one."""
+
+        :param prerequisites: a single integer or a list with the steps index that need to be done
+                           previous to the current one."""
         prerequisites = kwargs.get('prerequisites', None)
 
         if prerequisites is None:
@@ -966,6 +969,10 @@ class Protocol(Step):
                 # By default add the previous step as prerequisite
                 step.addPrerequisites(len(self._steps))
         else:
+            # Allow passing just an id
+            if not isinstance(prerequisites, list):
+                prerequisites = [prerequisites]
+
             step.addPrerequisites(*prerequisites)
 
         self._steps.append(step)

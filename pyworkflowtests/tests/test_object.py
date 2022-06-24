@@ -35,6 +35,10 @@ from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
 
+NUMERIC_ATRIBUTE_NAME = "1"
+
+NUMERIC_ATTRIBUTE_VALUE = "numeric_attribute"
+
 
 class ListContainer(pwobj.Object):
     def __init__(self, **args):
@@ -229,10 +233,17 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(imgSet[7], ptr4.get())
         self.assertEqual(ptr4.getExtended(), 'outputImages.7')
 
+        # Test numeric attributes.
+        setattr(o2, NUMERIC_ATRIBUTE_NAME, NUMERIC_ATTRIBUTE_VALUE)
+        ptr5 = pwobj.Pointer(value=o2, extended=NUMERIC_ATRIBUTE_NAME)
+        self.assertEqual(NUMERIC_ATTRIBUTE_VALUE, ptr5.get())
+
+
+
+
     def test_Sets(self):
         stackFn = "images.stk"
         fn = self.getOutputPath('test_images2.sqlite')
-        print("Writing to sqlite: %s" % fn)
 
         imgSet = MockSetOfImages(filename=fn)
 
@@ -260,8 +271,6 @@ class TestObject(pwtests.BaseTest):
         # PERFORMANCE functionality
         def checkSetIteration(limit, skipRows=None):
 
-            print("Checking set iteration with limit:%s and skipRows: %s"
-                  % (limit, skipRows))
             expectedId = 1 if skipRows is None else skipRows+1
             index = 0
             for item in imgSet.iterItems(limit=(limit, skipRows)):
@@ -385,10 +394,6 @@ class TestObject(pwtests.BaseTest):
         m1.setSamplingRate(1.6)
         m1.setAcquisition(acq1)
         m1Dict = m1.getObjDict(includeBasic=True)
-        for k, v in m1Dict.items():
-            if isinstance(v, str):
-                v = "'%s'" % v
-            print("('%s', %s)," % (k, v))
 
         goldDict1 = dict([
             ('object.id', 1),
