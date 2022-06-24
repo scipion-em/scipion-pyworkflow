@@ -1,7 +1,3 @@
-V3.0.22
--------
-- Fixing an error related with the logic of the EXECUTE/SCHEDULE button
-
 V3.0.21
 -------
  - Generating an interface to create the scipion log file.
@@ -12,6 +8,7 @@ V3.0.21
  - Links are also detected when they are just "http"
  - Bugfixed: Input list is shown when there are possible outputs and need to "expose details" (like selecting a specific volume in a set)
  - Bugfixed: Outputs that a numeric do not break the "Browse object window"
+ - Fixing an error related with the logic of the EXECUTE/SCHEDULE button
 
 Developers:
  - prerequisites could be just the id or the previous list of ids when adding a step.
