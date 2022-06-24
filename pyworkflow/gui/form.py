@@ -1670,7 +1670,7 @@ class FormWindow(Window):
             t = ('  Missing protocol: %s'
                  % (Mapper.getObjectPersistingClassName(prot)))
         else:
-            t = '  Protocol: %s' % (prot.getClassLabel())
+            t = '  %s' % (prot.getClassLabel())
 
         logoPath = prot.getPluginLogoPath() or getattr(package, '_logo', '')
 

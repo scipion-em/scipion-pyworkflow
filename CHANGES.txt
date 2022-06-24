@@ -11,6 +11,7 @@ V3.0.21
  - Control + MouseWheel scrolls horizontally
  - Links are also detected when they are just "http"
  - Bugfixed: Input list is shown when there are possible outputs and need to "expose details" (like selecting a specific volume in a set)
+ - Bugfixed: Outputs that a numeric do not break the "Browse object window"
 
 Developers:
  - prerequisites could be just the id or the previous list of ids when adding a step.
