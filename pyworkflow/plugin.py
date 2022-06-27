@@ -603,8 +603,13 @@ class Plugin:
             return ["validateInstallation fails: %s" % e]
 
     @classmethod
+    def getPluginDir(cls):
+        return os.path.join(pw.getModuleFolder(cls.getName()))
+
+    @classmethod
     def getPluginTemplateDir(cls):
-        return os.path.join(pw.getModuleFolder(cls.getName()), 'templates')
+        return os.path.join(cls.getPluginDir(), 'templates')
+
 
     @classmethod
     def getTemplates(cls):
