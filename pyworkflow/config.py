@@ -66,9 +66,8 @@ def getModuleFolder(moduleName):
 
 
 class Config:
-    """ Main Config for pyworkflow. It contains the main configuration values
+    """ Main Config for pyworkflow. It contains the main Scipion configuration variables
     providing default values or, if present, taking them from the environment.
-    It has SCIPION_HOME, SCIPION_USER_DATA ...
     Necessary value is SCIPION_HOME and has to be present in the environment"""
 
     @staticmethod
@@ -96,53 +95,67 @@ class Config:
     # Home for scipion
     _get = __get.__func__
     SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
-    "Path where Scipion is installed"
+    "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"
 
     _root = Root(SCIPION_HOME)
     _join = _root.join
 
     # SCIPION PATHS
-    # Where to install software
     SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
+    "Path where Scipion will install the software. Defaults to SCIPION_HOME/software."
 
-    # Where is the input data for tests...also where it will be downloaded
     SCIPION_TESTS = _join(_get('SCIPION_TESTS', os.path.join('data', 'tests')))
+    "Path where to find/download test data. Defaults to SCIPION_HOME/data/tests."
 
     # User dependent paths
-    # Location for scipion projects
     SCIPION_USER_DATA = _get('SCIPION_USER_DATA', '~/ScipionUserData')
+    "Path where Scipion projects are or will be created. Defaults to ~/ScipionUserData"
 
-    # General purpose scipion tmp folder
     SCIPION_TMP = _get('SCIPION_TMP', _join(SCIPION_USER_DATA, 'tmp'))
+    "General purpose scipion tmp folder. Defaults to SCIPION_USER_DATA/tmp"
+
     # LOGGING variables
-    # Path for Scipion logs folder: used by GUI
     SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA, 'logs'))
-    # Optional: custom logging configuration file
+    "Path for Scipion logs folder used by the GUI. Defaults to SCIPION_USER_DATA/logs."
+
     SCIPION_LOG_CONFIG = _get('SCIPION_LOG_CONFIG', None)
-    # Get general log file path (for the GUI)
+    "Optional. Path to a python logging configuration file fine tune the logging."
+
     SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
-    # Default logging level: String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET
+    "Path to the file where scipion will write GUI logging messages. Defaults to SCIPION_LOGS/scipion.log"
+
     SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
+    "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO."
 
-    # Scratch path
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
+    "Optional. Path to a location mounted in a scratch drive (SSD,...)"
 
-    # Where the output of the tests will be stored
     SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
+    "Path to a folder Where the output of the tests will be written. Defaults to SCIPION_USER_DATA/Tests."
 
     SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL', 'scipion@cnb.csic.es')
 
     SCIPION_LOGO = _get('SCIPION_LOGO', 'scipion_logo.gif')
 
-    # Config folders
+    # Config variables
     SCIPION_CONFIG = _get('SCIPION_CONFIG', 'scipion.conf')
+    "Path to the scipion configuration file where all this variables could be defined."
+
     SCIPION_LOCAL_CONFIG = _get('SCIPION_LOCAL_CONFIG', SCIPION_CONFIG)
+    "Path to an optional/extra/user configuration file meant to overwrite default variables."
+
     SCIPION_HOSTS = _get('SCIPION_HOSTS', 'hosts.conf')
+    "Path to the host.cof file to allow scipion to use queue engines and run in HPC environments."
+
     SCIPION_PROTOCOLS = _get('SCIPION_PROTOCOLS', 'protocols.conf')
+    ""
 
     SCIPION_PLUGIN_JSON = _get('SCIPION_PLUGIN_JSON', None)
+    "Optional. Path to get the json file with all the plugins available for Scipion."
+
     SCIPION_PLUGIN_REPO_URL = _get('SCIPION_PLUGIN_REPO_URL',
                                    'http://scipion.i2pc.es/getplugins/')
+    "Url from where to get the list of plugins."
 
     # REMOTE Section
     SCIPION_URL = _get('SCIPION_URL', 'http://scipion.cnb.csic.es/downloads/scipion')
@@ -151,16 +164,26 @@ class Config:
 
     # Scipion Notes
     SCIPION_NOTES_FILE = _get(SCIPION_NOTES_FILE, 'notes.txt')
+    "Name of the file where to write per project notes."
+
     SCIPION_NOTES_PROGRAM = _get(SCIPION_NOTES_PROGRAM, None)
+    "Command or program to use to open the notes file. Otherwise system will extension association will take place."
+
     SCIPION_NOTES_ARGS = _get(SCIPION_NOTES_ARGS, None)
 
     # Aspect
     SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica")
+    "Name of the font to use in Scipion GUI. Defaults to Helvetica."
+
     SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', 10))
+    "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10."
+
     WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
+    "Color to use in some wizards."
 
     # Notification
     SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
+    "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it."
 
     SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
 
@@ -169,6 +192,7 @@ class Config:
 
     # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not fallback on the slow copy.
     SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', None)
+    "Cancel fast copy done by shutil (copying files) when it fails. Has happened in GPFS environments."
 
     # Priority package list: This variable is used in the view protocols in
     # order to load first the plugins that contains the main protocols.conf
@@ -176,14 +200,14 @@ class Config:
     # duplicating all the sections in all plugins
     SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', None)
 
-    # Time in seconds to check the protocols steps. The default value is 3 seconds
-    SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 3))
+    SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 5))
+    "Number of seconds to wait before checking if new input is available in streamified protocols."
 
-    # Number of times trying to modify the protocol output. The default value is 3
     SCIPION_UPDATE_SET_ATTEMPTS = int(_get('SCIPION_UPDATE_SET_ATTEMPTS', 3))
+    "Number of attempts to modify the protocol output before failing. The default value is 3"
 
-    # Time in seconds to check new outputs. The default value is 2 seconds
     SCIPION_UPDATE_SET_ATTEMPT_WAIT = int(_get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2))
+    "Time in seconds to wait until the next attempt when checking new outputs. The default value is 2 seconds"
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
