@@ -96,6 +96,8 @@ class Config:
     # Home for scipion
     _get = __get.__func__
     SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
+    "Path where Scipion is installed"
+
     _root = Root(SCIPION_HOME)
     _join = _root.join
 
