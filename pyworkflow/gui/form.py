@@ -1187,6 +1187,7 @@ class ParamWidget:
             tp = MultiPointerTreeProvider(self._protocol.mapper)
             tree = BoundTree(content, tp, height=5)
             var = MultiPointerVar(tp, tree)
+            var.trace('w', self.window._onPointerChanged)
             tree.grid(row=0, column=0, sticky='we')
             self._addButton("Select", pwutils.Icon.ACTION_SEARCH, self._browseObject)
             self._addButton("Remove", pwutils.Icon.ACTION_DELETE, self._removeObject)

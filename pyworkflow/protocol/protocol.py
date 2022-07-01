@@ -758,7 +758,9 @@ class Protocol(Step):
             condition = self.evalParamCondition(paramName)
 
             obj = attr.get()
-            if obj is None or (isinstance(obj, Protocol) and obj.getStatus() == STATUS_SAVED): # the pointer points to a protocol
+            if isinstance(obj, Protocol) and obj.getStatus() == STATUS_SAVED:  # the pointer points to a protocol
+                emptyPointers = True
+            if obj is None and attr.hasValue():
                 emptyPointers = True
             if condition and obj is None and not param.allowsNull:
                 if not attr.hasValue():
