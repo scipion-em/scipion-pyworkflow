@@ -897,9 +897,13 @@ class Protocol(Step):
             for paramName, param in self._definition.iterParams():
                 # Create the var with value coming from kwargs or from
                 # the default param definition
-                var = param.paramClass(value=kwargs.get(paramName,
-                                                        param.default.get()))
-                setattr(self, paramName, var)
+                try:
+                    value = kwargs.get(paramName, param.default.get())
+                    var = param.paramClass(value=value)
+                    setattr(self, paramName, var)
+                except Exception as e:
+                    raise ValueError("Can't create parameter '%s' and set it to %s" %
+                                     (paramName, value)) from e
         else:
             print("FIXME: Protocol '%s' has not DEFINITION"
                   % self.getClassName())
