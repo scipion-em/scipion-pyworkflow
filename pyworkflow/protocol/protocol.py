@@ -758,7 +758,9 @@ class Protocol(Step):
             condition = self.evalParamCondition(paramName)
 
             obj = attr.get()
-            if obj is None or (isinstance(obj, Protocol) and obj.getStatus() == STATUS_SAVED): # the pointer points to a protocol
+            if isinstance(obj, Protocol) and obj.getStatus() == STATUS_SAVED:  # the pointer points to a protocol
+                emptyPointers = True
+            if obj is None and attr.hasValue():
                 emptyPointers = True
             if condition and obj is None and not param.allowsNull:
                 if not attr.hasValue():
@@ -895,9 +897,13 @@ class Protocol(Step):
             for paramName, param in self._definition.iterParams():
                 # Create the var with value coming from kwargs or from
                 # the default param definition
-                var = param.paramClass(value=kwargs.get(paramName,
-                                                        param.default.get()))
-                setattr(self, paramName, var)
+                try:
+                    value = kwargs.get(paramName, param.default.get())
+                    var = param.paramClass(value=value)
+                    setattr(self, paramName, var)
+                except Exception as e:
+                    raise ValueError("Can't create parameter '%s' and set it to %s" %
+                                     (paramName, value)) from e
         else:
             print("FIXME: Protocol '%s' has not DEFINITION"
                   % self.getClassName())
