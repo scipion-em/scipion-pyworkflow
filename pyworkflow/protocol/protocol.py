@@ -556,10 +556,11 @@ class Protocol(Step):
         """ This function will retrieve the text value
         of an enum parameter in the definition, taking the actual value in
         the protocol.
-        Params:
-            paramName: the name of the enum param.
-        Returns:
-            the string value corresponding to the enum choice.
+
+        :param paramName: the name of the enum param.
+
+        :returns: the string value corresponding to the enum choice.
+
         """
         index = getattr(self, paramName).get()
         return self.getParam(paramName).choices[index]
@@ -672,26 +673,31 @@ class Protocol(Step):
         their database to launch this protocol (this method is only used
         when a WORKFLOW is restarted or continued).
         Actions done here are:
-        1. Iterate over the main input Pointer of this protocol
-           (here, 3 different cases are analyzed)
 
-           A) When the pointer points to a protocol
+        #. Iterate over the main input Pointer of this protocol
+            (here, 3 different cases are analyzed)
 
-           B) When the pointer points to another object (INDIRECTLY).
-              - The pointer has an _extended value (new parameters configuration
+            #. When the pointer points to a protocol
+
+            #. When the pointer points to another object (INDIRECTLY).
+                The pointer has an _extended value (new parameters configuration
                 in the protocol)
 
-           C) When the pointer points to another object (DIRECTLY).
+            #. When the pointer points to another object (DIRECTLY).
+
               - The pointer has not an _extended value (old parameters
                 configuration in the protocol)
 
-        2. The PROTOCOL to which the pointer points is determined and saved in
-           the dictionary
+        #. The PROTOCOL to which the pointer points is determined and saved in
+            the dictionary
 
-        3. If this pointer points to another object (case B and C):
-           - Iterate over the main attributes of this pointer
-           - if any attribute is a pointer, then we move to PROTOCOL and repeat
-             this procedure from step 1
+        #. If this pointer points to another object (case B and C):
+
+          - Iterate over the main attributes of this pointer
+
+          - if any attribute is a pointer, then we move to PROTOCOL and repeat
+            this procedure from step 1
+
         """
         protocolDict = {}
         protocol = None
@@ -1324,6 +1330,15 @@ class Protocol(Step):
         pass
 
     def copy(self, other, copyId=True, excludeInputs=False):
+        """
+        Copies its attributes into the passed protocol
+
+        :param other: protocol instance to copt the attributes to
+        :param copyId: True (default) copies the identifier
+        :param excludeInputs: False (default). If true input attributes are excluded
+
+        """
+
         # Input attributes list
         inputAttributes = []
 
@@ -1737,14 +1752,16 @@ class Protocol(Step):
 
     @classmethod
     def validatePackageVersion(cls, varName, errors):
-        """ Function to validate the the package version specified in
+        """
+        Function to validate the package version specified in
         configuration file ~/.config/scipion/scipion.conf is among the available
         options and it is properly installed.
-        Params:
-            package: the package object (ej: eman2 or relion). Package should contain the
-                     following methods: getVersion(), getSupportedVersions()
-            varName: the expected environment var containing the path (and version)
-            errors: list to added error if found
+
+        :param package: the package object (ej: eman2 or relion). Package should contain the
+            following methods: getVersion(), getSupportedVersions()
+        :param varName: the expected environment var containing the path (and version)
+        :param errors: list of strings to add errors if found
+
         """
         package = cls.getClassPackage()
         packageName = cls.getClassPackageName()
@@ -2276,16 +2293,22 @@ class LegacyProtocol(Protocol):
 # ---------- Helper functions related to Protocols --------------------
 
 def runProtocolMain(projectPath, protDbPath, protId):
-    """ Main entry point when a protocol will be executed.
-    This function should be called when:
-    scipion runprotocol ...
-    Params:
-        projectPath: the absolute path to the project directory.
-        protDbPath: path to protocol db relative to projectPath
-        protId: id of the protocol object in db.
     """
+    Main entry point when a protocol will be executed.
+    This function should be called when::
+
+        scipion runprotocol ...
+
+    :param projectPath: the absolute path to the project directory.
+    :param protDbPath: path to protocol db relative to projectPath
+    :param protId: id of the protocol object in db.
+
+    """
+
     # Enter to the project directory and load protocol from db
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
+
+    print("PROTOCOL:",  protocol)
 
     setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 

@@ -214,17 +214,18 @@ class Project(object):
 
     def load(self, dbPath=None, hostsConf=None, protocolsConf=None, chdir=True,
              loadAllConfig=True):
-        """ Load project data, configuration and settings.
-        Params:
-            dbPath: the path to the project database.
-                If None, use the project.sqlite in the project folder.
-            hosts: where to read the host configuration. 
-                If None, check if exists in .config/hosts.conf
-                or read from ~/.config/scipion/hosts.conf
-            settings: where to read the settings.
-                If None, use the settings.sqlite in project folder.
-                If forProtocol is True, the settings and protocols.conf will
-                not be loaded.
+        """
+        Load project data, configuration and settings.
+
+        :param dbPath: the path to the project database.
+            If None, use the project.sqlite in the project folder.
+        :param hostsConf: where to read the host configuration.
+            If None, check if exists in .config/hosts.conf
+            or read from ~/.config/scipion/hosts.conf
+        :param protocolsConf: Not used
+        :param chdir: If True, os.cwd will be set to project's path.
+        :param loadAllConfig: If True, settings from settings.sqlite will also be loaded
+
         """
 
         if not os.path.exists(self.path):
@@ -350,9 +351,11 @@ class Project(object):
     def create(self, runsView=1, readOnly=False, hostsConf=None,
                protocolsConf=None):
         """Prepare all required paths and files to create a new project.
-        Params:
-         hosts: a list of configuration hosts associated to this projects
-               (class ExecutionHostConfig)
+
+        :param runsView: default view to associate the project with
+        :param readOnly: If True, project will be loaded as read only.
+        :param hostsConf: Path to the host.conf to be used when executing protocols
+        :param protocolsConf: Not used.
         """
         # Create project path if not exists
         pwutils.path.makePath(self.path)
@@ -532,10 +535,12 @@ class Project(object):
         This function can launch a workflow from a selected protocol in two
         modes depending on the 'mode' value (RESTART, CONTINUE)
         Actions done here are:
+
         1. Check if the workflow has active protocols.
         2. Fix the workflow if is not properly configured
         3. Restart or Continue a workflow starting from the protocol depending
-           of the 'mode' value
+            on the 'mode' value
+
         """
         errorsList = []
         if mode == MODE_RESTART:
@@ -548,14 +553,16 @@ class Project(object):
                        force=False):
         """ In this function the action of launching a protocol
         will be initiated. Actions done here are:
+
         1. Store the protocol and assign name and working dir
         2. Create the working dir and also the protocol independent db
         3. Call the launch method in protocol.job to handle submission:
-           mpi, thread, queue,
-        and also take care if the execution is remotely.
+            mpi, thread, queue,
+            and also take care if the execution is remotely.
 
         If the protocol has some prerequisites (other protocols that
         needs to be finished first), it will be scheduled.
+
         """
         if protocol.getPrerequisites() and not scheduled:
             return self.scheduleProtocol(protocol)
@@ -600,10 +607,13 @@ class Project(object):
     def scheduleProtocol(self, protocol, prerequisites=[], initialSleepTime=0):
         """ Schedule a new protocol that will run when the input data
         is available and the prerequisites are finished.
-        Params:
-            protocol: the protocol that will be scheduled.
-            prerequisites: a list with protocols ids that the scheduled
-                protocol will wait for.
+
+        :param protocol: the protocol that will be scheduled.
+        :param prerequisites: a list with protocols ids that the scheduled
+            protocol will wait for.
+        :param initialSleepTime: number of seconds to wait before
+            checking input's availability
+
         """
         isRestart = protocol.getRunMode() == MODE_RESTART
 
@@ -1036,10 +1046,11 @@ class Project(object):
         return result
 
     def getProtocolsDict(self, protocols=None, namesOnly=False):
-        """ Create a dict with the information of the given protocols.
-         Params:
-            protocols: list of protocols or None to include all.
-            namesOnly: the output list will contain only the protocol names.
+        """ Creates a dict with the information of the given protocols.
+
+        :param protocols: list of protocols or None to include all.
+        :param namesOnly: the output list will contain only the protocol names.
+
         """
         protocols = protocols or self.getRuns()
 
@@ -1081,10 +1092,12 @@ class Project(object):
         return newDict
 
     def getProtocolsJson(self, protocols=None, namesOnly=False):
-        """ Wraps getProtocolsDict to get a json string
-             Params:
-                protocols: list of protocols or None to include all.
-                namesOnly: the output list will contain only the protocol names.
+        """
+        Wraps getProtocolsDict to get a json string
+
+        :param protocols: list of protocols or None to include all.
+        :param namesOnly: the output list will contain only the protocol names.
+
         """
         newDict = self.getProtocolsDict(protocols=protocols, namesOnly=namesOnly)
         return json.dumps(list(newDict.values()),
@@ -1093,10 +1106,11 @@ class Project(object):
     def exportProtocols(self, protocols, filename):
         """ Create a text json file with the info
         to import the workflow into another project.
-        This methods is very similar to copyProtocol
-        Params:
-            protocols: a list of protocols to export.
-            filename: the filename where to write the workflow.
+        This method is very similar to copyProtocol
+
+        :param protocols: a list of protocols to export.
+        :param filename: the filename where to write the workflow.
+
         """
         jsonStr = self.getProtocolsJson(protocols)
         f = open(filename, 'w')
@@ -1105,10 +1119,12 @@ class Project(object):
 
     def loadProtocols(self, filename=None, jsonStr=None):
         """ Load protocols generated in the same format as self.exportProtocols.
-        Params:
-            filename: the path of the file where to read the workflow.
-            jsonStr: read the protocols from a string instead of file.
+
+        :param filename: the path of the file where to read the workflow.
+        :param jsonStr: Not used.
+
         Note: either filename or jsonStr should be not None.
+
         """
         f = open(filename)
         importDir = os.path.dirname(filename)
@@ -1397,10 +1413,13 @@ class Project(object):
         return self._runsGraph
 
     def getGraphFromRuns(self, runs):
-        """ This function will build a dependencies graph from a set
-         of given runs.
+        """
+        This function will build a dependencies graph from a set
+        of given runs.
+
         :param runs: The input runs to build the graph
         :return: The graph taking into account run dependencies
+
         """
         outputDict = {}  # Store the output dict
         g = pwutils.Graph(rootName='PROJECT')
@@ -1556,13 +1575,16 @@ class Project(object):
     def getRelatedObjects(self, relation, obj, direction=pwobj.RELATION_CHILDS,
                           refresh=False):
         """ Get all objects related to obj by a give relation.
-        Params:
-            relation: the relation name to search for.
-            obj: object from which the relation will be search,
-                actually not only this, but all other objects connected
-                to this one by the pwobj.RELATION_TRANSFORM.
-            direction: this say if search for childs or parents in the relation.
+
+        :param relation: the relation name to search for.
+        :param obj: object from which the relation will be search,
+            actually not only this, but all other objects connected
+            to this one by the pwobj.RELATION_TRANSFORM.
+        :parameter direction: Not used
+        :param refresh: If True, cached objects will be refreshed
+
         """
+
         graph = self.getTransformGraph(refresh)
         relations = self.mapper.getRelationsByName(relation)
         connection = self._getConnectedObjects(obj, graph)
@@ -1592,7 +1614,7 @@ class Project(object):
 
     def _getConnectedObjects(self, obj, graph):
         """ Given a TRANSFORM graph, return the elements that
-        are connected to an object, either childs, ancestors or siblings. 
+        are connected to an object, either children, ancestors or siblings.
         """
         n = graph.getNode(obj.strId())
         # Get the oldest ancestor of a node, before reaching the root node

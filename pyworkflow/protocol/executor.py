@@ -193,11 +193,16 @@ class ThreadStepExecutor(StepExecutor):
                  stepStartedCallback, 
                  stepFinishedCallback,
                  stepsCheckCallback,
-                 stepsCheckSecs=3):
-        """ Create threads and synchronize the steps execution.
-        n: the number of threads.
-        stepsCheckSecs:
-            rate of how many seconds between stepsCheckCallback calls
+                 stepsCheckSecs=5):
+        """
+        Creates threads and synchronize the steps execution.
+
+        :param steps: list of steps to run
+        :param stepStartedCallback: callback to be called before starting any step
+        :param stepFinishedCallback: callback to be run after all steps are done
+        :param stepsCheckCallback: callback to check if there are new steps to add (streaming)
+        :param stepsCheckSecs: seconds between stepsCheckCallback calls
+
         """
         delta = datetime.timedelta(seconds=stepsCheckSecs)
         lastCheck = datetime.datetime.now()
@@ -355,8 +360,20 @@ class MPIStepExecutor(ThreadStepExecutor):
                  stepStartedCallback, 
                  stepFinishedCallback,
                  checkStepsCallback,
-                 stepsCheckSecs=3):
-        ThreadStepExecutor.runSteps(self, steps, 
+                 stepsCheckSecs=5):
+        """
+        Creates mpiprocesses using numpy and synchronize the steps execution.
+
+        :param steps: list of steps to run
+        :param stepStartedCallback: callback to be called before starting any step
+        :param stepFinishedCallback: callback to be run after all steps are done
+        :param stepsCheckCallback: callback to check if there are new steps to add (streaming)
+        :param stepsCheckSecs: seconds between stepsCheckCallback calls
+
+        """
+
+
+        ThreadStepExecutor.runSteps(self, steps,
                                     stepStartedCallback, 
                                     stepFinishedCallback,
                                     checkStepsCallback,

@@ -102,8 +102,8 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
 def killWithChilds(pid):
     """ Kill the process with given pid and all children processes.
-    Params:
-     pid: the process id to terminate
+
+    :param pid: the process id to terminate
     """
     proc = psutil.Process(pid)
     for c in proc.children(recursive=True):
