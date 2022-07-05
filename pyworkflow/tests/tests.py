@@ -86,11 +86,11 @@ class BaseTest(unittest.TestCase):
     @classmethod
     def launchProtocol(cls, prot, **kwargs):
         """ Launch a given protocol using cls.proj.
-        Accepted **kwargs:
-            wait: if True the function will return after the protocol runs.
-                If not specified, then if waitForOutput is passed, wait is
-                false.
-            waitForOutputs: a list of expected outputs, ignored if wait=True
+
+        :param wait: if True the function will return after the protocol runs.
+            If not specified, then if waitForOutput is passed, wait is false.
+        :param waitForOutputs: a list of expected outputs, ignored if wait=True
+
         """
         wait = kwargs.get('wait', None)
         waitForOutputs = kwargs.get('waitForOutput', [])

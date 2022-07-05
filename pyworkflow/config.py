@@ -127,6 +127,9 @@ class Config:
     SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
     "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO."
 
+    NO_COLOR = _get('NO_COLOR', '')
+    "Complain with https://no-color.org/ iniative. Set it to something different than '' to deactivate colors in the output."
+
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
     "Optional. Path to a location mounted in a scratch drive (SSD,...)"
 
@@ -353,6 +356,11 @@ class Config:
     @classmethod
     def getUpdateSetAttemptsWait(cls):
         return cls.SCIPION_UPDATE_SET_ATTEMPT_WAIT
+
+    @classmethod
+    def colorsInTerminal(cls):
+        """ Returns true if colors are allowed. Based on NO_COLOR variable. Undefined or '' colors are enabled"""
+        return cls.NO_COLOR == ''
 
 
 # Add bindings folder to sys.path

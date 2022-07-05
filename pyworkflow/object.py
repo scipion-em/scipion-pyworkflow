@@ -390,15 +390,20 @@ class Object(object):
                 v.__getObjDict(kPrefix, objDict, includeClass)
 
     def getObjDict(self, includeClass=False, includeBasic=False):
-        """ Return all attributes and values in a dictionary.
+        """
+        Return all attributes and values in a dictionary.
         Nested attributes will be separated with a dot in the dict key.
-        Params:
-            includeClass: if True, the values will be a tuple (ClassName, value)
-                otherwise only the values of the attributes
-            includeBasic: if True include the id, label and comment.
-                object.id: objId
-                object.label: objLabel
-                object.comment: objComment
+
+        :param includeClass: if True, the values will be a tuple (ClassName, value)
+            otherwise only the values of the attributes
+        :param includeBasic: if True include the id, label and comment.
+
+        includeBasic example::
+
+            object.id: objId
+            object.label: objLabel
+            object.comment: objComment
+
         """
         d = OrderedDict()
 
@@ -460,12 +465,14 @@ class Object(object):
         return [v.getObjValue() for v in mappedDict.values()]
     
     def copy(self, other, copyId=True, ignoreAttrs=[]):
-        """ Copy all attributes values from one object to the other.
+        """
+        Copy all attributes values from one object to the other.
         The attributes will be created if needed with the corresponding type.
-        Params:
-            other: the other object from which to make the copy.
-            copyId: if true, the _objId will be also copied.
+
+        :param other: the other object from which to make the copy.
+        :param copyId: if true, the _objId will be also copied.
             ignoreAttrs: pass a list with attributes names to ignore.
+
         """
         copyDict = {'internalPointers': []} 
         self._copy(other, copyDict, copyId, ignoreAttrs=ignoreAttrs)
@@ -523,15 +530,19 @@ class Object(object):
         return clone    
     
     def evalCondition(self, condition):
-        """ Check if condition is meet.
-        Params:
-            condition: the condition string, it can contains variables
-                or methods without arguments to be evaluated.
-            Examples:
-                hasCTF
-                hasCTF and not hasAlignment
-        Return:
-            The value of the condition evaluated with values
+        """
+        Check if condition is meet.
+
+        Examples of condition::
+
+            "hasCTF"
+            "hasCTF and not hasAlignment"
+
+        :param condition: the condition string, it can contain variables
+            or methods without arguments to be evaluated.
+
+        :return The value of the condition evaluated with values
+
         """
         # Split in possible tokens
         import re
@@ -700,11 +711,13 @@ class String(Scalar):
 
     @classmethod
     def getDatetime(cls, strValue, formatStr=None, fs=True):
-        """ Get the datetime from the given string value.
-        Params:
-            strValue: string representation of the date
-            formatStr: if is None, use the default DATETIME_FORMAT.
-            fs: Use femto seconds or not, only when format=None
+        """
+        Converts the given string value to a datetime object.
+
+        :param strValue: string representation of the date
+        :param formatStr: if None, uses the default cls:String.DATETIME_FORMAT.
+        :param fs: Use femto seconds or not, only when format=None
+
         """
         if formatStr is None:
             try:
@@ -1166,11 +1179,12 @@ class Set(Object):
     def write(self, properties=True):
         """
         Commit the changes made to the Set underlying database.
-        Params:
-            properties: this flag controls when to write Set attributes to 
-                special table 'Properties' in the database. False value is 
-                use for example in SetOfClasses for not writing each Class2D 
-                properties.
+
+        :param properties: this flag controls when to write Set attributes to
+            special table 'Properties' in the database. False value is
+            use for example in SetOfClasses for not writing each Class2D
+            properties.
+
         """
         if properties:
             self._getMapper().setProperty('self', self.getClassName())

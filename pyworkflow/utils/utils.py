@@ -171,13 +171,14 @@ class Timer(object):
 
 
 def timeit(func):
-    """ Decorator function to have a simple measurement
-    of the execution time of a given function.
-    Just use:
-    @timeit
-    def func(...)
-        ...
-    to use it.
+    """
+    Decorator function to have a simple measurement of the execution time of a given function.
+    To use it ::
+
+        @timeit
+        def func(...)
+            ...
+
     """
 
     def timedFunc(*args, **kwargs):
@@ -246,14 +247,15 @@ def getUniqueItems(originalList):
 
 
 def executeRemoteX(command, hostName, userName, password):
-    """ Execute a remote command with X11 forwarding.
-    Params:
-        command: Command to execute.
-        hostName: Remote host name.
-        userName: User name.
-        password: Password.
-    Returns: 
-        Tuple with standard output and error output.
+    """
+    Execute a remote command with X11 forwarding. Currently not used.
+
+    :param command: Command to execute.
+    :param hostName: Remote host name.
+    :param userName: User name.
+    :param password: Password.
+
+    :returns Tuple with standard output and error output.
     """
     scriptPath = os.path.abspath(os.path.join(os.path.dirname(__file__), "sshAskPass.sh"))
     pswCommand = "echo '" + password + "' | " + scriptPath + " ssh -X " + userName + "@" + hostName + " " + command
@@ -264,14 +266,14 @@ def executeRemoteX(command, hostName, userName, password):
 
 
 def executeRemote(command, hostName, userName, password):
-    """ Execute a remote command.
-    Params:
-        command: Command to execute.
-        hostName: Remote host name.
-        userName: User name.
-        password: Password.
-    Returns: 
-        Tuple with standard input, standard output and error output.
+    """ Execute a remote command. Currently not used
+
+    :param command: Command to execute.
+    :param hostName: Remote host name.
+    :param userName: User name.
+    :param password: Password.
+
+    :returns Tuple with standard input, standard output and error output.
     """
     import paramiko
     ssh = paramiko.SSHClient()
@@ -285,13 +287,14 @@ def executeRemote(command, hostName, userName, password):
 
 def executeLongRemote(command, hostName, userName, password):
     """ Execute a remote command.
-    Params:
-        command: Command to execute.
-        hostName: Remote host name.
-        userName: User name.
-        password: Password.
-    Returns: 
-        Tuple with standard input, standard output and error output.
+
+    :param command: Command to execute.
+    :param hostName: Remote host name.
+    :param userName: User name.
+    :param password: Password.
+
+    :returns Tuple with standard input, standard output and error output.
+
     """
     import paramiko
     import select
@@ -337,22 +340,27 @@ def getHostFullName():
 # ******************************File utils *******************************
 
 def isInFile(text, filePath):
-    """ Checks if given text is in the given file.
-    params:
-        text: Text to check.
-        filePath : File path to check.
-    returns: True if the given text is in the given file, 
-             False if it is not in the file.
+    """
+    Checks if given text is in the given file.
+
+    :param text: Text to check.
+    :param filePath: File path to check.
+
+    :returns True if the given text is in the given file,
+        False if it is not in the file.
+
     """
     return any(text in line for line in open(filePath))
 
 
 def getLineInFile(text, fileName):
     """ Find the line where the given text is located in the given file.
-    params:
-       text: Text to check.
-       filePath : File path to check.
-    returns: File number where the text was located.
+
+    :param text: Text to check.
+    :param filePath: File path to check.
+
+    :return line number where the text was located.
+
     """
     with open(fileName) as f:
         for i, line in enumerate(f):
@@ -388,12 +396,12 @@ class StrColors(Enum):
 
 def getColorStr(text, color, bold=False):
     """ Add ANSI color codes to the string if there is a terminal sys.stdout.
-    Params:
-     text: text to be colored
-     color: red or green
-     bold: bold the text
+
+    :param text: text to be colored
+    :param color: red or green
+    :param bold: bold the text
     """
-    if envVarOn('SCIPION_SAFE_COLORS') and not sys.stdout.isatty():
+    if not Config.colorsInTerminal()  or not sys.stdout.isatty():
         return text
 
     attr = [str(color.value)]
@@ -441,15 +449,15 @@ blackB, redB, greenB, yellowB, blueB, magentaB, cyanB, whiteB = [
     ansi(i, bold=True) for i in range(30, 38)]
 
 # -------------- Hyper text highlighting ----------------------------
-"""
-We use a subset of TWiki hyper text conventions.
-In particular:
-    *some_text* will display some_text in bold
-    _some_text_ will display some_text in italic
-    Links:
-        http://www.link-page.com  -> hyperlink using the url as label
-        [[http://www.link-page.com][Link page]] -> hyperlink using "Link page" as label
-"""
+#
+# We use a subset of TWiki hyper text conventions.
+# In particular:
+#     *some_text* will display some_text in bold
+#     _some_text_ will display some_text in italic
+#     Links:
+#         http://www.link-page.com  -> hyperlink using the url as label
+#         [[http://www.link-page.com][Link page]] -> hyperlink using "Link page" as label
+
 # Types of recognized styles
 HYPER_BOLD = 'bold'
 HYPER_ITALIC = 'italic'
@@ -481,11 +489,11 @@ HYPER_ALL_RE = re.compile(PATTERN_ALL)
 
 def parseHyperText(text, matchCallback):
     """ Parse the text recognizing Hyper definitions below.
-    Params:
-        matchCallback: a callback function to processing each matching,
-                       it should accept the type of match (HYPER_BOLD, ITALIC or LINK)
-    Return:
-        The input text with the replacements made by matchCallback
+
+    :param matchCallback: a callback function to processing each matching,
+        it should accept the type of match (HYPER_BOLD, ITALIC or LINK)
+
+    :return The input text with the replacements made by matchCallback
     """
 
     def _match(match):
@@ -672,14 +680,14 @@ class Environ(dict):
 
     def set(self, varName, varValue, position=REPLACE):
         """ Modify the value for some variable.
-        Params:
-            varName: for example LD_LIBRARY_PATH
-            varValue: the value to add or replace.
-            position: controls how the value will be changed.
-                If REPLACE, it will overwrite the value of
-                the var.
-                BEGIN or END will preserve the current value
-                and add (at begin or end) the new value.
+
+        :param varName: for example LD_LIBRARY_PATH
+        :param varValue: the value to set, prefix or suffix.
+        :param position: controls how the value will be changed.
+            If REPLACE, it will overwrite the value of
+            the var. BEGIN or END will preserve the current value
+            and will add, at the beginning or end, the new value.
+
         """
         if varName in self and position != self.REPLACE:
             if position == self.BEGIN:
@@ -744,6 +752,7 @@ def envVarOn(varName, env=None):
     return strToBoolean(v)
 
 def strToBoolean(string):
+    """ Converts a string into a Boolean if the string is on of true, yes, on, 1. Case insensitive."""
     return string is not None and string.lower() in ['true', 'yes', 'on', '1']
 
 
@@ -849,16 +858,19 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
 @contextlib.contextmanager
 def weakImport(package):
     """
-    This method can be use to tolerate imports that may fail, e.g imports
+    This method can be used to tolerate imports that may fail.
 
-    from .protocol_ctffind import CistemProtCTFFind
-    with weakImport('tomo'):
-        from .protocol_ts_ctffind import CistemProtTsCtffind
+    e.g::
 
-    in this case CistemProtTsCtffind should fail if tomo package is missing,
+        from .protocol_ctffind import CistemProtCTFFind
+        with weakImport('tomo'):
+            from .protocol_ts_ctffind import CistemProtTsCtffind
+
+    In this case CistemProtTsCtffind should fail if tomo package is missing,
     but exception is captured and all the imports above should be available
 
     :param package: name of the package that is expected to fail
+
     """
     try:
         yield
