@@ -441,10 +441,10 @@ class ProtocolsView(tk.Frame):
             mem = psutil.virtual_memory()
             logger.debug("------------- refreshing ---------- ")
             files = proc.open_files()
-            logger.debug("  open files: ", len(files))
+            logger.debug("  open files: %s" % len(files))
             for f in files:
                 logger.debug("    - %s, %s" % (f.path, f.fd))
-            logger.debug("  memory percent: ", proc.memory_percent())
+            logger.debug("  memory percent: %s" % proc.memory_percent())
 
         if self.runsView == VIEW_LIST:
             self.updateRunsTree(True)

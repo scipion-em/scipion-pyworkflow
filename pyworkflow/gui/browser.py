@@ -617,7 +617,8 @@ class FileBrowser(ObjectBrowser):
         self.onClose()
 
     def _select(self, e=None):
-        _lastSelected = self.getSelected()
+
+        self._lastSelected = self.getSelected()
 
     def getEntryValue(self):
         return self.entryVar.get()
