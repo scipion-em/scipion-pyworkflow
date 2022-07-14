@@ -68,6 +68,10 @@ cfgMaxFontSize = 14
 cfgMinFontSize = 6
 cfgWrapLenght = cfgMaxWidth - 50
 
+# Style of treeviews where row height is variable based on the font size
+LIST_TREEVIEW = 'List.Treeview'
+
+
 
 class Config(Object):
     pass

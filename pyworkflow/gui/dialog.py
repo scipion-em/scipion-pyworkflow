@@ -34,7 +34,7 @@ from tkcolorpicker import askcolor as _askColor
 
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon, Color
-from . import gui, Window, widgets, configureWeigths
+from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW
 from .tree import BoundTree, Tree
 from .text import Text, TaggedText
 
@@ -585,7 +585,7 @@ class ListDialog(Dialog):
         self.initial_focus = self.tree
 
     def _createTree(self, parent):
-        self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode)
+        self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode, style=LIST_TREEVIEW)
         if self._selectOnDoubleClick:
             self.tree.itemDoubleClick = lambda obj: self._handleResult(RESULT_YES)
         self.tree.grid(row=1, column=0)
@@ -858,7 +858,7 @@ class SearchBaseWindow(Window):
         label = tk.Label(frame, text="Search", bg='white')
         label.grid(row=0, column=0, sticky='nw')
         self._searchVar = tk.StringVar()
-        entry = tk.Entry(frame, bg='white', textvariable=self._searchVar)
+        entry = tk.Entry(frame, bg='white', textvariable=self._searchVar, font=gui.getDefaultFont())
         entry.bind(TK.RETURN, self._onSearchClick)
         entry.bind(TK.ENTER, self._onSearchClick)
         entry.focus_set()
@@ -882,7 +882,7 @@ class SearchBaseWindow(Window):
 
     def _createResultsTree(self, frame, show, columns):
 
-        t = Tree(frame, show=show, columns=columns)
+        t = Tree(frame, show=show, columns=columns, style=LIST_TREEVIEW)
         t.column('#0', minwidth=100)
         t.bind("<Button-1>", self.onClick)
         t.bind("<Double-1>", self.onDoubleClick)

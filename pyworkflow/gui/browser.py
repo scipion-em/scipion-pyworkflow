@@ -33,9 +33,11 @@ import os.path
 import stat
 import tkinter as tk
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 import pyworkflow.utils as pwutils
-from . import gui
+from . import gui, LIST_TREEVIEW
 from .tree import BoundTree, TreeProvider
 from .text import TaggedText, openTextFileEditor
 from .widgets import Button, HotButton
@@ -84,7 +86,7 @@ class ObjectBrowser(tk.Frame):
 
     def _fillLeftPanel(self, frame):
         gui.configureWeigths(frame)
-        self.tree = BoundTree(frame, self.treeProvider)
+        self.tree = BoundTree(frame, self.treeProvider, style=LIST_TREEVIEW)
         self.tree.grid(row=0, column=0, sticky='news')
         self.itemConfig = self.tree.itemConfig
         self.getImage = self.tree.getImage
@@ -317,7 +319,7 @@ class FileTreeProvider(TreeProvider):
                 # All ok...add item.
                 fileInfoList.append(FileInfo(self._currentDir, f))
         except Exception as e:
-            print("Can't list files at " + self._currentDir, e)
+            logger.error("Can't list files at " + self._currentDir, e)
 
         # Sort objects
         fileInfoList.sort(key=self.fileKey, reverse=not self.isSortingAscending())
@@ -350,6 +352,12 @@ class FileBrowser(ObjectBrowser):
     where the "objects" are just files and directories.
     """
 
+    _lastSelectedFile = None
+    "Class scope attribute to keep the lastSelected file"
+
+    _fileSelectedAtLoading = None
+    "Class scope attribute to offer *Recent* shortcut"
+
     def __init__(self, parent, initialDir='.',
                  selectionType=SELECT_FILE,
                  selectionSingle=True,
@@ -364,6 +372,19 @@ class FileBrowser(ObjectBrowser):
                  shortCuts=None,  # Shortcuts to common locations/paths
                  onlyFolders=False
                  ):
+        """
+
+        :param parent: Parent tkinter window.
+        :param initialDir: Folder to show when loading the dialog.
+        :param selectionType: Any of SELECT_NONE, SELECT_FILE, SELECT_FOLDER, SELECT_PATH.
+        :param showHidden: Pass True to show hidden files.
+        :param selectButton: text for the select button. Defaults to *Select*.
+        :param entryLabel: text for the entry widget. Default None. There will be no entry.
+        :param entryValue: default value for the entry. Needs entryLabel.
+        :param showInfo: callback to show a string message, otherwise _showInfo will be used.
+        :param shortCuts: list of extra :class:`ShortCut`
+        :param onlyFolders: Pass True to show only folders.
+        """
         self.pathVar = tk.StringVar()
         self.pathVar.set(os.path.abspath(initialDir))
         self.pathEntry = None
@@ -391,9 +412,9 @@ class FileBrowser(ObjectBrowser):
         buttonsFrame.grid(row=1, column=0)
 
     def _showInfo(self, msg):
-        """ Default way (print to console) to show a message with a given info.
+        """ Default way (logger.info to console) to show a message with a given info.
         """
-        print(msg)
+        logger.info(msg)
 
     def _fillLeftPanel(self, frame):
         """ Redefine this method to include a buttons toolbar and
@@ -461,6 +482,11 @@ class FileBrowser(ObjectBrowser):
                         self._actionWorkingDir)
         self._addButton(frame, 'Up', pwutils.Icon.ARROW_UP, self._actionUp)
 
+        self._fileSelectedAtLoading = FileBrowser._lastSelectedFile
+
+        if self._fileSelectedAtLoading is not None:
+            self._addButton(frame, 'Recent', None, self._actionRecent)
+
         # Add shortcuts
         self._addShortCuts(frame)
 
@@ -508,11 +534,17 @@ class FileBrowser(ObjectBrowser):
         # Current dir remains in _lastSelected
         self._lastSelected = FileInfo(os.path.dirname(newDir),
                                       os.path.basename(newDir))
+
+        FileBrowser._lastSelectedFile = self._lastSelected
+
         self.tree.focus(itemKeyToFocus)
 
     def _actionUp(self, e=None):
         parentFolder = pwutils.getParentFolder(self.treeProvider.getDir())
         self._goDir(parentFolder)
+
+    def _actionRecent(self, e=None):
+        self._goDir(self._fileSelectedAtLoading.getPath())
 
     def _actionHome(self, e=None):
         self._goDir(pwutils.getHomePath())
@@ -577,20 +609,15 @@ class FileBrowser(ObjectBrowser):
             self.pathEntry.focus()
 
     def onClose(self):
+        """ This onClose is replaced at init time in the FileBrowserWindow with its own callback"""
         pass
 
-    def onSelect(self, obj):
-        print(obj, "type: ", type(obj))
-
     def _close(self, e=None):
+        """ This _close is bound to the close button"""
         self.onClose()
 
     def _select(self, e=None):
         _lastSelected = self.getSelected()
-        if _lastSelected is not None:
-            self.onSelect(_lastSelected)
-        else:
-            print('Select a valid file/folder')
 
     def getEntryValue(self):
         return self.entryVar.get()
