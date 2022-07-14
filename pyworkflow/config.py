@@ -317,7 +317,6 @@ class Config:
         os.environ[SCIPION_DEBUG] = str(debugOn)
         os.environ[SCIPION_DEBUG_NOCLEAN] = str(debugOn)
         os.environ[SCIPION_LOG_LEVEL] = "INFO" if not debugOn else "DEBUG"
-        logging.basicConfig(level=logging.DEBUG if debugOn else logging.INFO)
 
     @staticmethod
     def debugSQLOn():
