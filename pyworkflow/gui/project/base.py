@@ -26,16 +26,16 @@
 import os
 import webbrowser
 import tkinter as tk
+from tkinter.ttk import Style
 
 import pyworkflow as pw
-from pyworkflow.gui import Window, Message, Color, getBigFont
+from pyworkflow.gui import Window, Message, Color, getBigFont, getDefaultFont, LIST_TREEVIEW
 from pyworkflow.gui.widgets import GradientFrame
 from pyworkflow.utils.properties import Icon
 
 from .viewprojects import ProjectsView
 from .viewprotocols import ProtocolsView
 from .viewdata import ProjectDataView
-
 
 VIEW_PROJECTS = Message.VIEW_PROJECTS
 VIEW_PROTOCOLS = Message.VIEW_PROTOCOLS
@@ -57,6 +57,8 @@ class ProjectBaseWindow(Window):
         content.rowconfigure(1, weight=1)
         content.grid(row=0, column=0, sticky='news')
         self.content = content
+
+        self.defineStyle()
 
         if getattr(self, 'menuCfg', None):
             Window.createMainMenu(self, self.menuCfg)
@@ -186,3 +188,14 @@ class ProjectBaseWindow(Window):
         self.showInfo("Please, do contact us at [[mailto:%s][%s]] for any "
                       "feedback, bug, idea, anything that will make Scipion "
                       "better.""" % (email, email))
+
+    def defineStyle(self):
+        """
+        Defines some specific behaviour of the style.
+        """
+
+        # To specify the height of the rows based on the font size.
+        # Should be centralized somewhere.
+        style = Style()
+        rowheight = getDefaultFont().metrics()['linespace']
+        style.configure(LIST_TREEVIEW, rowheight=rowheight)
