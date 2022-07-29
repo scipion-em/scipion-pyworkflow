@@ -236,8 +236,13 @@ class RunScheduler:
                 inSet = attr.get()
                 if isinstance(inSet, Set) and inSet.isStreamOpen():
                     inputMissing = True
-                    self._log("Waiting for closing %s... (%s does not work in "
-                              "streaming)" % (inSet, self.protocol))
+                    self._log("Waiting for closing %s... (does not work in "
+                              "streaming)" % inSet)
+                    break
+                elif isinstance(inSet, Protocol) and not inSet.isFinished():  # Then is a pointer to a protocol
+                    inputMissing = True
+                    self._log("Waiting for protocol %s to finish... (does not work in "
+                              "streaming)" % inSet)
                     break
 
         if not inputMissing:
