@@ -34,7 +34,7 @@ from tkcolorpicker import askcolor as _askColor
 
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon, Color
-from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW
+from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle
 from .tree import BoundTree, Tree
 from .text import Text, TaggedText
 
@@ -73,6 +73,8 @@ class Dialog(tk.Toplevel):
             gui.setCommonFonts()
 
         tk.Toplevel.__init__(self, parent)
+
+        defineStyle()
 
         self.withdraw()  # remain invisible for now
         # If the master is not viewable, don't

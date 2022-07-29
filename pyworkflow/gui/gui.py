@@ -26,6 +26,7 @@ import tkinter as tk
 import tkinter.font as tkFont
 import queue
 from functools import partial
+from tkinter.ttk import Style
 
 from pyworkflow.object import Object
 import pyworkflow as pw
@@ -243,6 +244,21 @@ def configureWeigths(widget, row=0, column=0):
     for making childs widgets take the space available"""
     widget.columnconfigure(column, weight=1)
     widget.rowconfigure(row, weight=1)
+
+
+def defineStyle():
+    """
+    Defines some specific behaviour of the style.
+    """
+
+    # To specify the height of the rows based on the font size.
+    # Should be centralized somewhere.
+    style = Style()
+    defaultFont = getDefaultFont()
+    rowheight = defaultFont.metrics()['linespace']
+
+    style.configure(LIST_TREEVIEW, rowheight=rowheight)
+    style.configure(LIST_TREEVIEW+".Heading", font=(defaultFont["family"],defaultFont["size"]))
 
 
 class Window:

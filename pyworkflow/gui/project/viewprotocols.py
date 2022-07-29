@@ -593,13 +593,10 @@ class ProtocolsView(tk.Frame):
             action, cond = actionTuple
             displayAction(action, i, cond)
 
-    def _createProtocolsTree(self, parent, background=Color.LIGHT_GREY_COLOR,
+    def _createProtocolsTree(self, parent,
                              show='tree', columns=None):
-        defaultFont = pwgui.getDefaultFont()
-        self.style.configure("W.Treeview", background=background, borderwidth=0,
-                             fieldbackground=background,
-                             rowheight=defaultFont.metrics()['linespace'])
-        t = pwgui.tree.Tree(parent, show=show, style='W.Treeview',
+
+        t = pwgui.tree.Tree(parent, show=show, style=LIST_TREEVIEW,
                             columns=columns)
         t.column('#0', minwidth=300)
 

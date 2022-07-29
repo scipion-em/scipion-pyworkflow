@@ -131,7 +131,7 @@ class Config:
     "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO."
 
     NO_COLOR = _get('NO_COLOR', '')
-    "Complain with https://no-color.org/ iniative. Set it to something different than '' to deactivate colors in the output."
+    "Comply with https://no-color.org/ initiative. Set it to something different than '' to deactivate colors in the output."
 
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
     "Optional. Path to a location mounted in a scratch drive (SSD,...)"
@@ -307,9 +307,10 @@ class Config:
         return os.path.join(get_paths()['data'], "lib")
 
     @staticmethod
-    def debugOn(*args):
+    def debugOn():
+        """ Returns a True if debug mode (SCIPION_DEBUG variable) is active """
         from .utils import envVarOn
-        return bool(envVarOn(SCIPION_DEBUG, *args))
+        return bool(envVarOn(SCIPION_DEBUG))
 
     @staticmethod
     def toggleDebug():
