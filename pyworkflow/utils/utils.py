@@ -401,7 +401,7 @@ def getColorStr(text, color, bold=False):
     :param color: red or green
     :param bold: bold the text
     """
-    if not Config.colorsInTerminal()  or sys.stdout.isatty():
+    if not Config.colorsInTerminal()  or not sys.stdout.isatty():
         return text
 
     attr = [str(color.value)]
