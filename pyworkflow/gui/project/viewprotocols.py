@@ -25,7 +25,7 @@
 import logging
 import threading
 
-from pyworkflow.gui import TextFileViewer, getDefaultFont
+from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut
 from pyworkflow.gui.project.constants import ACTION_REFRESH, ACTION_EDIT, ACTION_COPY, ACTION_DELETE, ACTION_STEPS, \
     ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, \
     ACTION_COLLAPSE, ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ActionIcons, ACTION_TREE, ACTION_SWITCH_VIEW, \
@@ -439,12 +439,12 @@ class ProtocolsView(tk.Frame):
             import psutil
             proc = psutil.Process(os.getpid())
             mem = psutil.virtual_memory()
-            print("------------- refreshing ---------- ")
+            logger.debug("------------- refreshing ---------- ")
             files = proc.open_files()
-            print("  open files: ", len(files))
+            logger.debug("  open files: %s" % len(files))
             for f in files:
-                print("    - %s, %s" % (f.path, f.fd))
-            print("  memory percent: ", proc.memory_percent())
+                logger.debug("    - %s, %s" % (f.path, f.fd))
+            logger.debug("  memory percent: %s" % proc.memory_percent())
 
         if self.runsView == VIEW_LIST:
             self.updateRunsTree(True)
@@ -593,13 +593,10 @@ class ProtocolsView(tk.Frame):
             action, cond = actionTuple
             displayAction(action, i, cond)
 
-    def _createProtocolsTree(self, parent, background=Color.LIGHT_GREY_COLOR,
+    def _createProtocolsTree(self, parent,
                              show='tree', columns=None):
-        defaultFont = pwgui.getDefaultFont()
-        self.style.configure("W.Treeview", background=background, borderwidth=0,
-                             fieldbackground=background,
-                             rowheight=defaultFont.metrics()['linespace'])
-        t = pwgui.tree.Tree(parent, show=show, style='W.Treeview',
+
+        t = pwgui.tree.Tree(parent, show=show, style=LIST_TREEVIEW,
                             columns=columns)
         t.column('#0', minwidth=300)
 
@@ -782,13 +779,7 @@ class ProtocolsView(tk.Frame):
         # Ne need to force the check pids here, temporary
         self.provider._checkPids = True
 
-        # To specify the height of the rows based on the font size.
-        # Should be centralized somewhere.
-        style = ttk.Style()
-        rowheight = pwgui.getDefaultFont().metrics()['linespace']
-        style.configure('List.Treeview', rowheight=rowheight)
-
-        t = pwgui.tree.BoundTree(parent, self.provider, style='List.Treeview')
+        t = pwgui.tree.BoundTree(parent, self.provider, style=LIST_TREEVIEW)
         self.provider._checkPids = False
 
         t.itemDoubleClick = self._runItemDoubleClick
@@ -1361,9 +1352,11 @@ class ProtocolsView(tk.Frame):
         workingDir = protocol.getWorkingDir()
         if os.path.exists(workingDir):
 
+            protFolderShortCut = ShortCut.factory(workingDir,name="Protocol folder", icon=None ,toolTip="Protocol directory")
             window = pwgui.browser.FileBrowserWindow("Browsing: " + workingDir,
                                                      master=self.windows,
-                                                     path=workingDir)
+                                                     path=workingDir,
+                                                     shortCuts=[protFolderShortCut])
             window.show()
         else:
             self.windows.showInfo("Protocol working dir does not exists: \n %s"
