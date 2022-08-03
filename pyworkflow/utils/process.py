@@ -56,7 +56,7 @@ def runCommand(command, env=None, cwd=None):
     """ Execute command with given environment env and directory cwd """
 
     # First let us create core dumps if in debug mode
-    if Config.debugOn(env):
+    if Config.debugOn():
         import resource
         resource.setrlimit(resource.RLIMIT_CORE,
                            (resource.RLIM_INFINITY, resource.RLIM_INFINITY))

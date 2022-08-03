@@ -1,11 +1,17 @@
 V3.0.23
 -------
-- Fixing a bug for static protocols: when a protocol had another protocol as input, it failed to wait until it had finish.
+ - Fixing a bug for static protocols: when a protocol had another protocol as input, it failed to wait until it had finish.
+ - Improvements in responsiveness to font size: Tables and automatic layouts. Object browser, Search windows.
+ - Filebrowser has 2 new shortcuts: "recent" and "Protocol folder"
+
+
+Developers:
+ - Some modules switched to use logger instead of print: viewprotocols.py, browser.py and launch.py.
 
 
 V3.0.22
 -------
-- Fixing a persistent error related with the logic of the EXECUTE/SCHEDULE button
+ - Fixing a persistent error related with the logic of the EXECUTE/SCHEDULE button
 
 
 V3.0.21
