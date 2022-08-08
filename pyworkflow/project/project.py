@@ -24,6 +24,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+logger = logging.getLogger(__name__)
 
 import datetime as dt
 import json
@@ -235,8 +237,8 @@ class Project(object):
         # If folder is read only, flag it and warn about it.
         if not os.access(self.path, os.W_OK):
             self._isInReadOnlyFolder = True
-            print("WARNING on project \"%s\": don't have write permissions "
-                  "for project folder. Loading as READ-ONLY." % self.shortName)
+            logger.warning("Project \"%s\": you don't have write permissions "
+                  "for project folder. Loading asd READ-ONLY." % self.shortName)
 
         if chdir:
             os.chdir(self.path)  # Before doing nothing go to project dir
@@ -253,13 +255,13 @@ class Project(object):
                 # we are loading a project after a Project.setDbName,
                 # used when running protocols
                 settingsPath = os.path.join(self.path, self.settingsPath)
-                if pw.Config.debugOn():
-                    print("settingsPath: %s" % settingsPath)
+
+                logger.debug("settingsPath: %s" % settingsPath)
 
                 if os.path.exists(settingsPath):
                     self.settings = config.ProjectSettings.load(settingsPath)
                 else:
-                    print("settings is None")
+                    logger.info("settings is None")
                     self.settings = None
 
             self._loadCreationTime()
@@ -272,7 +274,7 @@ class Project(object):
 
         # Catch any less severe exception..to allow at least open the project.
         # except Exception as e:
-        #     print("ERROR: Project %s load failed.\n"
+        #     logger.info("ERROR: Project %s load failed.\n"
         #           "       Message: %s\n" % (self.path, e))
 
     def _loadCreationTime(self):
@@ -339,8 +341,8 @@ class Project(object):
             hostKey = hostName
         else:
             hostKey = self.getHostNames()[0]
-            print("PROJECT: Warning, protocol host '%s' not found." % hostName)
-            print("         Using '%s' instead." % hostKey)
+            logger.warning("Protocol host '%s' not found." % hostName)
+            logger.warning("         Using '%s' instead." % hostKey)
 
         return self._hosts[hostKey]
 
@@ -361,7 +363,7 @@ class Project(object):
         pwutils.path.makePath(self.path)
         os.chdir(self.path)  # Before doing nothing go to project dir
         self._cleanData()
-        print("Creating project at: ", os.path.abspath(self.dbPath))
+        logger.info("Creating project at %s" % os.path.abspath(self.dbPath))
         # Create db through the mapper
         self.mapper = self.createMapper(self.dbPath)
         # Store creation time
@@ -563,6 +565,14 @@ class Project(object):
         If the protocol has some prerequisites (other protocols that
         needs to be finished first), it will be scheduled.
 
+        :param protocol: Protocol instance to launch
+        :param wait: Optional. If true, this method
+            will wait until execution is finished. Used in tests.
+        :param scheduled: Optional. If true, run.db and paths
+            already exist and are preserved.
+        :param force: Optional. If true, launch is forced, regardless
+            latter dependent executions. Used when restarting many protocols a once.
+
         """
         if protocol.getPrerequisites() and not scheduled:
             return self.scheduleProtocol(protocol)
@@ -698,8 +708,7 @@ class Project(object):
             prot2.closeMappers()
 
         except Exception as ex:
-            print("Error trying to update protocol: %s(jobId=%s)\n "
-                  "ERROR: %s, tries=%d"
+            logger.error("Couldn't update protocol %s(jobId=%s) from it's own database. ERROR: %s, tries=%d"
                   % (protocol.getObjName(), jobId, ex, tries))
             if tries == 3:  # 3 tries have been failed
                 traceback.print_exc()
@@ -720,7 +729,7 @@ class Project(object):
             if protocol.getStatus() in ACTIVE_STATUS:
                 pwprot.stop(protocol)
         except Exception as e:
-            print("stopProtocol: error", e)
+            logger.error("Couldn't stop the protocol: %s" % e)
             raise
         finally:
             protocol.setAborted()
@@ -849,7 +858,7 @@ class Project(object):
             if wd.startswith(PROJECT_RUNS):
                 prot.cleanWorkingDir()
             else:
-                print("Error path: ", wd)
+                logger.info("Can't delete protocol %s. Its workingDir %s does not starts with %s " % (prot, wd, PROJECT_RUNS))
 
         self.mapper.commit()
 
@@ -893,7 +902,7 @@ class Project(object):
                 try:
                     maxSuffix = max(int(stringSuffix), maxSuffix)
                 except:
-                    print("stringSuffix", stringSuffix)
+                    logger.error("Couldn't set protocol's label. %s" % stringSuffix)
             elif otherProtLabel == defaultLabel:  # When only we have the prefix,
                 maxSuffix = max(1, maxSuffix)     # this REGEX don't match.
 
@@ -1140,7 +1149,7 @@ class Project(object):
             protClass = emProtocols.get(protClassName, None)
 
             if protClass is None:
-                print("ERROR: protocol class name '%s' not found" % protClassName)
+                logger.error("Protocol with class name '%s' not found. Are you missing it's plugin?." % protClassName)
             else:
                 protLabel = protDict.get('object.label', None)
                 prot = self.newProtocol(protClass,
@@ -1176,7 +1185,7 @@ class Project(object):
                         newProtId = newDict[prerequisite].getObjId()
                         newPrerequisites.append(newProtId)
                     else:
-                        print('Wait for id %s missing: ignored' % prerequisite)
+                        logger.info('"Wait for" id %s missing: ignored.' % prerequisite)
                 prot._prerequisites.set(newPrerequisites)
 
         for protDict in protocolsList:
@@ -1441,7 +1450,7 @@ class Project(object):
                 if pointedId in outputDict:
                     parentNode = outputDict[pointedId]
                     if parentNode is node:
-                        print("WARNING: Found a cyclic dependence from node "
+                        logger.warning("WARNING: Found a cyclic dependence from node "
                               "%s to itself, probably a bug. " % pointedId)
                     else:
                         parentNode.addChild(node)
@@ -1490,7 +1499,7 @@ class Project(object):
 
             # Duplicated ...
             if pObj is None:
-                print("WARNING: Relation seems to point to a deleted object. "
+                logger.warning("Relation seems to point to a deleted object. "
                       "%s: %s" % (OBJECT_PARENT_ID, rel[OBJECT_PARENT_ID]))
                 continue
 
@@ -1498,10 +1507,10 @@ class Project(object):
             pp = pwobj.Pointer(pObj, extended=pExt)
 
             if pObj is None or pp.get() is None:
-                print("project._getRelationGraph: ERROR, pointer to parent is "
+                logger.error("project._getRelationGraph: pointer to parent is "
                       "None. IGNORING IT.\n")
                 for key in rel.keys():
-                    print("%s: %s" % (key, rel[key]))
+                    logger.info("%s: %s" % (key, rel[key]))
 
                 continue
 
@@ -1513,8 +1522,8 @@ class Project(object):
                 parent = g.getNode(pp.getUniqueId())
 
             if not parent:
-                print("project._getRelationGraph: ERROR, parent Node "
-                      "is None: ", pid)
+                logger.error("project._getRelationGraph: parent Node "
+                      "is None: %s" % pid)
             else:
                 cObj = self.getObject(rel['object_child_id'])
                 cExt = rel['object_child_extended']
@@ -1529,15 +1538,15 @@ class Project(object):
                     child = g.getNode(cp.getUniqueId())
 
                     if not child:
-                        print("project._getRelationGraph: ERROR, child Node "
-                              "is None: ", cp.getUniqueId())
-                        print("   parent: ", pid)
+                        logger.error("project._getRelationGraph: child Node "
+                              "is None: %s." % cp.getUniqueId())
+                        logger.error("   parent: %s" % pid)
                     else:
                         parent.addChild(child)
                 else:
-                    print("project._getRelationGraph: ERROR, child Obj "
-                          "is None, id: ", rel['object_child_id'])
-                    print("   parent: ", pid)
+                    logger.error("project._getRelationGraph: child Obj "
+                          "is None, id: %s " %  rel['object_child_id'])
+                    logger.error("   parent: %s" % pid)
 
         for n in g.getNodes():
             if n.isRoot() and n is not root:
@@ -1596,7 +1605,7 @@ class Project(object):
             pObj = self.getObject(rel[OBJECT_PARENT_ID])
 
             if pObj is None:
-                print("WARNING: Relation seems to point to a deleted object. "
+                logger.warning("Relation seems to point to a deleted object. "
                       "%s: %s" % (OBJECT_PARENT_ID, rel[OBJECT_PARENT_ID]))
                 continue
             pExt = rel['object_parent_extended']
@@ -1648,14 +1657,14 @@ class Project(object):
         self.settings.setReadOnly(value)
 
     def fixLinks(self, searchDir):
-        print("Fixing project links. Searching at %s" % searchDir)
+        logger.info("Fixing project links. Searching at %s" % searchDir)
         runs = self.getRuns()
 
         for prot in runs:
             print (prot)
             broken = False
             if isinstance(prot, ProtImportBase) or prot.getClassName() == "ProtImportMovies":
-                print("Import detected")
+                logger.info("Import detected")
                 for _, attr in prot.iterOutputAttributes():
                     fn = attr.getFiles()
                     for f in attr.getFiles():
@@ -1665,17 +1674,17 @@ class Project(object):
                         if not os.path.exists(f):
                             if not broken:
                                 broken = True
-                                print("Found broken links in run: ",
+                                logger.info("Found broken links in run: %s" %
                                       pwutils.magenta(prot.getRunName()))
-                            print("  Missing: ", pwutils.magenta(f))
+                            logger.info("  Missing: %s" % pwutils.magenta(f))
                             if os.path.islink(f):
-                                print("    -> ", pwutils.red(os.path.realpath(f)))
+                                logger.info("    -> %s" % pwutils.red(os.path.realpath(f)))
                             newFile = pwutils.findFile(os.path.basename(f),
                                                        searchDir,
                                                        recursive=True)
                             if newFile:
-                                print("  Found file %s, creating link..." % newFile,
-                                      pwutils.green("   %s -> %s" % (f, newFile)))
+                                logger.info("  Found file %s, creating link... %s" % (newFile,
+                                    pwutils.green("   %s -> %s" % (f, newFile))))
                                 pwutils.createAbsLink(newFile, f)
 
     @staticmethod

@@ -43,6 +43,8 @@ from logging import FileHandler
 from pyworkflow.constants import PROJECT_SETTINGS, PROJECT_DBNAME
 from pyworkflow.utils import Config
 
+CONSOLE_HANDLER = 'consoleHandler'
+
 SCIPION_PROT_ID = "SCIPION_PROT_ID"
 SCIPION_PROJ_ID = "SCIPION_PROJ_ID"
 
@@ -87,15 +89,27 @@ class LoggingConfigurator:
         return False
 
     @staticmethod
-    def setupDefaultLogging():
+    def setupDefaultLogging(logFile=None, console=True, lineFormat=None):
+        """ Configures logging in a default way that is to file (rotating) and console
+
+        :param logFile: Optional, path to the log file. Defaults to SCIPION_LOG variable value. If folder
+            does not exists it will be created.
+        :param console: Optional, defaults to True, so log messages are sent to the terminal as well
+        :param lineFormat: Optional, format to the log line. Defaults to '%(asctime)s %(name)s %(levelname)s:  %(message)s' 
+
+        """
         from pyworkflow import Config
+
+        logFile = logFile or Config.SCIPION_LOG
+        lineFormat = lineFormat or '%(asctime)s %(name)s %(levelname)s:  %(message)s'
+
         # Log configuration
         config = {
             'version': 1,
             'disable_existing_loggers': False,
             'formatters': {
                 'standard': {
-                    'format': '%(asctime)s %(name)s %(levelname)s:  %(message)s'
+                    'format': lineFormat
                     # TODO: use formattime to show the time less verbose
                 }
             },
@@ -104,19 +118,14 @@ class LoggingConfigurator:
                     'level': Config.SCIPION_LOG_LEVEL,
                     'class': 'logging.handlers.RotatingFileHandler',
                     'formatter': 'standard',
-                    'filename': Config.SCIPION_LOG,
-                    'maxBytes': 10000,
+                    'filename': logFile,
+                    'maxBytes': 1000000,
                     'backupCount': 10
-                },
-                'consoleHandler': {
-                    'level': Config.SCIPION_LOG_LEVEL,
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'standard',
                 },
             },
             'loggers': {
                 '': {
-                    'handlers': ['consoleHandler', 'fileHandler'],
+                    'handlers': ['fileHandler'],
                     'level': Config.SCIPION_LOG_LEVEL,
                     'propagate': False,
                     'qualname': 'pyworkflow',
@@ -124,8 +133,17 @@ class LoggingConfigurator:
             }
         }
 
+        if console:
+            config["handlers"][CONSOLE_HANDLER] = {
+                        'level': Config.SCIPION_LOG_LEVEL,
+                        'class': 'logging.StreamHandler',
+                        'formatter': 'standard',
+                        }
+
+            config['loggers']['']['handlers'].append(CONSOLE_HANDLER)
+
         # Create the log folder
-        os.makedirs(Config.SCIPION_LOGS, exist_ok=True)
+        os.makedirs(os.path.dirname(logFile), exist_ok=True)
 
         logging.config.dictConfig(config)
 

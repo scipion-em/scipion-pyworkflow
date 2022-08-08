@@ -25,6 +25,7 @@
 # *
 # **************************************************************************
 
+import logging
 import os
 import sys
 import time
@@ -37,7 +38,7 @@ from pyworkflow.protocol import (getProtocolFromDb,
 from pyworkflow.constants import PROTOCOL_UPDATED
 
 # Add callback for remote debugging if available.
-from pyworkflow.utils import prettyTimestamp
+from pyworkflow.utils import LoggingConfigurator
 
 try:
     from rpdb2 import start_embedded_debugger
@@ -58,7 +59,10 @@ class RunScheduler:
         # Enter to the project directory and load protocol from db
         self.protocol = self._loadProtocol()
         self.project = self.protocol.getProject()
-        self.log = open(self.protocol.getScheduleLog(), 'w')
+        LoggingConfigurator.setupDefaultLogging(self.protocol.getScheduleLog(),
+                                                console=False,
+                                                lineFormat='%(asctime)s  %(message)s')
+        self.log = logging.getLogger(__name__)
         self.protPid = os.getpid()
         self.protocol.setPid(self.protPid)
         self.protocol._store(self.protocol._pid)
@@ -109,8 +113,7 @@ class RunScheduler:
                                  self._args.protId, chdir=True)
 
     def _log(self, msg):
-        self.log.write("%s: %s\n" % (prettyTimestamp(), msg))
-        self.log.flush()
+        self.log.info(msg)
 
     def _updateProtocol(self, protocol):
 
@@ -221,6 +224,7 @@ class RunScheduler:
         self._log("Checking input data...")
         # Updating input protocols
         for key, attr in self.protocol.iterInputAttributes():
+            self.log.debug("Turn for %s" % key)
             inputProt = self._getProtocolFromPointer(attr)
             inputProt = self._updateProtocol(inputProt)
             penalize += self._getSecondsToWait(inputProt)
@@ -248,6 +252,7 @@ class RunScheduler:
         if not inputMissing:
             inputProtocolDict = self.protocol.inputProtocolDict()
             for prot in inputProtocolDict.values():
+                self.log.debug("Turn from inputProtocolDict for %s" % prot)
                 self._updateProtocol(prot)
 
         return inputMissing, penalize
@@ -289,7 +294,6 @@ class RunScheduler:
             time.sleep(sleepTime)
 
         self._log("Launching the protocol >>>>")
-        self.log.close()
         self.project.launchProtocol(self.protocol, scheduled=True, force=True)
 
 
@@ -309,4 +313,4 @@ if __name__ == '__main__':
             runScheduler.schedule()
         except Exception as ex:
             print(ex)
-            print("Schedule fail with this parameters: ", sys.argv)
+            print("Scheduling failed with these parameters: ", sys.argv)

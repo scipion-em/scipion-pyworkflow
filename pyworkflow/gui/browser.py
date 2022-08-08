@@ -620,6 +620,11 @@ class FileBrowser(ObjectBrowser):
 
         self._lastSelected = self.getSelected()
 
+        if self._lastSelected is not None:
+            self.onSelect(self._lastSelected)
+        else:
+            self.showInfo('Select a valid file/folder')
+
     def getEntryValue(self):
         return self.entryVar.get()
 

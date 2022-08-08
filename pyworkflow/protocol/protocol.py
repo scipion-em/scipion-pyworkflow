@@ -715,20 +715,28 @@ class Protocol(Step):
                     else:
                         # This is a problem, since protocols coming from
                         # Pointers do not have the __project set.
-                        # We do not have an clear way to get the protocol if
+                        # We do not have a clear way to get the protocol if
                         # we do not have the project object associated
                         # This case implies Direct Pointers to Sets
                         # (without extended): hopefully this will only be
                         # created from tests
-                        print("Can't get protocol info from input attribute."
+                        logger.warning("Can't get %s info from %s."
                               " This could render unexpected results when "
-                              "scheduling protocols.")
+                              "scheduling protocols. Value: %s" % (key, self, attrInput))
                         continue
 
+                # If there is output
                 if output is not None:
+
+                    # For each output attribute: Looking for pointers like SetOfCoordinates.micrographs
                     for k, attr in output.getAttributes():
+
+                        # If it's a pointer
                         if isinstance(attr, Pointer):
                             if attr.get() is not None:
+                                # Get input dict from the previous protocol.
+                                # NOTE: This might not be enough cause the pointer
+                                # might not be to the previous protocol
                                 auxDict = protocol.inputProtocolDict()
                                 for auxKey in auxDict:
                                     if auxKey not in protocolDict.keys():
