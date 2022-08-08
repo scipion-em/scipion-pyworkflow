@@ -28,6 +28,8 @@ This module extends the functionalities of a normal Tkinter Canvas.
 The new Canvas class allows to easily display Texboxes and Edges
 that can be interactively dragged and clicked.
 """
+import logging
+logger = logging.getLogger(__name__)
 import math
 import tkinter as tk
 import operator
@@ -411,7 +413,6 @@ class Canvas(tk.Canvas, Scrollable):
             layout.draw(graph)
             # Update node positions
             self._updatePositions(graph.getRoot(), {})
-
         self.updateScrollRegion()
         self.__zoom(None, scale)
 
@@ -454,18 +455,23 @@ class Canvas(tk.Canvas, Scrollable):
         Establishes a connection between the visible parents of node's children
         with node
         """
+        logger.debug("Connecting item %s with parents:" % item)
         visibleParents = self._visibleParents(item, [])
         for visibleParent in visibleParents:
             if visibleParent != item:
-                dest = self.items[item.item.id]
-                source = self.items[visibleParent.item.id]
-                visibleParentNode = self.nodeList.getNode(visibleParent.run.getObjId())
-                itemNode = self.nodeList.getNode(item.run.getObjId())
+                try:
+                    logger.debug("Visible parent: %s" % visibleParent)
+                    dest = self.items[item.item.id]
+                    source = self.items[visibleParent.item.id]
+                    visibleParentNode = self.nodeList.getNode(visibleParent.run.getObjId())
+                    itemNode = self.nodeList.getNode(item.run.getObjId())
 
-                if visibleParent not in item.getParents() and visibleParentNode.isExpanded():
-                    self.createEdge(source, dest)
-                if not itemNode.isExpanded():
-                    self.createEdge(source, dest)
+                    if visibleParent not in item.getParents() and visibleParentNode.isExpanded():
+                        self.createEdge(source, dest)
+                    if not itemNode.isExpanded():
+                        self.createEdge(source, dest)
+                except:
+                    logger.warning("Can't connect node %s to parent %s" % (item, visibleParent))
 
     def _visibleParents(self, node, parentlist):
         """
@@ -499,6 +505,7 @@ class Canvas(tk.Canvas, Scrollable):
         if nodeName not in visitedDict:
             visitedDict[nodeName] = True
             item = node.item
+            logger.debug("Updating position for node: %s, item: %s" % (node, item))
             item.moveTo(node.x, node.y)
 
             if getattr(node, 'expanded', True):
