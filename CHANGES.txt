@@ -1,13 +1,16 @@
 V3.0.23
 -------
- - Fixing a bug for static protocols: when a protocol had another protocol as input, it failed to wait until it had finish.
+ - Fixing a bug for static protocols: when a protocol had another protocol as input, it failed to wait until it had finished.
  - Improvements in responsiveness to font size: Tables and automatic layouts. Object browser, Search windows.
  - Filebrowser has 2 new shortcuts: "recent" and "Protocol folder"
+ - Text widget: "File does not exist message" removed.
+ - Rescue colors in terminal
 
 
 Developers:
- - Some modules switched to use logger instead of print: viewprotocols.py, browser.py and launch.py.
-
+ - Some modules switched to use logger instead of print: viewprotocols.py, browser.py and launch.py,
+   pw_schedule_run.py, viewprojects.py, canvas.py, project.py, protocol.py.
+ - LoggerConfigurator adapted to received logfile, flag for console handler and line format.
 
 V3.0.22
 -------
