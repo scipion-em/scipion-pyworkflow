@@ -5,12 +5,14 @@ V3.0.23
  - Filebrowser has 2 new shortcuts: "recent" and "Protocol folder"
  - Text widget: "File does not exist message" removed.
  - Rescue colors in terminal
-
+ - Rescue output in tests.
 
 Developers:
  - Some modules switched to use logger instead of print: viewprotocols.py, browser.py and launch.py,
    pw_schedule_run.py, viewprojects.py, canvas.py, project.py, protocol.py.
  - LoggerConfigurator adapted to received logfile, flag for console handler and line format.
+ - pw_run_tests.py uses logging now.
+ - tests mode with --log now works. All goes to the same file and is not html.
 
 V3.0.22
 -------
