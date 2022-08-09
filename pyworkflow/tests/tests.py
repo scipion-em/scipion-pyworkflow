@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 import sys
 import os
 import time
@@ -63,7 +66,7 @@ class DataSet:
         if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
             command = ("%s %s --download %s %s"
                        % (pw.PYTHON, pw.getSyncDataScript(), folder, url))
-            print(">>>> %s" % command)
+            logger.info(">>>> %s" % command)
             os.system(command)
 
         return cls._datasetDict[name]
@@ -133,11 +136,11 @@ class BaseTest(unittest.TestCase):
         # For each log file to print
         for key in logs:
 
-            print(pwutils.cyanStr("\n*************** last %s lines of %s *********************\n" % (lastLines, key)))
+            logger.info(pwutils.cyanStr("\n*************** last %s lines of %s *********************\n" % (lastLines, key)))
             logLines = prot.getLogsLastLines(lastLines, logFile=logs[key])
             for i in range(0, len(logLines)):
-                print(logLines[i])
-            print(pwutils.cyanStr("\n*************** end of %s *********************\n" % key))
+                logger.info(logLines[i])
+            logger.info(pwutils.cyanStr("\n*************** end of %s *********************\n" % key))
 
             sys.stdout.flush()
 
@@ -169,7 +172,7 @@ class BaseTest(unittest.TestCase):
             time.sleep(sleepTime)
             prot2 = _loadProt()
             if counter > numberOfSleeps:
-                print("Timeout (%s) reached waiting for %s at %s" % (timeOut, outputAttributeName, prot))
+                logger.warning("Timeout (%s) reached waiting for %s at %s" % (timeOut, outputAttributeName, prot))
                 break
             counter += 1
 
@@ -200,7 +203,7 @@ class BaseTest(unittest.TestCase):
         for item1, item2 in zip(set1, set2):
             areEqual = item1.equalAttributes(item2)
             if not areEqual:
-                print("item 1 and item2 are different: ")
+                logger.info("item 1 and item2 are different: ")
                 item1.printAll()
                 item2.printAll()
             test.assertTrue(areEqual)
@@ -245,7 +248,7 @@ def setupTestProject(cls, writeLocalConfig=False):
 
     if writeLocalConfig:
         hostsConfig = '/tmp/hosts.conf'
-        print("Writing local config: %s" % hostsConfig)
+        logger.info("Writing local config: %s" % hostsConfig)
         import pyworkflow.protocol as pwprot
         pwprot.HostConfig.writeBasic(hostsConfig)
 
@@ -279,14 +282,14 @@ class GTestResult(unittest.TestResult):
 
     def doReport(self):
         secs = time.time() - self.startTimeAll
-        sys.stderr.write("\n%s run %d tests (%0.3f secs)\n" %
+        logger.info("\n%s run %d tests (%0.3f secs)\n" %
                          (pwutils.greenStr("[==========]"),
                           self.numberTests, secs))
         if self.testFailed:
-            sys.stderr.write("%s %d tests\n"
+            logger.info("%s %d tests\n"
                              % (pwutils.redStr("[  FAILED  ]"),
                                 self.testFailed))
-        sys.stdout.write("%s %d tests\n"
+        logger.info("%s %d tests\n"
                          % (pwutils.greenStr("[  PASSED  ]"),
                             self.numberTests - self.testFailed))
 
@@ -310,14 +313,14 @@ class GTestResult(unittest.TestResult):
 
     def addSuccess(self, test):
         secs = self.toc()
-        sys.stderr.write("%s %s (%0.3f secs)\n" %
+        logger.info("%s %s (%0.3f secs)\n" %
                          (pwutils.greenStr('[ RUN   OK ]'),
                           self.getTestName(test), secs))
 
     def reportError(self, test, err):
-        sys.stderr.write("%s %s\n" % (pwutils.redStr('[   FAILED ]'),
+        logger.info("%s %s\n" % (pwutils.redStr('[   FAILED ]'),
                                       self.getTestName(test)))
-        sys.stderr.write("\n%s"
+        logger.info("\n%s"
                          % pwutils.redStr("".join(format_exception(*err))))
         self.testFailed += 1
 
