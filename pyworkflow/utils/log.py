@@ -67,9 +67,9 @@ class LoggingConfigurator:
     customLoggingActive = False  # Holds if a custom logging configuration has taken place.
 
     @classmethod
-    def setupLogging(cls):
+    def setupLogging(cls, logFile=None, console=True, lineFormat=None):
         if not cls.loadCustomLoggingConfig():
-            cls.setupDefaultLogging()
+            cls.setupDefaultLogging(logFile=logFile, console=console, lineFormat=lineFormat)
 
     @classmethod
     def loadCustomLoggingConfig(cls):
@@ -143,7 +143,7 @@ class LoggingConfigurator:
             config['loggers']['']['handlers'].append(CONSOLE_HANDLER)
 
         # Create the log folder
-        os.makedirs(os.path.dirname(logFile), exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(logFile)), exist_ok=True)
 
         logging.config.dictConfig(config)
 
