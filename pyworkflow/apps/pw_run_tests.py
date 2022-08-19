@@ -79,13 +79,14 @@ class Tester:
         self.log = args.log
 
         if self.log:
-            LoggingConfigurator.setupLogging(logFile=self.log, lineFormat="%(message)s")
+            LoggingConfigurator.setupLogging(logFile=self.log)
         else:
-            logging.basicConfig(level=Config.SCIPION_LOG_LEVEL, format="%(message)s")
+            logging.basicConfig(level=Config.SCIPION_LOG_LEVEL, format=Config.SCIPION_LOG_FORMAT)
 
         self.logger = logging.getLogger(__name__)
 
-        self.logger.info("Running tests....")
+        # This goes intentionally to the output. Is not a logging line._S
+        print("Running tests....")
 
         testsDict = OrderedDict()
         testLoader = unittest.defaultTestLoader

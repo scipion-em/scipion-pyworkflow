@@ -60,8 +60,7 @@ class RunScheduler:
         self.protocol = self._loadProtocol()
         self.project = self.protocol.getProject()
         LoggingConfigurator.setupDefaultLogging(self.protocol.getScheduleLog(),
-                                                console=False,
-                                                lineFormat='%(asctime)s  %(message)s')
+                                                console=False)
         self.log = logging.getLogger(__name__)
         self.protPid = os.getpid()
         self.protocol.setPid(self.protPid)

@@ -24,7 +24,7 @@
 # **************************************************************************
 import logging
 import threading
-
+from pyworkflow import Config
 from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut
 from pyworkflow.gui.project.constants import ACTION_REFRESH, ACTION_EDIT, ACTION_COPY, ACTION_DELETE, ACTION_STEPS, \
     ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, \
@@ -32,7 +32,7 @@ from pyworkflow.gui.project.constants import ACTION_REFRESH, ACTION_EDIT, ACTION
     ACTION_SELECT_TO, ACTION_RENAME, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, ACTION_DEFAULT, \
     ACTION_SELECT_FROM, ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW
 
-INIT_REFRESH_SECONDS = 5
+INIT_REFRESH_SECONDS = Config.SCIPION_GUI_REFRESH_INITIAL_WAIT
 
 """
 View with the protocols inside the main project window.
@@ -470,7 +470,7 @@ class ProtocolsView(tk.Frame):
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
         """ Schedule automatic refresh increasing the time between refreshes. """
-        if pwutils.envVarOn('DO_NOT_AUTO_REFRESH'):
+        if pwutils.envVarOn(Config.SCIPION_GUI_CANCEL_AUTO_REFRESH):
             return
 
         self.refreshRuns(initRefreshCounter=False, checkPids=True)

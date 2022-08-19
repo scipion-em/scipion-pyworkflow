@@ -28,6 +28,9 @@
 This module handles process execution
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
 import sys
 from subprocess import check_call
 import psutil
@@ -45,7 +48,7 @@ def runJob(log, programname, params,
                               env, gpuList=gpuList)
     
     if log is None:
-        print("** Running command: %s" % greenStr(command))
+        logger.info("** Running command: %s" % greenStr(command))
     else:
         log.info(greenStr(command))
 
@@ -108,11 +111,11 @@ def killWithChilds(pid):
     proc = psutil.Process(pid)
     for c in proc.children(recursive=True):
         if c.pid is not None:
-            print("Terminating child pid: %d" % c.pid)
+            logger.info("Terminating child pid: %d" % c.pid)
             c.kill()
-    print("Terminating process pid: %s" % pid)
+    logger.info("Terminating process pid: %s" % pid)
     if pid is None:
-        print("WARNING! Got None PID!!!")
+        logger.warning("Got None PID!!!")
     else:
         proc.kill()
 

@@ -478,7 +478,7 @@ class Protocol(Step):
         self.__tryUpdateOutputSet(outputName, outputSet, state)
 
     def __tryUpdateOutputSet(self, outputName, outputSet,
-                            state=Set.STREAM_OPEN, tries=1):
+                            state=Set.STREAM_OPEN, tries=1, firstException=None):
         try:
             # Update the set with the streamState value (either OPEN or CLOSED)
             outputSet.setStreamState(state)
@@ -498,14 +498,16 @@ class Protocol(Step):
             outputSet.close()
 
         except Exception as ex:
-            print("Error trying to update output of protocol, tries=%d" % tries)
 
             if tries > pw.Config.getUpdateSetAttempts():
-                raise ex
+                raise BlockingIOError("Can't update %s (output) of %s after %s attempts. Reason: %s. "
+                                      "Concurrency, a non writable file system or a quota exceeded could be among the causes." %
+                                      (outputName, self,tries-1, ex)) from firstException
             else:
+                logger.warning("Trying to update %s (output) of protocol %s, attempt=%d: %s " % (outputName, self, tries, ex))
                 time.sleep(pw.Config.getUpdateSetAttemptsWait())
                 self.__tryUpdateOutputSet(outputName, outputSet, state,
-                                          tries + 1)
+                                          tries + 1, firstException= ex if tries==1 else firstException)
 
     def hasExpert(self):
         """ This function checks if the protocol has
