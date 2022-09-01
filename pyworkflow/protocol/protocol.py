@@ -730,18 +730,22 @@ class Protocol(Step):
 
                     # For each output attribute: Looking for pointers like SetOfCoordinates.micrographs
                     for k, attr in output.getAttributes():
-
+                        logger.debug("%s (%s) found in %s" % (k, attr, output))
                         # If it's a pointer
                         if isinstance(attr, Pointer):
-                            if attr.get() is not None:
-                                # Get input dict from the previous protocol.
-                                # NOTE: This might not be enough cause the pointer
-                                # might not be to the previous protocol
-                                auxDict = protocol.inputProtocolDict()
-                                for auxKey in auxDict:
-                                    if auxKey not in protocolDict.keys():
-                                        protocolDict[auxKey] = auxDict[auxKey]
-                                break
+                            # if attr.get() is not None:
+                            #     # Get input dict from the previous protocol.
+                            #     # NOTE: This might not be enough cause the pointer
+                            #     # might not be to the previous protocol
+                            #     auxDict = protocol.inputProtocolDict()
+                            #     for auxKey in auxDict:
+                            #         if auxKey not in protocolDict.keys():
+                            #             protocolDict[auxKey] = auxDict[auxKey]
+                            #     break
+                            prot = attr.getObjValue()
+                            if prot is not None:
+                                protocolDict[prot.getObjId()] = prot
+
 
             protocolDict[protocol.getObjId()] = protocol
 
@@ -2433,7 +2437,7 @@ def isProtocolUpToDate(protocol):
     dbTS = pwutils.getFileLastModificationDate(protocol.getDbPath())
 
     if not (protTS and dbTS):
-        print("Can't compare if protocol is up to date: "
+        logger.info("Can't compare if protocol is up to date: "
               "Protocol %s, protocol time stamp: %s, %s timeStamp: %s"
               % (protocol, protTS, protocol, dbTS))
     else:
