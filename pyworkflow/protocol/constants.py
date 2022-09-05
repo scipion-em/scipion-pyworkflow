@@ -78,3 +78,9 @@ GPU_LIST = 'gpuList'
 
 # Job management
 UNKNOWN_JOBID = -1
+
+# File sizes
+SIZE_1KB = 1024
+SIZE_1MB = SIZE_1KB * SIZE_1KB
+SIZE_1GB = SIZE_1MB * SIZE_1KB
+SIZE_1TB = SIZE_1GB * SIZE_1KB

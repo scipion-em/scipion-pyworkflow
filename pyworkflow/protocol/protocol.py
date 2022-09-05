@@ -39,6 +39,7 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
 from .params import Form
+from ..utils import getFileSize
 
 SCHEDULE_LOG = 'schedule.log'
 
@@ -352,6 +353,7 @@ class Protocol(Step):
 
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
+        self._size = None
         self._steps = []  # List of steps that will be executed
         # All generated filePaths should be inside workingDir
         self.workingDir = String(kwargs.get('workingDir', '.'))
@@ -1034,6 +1036,10 @@ class Protocol(Step):
             stepsSet.update(step)
         stepsSet.write()
         stepsSet.close()  # Close the connection
+
+    def getPath(self, *paths):
+        """ Same as _getPath but without underscore. """
+        return self._getPath(*paths)
 
     def _getPath(self, *paths):
         """ Return a path inside the workingDir. """
@@ -2281,6 +2287,12 @@ class Protocol(Step):
         """
         pass
 
+    def getSize(self):
+        """ Returns the size of the folder corresponding to this protocol"""
+        if not self._size:
+            self._size = getFileSize(self.getPath())
+
+        return self._size
 
 class LegacyProtocol(Protocol):
     """ Special subclass of Protocol to be used when a protocol class
