@@ -6,6 +6,9 @@ V3.0.23
  - Text widget: "File does not exist message" removed.
  - Rescue colors in terminal
  - Rescue output in tests.
+ - New color mode: Size (GREEN < 1MB, ORANGE < 1GB, RED < 1TB, DARK > 1TB
+ - Color mode info is shown in the "info line" when switching
+ - Color mode age: fixed.
 
 Developers:
  - Some modules switched to use logger instead of print: viewprotocols.py, browser.py and launch.py,
@@ -13,6 +16,7 @@ Developers:
  - LoggerConfigurator adapted to received logfile, flag for console handler and line format.
  - pw_run_tests.py uses logging now.
  - tests mode with --log now works. All goes to the same file and is not html.
+ - Protocol.getPath added = Protocol._getPath
 
 V3.0.22
 -------
