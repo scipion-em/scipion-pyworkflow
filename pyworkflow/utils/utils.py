@@ -811,7 +811,7 @@ def hex_to_rgb(value):
 
 
 def rgb_to_hex(rgb):
-    return '#%02x%02x%02x' % rgb
+    return '#%02x%02x%02x' % (int(rgb[0]), int(rgb[1]), int(rgb[2]))
 
 
 def lighter(color, percent):

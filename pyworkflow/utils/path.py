@@ -458,8 +458,19 @@ def createUniqueFileName(fn):
 
 
 def getFileSize(fn):
-    """ Shortcut to inspect the size of a file. """
-    return os.stat(fn).st_size
+    """ Shortcut to inspect the size of a file or a folder. """
+
+    if os.path.isdir(fn):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(fn):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                if not os.path.islink(fp):
+                    total_size += os.path.getsize(fp)
+        return total_size
+
+    else:
+        return os.path.getsize(fn)
 
 
 def getFileLastModificationDate(fn):

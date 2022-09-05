@@ -127,6 +127,9 @@ class Config:
     SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
     "Path to the file where scipion will write GUI logging messages. Defaults to SCIPION_LOGS/scipion.log"
 
+    SCIPION_LOG_FORMAT = _get('SCIPION_LOG_FORMAT', "%(message)s")
+    "Format for all the log lines, defaults to %(message)s. To compose the format see https://docs.python.org/3/library/logging.html#logrecord-attributes"
+
     SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
     "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO."
 
@@ -138,6 +141,9 @@ class Config:
 
     SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
     "Path to a folder Where the output of the tests will be written. Defaults to SCIPION_USER_DATA/Tests."
+
+    SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', "False")
+    "Set it to 1, True, Yes or y to cancel test dataset synchronization. Needed when updating files in a dataset."
 
     SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL', 'scipion@cnb.csic.es')
 
@@ -192,9 +198,16 @@ class Config:
     "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it."
 
     SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
+    "Directory when scipion was launched"
 
-    # Refresh the displayed runs with a thread
     SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', 'False')
+    "True to refresh the runs graph with a thread. Unstable."
+
+    SCIPION_GUI_REFRESH_INITIAL_WAIT = int(_get("SCIPION_GUI_REFRESH_INITIAL_WAIT", 5))
+    "Seconds to wait after a manual refresh"
+
+    SCIPION_GUI_CANCEL_AUTO_REFRESH = _get("SCIPION_GUI_CANCEL_AUTO_REFRESH","False")
+    "Set it to True to cancel automatic refresh of the runs."
 
     # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not fallback on the slow copy.
     SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', None)
@@ -267,8 +280,8 @@ class Config:
             for name, value in vars(baseCls).items():
                 # Skip methods and internal attributes starting with __
                 # (e.g __doc__, __module__, etc)
-                if isinstance(value, str) and not name.startswith('__'):
-                    configVars[name] = value
+                if (isinstance(value, str) or isinstance(value, int)) and not name.startswith('__'):
+                    configVars[name] = str(value)
         return configVars
 
     @classmethod
