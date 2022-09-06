@@ -80,6 +80,9 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
     if gpuList:
         params = params % {'GPU': ' '.join(str(g) for g in gpuList)}
+        if "CUDA_VISIBLE_DEVICES" in programname:
+            sep = "," if len(gpuList) > 1 else ""
+            programname = programname % {'GPU': sep.join(str(g) for g in gpuList)}
 
     prepend = '' if env is None else env.getPrepend()
 
