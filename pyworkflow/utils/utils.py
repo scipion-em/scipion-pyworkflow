@@ -21,6 +21,9 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+logger = logging.getLogger(__name__)
+
 import contextlib
 import sys
 import os
@@ -142,7 +145,7 @@ class UtcConverter:
 to_utc = UtcConverter()
 
 def prettyLog(msg):
-    print(cyan(prettyTime(datetime.now(), secs=True)), msg)
+    logger.info(cyanStr(msg))
 
 
 class Timer(object):
@@ -158,7 +161,7 @@ class Timer(object):
         return datetime.now() - self._dt
 
     def toc(self, message='Elapsed:'):
-        print(message, self.getElapsedTime())
+        logger.info(message + str(self.getElapsedTime()))
 
     def getToc(self):
         return prettyDelta(self.getElapsedTime())
@@ -673,7 +676,7 @@ class Environ(dict):
                 return self.get(k)
 
         if mandatory:
-            print("None of the variables: %s found in the Environment. "
+            logger.info("None of the variables: %s found in the Environment. "
                   "Please check scipion.conf files." % (str(keys)))
 
         return None
@@ -712,7 +715,7 @@ class Environ(dict):
         if existsVariablePaths(libraryPath):
             self.update({'LD_LIBRARY_PATH': libraryPath}, position=position)
         else:
-            print("Some paths do not exist in: % s" % libraryPath)
+            logger.info("Some paths do not exist in: % s" % libraryPath)
 
     def setPrepend(self, prepend):
         """ Use this method to set a prepend string that will be added at
@@ -762,27 +765,15 @@ def getMemoryAvailable():
     return virtual_memory().total // 1024 ** 2
 
 
-def startDebugger(password='a'):
-    if Config.debugOn():
-        try:
-            # FIXME: rpdb2 does not support python 3
-            from rpdb2 import start_embedded_debugger
-            print("Starting debugger...")
-            start_embedded_debugger(password)
-        except Exception:
-            print("Error importing rpdb2 debugging module, consider installing winpdb.")
-
-
 def getFreePort(basePort=0, host=''):
     import socket
-    port = 0
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((host, basePort))
         ipaddr, port = s.getsockname()
         s.close()
     except Exception as e:
-        print(e)
+        logger.error("Can't get a free port", exc_info=e)
         return 0
     return port
 

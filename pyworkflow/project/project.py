@@ -653,20 +653,22 @@ class Project(object):
         if self.openedAsReadOnly():
             return pw.NOT_UPDATED_READ_ONLY
 
-        if checkPid:
-            self.checkPid(protocol)
-
-        if skipUpdatedProtocols:
-            # If we are already updated, comparing timestamps
-            if pwprot.isProtocolUpToDate(protocol):
-                return pw.NOT_UPDATED_UNNECESSARY
-
         try:
+
             # Backup the values of 'jobId', 'label' and 'comment'
             # to be restored after the .copy
             jobId = protocol.getJobId()
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
+
+            if checkPid:
+                self.checkPid(protocol)
+
+            if skipUpdatedProtocols:
+                # If we are already updated, comparing timestamps
+                if pwprot.isProtocolUpToDate(protocol):
+                    return pw.NOT_UPDATED_UNNECESSARY
+
 
             # If the protocol database has ....
             #  Comparing date will not work unless we have a reliable
@@ -708,18 +710,22 @@ class Project(object):
             prot2.closeMappers()
 
         except Exception as ex:
-            logger.error("Couldn't update protocol %s(jobId=%s) from it's own database. ERROR: %s, tries=%d"
-                  % (protocol.getObjName(), jobId, ex, tries))
             if tries == 3:  # 3 tries have been failed
                 traceback.print_exc()
                 # If any problem happens, the protocol will be marked
                 # with a FAILED status
-                protocol.setFailed(str(ex))
-                self.mapper.store(protocol)
+                try:
+                    protocol.setFailed(str(ex))
+                    self.mapper.store(protocol)
+                except Exception:
+                    pass
                 return pw.NOT_UPDATED_ERROR
             else:
+                logger.warning("Couldn't update protocol %s(jobId=%s) from it's own database. ERROR: %s, attempt=%d"
+                             % (protocol.getObjName(), jobId, ex, tries))
                 time.sleep(0.5)
                 self._updateProtocol(protocol, tries + 1)
+
 
         return pw.PROTOCOL_UPDATED
 
@@ -1076,7 +1082,6 @@ class Project(object):
 
         g = self.getRunsGraph()
 
-        # pwutils.startDebugger('a')
         for prot in protocols:
             protId = prot.getObjId()
             node = g.getNode(prot.strId())
@@ -1388,7 +1393,10 @@ class Project(object):
         from pyworkflow.protocol.launch import _runsLocally
         pid = protocol.getPid()
 
-        if (protocol.isRunning() and _runsLocally(protocol)
+        # Include running and scheduling ones
+        # NOTE: This may be happening even with successfully finished protocols
+        # which PID is gone.
+        if (protocol.isActive() and _runsLocally(protocol)
             and not protocol.useQueue()
                 and not pwutils.isProcessAlive(pid)):
             protocol.setFailed("Process %s not found running on the machine. "

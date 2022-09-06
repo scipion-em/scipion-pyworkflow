@@ -28,6 +28,8 @@ This modules implements the automatic
 creation of protocol form GUI from its
 params definition.
 """
+import logging
+logger = logging.getLogger(__name__)
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -1014,9 +1016,9 @@ class ParamWidget:
         self.window = window
         self._protocol = self.window.protocol
         if self._protocol.getProject() is None:
-            print(">>> ERROR: Project is None for protocol: %s, "
+            logger.error(">>> ERROR: Project is None for protocol: %s, "
                   "start winpdb to debug it" % self._protocol)
-            pwutils.startDebugger()
+
         self.row = row
         self.column = column
         self.paramName = paramName

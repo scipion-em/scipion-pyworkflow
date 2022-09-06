@@ -31,6 +31,9 @@ Scipion data synchronization.
 
 Get(put) tests data, from(to) the server to(from) the $SCIPION_TESTS folder.
 """
+import logging
+logger = None
+
 import sys
 import os
 from os.path import join, isdir, exists, relpath, dirname
@@ -46,6 +49,12 @@ from pyworkflow.utils import redB, red, green, yellow
 
 
 def main():
+
+    #Configure logging
+    logging.basicConfig(level=pw.Config.SCIPION_LOG_LEVEL, format=pw.Config.SCIPION_LOG_FORMAT)
+    global logger
+    logger = logging.getLogger(__name__)
+
     # Get arguments.
     args = get_parser().parse_args()
 
@@ -55,32 +64,36 @@ def main():
         listDatasets(args.url)
         sys.exit(0)
 
-    if args.check_all:
-        datasets = [x.decode("utf-8").strip('./\n') for x in urlopen('%s/MANIFEST' % args.url)]
-        print('Checking datasets: %s' % ' '.join(datasets))
+    if args.check:
+        if not args.datasets:
+            datasets = [x.decode("utf-8").strip('./\n') for x in urlopen('%s/MANIFEST' % args.url)]
+        else:
+            datasets = args.datasets
+
+        logger.info('Checking %s at %s.' % (' '.join(datasets), args.url))
 
         all_uptodate = True
         for dataset in datasets:
             all_uptodate &= check(dataset, url=args.url, verbose=args.verbose)
         if all_uptodate:
-            print('All datasets are up-to-date.')
+            logger.info('All datasets are up-to-date.')
             sys.exit(0)
         else:
-            print('Some datasets are not updated.')
+            logger.error('Some datasets are not updated.')
             sys.exit(1)
 
     if not args.datasets:
-        sys.exit('At least --list, --check-all or datasets needed.\n'
+        sys.exit('At least --list, --check or datasets needed.\n'
                  'Run with --help for more info.')
 
-    print('Selected datasets: %s' % yellow(' '.join(args.datasets)))
+    logger.info('Selected datasets: %s' % yellow(' '.join(args.datasets)))
 
     testFolder = pw.Config.SCIPION_TESTS
 
     if args.format:
         for dataset in args.datasets:
             datasetFolder = join(testFolder, dataset)
-            print('Formatting %s (creating MANIFEST file)' % dataset)
+            logger.info('Formatting %s (creating MANIFEST file)' % dataset)
 
             if not exists(datasetFolder):
                 sys.exit('ERROR: %s does not exist in datasets folder %s.' %
@@ -93,17 +106,17 @@ def main():
         try:
             for dataset in args.datasets:
                 if exists(join(testFolder, dataset)):
-                    print('Local copy of dataset %s detected.' % dataset)
-                    print('Checking for updates...')
+                    logger.info('Local copy of dataset %s detected.' % dataset)
+                    logger.info('Checking for updates...')
                     update(dataset, url=args.url, verbose=args.verbose)
                 else:
-                    print('Dataset %s not in local machine. '
+                    logger('Dataset %s not in local machine. '
                           'Downloading...' % dataset)
                     download(dataset, url=args.url, verbose=args.verbose)
         except IOError as e:
-            print('Warning: %s' % e)
+            logger.warning('%s' % e)
             if e.errno == 13:  # permission denied
-                print('Maybe you need to run as the user that '
+                logger.warning('Maybe you need to run as the user that '
                       'did the global installation?')
             sys.exit(1)
         sys.exit(0)
@@ -115,7 +128,7 @@ def main():
                 upload(dataset, login=args.login,
                        remoteFolder=args.remotefolder, delete=args.delete)
             except Exception as e:
-                print('Error when uploading dataset %s: %s' % (dataset, e))
+                logger.error('Error when uploading dataset %s: %s' % (dataset, e))
                 if ask() != 'y':
                     sys.exit(1)
         sys.exit(0)
@@ -149,7 +162,7 @@ def get_parser():
               'as it is in the local one. Dangerous, use with caution.'))
     add('-u', '--url', default=pw.Config.SCIPION_URL_TESTDATA,
         help='URL where remote datasets will be looked for.')
-    add('--check-all', action='store_true',
+    add('--check', action='store_true',
         help='See if there is any remote dataset not in sync with locals.')
     add('-l', '--login', default='scipion@scipion.cnb.csic.es', help='ssh login string. For upload')
     add('-rf', '--remotefolder', default='scipionfiles/downloads/scipion/data/tests',
@@ -176,14 +189,14 @@ def listDatasets(url):
         for line in sorted(urlopen('%s/MANIFEST' % url)):
             print("  * %s" % line.decode("utf-8").strip('./\n'))
     except Exception as e:
-        print("Error reading %s (%s)" % (url, e))
+        logger.info("Error reading %s (%s)" % (url, e))
 
 
 def check(dataset, url, verbose=False, updateMANIFEST=False):
     """ See if our local copy of dataset is the same as the remote one.
     Return True if it is (if all the checksums are equal), False if not.
     """
-    def vlog(txt): sys.stdout.write(txt) if verbose else None  # verbose log
+    def vlog(txt): logger.info(txt) if verbose else None  # verbose log
 
     vlog("Checking dataset %s ... " % dataset)
 
@@ -216,7 +229,7 @@ def check(dataset, url, verbose=False, updateMANIFEST=False):
                                             if md5sLocal[f] != md5sRemote[f]])
             return False
     except Exception as e:
-        vlog("\terror: %s\n" % e)
+        logger.error("Can't check dataset %s." % dataset, exc_info=e)
         return False
 
 
@@ -227,8 +240,8 @@ def download(dataset, destination=None, url=None, verbose=False):
 
     # First make sure that we ask for a known dataset.
     if dataset not in [x.decode('utf-8').strip('./\n') for x in urlopen('%s/MANIFEST' % url)]:
-        print("Unknown dataset: %s" % red(dataset))
-        print("Use --list to see the available datasets.")
+        logger.info("Unknown dataset: %s" % red(dataset))
+        logger.info("Use --list to see the available datasets.")
         return
 
     # Retrieve the dataset's MANIFEST file.
@@ -238,15 +251,15 @@ def download(dataset, destination=None, url=None, verbose=False):
     manifest = join(destination, dataset, 'MANIFEST')
     try:
         if verbose:
-            print("Retrieving MANIFEST file")
+            logger.info("Retrieving MANIFEST file")
         open(manifest, 'wb').writelines(
             urlopen('%s/%s/MANIFEST' % (url, dataset)))
     except Exception as e:
-        print("ERROR reading %s/%s/MANIFEST (%s)" % (url, dataset, e))
+        logger.info("ERROR reading %s/%s/MANIFEST (%s)" % (url, dataset, e))
         return
 
     # Now retrieve all of the files mentioned in MANIFEST, and check their md5.
-    print('Fetching files of dataset "%s"...' % dataset)
+    logger.info('Fetching files of dataset "%s"...' % dataset)
     lines = open(manifest).readlines()
     done = 0.0  # fraction already done
     inc = 1.0 / len(lines)  # increment, how much each iteration represents
@@ -266,14 +279,14 @@ def download(dataset, destination=None, url=None, verbose=False):
 
             done += inc
             if verbose:
-                print(redB("%3d%% " % (100 * done)), fname)
+                logger.info(redB("%3d%% " % (100 * done)) + fname)
             else:
                 sys.stdout.write(redB("#") * (int(50*done)-int(50*(done-inc))))
                 sys.stdout.flush()
         except Exception as e:
-            print("\nError in %s (%s)" % (fname, e))
-            print("URL: %s/%s/%s" % (url, dataset, fname))
-            print("Destination: %s" % fpath)
+            logger.info("\nError in %s (%s)" % (fname, e))
+            logger.info("URL: %s/%s/%s" % (url, dataset, fname))
+            logger.info("Destination: %s" % fpath)
             if ask("Continue downloading? (y/[n]): ", ['y', 'n', '']) != 'y':
                 return
 
@@ -287,7 +300,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
     workingCopy = workingCopy or pw.Config.SCIPION_TESTS
 
     # Verbose log
-    def vlog(txt): sys.stdout.write(txt) if verbose else None
+    def vlog(txt): logger.info(txt) if verbose else None
 
     # Read contents of *remote* MANIFEST file, and create a dict {fname: md5}
     manifest = urlopen('%s/%s/MANIFEST' % (url, dataset)).readlines()
@@ -300,12 +313,12 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
         t_manifest = os.stat(join(datasetFolder, 'MANIFEST')).st_mtime
         assert t_manifest > last and time.time() - t_manifest < 60*60*24*7
     except (OSError, IOError, AssertionError) as e:
-        print("Regenerating local MANIFEST...")
+        logger.info("Regenerating local MANIFEST...")
         createMANIFEST(datasetFolder)
     md5sLocal = dict(x.strip().split() for x in open(join(datasetFolder, 'MANIFEST')))
 
     # Check that all the files mentioned in MANIFEST are up-to-date
-    print("Verifying MD5s...")
+    logger.info("Verifying MD5s...")
 
     filesUpdated = 0  # number of files that have been updated
     taintedMANIFEST = False  # can MANIFEST be out of sync?
@@ -319,7 +332,7 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
             else:
                 if not downloadingPrinted:
                     verboseMsg = " Next time use -v for more details." if not verbose else ""
-                    print("%s differs. Downloading new version.%s" % (fname, verboseMsg))
+                    logger.info("%s differs. Downloading new version.%s" % (fname, verboseMsg))
 
                 vlog("\r  %s  %s  (downloading... " % (red("XX"), fname))
                 if not isdir(dirname(fpath)):
@@ -328,20 +341,20 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
                 urlretrieve('%s/%s/%s' % (url, dataset, fname)
                             , fpath)
 
-                vlog("done)\n")
+                vlog("done)")
                 filesUpdated += 1
         except Exception as e:
-            print("\nError while updating %s: %s" % (fname, e))
+            logger.error("Couldn't update %s." % fname, exc_info= e)
             taintedMANIFEST = True  # if we don't update, it can be wrong
 
-    print("...done. Updated files: %d" % filesUpdated)
+    logger.info("...done. Updated files: %d" % filesUpdated)
 
     # Save the new MANIFEST file in the folder of the downloaded dataset
     if filesUpdated > 0:
         open(join(datasetFolder, 'MANIFEST'), 'w').writelines(md5sRemote)
 
     if taintedMANIFEST:
-        print("Some files could not be updated. Regenerating local MANIFEST ...")
+        logger.info("Some files could not be updated. Regenerating local MANIFEST ...")
         createMANIFEST(datasetFolder)
 
 
@@ -353,23 +366,23 @@ def upload(dataset, login, remoteFolder, delete=False):
     if not exists(localFolder):
         sys.exit("ERROR: local folder %s does not exist." % localFolder)
 
-    print("Warning: Uploading, please BE CAREFUL! This can be dangerous.")
-    print('You are going to be connected to "%s" to write in folder '
+    logger.info("Warning: Uploading, please BE CAREFUL! This can be dangerous.")
+    logger.info('You are going to be connected to "%s" to write in folder '
           '"%s" the dataset "%s".' % (login, remoteFolder, dataset))
     if ask() == 'n':
         return
 
     # First make sure we have our MANIFEST file up-to-date
-    print("Updating local MANIFEST file with MD5 info...")
+    logger.info("Updating local MANIFEST file with MD5 info...")
     createMANIFEST(localFolder)
 
     # Upload the dataset files (with rsync)
-    print("Uploading files...")
+    logger.info("Uploading files...")
     call(['rsync', '-rlv', '--chmod=a+r', localFolder,
           '%s:%s' % (login, remoteFolder)] + (['--delete'] if delete else []))
 
     # Regenerate remote MANIFEST (which contains a list of datasets)
-    print("Regenerating remote MANIFEST file...")
+    logger.info("Regenerating remote MANIFEST file...")
     call(['ssh', login,
           'cd %s && find -type d -mindepth 1 -maxdepth 1 > MANIFEST' % remoteFolder])
     # This is a file that just contains the name of the directories
@@ -377,7 +390,7 @@ def upload(dataset, login, remoteFolder, delete=False):
     # the datasets, which contain file names and md5s.
 
     # Leave a register (log file)
-    print("Logging modification attempt in modifications.log ...")
+    logger.info("Logging modification attempt in modifications.log ...")
     log = """++++
 Modification to %s dataset made at
 %s
@@ -385,7 +398,7 @@ by %s at %s
 ----""" % (dataset, time.asctime(), getpass.getuser(), ' '.join(os.uname()))
     call(['ssh', login,
           'echo "%s" >> %s' % (log, join(remoteFolder, 'modifications.log'))])
-    print("...done.")
+    logger.info("...done.")
 
 
 def createMANIFEST(path):
@@ -395,9 +408,9 @@ def createMANIFEST(path):
         for root, dirs, files in os.walk(path):
             for filename in set(files) - {'MANIFEST'}:  # all but ourselves
                 fn = join(root, filename)  # file to check
-                print("Calculating md5 for local %s ... " % filename, end="")
+                logger.info("Calculating md5 for local %s ... " % filename)
                 manifest.write('%s %s\n' % (relpath(fn, path), md5sum(fn)))
-                print(green("DONE!"))
+                logger.info(green("DONE!"))
 
 def md5sum(fname):
     """ Return the md5 hash of file fname """
