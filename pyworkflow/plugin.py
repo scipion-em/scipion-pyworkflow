@@ -265,14 +265,20 @@ class Domain:
 
     @staticmethod
     def importFromPlugin(module, objects=None, errorMsg='', doRaise=False):
-        """ This method try to import either a list of objects from the
-            module/plugin or the whole module/plugin and returns what is
-            imported if not fails.
-            When the import fails (due to the plugin or the object is not found),
-            it prints a common message + optional errorMsg;
-            or it raise an error with the same message, if doRaise is True.
+        """
+        This method try to import either a list of objects from the
+        module/plugin or the whole module/plugin and returns what is
+        imported if not fails.
+        When the import fails (due to the plugin or the object is not found),
+        it prints a common message + optional errorMsg;
+        or it raise an error with the same message, if doRaise is True.
 
-         -> Usages:
+        :param module: Module name to import
+        :param objects: Optional, string with objects to return present in module
+        :param errorMsg: Optional, extra error message to append to the main message.
+        :param doRaise: If True it will raise an exception instead of tolerating the import error
+
+        Usages::
 
              # Import the whole plugin 'plugin1' as 'plug1'
              plug1 = importFromPlugin('plugin1')
@@ -387,12 +393,13 @@ class Domain:
 
     @classmethod
     def findWizards(cls, protocol, environment):
-        """ Find available wizards for this class, in this Domain.
-        Params:
-            protocols: Protocol instance for which wizards will be search.
-            environment: The environment name for wizards (e.g TKINTER)
-        Returns:
-            a dict with the paramName and wizards for this class."""
+        """
+        Find available wizards for this class, in this Domain.
+
+        :param protocol: Protocol instance for which wizards will be search.
+        :param environment: The environment name for wizards (e.g TKINTER)
+
+        :return A dict with the paramName and wizards for the protocol passed."""
         return cls.__findWizardsFromDict(protocol, environment,
                                          cls.getWizards())
 
@@ -565,9 +572,11 @@ class Plugin:
 
     @classmethod
     def getActiveVersion(cls, home=None, versions=None):
-        """ Return the version of the binaries that are currently active.
-        In the current implementation it will be inferred from the *_HOME
+        """
+        Returns the version of the binaries that are currently active.
+        In the current implementation it will be inferred from the \*_HOME
         variable, so it should contain the version number in it. """
+
         # FIXME: (JMRT) Use the basename might alleviate the issue with matching
         # the binaries version, but we might consider to find a better solution
         home = os.path.basename(home or cls.getHome())

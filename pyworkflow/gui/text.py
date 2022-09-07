@@ -462,8 +462,10 @@ class OutputText(Text):
                                                       maxSize=self.maxSize, 
                                                       notifyLine=self._notifyLine,
                                                       errors='replace')
-        else:
-            self.insert(tk.END, "File '%s' doesn't exist" % self.filename)
+
+        # I'm cancelling this message. If file does not exist ... text is empty.
+        # else:
+        #     self.insert(tk.END, "File '%s' doesn't exist" % self.filename)
 
         self.setReadOnly(True)
         # self.goEnd()

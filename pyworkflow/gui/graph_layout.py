@@ -24,6 +24,9 @@
 # *
 # **************************************************************************
 import logging
+
+from pyworkflow.gui import cfgFontSize
+
 logger = logging.getLogger(__name__)
 
 from pyworkflow import Config
@@ -77,7 +80,7 @@ class BasicLayout(GraphLayout):
 
             if len(siblings) == 1:
                 node.x = maxParent.x
-                node.y = maxParent.y + self.DY
+                node.y = maxParent.y + self.getY()
             else:
                 rightSibling = siblings[0]
                 for s in siblings:
@@ -105,10 +108,31 @@ class LevelTreeLayout(GraphLayout):
         self.DY = 65
         self.DX = 15
         self.maxLevel = 9999
-                        
+        self._fontScaleFactor = None
+
+    def getY(self):
+        """
+        :return: Y distance affected by the font size
+
+        """
+
+        return self.DY*self.getFontScaleFactor()
+
+    def getFontScaleFactor(self):
+        """
+        :return: The scale factor between default font size 10, and current one
+
+        """
+        if self._fontScaleFactor is None:
+
+            self._fontScaleFactor = cfgFontSize/10
+
+        return self._fontScaleFactor
+
     def draw(self, graph, **kwargs):
-        """ Organize nodes of the graph in the plane.
-        Nodes should have: x, y, width and height attributes
+        """
+        Organize nodes of the graph in the plane.
+        Nodes should have x, y, width and height attributes.
         x and y will be modified.
         """
         rootNode = graph.getRoot()
@@ -125,7 +149,7 @@ class LevelTreeLayout(GraphLayout):
         for left, _ in rootNode._layout['hLimits']:
             m = min(m, left)
         
-        self._applyNodeOffsets(rootNode, -m + self.DY)
+        self._applyNodeOffsets(rootNode, -m + self.getY())
         
         # Clean temporary _layout attributes
         for node in graph.getNodes():
@@ -144,7 +168,7 @@ class LevelTreeLayout(GraphLayout):
         if level > layout.get('level', 0):
             # Calculate the y-position depending on the level
             # and the delta-Y (DY)
-            node.y = level * self.DY
+            node.y = level * self.getY()
             layout['level'] = level
             layout['parent'] = parent
             if hasattr(node, 'width'):
