@@ -476,7 +476,7 @@ def getFileSize(fn):
 def getFileLastModificationDate(fn):
     """ Returns the last modification date of a file or None
     if it doesn't exist. """
-    if os.path.os.path.exists(fn):
+    if os.path.exists(fn):
         ts = os.path.getmtime(fn)
         return datetime.datetime.fromtimestamp(ts)
     else:

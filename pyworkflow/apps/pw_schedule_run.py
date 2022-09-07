@@ -127,6 +127,8 @@ class RunScheduler:
             updateResult = self.project._updateProtocol(protocol)
             if updateResult == PROTOCOL_UPDATED:
                 self._log("Updated protocol: %s (%s)" % (protId, protocol))
+            else:
+                self._log("The protocol %s (%s) is up to date" % (protId, protocol))
             self.updatedProtocols[protId] = protocol
 
         return protocol
@@ -249,10 +251,11 @@ class RunScheduler:
                     break
 
         if not inputMissing:
-            inputProtocolDict = self.protocol.inputProtocolDict()
-            for prot in inputProtocolDict.values():
-                self.log.debug("Turn from inputProtocolDict for %s" % prot)
-                self._updateProtocol(prot)
+            inputProtocolIds = self.protocol.getProtocolsToUpdate()
+            for protId in inputProtocolIds:
+                protocol = self.project.getProtocol(protId)
+                self.log.debug("Turn from inputProtocolDict for %s" % protocol)
+                self._updateProtocol(protocol)
 
         return inputMissing, penalize
 

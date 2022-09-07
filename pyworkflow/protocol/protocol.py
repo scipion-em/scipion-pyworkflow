@@ -671,39 +671,36 @@ class Protocol(Step):
             elif attr.isPointer():
                 yield key, attr
 
-    def inputProtocolDict(self):
+    def getProtocolsToUpdate(self):
         """
-        This function returns a dictionary of protocols that need to update
+        This function returns a list of protocols ids that need to update
         their database to launch this protocol (this method is only used
         when a WORKFLOW is restarted or continued).
         Actions done here are:
 
         #. Iterate over the main input Pointer of this protocol
-            (here, 3 different cases are analyzed)
+            (here, 3 different cases are analyzed):
 
-            #. When the pointer points to a protocol
+            A #. When the pointer points to a protocol
 
-            #. When the pointer points to another object (INDIRECTLY).
+            B #. When the pointer points to another object (INDIRECTLY).
                 The pointer has an _extended value (new parameters configuration
                 in the protocol)
 
-            #. When the pointer points to another object (DIRECTLY).
+            C #. When the pointer points to another object (DIRECTLY).
 
               - The pointer has not an _extended value (old parameters
                 configuration in the protocol)
 
         #. The PROTOCOL to which the pointer points is determined and saved in
-            the dictionary
+            the list
 
-        #. If this pointer points to another object (case B and C):
+        #. If this pointer points to a set (case B and C):
 
-          - Iterate over the main attributes of this pointer
-
-          - if any attribute is a pointer, then we move to PROTOCOL and repeat
-            this procedure from step 1
-
+          - Iterate over the main attributes of the set
+            - if attribute is a pointer then we add the pointed protocol to the ids list
         """
-        protocolDict = {}
+        protocolIds = []
         protocol = None
         for key, attrInput in self.iterInputAttributes():
             output = attrInput.get()
@@ -731,25 +728,18 @@ class Protocol(Step):
 
                 # If there is output
                 if output is not None:
-
                     # For each output attribute: Looking for pointers like SetOfCoordinates.micrographs
                     for k, attr in output.getAttributes():
-
                         # If it's a pointer
                         if isinstance(attr, Pointer):
-                            if attr.get() is not None:
-                                # Get input dict from the previous protocol.
-                                # NOTE: This might not be enough cause the pointer
-                                # might not be to the previous protocol
-                                auxDict = protocol.inputProtocolDict()
-                                for auxKey in auxDict:
-                                    if auxKey not in protocolDict.keys():
-                                        protocolDict[auxKey] = auxDict[auxKey]
-                                break
+                            logger.debug("Pointer found in output: %s.%s (%s)" % (output, k, attr))
+                            prot = attr.getObjValue()
+                            if prot is not None:
+                                protocolIds.append(prot.getObjId())
 
-            protocolDict[protocol.getObjId()] = protocol
+            protocolIds.append(protocol.getObjId())
 
-        return protocolDict
+        return protocolIds
 
     def getInputStatus(self):
         """ Returns if any input pointer is not ready yet and if there is
@@ -2447,7 +2437,7 @@ def isProtocolUpToDate(protocol):
     dbTS = pwutils.getFileLastModificationDate(protocol.getDbPath())
 
     if not (protTS and dbTS):
-        print("Can't compare if protocol is up to date: "
+        logger.info("Can't compare if protocol is up to date: "
               "Protocol %s, protocol time stamp: %s, %s timeStamp: %s"
               % (protocol, protTS, protocol, dbTS))
     else:
