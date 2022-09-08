@@ -460,7 +460,10 @@ def createUniqueFileName(fn):
 def getFileSize(fn):
     """ Shortcut to inspect the size of a file or a folder. """
 
-    if os.path.isdir(fn):
+    if not os.path.exists(fn):
+        return  0
+
+    elif os.path.isdir(fn):
         total_size = 0
         for dirpath, dirnames, filenames in os.walk(fn):
             for f in filenames:

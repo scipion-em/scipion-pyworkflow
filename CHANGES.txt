@@ -1,3 +1,7 @@
+V3.0.24 (hotfix)
+-------
+ - Do not fail when getting the size of an empty protocol.
+
 V3.0.23
 -------
 Users:
