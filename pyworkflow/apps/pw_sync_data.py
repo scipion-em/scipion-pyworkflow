@@ -110,7 +110,7 @@ def main():
                     logger.info('Checking for updates...')
                     update(dataset, url=args.url, verbose=args.verbose)
                 else:
-                    logger('Dataset %s not in local machine. '
+                    logger.info('Dataset %s not in local machine. '
                           'Downloading...' % dataset)
                     download(dataset, url=args.url, verbose=args.verbose)
         except IOError as e:
