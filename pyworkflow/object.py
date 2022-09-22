@@ -798,9 +798,33 @@ class Boolean(Scalar):
         return self.get() 
     
     def __bool__(self):
-        return self.get()  
-    
-    
+        return self.get()
+
+
+class Range(String):
+    """ Range object. """
+
+    def get(self, default=None):
+        """ Create a list of integers from a string with range definitions
+        Examples:
+        "1,5-8,10" -> [1,5,6,7,8,10]
+        "2,6,9-11" -> [2,6,9,10,11]
+        "2 5, 6-8" -> [2,5,6,7,8]
+        """
+        if self.hasValue():
+            elements = self._objValue.split(',')
+            values = []
+            for e in elements:
+                if '-' in e:
+                    limits = e.split('-')
+                    values += range(int(limits[0]), int(limits[1])+1)
+                else:
+                    # If values are separated by space also split
+                    values += map(int, e.split())
+            return values
+        return default
+
+
 class Pointer(Object):
     """Reference object to other one"""
     EXTENDED_ATTR = '__attribute__'

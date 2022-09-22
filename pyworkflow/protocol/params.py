@@ -538,7 +538,7 @@ class NumericListParam(StringParam):
         self.addValidator(NumericListValidator())
         
         
-class NumericRangeParam(StringParam):
+class NumericRangeParam(Param):
     """ This class will serve to specify range of numbers with a string representation.
      Possible notation are::
 
@@ -548,7 +548,7 @@ class NumericRangeParam(StringParam):
 
     """
     def __init__(self, **args):
-        StringParam.__init__(self, **args)
+        Param.__init__(self, paramClass=Range, **args)
         self.addValidator(NumericRangeValidator())
         
         
