@@ -3,7 +3,7 @@ psutil<=5.8.0 # Updated to latest on 07-2021
 configparser<=5.0.2 # Updated to latest on 07-2021
 matplotlib==3.0.3; python_version == '3.5'  # Final version
 matplotlib==3.2.2; python_version >= '3.6'  # Latest available 3.4.2 on 07-2021
-numpy<=1.18.4 # Latest available 1.20.3 on 07-2021. Careful. Xmipp is compiled agains numpy!!
+numpy<=1.19.2 # Tested on 09-2022. Careful. Xmipp is compiled agains numpy!!
 pillow<=8.2.0 # Updated to latest on 07-2021
 requests<=2.25.1 # up to date on 07-2021
 mpi4py <= 3.0.3 # up to date on 07-2021
