@@ -95,7 +95,7 @@ class Domain:
         except Exception as e:
             print(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
-            print("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
+            print("Please, contact developers at %s and send this ugly information below. They'll understand it!." % DOCSITEURLS.CONTACTUS)
             print(pwutils.yellow(traceback.format_exc()))
 
     @classmethod
@@ -604,7 +604,7 @@ class Plugin:
             missing = ["%s: %s" % (var, cls.getVar(var))
                        for var in cls._pathVars if not os.path.exists(cls.getVar(var))]
 
-            return (["Missing paths: the variables bellow point to non existing paths."]
+            return (["Missing paths: the variables below point to non existing paths."]
                     + missing + [
                      "Either install the software ( %s )" % DOCSITEURLS.PLUGIN_MANAGER,
                     "or edit the config file ( %s )" % DOCSITEURLS.CONFIG]) if missing else []
