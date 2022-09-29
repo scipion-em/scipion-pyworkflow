@@ -747,53 +747,6 @@ class String(Scalar):
         """ Get the datetime from this object string value. """
         return String.getDatetime(self._objValue, formatStr, fs)
 
-    def getList(self, default=None, length=None):
-        """ Create a list of integers from a string with range definitions
-        Examples:
-        "1,5-8,10" -> [1,5,6,7,8,10]
-        "2,6,9-11" -> [2,6,9,10,11]
-        "2 5, 6-8" -> [2,5,6,7,8]
-
-        Alternatively, the items should be separated by spaces and a
-        multiplier 'x' can be used. If length is not None, then
-        the last element will be repeated until the desired length is reached.
-        Examples:
-        '1 1 2x2 4 4' -> ['1', '1', '2', '2', '4', '4']
-        '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']
-
-        """
-        if any([",", "-"]) in self._objValue:
-            elements = self._objValue.split(',')
-            values = []
-            for e in elements:
-                if '-' in e:
-                    limits = e.split('-')
-                    values += range(int(limits[0]), int(limits[1])+1)
-                else:
-                    # If values are separated by space also split
-                    values += map(int, e.split())
-            return values
-        elif "x" in self._objValue:
-            result = []
-            for chunk in self._objValue.split():
-                values = chunk.split('x')
-                n = len(values)
-                if n == 1:  # 'x' is not present in the chunk, single value
-                    result += values
-                elif n == 2:  # multiply the values by the number after 'x'
-                    result += [values[1]] * int(values[0])
-                else:
-                    raise Exception("More than one 'x' is not allowed in list string value.")
-
-            # If length is passed, we fill the list with
-            # the last element until length is reached
-            if length is not None and length > len(result):
-                item = result[-1]
-                result += [item] * (length - len(result))
-
-            return result
-        return default
-
 
 class Float(Scalar):
     """Float object"""
