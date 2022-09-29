@@ -1,3 +1,7 @@
+V3.0.26 (hotfix)
+-------
+ - Reporting url is now pointing to https.
+
 V3.0.25 (hotfix)
 -------
  - Fix logger error when downloading a new dataset.
