@@ -614,24 +614,26 @@ def getRangeStringFromList(list):
     return ','.join(ranges)
 
 
-def getListFromValues(valuesStr, length=None):
+def getListFromValues(valuesStr, length=None, caster=str):
     """ Convert a string representing list items into a list.
-    The items should be separated by spaces and a multiplier 'x' can be used.
+    The items should be separated by spaces or commas and a multiplier 'x' can be used.
     If length is not None, then the last element will be repeated
     until the desired length is reached.
+
     Examples:
     '1 1 2x2 4 4' -> ['1', '1', '2', '2', '4', '4']
     '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']
+
     """
     result = []
-
+    valuesStr = valuesStr.replace(","," ")
     for chunk in valuesStr.split():
         values = chunk.split('x')
         n = len(values)
         if n == 1:  # 'x' is not present in the chunk, single value
-            result += values
+            result += [caster(values[0])]
         elif n == 2:  # multiple the values by the number after 'x'
-            result += [values[1]] * int(values[0])
+            result += [caster(values[1])] * int(values[0])
         else:
             raise Exception("More than one 'x' is not allowed in list string value.")
 
@@ -639,7 +641,7 @@ def getListFromValues(valuesStr, length=None):
     # the last element until length is reached
     if length is not None and length > len(result):
         item = result[-1]
-        result += [item] * (length - len(result))
+        result += [caster(item)] * (length - len(result))
 
     return result
 
