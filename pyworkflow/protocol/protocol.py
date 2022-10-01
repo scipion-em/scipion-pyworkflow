@@ -25,7 +25,7 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-import sys
+import sys, os
 import json
 import threading
 import time

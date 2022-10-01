@@ -28,12 +28,11 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
-import os
 from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
 
-from pyworkflow import utils
+from pyworkflow.utils import getListFromValues, getListFromRangeString
 from pyworkflow.utils.reflection import getSubclasses
 
 
@@ -746,6 +745,15 @@ class String(Scalar):
     def datetime(self, formatStr=None, fs=True):
         """ Get the datetime from this object string value. """
         return String.getDatetime(self._objValue, formatStr, fs)
+
+    def getListFromValues(self, length=None, caster=int):
+        """ Returns a list from a string with values as described at getListFromValues. Useful for """
+        return getListFromValues(self._objValue, length, caster)
+
+    def getListFromRange(self):
+        """ Returns a list from a string with values as described at getListFromRangeString.
+         Useful for NumericRangeParam params"""
+        return getListFromRangeString(self._objValue)
 
 
 class Float(Scalar):

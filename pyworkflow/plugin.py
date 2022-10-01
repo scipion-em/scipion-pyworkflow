@@ -95,7 +95,7 @@ class Domain:
         except Exception as e:
             print(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
-            print("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
+            print("Please, contact developers at %s and send this ugly information below. They'll understand it!." % DOCSITEURLS.CONTACTUS)
             print(pwutils.yellow(traceback.format_exc()))
 
     @classmethod
