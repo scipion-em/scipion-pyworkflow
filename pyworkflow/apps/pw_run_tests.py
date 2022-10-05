@@ -30,7 +30,7 @@ Run or show the selected tests. Tests can be selected by giving
 the "case", or by giving the paths and file pattern to use for
 searching them.
 """
-from os.path import basename
+from pyworkflow.utils import LoggingConfigurator
 import argparse
 from collections import OrderedDict
 
@@ -46,7 +46,6 @@ TEST = 2
 
 class Tester:
     def main(self, args=None):
-        print("Running tests....")
 
         # Trigger plugin's variable definition
         Config.getDomain().getPlugins()
@@ -76,6 +75,19 @@ class Tester:
         if not args.run and not args.show and not args.tests:
             sys.exit(parser.format_help())
 
+        # Logging stuff first
+        self.log = args.log
+
+        if self.log:
+            LoggingConfigurator.setupLogging(logFile=self.log)
+        else:
+            logging.basicConfig(level=Config.SCIPION_LOG_LEVEL, format=Config.SCIPION_LOG_FORMAT)
+
+        self.logger = logging.getLogger(__name__)
+
+        # This goes intentionally to the output. Is not a logging line._S
+        print("Running tests....")
+
         testsDict = OrderedDict()
         testLoader = unittest.defaultTestLoader
 
@@ -87,9 +99,7 @@ class Tester:
                 try:
                     testsDict['tests'].addTests(testLoader.loadTestsFromName(t))
                 except Exception as e:
-                    print('Cannot load test %s -- skipping' % t)
-                    import traceback
-                    traceback.print_exc()
+                    self.logger.error('Cannot load test %s -- skipping' % t, exc_info=True)
         else:
             # In this other case, we will load the test available
             # from pyworkflow and the other plugins
@@ -107,14 +117,13 @@ class Tester:
         self.grep = [g.lower() for g in args.grep] if args.grep else []
         self.skip = args.skip
         self.mode = args.mode
-        self.log = args.log
 
         if args.tests:
             self.runSingleTest(testsDict['tests'])
 
         elif args.run:
             for moduleName, tests in testsDict.items():
-                print(pwutils.cyan(">>>> %s" % moduleName))
+                self.logger.info(pwutils.cyanStr(">>>> %s" % moduleName))
                 self.runTests(moduleName, tests)
 
         elif args.grep:
@@ -125,7 +134,7 @@ class Tester:
         else:
             for moduleName, tests in testsDict.items():
                 if self._match(moduleName):
-                    print(pwutils.cyan(">>>> %s" % moduleName))
+                    print(pwutils.cyanStr(">>>> %s" % moduleName))
                     self.printTests(moduleName, tests)
 
     def _match(self, itemName):
@@ -139,7 +148,7 @@ class Tester:
 
     def __iterTests(self, test):
         """ Recursively iterate over a testsuite. """
-        print("__iterTests: %s, is-suite: %s" % (str(test.__class__),
+        self.logger.debug("__iterTests: %s, is-suite: %s" % (str(test.__class__),
                                                  isinstance(test, unittest.TestSuite)))
 
         if isinstance(test, unittest.TestSuite):
@@ -181,8 +190,8 @@ class Tester:
                 if testModuleName.startswith(errorStr):
                     newName = t.id().replace(errorStr, '')
                     if self._match(newName):
-                        print(pwutils.red('Error loading the test. Please, run the test for more information:'),
-                              newName)
+                        self.logger.error(
+                            pwutils.redStr('Error loading the test. Please, run the test for more information: ' + newName))
                     continue
 
                 if testModuleName != lastModule:
@@ -200,11 +209,12 @@ class Tester:
                                     % (testModuleName, className, testName))
         else:
             if not self.grep:
-                print(pwutils.green(' The plugin does not have any test'))
+                self.logger.warning(pwutils.greenStr(' The plugin does not have any test'))
 
     def _printNewItem(self, itemType, itemName):
         if self._match(itemName):
             spaces = (itemType * 2) * ' '
+            # Do not use intentionally the logger. This is not a logging output but a GUI output
             print("%s %s %s" % (spaces, self.getTestsCommand(), itemName))
 
     def getTestsCommand(self):
@@ -212,27 +222,6 @@ class Tester:
 
     def printTests(self, moduleName, tests):
         self._visitTests(moduleName, tests, self._printNewItem)
-
-    def _logTest(self, cmd, runTime, result, logFile):
-        with open(self.testLog, "r+") as f:
-            lines = f.readlines()
-            f.seek(0)
-            for l in lines:
-                if '<!-- LAST_ROW -->' in l:
-                    rowStr = "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>"
-                    if result:  # != 0 means failed in os.system
-                        resultStr = '<font color="red">[FAILED]</font>'
-                    else:
-                        resultStr = '<font color="green">[SUCCEED]</font>'
-                    logStr = '<a href="file://%s">%s</a>' % (logFile, basename(logFile))
-
-                    f.write(rowStr % (self.testCount, cmd, runTime, resultStr, logStr))
-                    f.write('\n')
-                if self.headerPrefix in l:
-                    f.write(self.headerPrefix + self.testTimer.getToc() + '</h3>\n')
-                else:
-                    f.write(l)
-            f.close()
 
     def _runNewItem(self, itemType, itemName):
         if self._match(itemName):
@@ -244,58 +233,22 @@ class Tester:
                    (itemType == TEST and self.mode == 'all'))
             if run:
                 if self.log:
-                    logFile = join(self.testsDir, '%s.txt' % itemName)
-                    cmdFull = cmd + " > %s 2>&1" % logFile
+                    # logFile = join(self.testsDir, '%s.txt' % itemName)
+                    cmdFull = cmd + " >> %s 2>&1" % self.log
                 else:
                     logFile = ''
                     cmdFull = cmd
 
-                print(pwutils.green(cmdFull))
+                self.logger.info(pwutils.greenStr(cmdFull))
                 t = pwutils.Timer()
                 t.tic()
                 self.testCount += 1
-                result = os.system(cmdFull)
-                if self.log:
-                    self._logTest(cmd, t.getToc(), result, logFile)
+                os.system(cmdFull)
 
     def runTests(self, moduleName, tests):
+
         self.testCount = 0
-
-        if self.log:
-            self.testsDir = join(pw.Config.SCIPION_USER_DATA, 'Tests', self.log)
-            pwutils.cleanPath(self.testsDir)
-            pwutils.makePath(self.testsDir)
-            self.testLog = join(self.testsDir, 'tests.html')
-            self.testTimer = pwutils.Timer()
-            self.testTimer.tic()
-            self.headerPrefix = '<h3>Test results (%s) Duration: ' % pwutils.prettyTime()
-            f = open(self.testLog, 'w')
-            f.write("""<!DOCTYPE html>
-    <html>
-    <body>
-    """)
-            f.write(self.headerPrefix + '</h3>')
-            f.write("""    
-     <table style="width:100%" border="1">
-      <tr>
-        <th>#</th>
-        <th>Command</th>
-        <th>Time</th>
-        <th>Result</th>
-        <th>Log file</th>
-      </tr>
-    <!-- LAST_ROW -->
-    </table> 
-    
-    </body>
-    </html>""")
-
-            f.close()
         self._visitTests(moduleName, tests, self._runNewItem)
-
-        if self.log:
-            print("\n\nOpen results in your browser: \nfile:///%s"
-                  % self.testLog)
 
     def runSingleTest(self, tests):
         result = pwtests.GTestResult()

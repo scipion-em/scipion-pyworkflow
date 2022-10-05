@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+
 import sys
 import os
 import time
@@ -60,10 +63,10 @@ class DataSet:
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
 
-        if not pwutils.envVarOn('SCIPION_TEST_NOSYNC'):
+        if not pwutils.strToBoolean(pw.Config.SCIPION_TEST_NOSYNC):
             command = ("%s %s --download %s %s"
                        % (pw.PYTHON, pw.getSyncDataScript(), folder, url))
-            print(">>>> %s" % command)
+            logger.info(">>>> %s" % command)
             os.system(command)
 
         return cls._datasetDict[name]
@@ -86,11 +89,11 @@ class BaseTest(unittest.TestCase):
     @classmethod
     def launchProtocol(cls, prot, **kwargs):
         """ Launch a given protocol using cls.proj.
-        Accepted **kwargs:
-            wait: if True the function will return after the protocol runs.
-                If not specified, then if waitForOutput is passed, wait is
-                false.
-            waitForOutputs: a list of expected outputs, ignored if wait=True
+
+        :param wait: if True the function will return after the protocol runs.
+            If not specified, then if waitForOutput is passed, wait is false.
+        :param waitForOutputs: a list of expected outputs, ignored if wait=True
+
         """
         wait = kwargs.get('wait', None)
         waitForOutputs = kwargs.get('waitForOutput', [])
@@ -121,19 +124,29 @@ class BaseTest(unittest.TestCase):
 
     @staticmethod
     def printLastLogLines(prot):
+        """ Prints the last log lines (50 or  'PROT_LOGS_LAST_LINES' env variable) from stdout and stderr log files
+
+        :param prot: Protocol to take the logs from
+
+        """
+        logs = {"STD OUT": 0, "STD ERR":1}
 
         lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 50))
-        print(pwutils.cyanStr("\n*************** LAST %s LINES OF THE LOG *********************\n" % lastLines))
-        logLines = prot.getLogsLastLines(lastLines)
-        for i in range(0, len(logLines)):
-            print(logLines[i])
-        print(pwutils.cyanStr("\n*************** END OF THE LOG *********************\n"))
 
-        sys.stdout.flush()
+        # For each log file to print
+        for key in logs:
+
+            logger.info(pwutils.cyanStr("\n*************** last %s lines of %s *********************\n" % (lastLines, key)))
+            logLines = prot.getLogsLastLines(lastLines, logFile=logs[key])
+            for i in range(0, len(logLines)):
+                logger.info(logLines[i])
+            logger.info(pwutils.cyanStr("\n*************** end of %s *********************\n" % key))
+
+            sys.stdout.flush()
 
     @classmethod
     def saveProtocol(cls, prot):
-        """ Save protocol using cls.proj """
+        """ Saves a protocol using cls.proj """
         cls.proj.saveProtocol(prot)
 
     @classmethod
@@ -159,7 +172,7 @@ class BaseTest(unittest.TestCase):
             time.sleep(sleepTime)
             prot2 = _loadProt()
             if counter > numberOfSleeps:
-                print("Timeout (%s) reached waiting for %s at %s" % (timeOut, outputAttributeName, prot))
+                logger.warning("Timeout (%s) reached waiting for %s at %s" % (timeOut, outputAttributeName, prot))
                 break
             counter += 1
 
@@ -190,7 +203,7 @@ class BaseTest(unittest.TestCase):
         for item1, item2 in zip(set1, set2):
             areEqual = item1.equalAttributes(item2)
             if not areEqual:
-                print("item 1 and item2 are different: ")
+                logger.info("item 1 and item2 are different: ")
                 item1.printAll()
                 item2.printAll()
             test.assertTrue(areEqual)
@@ -216,6 +229,10 @@ class BaseTest(unittest.TestCase):
 
         self.assertIsNotNone(setObject.get(), msg)
 
+    @classmethod
+    def setupTestOutput(cls):
+        setupTestOutput(cls)
+
 
 def setupTestOutput(cls):
     """ Create the output folder for a give Test class. """
@@ -231,7 +248,7 @@ def setupTestProject(cls, writeLocalConfig=False):
 
     if writeLocalConfig:
         hostsConfig = '/tmp/hosts.conf'
-        print("Writing local config: %s" % hostsConfig)
+        logger.info("Writing local config: %s" % hostsConfig)
         import pyworkflow.protocol as pwprot
         pwprot.HostConfig.writeBasic(hostsConfig)
 
@@ -265,14 +282,14 @@ class GTestResult(unittest.TestResult):
 
     def doReport(self):
         secs = time.time() - self.startTimeAll
-        sys.stderr.write("\n%s run %d tests (%0.3f secs)\n" %
+        logger.info("\n%s run %d tests (%0.3f secs)\n" %
                          (pwutils.greenStr("[==========]"),
                           self.numberTests, secs))
         if self.testFailed:
-            sys.stderr.write("%s %d tests\n"
+            logger.info("%s %d tests\n"
                              % (pwutils.redStr("[  FAILED  ]"),
                                 self.testFailed))
-        sys.stdout.write("%s %d tests\n"
+        logger.info("%s %d tests\n"
                          % (pwutils.greenStr("[  PASSED  ]"),
                             self.numberTests - self.testFailed))
 
@@ -296,14 +313,14 @@ class GTestResult(unittest.TestResult):
 
     def addSuccess(self, test):
         secs = self.toc()
-        sys.stderr.write("%s %s (%0.3f secs)\n" %
+        logger.info("%s %s (%0.3f secs)\n" %
                          (pwutils.greenStr('[ RUN   OK ]'),
                           self.getTestName(test), secs))
 
     def reportError(self, test, err):
-        sys.stderr.write("%s %s\n" % (pwutils.redStr('[   FAILED ]'),
+        logger.info("%s %s\n" % (pwutils.redStr('[   FAILED ]'),
                                       self.getTestName(test)))
-        sys.stderr.write("\n%s"
+        logger.info("\n%s"
                          % pwutils.redStr("".join(format_exception(*err))))
         self.testFailed += 1
 

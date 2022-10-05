@@ -1,13 +1,151 @@
+V3.0.27
 -------
-v3.0.?
+Users:
+ - Allow multiple file handlers for the same extension
+
+V3.0.26 (hotfix)
+-------
+ - Reporting url is now pointing to https.
+
+V3.0.25 (hotfix)
+-------
+ - Fix logger error when downloading a new dataset.
+
+V3.0.24 (hotfix)
+-------
+ - Do not fail when getting the size of an empty protocol.
+
+V3.0.23
+-------
+Users:
+ - Fixing a bug for static protocols: when a protocol had another protocol as input, it failed to wait until it had finished.
+ - Improvements in responsiveness to font size: Tables and automatic layouts. Object browser, Search windows.
+ - Filebrowser has 2 new shortcuts: "recent" and "Protocol folder"
+ - Text widget: "File does not exist message" removed.
+ - Rescue colors in terminal
+ - Rescue output in tests.
+ - New color mode: Size (GREEN < 1MB, ORANGE < 1GB, RED < 1TB, DARK > 1TB
+ - Color mode info is shown in the "info line" when switching
+ - Color mode age: fixed.
+ - New config variables:
+      SCIPION_LOG_FORMAT: Define log lines format base on python convention,
+      SCIPION_TEST_NOSYNC: Disable dataset syncing,
+      SCIPION_GUI_REFRESH_INITIAL_WAIT: Initial time to wait after a manual refresh. Defaults to 5.
+      SCIPION_GUI_CANCEL_AUTO_REFRESH: True will cancel automatic refreshes.
+ - scipion printenv returns also int variables.
+ - Tolerate project update errors (e.g.: read only filesystem due to quota + update)
+ - Check if scheduled process is alive when updating.
+
+Developers:
+ - Some modules switched to use logger instead of print: viewprotocols.py, browser.py and launch.py,
+   pw_schedule_run.py, viewprojects.py, canvas.py, project.py, protocol.py.
+ - LoggerConfigurator adapted to received logfile, flag for console handler and line format.
+ - pw_run_tests.py uses logging now.
+ - tests mode with --log now works. All goes to the same file and is not html.
+ - Protocol.getPath added = Protocol._getPath
+ - form.py, process.py, pw_sync_data.py, utils.py use logging now.
+ - All logging messages are affected by SCIPION_LOG_FORMAT (defaults to %(message)).
+ - stdout handler does exclude ERROR and CRITICAL messages.
+ - Test output can be sent to a log file (--log) and uses SCIPION_LOG_FORMAT.
+ - testdata --check-all renamed to --check and optionally can check a single dataset.
+
+V3.0.22
+-------
+ - Fixing a persistent error related with the logic of the EXECUTE/SCHEDULE button
+
+
+V3.0.21
+-------
+ - Generating an interface to create the scipion log file.
+ - Creating an option to display the scipion log
+ - New "Search protocol in graph" (Control + l) window to locate a box in the graph
+ - At loading time, selected protocol is "focused" (window scrolls to it)
+ - Control + MouseWheel scrolls horizontally
+ - Links are also detected when they are just "http"
+ - Bugfixed: Input list is shown when there are possible outputs and need to "expose details" (like selecting a specific volume in a set)
+ - Bugfixed: Outputs that a numeric do not break the "Browse object window"
+ - Fixing an error related with the logic of the EXECUTE/SCHEDULE button
+
+Developers:
+ - prerequisites could be just the id or the previous list of ids when adding a step.
+
+V3.0.20
+-------
+ - Empty sections/subsection (without protocols) in the left tree will not be shown
+
+Developers:
+ - Allow pointers to be defined with a list of classes instead of a string: "SetOfParticles, SetOfAverages" or [ SetOfParticles, SetOfAverages ]
+ - Two "utils" functions: hasAnyFileChanged, hasFileChangedSince to check if a file/s have changed since a "time" passed.
+ - BaseTest now has: setupTestOutput exposed --> self.setupTestOutput()
+ - Allow getting an item in a set not only by id but by a query: myset["_tsId=tomo1"].
+
+
+V3.0.19
+-------
+ - Scalar parameters pointing to outputs now works also when scheduling
+ - Fix: outputs after a Scalar output (boxSize from pickings) weren't offered to the chosen
+ - Defining a new format to handler the log
+ - Creating in the config new constants to prevent sqlite locks when updating any set
+    - SCIPION_UPDATE_SET_ATTEMPTS: Number of attempts when trying a set update. The default value is 3
+    - SCIPION_UPDATE_SET_ATTEMPT_WAIT: Time in seconds to wait between updates. The default value is 2 seconds
+
+Developers:
+ - In _showWizard, passing the paramName as a form variable so the wizard can check from which parameter it was called
+
+
+V3.0.18
+-------
+ - Fixed GUI errors:
+   - fixing the workflow collapse/expand nodes
+   - resetting nodes with manual subset looses the parent
+   - reporting the protocol wall time
+   - finished protocol can't be modified
+ - Fixed: execute a protocol directly that is not streaming and that has an open input must be scheduled
+ - Close all sets when stopping a protocol
+ - fixing an error closing some viewers(the action of closing some viewers closes Scipion completely)
+ - fixing an error drawing the protocols step tree
+ - fixing an error deleting a protocol by the keyboard
+ - logging DEBUG mode will be activated when toggling debug mode
+ - A dramatic plugin import error will be tolerated. Plugin will not be loaded.
+ - Possible outputs definition is now possible. Protocols can define possible outputs to allow designing
+   a workflow in advance without executing them.
+ - New variable added: SCIPION_STEPS_CHECK_SEC. Defaults to 3 (seconds). It represents how often new input is checked in streamified protocols. Increasing this
+   value will relax the stress in the system, but will feel less "alive".
+ - Workflow templates can now be imported into an existing project
+
+Developers:
+ - Possible Outputs allowed: dict or enum definition possible, see Protocol._possibleOutput
+ - Allow readonly parameters in protocols. Useful in combination with wizards or just informative parameters.
+ - Added the variable SCIPION_PRIORITY_PACKAGE_LIST that is used in the view
+   protocols in order to load first the plugins that contains the main
+   protocols.conf sections. This variable is defined as string with the packages names separated by a space.
+   e.g: SCIPION_PRIORITY_PACKAGE_LIST = "pwem tomo cistem"
+
+
+v3.0.17
 -------
  - Second tab of logs have just error messages (stderr output)
- - Allow multiple file handlers for the same extension
- - Do not suggest deleteing hosts-conf when parsing fails
+ - Tests show stderr output too (last lines)
+ - Report host.conf submit command problems when parsing/formatting fails
 
  Developers:
  - Logging mechanism closer to a standard way. import logging + logging.getLogger() whould work in any module
 
+
+v3.0.16
+-------
+ - Do not suggest deleteing hosts-conf when parsing fails
+ - "Select from" option in context menu to select all protocols hanging from the current selection.
+ - Schedule optimized
+ - dataset download more verbose
+ - pyworkflow version shown in main project window
+ - new color chooser. More user friendly
+ - Viewers are not asked to open outputs generated by themselves. In case a viewer creates an output.
+ - File browser shows links
+ - File browser allow multiple file handlers for the same extension
+
+ Developers:
+ - weakImport tool: context manager to tolerate import errors
 
 -------
 v3.0.15
@@ -24,4 +162,3 @@ April 21, 2021:
  - GUI performance and speed up
  - Improvement of the scheduling process
  - Fixed the options: Restart, Continue, Reset and Stop a workflow
-

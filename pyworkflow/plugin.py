@@ -71,24 +71,32 @@ class Domain:
         """ Register a new plugin. This function should only be called when
         creating a class with __metaclass__=PluginMeta that will trigger this.
         """
-        m = importlib.import_module(name)
+        try:
+            m = importlib.import_module(name)
 
-        # Define variables
-        m.Plugin._defineVariables()
-        m.Domain = cls  # Register the domain class for this module
-        # TODO avoid loading bibtex here and make a lazy load like the rest.
-        # Load bibtex
-        m._bibtex = {}
-        bib = cls.__getSubmodule(name, 'bibtex')
-        if bib is not None:
-            if hasattr(bib, "_bibtex"):
-                print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
-            else:
-                try:
-                    m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
-                except Exception:
-                    pass
-        cls._plugins[name] = m  # Register the name to as a plugin
+            # Define variables
+            m.Plugin._defineVariables()
+            m.Domain = cls  # Register the domain class for this module
+            # TODO avoid loading bibtex here and make a lazy load like the rest.
+            # Load bibtex
+            m._bibtex = {}
+            bib = cls.__getSubmodule(name, 'bibtex')
+            if bib is not None:
+                if hasattr(bib, "_bibtex"):
+                    print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
+                else:
+                    try:
+                        m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
+                    except Exception:
+                        pass
+            cls._plugins[name] = m  # Register the name to as a plugin
+
+        # Catch any import exception, warn about it but continue.
+        except Exception as e:
+            print(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
+                                 "All its content will be missing in this execution." % name))
+            print("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
+            print(pwutils.yellow(traceback.format_exc()))
 
     @classmethod
     def getPlugins(cls):
@@ -257,14 +265,20 @@ class Domain:
 
     @staticmethod
     def importFromPlugin(module, objects=None, errorMsg='', doRaise=False):
-        """ This method try to import either a list of objects from the
-            module/plugin or the whole module/plugin and returns what is
-            imported if not fails.
-            When the import fails (due to the plugin or the object is not found),
-            it prints a common message + optional errorMsg;
-            or it raise an error with the same message, if doRaise is True.
+        """
+        This method try to import either a list of objects from the
+        module/plugin or the whole module/plugin and returns what is
+        imported if not fails.
+        When the import fails (due to the plugin or the object is not found),
+        it prints a common message + optional errorMsg;
+        or it raise an error with the same message, if doRaise is True.
 
-         -> Usages:
+        :param module: Module name to import
+        :param objects: Optional, string with objects to return present in module
+        :param errorMsg: Optional, extra error message to append to the main message.
+        :param doRaise: If True it will raise an exception instead of tolerating the import error
+
+        Usages::
 
              # Import the whole plugin 'plugin1' as 'plug1'
              plug1 = importFromPlugin('plugin1')
@@ -339,10 +353,10 @@ class Domain:
                                                   doRaise=True)
                 viewers.append(prefViewer)
             except Exception as e:
-                print("Couldn't load \"%s\" as preferred viewer.\n"
+                print("Couldn't load \"%s\" as preferred viewer for %s.\n"
                       "There might be a typo in your VIEWERS variable "
                       "or an error in the viewer's plugin installation"
-                      % prefViewerStr)
+                      % (prefViewerStr, className))
                 print(e)
         return viewers
 
@@ -379,12 +393,13 @@ class Domain:
 
     @classmethod
     def findWizards(cls, protocol, environment):
-        """ Find available wizards for this class, in this Domain.
-        Params:
-            protocols: Protocol instance for which wizards will be search.
-            environment: The environment name for wizards (e.g TKINTER)
-        Returns:
-            a dict with the paramName and wizards for this class."""
+        """
+        Find available wizards for this class, in this Domain.
+
+        :param protocol: Protocol instance for which wizards will be search.
+        :param environment: The environment name for wizards (e.g TKINTER)
+
+        :return A dict with the paramName and wizards for the protocol passed."""
         return cls.__findWizardsFromDict(protocol, environment,
                                          cls.getWizards())
 
@@ -557,9 +572,11 @@ class Plugin:
 
     @classmethod
     def getActiveVersion(cls, home=None, versions=None):
-        """ Return the version of the binaries that are currently active.
-        In the current implementation it will be inferred from the *_HOME
+        """
+        Returns the version of the binaries that are currently active.
+        In the current implementation it will be inferred from the \*_HOME
         variable, so it should contain the version number in it. """
+
         # FIXME: (JMRT) Use the basename might alleviate the issue with matching
         # the binaries version, but we might consider to find a better solution
         home = os.path.basename(home or cls.getHome())
@@ -595,8 +612,13 @@ class Plugin:
             return ["validateInstallation fails: %s" % e]
 
     @classmethod
+    def getPluginDir(cls):
+        return os.path.join(pw.getModuleFolder(cls.getName()))
+
+    @classmethod
     def getPluginTemplateDir(cls):
-        return os.path.join(pw.getModuleFolder(cls.getName()), 'templates')
+        return os.path.join(cls.getPluginDir(), 'templates')
+
 
     @classmethod
     def getTemplates(cls):

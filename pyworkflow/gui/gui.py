@@ -25,6 +25,8 @@ import os
 import tkinter as tk
 import tkinter.font as tkFont
 import queue
+from functools import partial
+from tkinter.ttk import Style
 
 from pyworkflow.object import Object
 import pyworkflow as pw
@@ -66,6 +68,10 @@ cfgMaxWidth = 800
 cfgMaxFontSize = 14
 cfgMinFontSize = 6
 cfgWrapLenght = cfgMaxWidth - 50
+
+# Style of treeviews where row height is variable based on the font size
+LIST_TREEVIEW = 'List.Treeview'
+
 
 
 class Config(Object):
@@ -240,12 +246,27 @@ def configureWeigths(widget, row=0, column=0):
     widget.rowconfigure(row, weight=1)
 
 
+def defineStyle():
+    """
+    Defines some specific behaviour of the style.
+    """
+
+    # To specify the height of the rows based on the font size.
+    # Should be centralized somewhere.
+    style = Style()
+    defaultFont = getDefaultFont()
+    rowheight = defaultFont.metrics()['linespace']
+
+    style.configure(LIST_TREEVIEW, rowheight=rowheight)
+    style.configure(LIST_TREEVIEW+".Heading", font=(defaultFont["family"],defaultFont["size"]))
+
+
 class Window:
     """Class to manage a Tk windows.
     It will encapsulates some basic creation and 
     setup functions. """
     # To allow plugins to add their own menus
-    _pluginMenus = list()
+    _pluginMenus = dict()
 
     def __init__(self, title='', masterWindow=None, weight=True,
                  minsize=(500, 300), icon=Icon.SCIPION_ICON, **kwargs):
@@ -439,15 +460,18 @@ class Window:
             menu.add_cascade(label="Others", menu=submenu)
 
             # For each plugin menu
-            for label, callback, icon in self._pluginMenus:
+            for label in self._pluginMenus:
                 submenu.add_command(label=label, compound=tk.LEFT,
-                                    image=self.getImage(icon),
-                                    command=callback)
+                                    image=self.getImage(self._pluginMenus.get(label)[1]),
+                                    command=partial(self.plugin_callback, label))
+
+    def plugin_callback(self, label):
+        return self._pluginMenus.get(label)[0](self)
 
     @classmethod
     def registerPluginMenu(cls, label, callback, icon=None):
         # TODO: have a proper model instead of a tuple?
-        cls._pluginMenus.append((label, callback, icon))
+        cls._pluginMenus[label] = (callback, icon)
 
     def showError(self, msg, header="Error", exception=None):
         """Pops up a dialog with the error message

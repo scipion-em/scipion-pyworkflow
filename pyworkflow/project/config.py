@@ -41,7 +41,8 @@ class ProjectSettings(pwobj.Object):
     COLOR_MODE_STATUS = 0
     COLOR_MODE_LABELS = 1
     COLOR_MODE_AGE = 2
-    COLOR_MODES = (COLOR_MODE_STATUS, COLOR_MODE_LABELS, COLOR_MODE_AGE)
+    COLOR_MODE_SIZE = 3
+    COLOR_MODES = (COLOR_MODE_STATUS, COLOR_MODE_LABELS, COLOR_MODE_AGE, COLOR_MODE_SIZE)
 
     def __init__(self, confs={}, **kwargs):
         super().__init__(**kwargs)
@@ -128,6 +129,9 @@ class ProjectSettings(pwobj.Object):
     def ageColorMode(self):
         return self.getColorMode() == self.COLOR_MODE_AGE
 
+    def sizeColorMode(self):
+        return self.getColorMode() == self.COLOR_MODE_SIZE
+
     def write(self, dbPath=None):
         self.setName('ProjectSettings')
         if dbPath is not None:
@@ -191,7 +195,7 @@ class MenuConfig(object):
     Leaf elements can contain actions"""
 
     def __init__(self, text=None, value=None,
-                 icon=None, tag=None, **kwargs):
+                 icon=None, tag=None, shortCut=None, openItem=False, visible=True):
         """Constructor for the Menu config item.
         Arguments:
           text: text to be displayed
@@ -204,9 +208,10 @@ class MenuConfig(object):
         self.value = value
         self.icon = icon
         self.tag = tag
-        self.shortCut = kwargs.get('shortCut', None)
+        self.shortCut = shortCut
+        self.openItem = openItem
+        self.visible = visible
         self.childs = pwobj.List()
-        self.openItem = kwargs.get('openItem', False)
 
     def addSubMenu(self, text, value=None, **args):
         subMenu = type(self)(text, value, **args)
@@ -227,7 +232,8 @@ class MenuConfig(object):
 class NodeConfig(pwobj.Scalar):
     """ Store Graph node information such as x, y. """
 
-    def __init__(self, nodeId=0, x=None, y=None, selected=False, expanded=True):
+    def __init__(self, nodeId=0, x=None, y=None, selected=False, expanded=True,
+                 visible=True):
         pwobj.Scalar.__init__(self)
         # Special node id 0 for project node
         self._values = {'id': nodeId,
@@ -235,6 +241,7 @@ class NodeConfig(pwobj.Scalar):
                         'y': pwobj.Integer(y).get(0),
                         'selected': selected,
                         'expanded': expanded,
+                        'visible': pwobj.Boolean(visible).get(0),
                         'labels': []}
 
     def _convertValue(self, value):
@@ -283,6 +290,14 @@ class NodeConfig(pwobj.Scalar):
 
     def isExpanded(self):
         return self._values['expanded']
+
+    def setVisible(self, visible):
+        self._values['visible'] = visible
+
+    def isVisible(self):
+        if self._values.get('visible') is None:
+            self._values['visible'] = True
+        return self._values['visible']
 
     def setLabels(self, labels):
         self._values['labels'] = labels

@@ -91,6 +91,7 @@ class Param(FormElement):
         # Allow pointers (used for scalars)
         self.allowsPointers = args.get('allowsPointers', False)
         self.validators = args.get('validators', [])
+        self.readOnly = args.get("readOnly", False)
         
     def __str__(self):
         return "    label: %s" % self.label.get()
@@ -330,6 +331,12 @@ class Form(object):
     def addParallelSection(self, threads=1, mpi=8, condition="",
                            hours=72, jobsize=0):
 
+        """ Adds the parallelization section to the form
+            pass threads=0 to disable threads parameter and mpi=0 to disable mpi params
+
+        :param threads: default value for of threads, defaults to 1
+        :param mpi: default value for mpi, defaults to 8"""
+
         self.addSection(label='Parallelization')
         self.addParam('hostName', StringParam, default="localhost",
                       label='Execution host',
@@ -448,11 +455,22 @@ class PointerParam(Param):
         self.allowsNull = Boolean(args.get('allowsNull', False))
         
     def setPointerClass(self, newPointerClass):
-        if ',' in newPointerClass:
+
+        # Tolerate passing classes instead of their names
+        if isinstance(newPointerClass, list):
             self.pointerClass = CsvList()
-            self.pointerClass.set(newPointerClass)
+            self.pointerClass.set(",". join([clazz.__name__ for clazz in newPointerClass]))
+
+        elif(isinstance(newPointerClass, str)):
+            if ',' in newPointerClass:
+                self.pointerClass = CsvList()
+                self.pointerClass.set(newPointerClass)
+            else:
+                self.pointerClass = String(newPointerClass)
+
+        # Single class item, not the string
         else:
-            self.pointerClass = String(newPointerClass)
+            self.pointerClass = String(newPointerClass.__name__)
 
 
 class MultiPointerParam(PointerParam):
@@ -522,10 +540,12 @@ class NumericListParam(StringParam):
         
 class NumericRangeParam(StringParam):
     """ This class will serve to specify range of numbers with a string representation.
-     Possible notation are:
+     Possible notation are::
+
         "1,5-8,10" -> [1,5,6,7,8,10]
         "2,6,9-11" -> [2,6,9,10,11]
         "2 5, 6-8" -> [2,5,6,7,8]
+
     """
     def __init__(self, **args):
         StringParam.__init__(self, **args)

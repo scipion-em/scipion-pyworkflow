@@ -25,12 +25,14 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import os
 
 import pyworkflow as pw
 import pyworkflow.object as pwobj
 import pyworkflow.tests as pwtests
 import pyworkflow.mapper as pwmapper
 import pyworkflow.protocol as pwprot
+from pyworkflow.project import Project
 from pyworkflowtests.protocols import ProtOutputTest
 from pyworkflowtests import Domain, MockObject
 
@@ -53,7 +55,10 @@ class TestProtocolOutputs(pwtests.BaseTest):
         mapperDict = Domain.getMapperDict()
 
         mapper = pwmapper.SqliteMapper(fn, mapperDict)
-        prot = ProtOutputTest(mapper=mapper, n=2,
+        # Associate the project
+        proj = Project(Domain, path=self.getOutputPath(''))
+
+        prot = ProtOutputTest(mapper=mapper, n=2, project=proj,
                               workingDir=self.getOutputPath(''))
 
         # Add and old style o, not in the outputs dictionary
@@ -66,12 +71,16 @@ class TestProtocolOutputs(pwtests.BaseTest):
         self.assertTrue(1, len(outputs))
 
         prot._stepsExecutor = pwprot.StepExecutor(hostConfig=None)
+
+        #Create the logs folder
+        prot.makeWorkingDir()
+
         prot.run()
 
         self.assertEqual(prot._steps[0].getStatus(),
                          pwprot.STATUS_FINISHED)
 
-        # Check there is an o
+        # Check there is an output
         self.assertOutput(prot)
 
         outputs = [o for o in prot.iterOutputAttributes()]

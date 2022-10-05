@@ -42,8 +42,11 @@ B. Remote execution:
 
 import os
 import re
+import logging
+logger = logging.getLogger(__file__)
 from subprocess import Popen, PIPE
 import pyworkflow as pw
+from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
 from pyworkflow.protocol.constants import UNKNOWN_JOBID
@@ -163,7 +166,7 @@ def _runRemote(protocol, mode):
             'protId': protocol.getObjId()
             }
     cmd = tpl % args
-    print("** Running remote: %s" % greenStr(cmd))
+    logger.info("** Running remote: %s" % greenStr(cmd))
     p = Popen(cmd, shell=True, stdout=PIPE)
 
     return p
@@ -201,12 +204,47 @@ def _copyFiles(protocol, rpath):
         rpath.putFile(f, remoteFile)
 
 
+def analyzeFormattingTypeError(string, dictionary):
+    """ receives a string with %(VARS) to be replaced with a dictionary
+     it splits te string by \n and test the formatting per line. Raises an exception if any line fails
+     with all problems found"""
+
+    # Do the replace line by line
+    lines = string.split("\n")
+
+    problematicLines = []
+    for line in lines:
+        try:
+            line % dictionary
+        except KeyError as e:
+            problematicLines.append(line + " --> variable not present in this context.")
+        except Exception as e:
+            problematicLines.append(line + " --> " + str(e))
+
+    if problematicLines:
+        return PyworkflowException('Following lines in %s seems to be problematic. '
+                                   'Please review its format or content.\n%s' % (pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
+                                   url=pw.DOCSITEURLS.HOST_CONFIG)
+
 def _submit(hostConfig, submitDict, cwd=None, env=None):
     """ Submit a protocol to a queue system. Return its job id.
     """
     # Create first the submission script to be launched
     # formatting using the template
-    template = hostConfig.getSubmitTemplate() % submitDict
+    template = hostConfig.getSubmitTemplate()
+
+    try:
+        template = template % submitDict
+    except Exception as e:
+        # Capture parsing errors
+        exception = analyzeFormattingTypeError(template, submitDict)
+
+        if exception:
+            raise exception
+        else:
+            # If there is no exception, then raise actual one
+            raise e
+
     # FIXME: CREATE THE PATH FIRST
     scripPath = submitDict['JOB_SCRIPT']
     f = open(scripPath, 'w')
@@ -220,7 +258,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     # "qsub %(JOB_SCRIPT)s"
     command = hostConfig.getSubmitCommand() % submitDict
     gcmd = greenStr(command)
-    print("** Submitting to queue: '%s'" % gcmd)
+    logger.info("** Submitting to queue: '%s'" % gcmd)
 
     p = Popen(command, shell=True, stdout=PIPE, cwd=cwd, env=env)
     out = p.communicate()[0]
@@ -229,17 +267,17 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     s = re.search('(\d+)', str(out))
     if p.returncode == 0 and s:
         job = int(s.group(0))
-        print("Launched job with id %s" % job)
+        logger.info("Launched job with id %s" % job)
         return job
     else:
-        print("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
+        logger.info("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
         return UNKNOWN_JOBID
 
 
 def _run(command, wait, stdin=None, stdout=None, stderr=None):
     """ Execute a command in a subprocess and return the pid. """
     gcmd = greenStr(command)
-    print("** Running command: '%s'" % gcmd)
+    logger.info("** Running command: '%s'" % gcmd)
     p = Popen(command, shell=True, stdout=stdout, stderr=stderr)
     jobId = p.pid
     if wait:

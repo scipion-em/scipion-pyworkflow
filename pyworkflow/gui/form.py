@@ -28,6 +28,8 @@ This modules implements the automatic
 creation of protocol form GUI from its
 params definition.
 """
+import logging
+logger = logging.getLogger(__name__)
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -478,24 +480,42 @@ class SubclassesTreeProvider(TreeProvider):
                     # the magnifier glass (object selector of type XX)
                     paramName = None
                     attr = None
-                    for paramName, attr in prot.iterOutputAttributes():
+                    for paramName, attr in prot.iterOutputAttributes(includePossible=True):
                         def _checkParam(paramName, attr):
                             # If attr is a sub-classes of any desired one, add it to the list
                             # we should also check if there is a condition, the object
                             # must comply with the condition
                             p = None
-                            if (any(isinstance(attr, c) for c in classes) and
-                                    (not condition or
-                                     attr.evalCondition(condition))):
-                                p = pwobj.Pointer(prot, extended=paramName)
-                                p._allowsSelection = True
-                                objects.append(p)
+
+                            match = False
+                            cancelConditionEval = False
+                            possibleOutput = isinstance(attr, type)
+
+                            # Go through all compatible Classes coming from in pointerClass string
+                            for c in classes:
+                                # If attr is instance
+                                if isinstance(attr, c):
+                                    match = True
+                                    break
+                                # If it is a class already: "possibleOutput" case. In this case attr is the class and not
+                                # an instance of c. In this special case
+                                elif possibleOutput and attr == c:
+                                    match = True
+                                    cancelConditionEval = True
+
+                            # If attr matches the class
+                            if match:
+                                if cancelConditionEval or not condition or attr.evalCondition(condition):
+                                    p = pwobj.Pointer(prot, extended=paramName)
+                                    p._allowsSelection = True
+                                    objects.append(p)
+                                    return
 
                             # JMRT: For all sets, we don't want to include the
                             # subitems here for performance reasons (e.g SetOfParticles)
                             # Thus, a Set class can define EXPOSE_ITEMS = True
                             # to enable the inclusion of its items here
-                            if getattr(attr, 'EXPOSE_ITEMS', False):
+                            if getattr(attr, 'EXPOSE_ITEMS', False) and not possibleOutput:
                                 # If the ITEM type match any of the desired classes
                                 # we will add some elements from the set
                                 if (attr.ITEM_TYPE is not None and
@@ -542,7 +562,7 @@ class SubclassesTreeProvider(TreeProvider):
         objects.sort(key=self.objectKey, reverse=not self.isSortingAscending())
 
     def objectKey(self, pobj):
-
+        """ Returns the value to be evaluated during sorting based on _sortingColumnName"""
         obj = self._getParentObject(pobj, pobj)
 
         if self._sortingColumnName == SubclassesTreeProvider.CREATION_COLUMN:
@@ -594,14 +614,16 @@ class SubclassesTreeProvider(TreeProvider):
 
     @staticmethod
     def _getObjectCreation(obj):
-
-        return obj.getObjCreation() if obj.getObjCreation() else "Empty"
+        """ Returns the Object creation time stamp or 'Not ready' for those not yet ready or possibleOutputs"""
+        return obj.getObjCreation() if obj is not None and obj.getObjCreation() else "Not ready"
 
     @staticmethod
     def _getObjectInfoValue(obj):
-
-        return str(obj).replace(obj.getClassName(), '')
-
+        """ Returns the best summary of the object in a string."""
+        if obj is not None:
+            return str(obj).replace(obj.getClassName(), '')
+        else: # possible Outputs are not output already so here comes None
+            return "Possible output"
     def _getPointerLabel(self, pobj, parent=None):
 
         # If parent is not provided, try to get it, it might have none.
@@ -994,9 +1016,9 @@ class ParamWidget:
         self.window = window
         self._protocol = self.window.protocol
         if self._protocol.getProject() is None:
-            print(">>> ERROR: Project is None for protocol: %s, "
+            logger.error(">>> ERROR: Project is None for protocol: %s, "
                   "start winpdb to debug it" % self._protocol)
-            pwutils.startDebugger()
+
         self.row = row
         self.column = column
         self.paramName = paramName
@@ -1078,6 +1100,9 @@ class ParamWidget:
     def _showWizard(self, e=None):
         wizClass = self.window.wizards[self.wizParamName]
         wizard = wizClass()
+        # wizParamName: form attribute, the wizard object can check from which parameter it was called
+        # Used into VariableWizard objects (scipion-chem), where input and output parameters used for each wizard are defined
+        self.window.wizParamName = self.wizParamName
         wizard.show(self.window)
 
     def _findParamWizard(self):
@@ -1164,6 +1189,7 @@ class ParamWidget:
             tp = MultiPointerTreeProvider(self._protocol.mapper)
             tree = BoundTree(content, tp, height=5)
             var = MultiPointerVar(tp, tree)
+            var.trace('w', self.window._onPointerChanged)
             tree.grid(row=0, column=0, sticky='we')
             self._addButton("Select", pwutils.Icon.ACTION_SEARCH, self._browseObject)
             self._addButton("Remove", pwutils.Icon.ACTION_DELETE, self._removeObject)
@@ -1238,9 +1264,9 @@ class ParamWidget:
                                            self.window._onPointerChanged)
                 self._selectmode = 'browse'
                 sticky = 'ew'
-
+            state = tk.DISABLED if param.readOnly else tk.NORMAL
             entry = tk.Entry(content, width=entryWidth, textvariable=var,
-                             font=self.window.font)
+                             font=self.window.font, state=state)
 
             # Select all content on focus
             entry.bind("<FocusIn>",
@@ -1647,7 +1673,7 @@ class FormWindow(Window):
             t = ('  Missing protocol: %s'
                  % (Mapper.getObjectPersistingClassName(prot)))
         else:
-            t = '  Protocol: %s' % (prot.getClassLabel())
+            t = '  %s' % (prot.getClassLabel())
 
         logoPath = prot.getPluginLogoPath() or getattr(package, '_logo', '')
 
@@ -2029,17 +2055,17 @@ class FormWindow(Window):
     def _createLegacyInfo(self, parent):
         frame = tk.Frame(parent, name="legacy")
         t = tk.Label(frame,
-                     text="This protocol is missing from the installation. "
+                     text="This protocol is missing in this installation. "
                           "\nThis could be because you are opening an old "
-                          "project and some of \nthe executed protocols does "
-                          "not exist in the current version and were deprecated"
+                          "project and some of \nthe executed protocols do "
+                          "not exist anymore and were deprecated"
                           ",\n or because your scipion installation requires a "
                           "plugin where this protocol can be found.\n\n"
                           "If you are a developer, it could be the case that "
                           "you have changed \nto another branch where the "
                           "protocol does not exist.\n\n"
                           "Anyway, you can still inspect the parameters by "
-                          "opening the DB from the toolbar."
+                          "opening the DB from the toolbar activating the Debug mode."
                      )
         t.grid(row=0, column=0, padx=5, pady=5)
 
@@ -2086,9 +2112,13 @@ class FormWindow(Window):
                                        and not self.protocol.isInteractive()) \
                 else tk.NORMAL
 
+            btnSaveState = tk.DISABLED if (btnState == tk.DISABLED or
+                                           self.protocol.getOutputsSize()) \
+                else tk.NORMAL
+
             self.btnSave = Button(btnFrame, pwutils.Message.LABEL_BUTTON_RETURN,
                                   pwutils.Icon.ACTION_SAVE, command=self.save,
-                                  state=btnState)
+                                  state=btnSaveState)
             self.btnSave.grid(row=0, column=1, padx=5, pady=5, sticky='se')
             self.btnExecute = HotButton(btnFrame, pwutils.Message.LABEL_BUTTON_EXEC,
                                         pwutils.Icon.ACTION_EXECUTE,
@@ -2534,15 +2564,20 @@ class FormWindow(Window):
         # This event can be fired even before the button is created
         if btnExecute is None:
             return
+        btnState = tk.DISABLED if (self.protocol.isActive() and not self.protocol.isInteractive()) else tk.NORMAL
+        emptyInput, openSetPointer, emptyPointers = self.protocol.getInputStatus()
 
-        if self.protocol.hasLinkedInputs():
+        if emptyInput:
+            btnState = tk.DISABLED
+
+        if openSetPointer or emptyPointers:
             btnText = 'Schedule'
             cmd = self.schedule
         else:
             btnText = pwutils.Message.LABEL_BUTTON_EXEC
             cmd = self.execute
 
-        btnExecute.config(text=btnText, command=cmd)
+        btnExecute.config(text=btnText, command=cmd, state=btnState)
 
 
 def editObject(self, title, root, obj, mapper):
