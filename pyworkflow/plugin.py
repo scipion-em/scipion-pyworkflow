@@ -41,6 +41,7 @@ import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 from pyworkflow.template import Template
+from pyworkflow.utils import sortListByList
 
 from .constants import *
 
@@ -92,7 +93,11 @@ class Domain:
             cls._plugins[name] = m  # Register the name to as a plugin
 
         # Catch any import exception, warn about it but continue.
+        except ModuleNotFoundError as e:
+            # This is probably due to a priority package like pwchem not being installed
+            pass
         except Exception as e:
+
             print(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
             print("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
@@ -109,8 +114,17 @@ class Domain:
 
     @classmethod
     def _discoverPlugins(cls):
+        # Get the list of plugins registered
+        plugin_modules = []
         for entry_point in pkg_resources.iter_entry_points('pyworkflow.plugin'):
-            cls.registerPlugin(entry_point.name)
+            plugin_modules.append(entry_point.name)
+
+        # Sort the list taking into account the priority
+        plugin_modules = sortListByList(plugin_modules, pw.Config.getPriorityPackageList())
+
+        for module in plugin_modules:
+            cls.registerPlugin(module)
+
 
     @classmethod
     def _discoverGUIPlugins(cls):

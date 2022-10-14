@@ -469,9 +469,8 @@ class ProtocolTreeConfig:
 
         # Read the protocols.conf of any installed plugin
         pluginDict = domain.getPlugins()
-        pluginList = cls.__orderByPriority(pluginDict.keys(),
-                                           priorityPluginList=Config.getPriorityPackageList())
-        for pluginName in pluginList:
+
+        for pluginName in pluginDict.keys():
             try:
 
                 # if the plugin has a path

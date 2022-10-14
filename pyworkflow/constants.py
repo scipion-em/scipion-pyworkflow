@@ -122,14 +122,17 @@ PROJECT_SETTINGS = 'settings.sqlite'
 
 class DOCSITEURLS:
     """Documentation site URL useful when exceptions happens and you want to point to some pages"""
-    HOME = 'https://scipion-em.github.io/docs/'
+    HOME = 'https://scipion-em.github.io/docs/release-3.0.0/'
     DOCS = HOME + 'docs/'
     CONFIG = DOCS + 'scipion-modes/scipion-configuration.html'
     CONFIG_SECTION = CONFIG + '#%s'
     CONTACTUS = 'http://scipion.i2pc.es/contact'
     USER = DOCS + 'user/'
+    GUI = USER + 'scipion-gui.html'
+    WAIT_FOR = GUI + '#waiting-for-other-protocols'
     PLUGIN_MANAGER = USER + 'plugin-manager.html'
     HOST_CONFIG = DOCS + "scipion-modes/host-configuration.html"
+
 
 # tkinter bind constants
 class TK:
