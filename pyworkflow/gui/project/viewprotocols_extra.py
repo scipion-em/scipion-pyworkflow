@@ -517,14 +517,6 @@ class ProtocolTreeConfig:
         node.visible = anyLeaf
 
         return anyLeaf
-    @classmethod
-    def __orderByPriority(cls, pluginList, priorityPluginList):
-        if priorityPluginList:
-            sortedPluginList = priorityPluginList + [pluginName for pluginName in pluginList
-                                                     if pluginName not in priorityPluginList]
-            return sortedPluginList
-        else:
-            return pluginList
 
 
 class ProtocolConfig(MenuConfig):

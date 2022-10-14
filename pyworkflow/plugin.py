@@ -93,7 +93,7 @@ class Domain:
             cls._plugins[name] = m  # Register the name to as a plugin
 
         # Catch any import exception, warn about it but continue.
-        except ModuleNotFoundError as e:
+        except ModuleNotFoundError:
             # This is probably due to a priority package like pwchem not being installed
             pass
         except Exception as e:
