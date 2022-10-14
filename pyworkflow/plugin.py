@@ -26,6 +26,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+logger = logging.getLogger(__name__)
 import glob
 import os
 import importlib
@@ -84,7 +86,7 @@ class Domain:
             bib = cls.__getSubmodule(name, 'bibtex')
             if bib is not None:
                 if hasattr(bib, "_bibtex"):
-                    print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
+                    logger.info("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
                 else:
                     try:
                         m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
@@ -98,10 +100,10 @@ class Domain:
             pass
         except Exception as e:
 
-            print(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
+            (pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
-            print("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
-            print(pwutils.yellow(traceback.format_exc()))
+            logger.info("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
+            logger.info(pwutils.yellow(traceback.format_exc()))
 
     @classmethod
     def getPlugins(cls):
@@ -208,7 +210,7 @@ class Domain:
                             if name in subclasses:
                                 # Get already added class plugin
                                 pluginCollision = subclasses[name]._package.__name__
-                                print("ERROR: Name collision (%s) detected "
+                                logger.info("ERROR: Name collision (%s) detected "
                                       "while discovering %s.%s.\n"
                                       " It conflicts with %s" %
                                       (name, pluginName, submoduleName,
@@ -367,11 +369,10 @@ class Domain:
                                                   doRaise=True)
                 viewers.append(prefViewer)
             except Exception as e:
-                print("Couldn't load \"%s\" as preferred viewer for %s.\n"
+                logger.error("Couldn't load \"%s\" as preferred viewer for %s.\n"
                       "There might be a typo in your VIEWERS variable "
                       "or an error in the viewer's plugin installation"
-                      % (prefViewerStr, className))
-                print(e)
+                      % (prefViewerStr, className), exc_info=e)
         return viewers
 
     @classmethod
@@ -421,11 +422,11 @@ class Domain:
     def printInfo(cls):
         """ Simple function (mainly for debugging) that prints basic
         information about this Domain. """
-        print("Domain: %s" % cls._name)
-        print("     objects: %s" % len(cls._objects))
-        print("   protocols: %s" % len(cls._protocols))
-        print("     viewers: %s" % len(cls._viewers))
-        print("     wizards: %s" % len(cls._wizards))
+        logger.info("Domain: %s" % cls._name)
+        logger.info("     objects: %s" % len(cls._objects))
+        logger.info("   protocols: %s" % len(cls._protocols))
+        logger.info("     viewers: %s" % len(cls._viewers))
+        logger.info("     wizards: %s" % len(cls._wizards))
 
     # ---------- Private methods of Domain class ------------------------------
     @staticmethod
@@ -468,7 +469,7 @@ class Domain:
         if doRaise:
             raise Exception("\n\n" + raiseMsg)
         else:
-            print(raiseMsg)
+            logger.info(raiseMsg)
 
     @staticmethod
     def __getSubmodule(name, subname):
@@ -535,7 +536,7 @@ class Plugin:
         if cls._condaActivationCmd is None:
             condaActivationCmd = os.environ.get(CONDA_ACTIVATION_CMD_VAR, "")
             if not condaActivationCmd:
-                print("WARNING!!_condaActivationCmd: %s variable not defined. "
+                logger.info("WARNING!!_condaActivationCmd: %s variable not defined. "
                       "Relying on conda being in the PATH" % CONDA_ACTIVATION_CMD_VAR)
             elif condaActivationCmd[-1] not in [";", "&"]:
                 condaActivationCmd += "&&"
@@ -667,7 +668,7 @@ class PluginInfo:
             tuples = message_from_string('\n'.join(lines))
 
         except Exception:
-            print("Plugin %s seems is not a pip module yet. "
+            logger.info("Plugin %s seems is not a pip module yet. "
                   "No metadata found" % name)
             tuples = message_from_string('Author: plugin in development mode?')
 
