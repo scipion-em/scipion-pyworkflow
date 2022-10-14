@@ -1,3 +1,9 @@
+V3.0.27
+-------
+Users:
+ - "Use queue?" label and help reworded and linked to documentation site
+ - "Wait for" label and help reworded and linked to documentation site
+
 V3.0.26 (hotfix)
 -------
  - Reporting url is now pointing to https.
