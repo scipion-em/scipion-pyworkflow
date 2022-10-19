@@ -1394,9 +1394,10 @@ class Project(object):
         pid = protocol.getPid()
 
         # Include running and scheduling ones
+        # Exclude interactive protocols
         # NOTE: This may be happening even with successfully finished protocols
         # which PID is gone.
-        if (protocol.isActive() and _runsLocally(protocol)
+        if (protocol.isActive() and not protocol.isInteractive() and _runsLocally(protocol)
             and not protocol.useQueue()
                 and not pwutils.isProcessAlive(pid)):
             protocol.setFailed("Process %s not found running on the machine. "
