@@ -129,7 +129,7 @@ class Message:
     LABEL_HOST = 'Host'
     LABEL_THREADS = 'Threads'
     LABEL_MPI = 'MPI'
-    LABEL_QUEUE = 'Use queue?'
+    LABEL_QUEUE = 'Use a queue engine?'
     LABEL_QUEUE_FOR_JOBS = 'Use queue for Jobs?'
 
     LABEL_WAIT_FOR = 'Wait for'
@@ -158,9 +158,11 @@ Define the number of processors to be used in the execution.
     """
 
     HELP_USEQUEUE = """
-    Click *Yes* if you want to submit a single job per protocol to a Queue system.
-    The queue commands to launch and stop jobs should be configured
-    for the current host in the _%s_ file.
+    Click Yes if you want to send this execution to a queue engine like Slurm, Torque, ...
+    The queue commands to launch and stop jobs should be configured at
+    _%s_ file.
+    
+    See %s for more information.
         """
     HELP_USEQUEUEPERJOB = """
     Click *Yes* if you want to submit the multiple jobs per protocol to a Queue system.
@@ -170,9 +172,13 @@ Define the number of processors to be used in the execution.
 
     HELP_WAIT_FOR = """
     Specify a comma separated list of protocol IDs if you want
-that this protocol starts after the input protocols in the list
-are finished. This function will allow you to "schedule" many
-runs that will be executed after each other.
+    to *schedule* this protocol and wait for those protocols to finish before
+    starting this one.
+    
+    This function will allow you to "schedule" many
+    runs that will be executed after each other.
+     
+    See %s for more information.
     """
     
     TITLE_NAME_RUN = ' Protocol Run: '
