@@ -292,7 +292,7 @@ class ProtocolsView(tk.Frame):
         dframe = tk.Frame(tab, bg='white')
         pwgui.configureWeigths(dframe, row=0)
         pwgui.configureWeigths(dframe, row=2)
-        # Just configure the provider, later bellow, in updateSelection, it will be
+        # Just configure the provider, later below, in updateSelection, it will be
         # provided with the protocols.
         provider = RunIOTreeProvider(self, None,
                                      self.project.mapper)

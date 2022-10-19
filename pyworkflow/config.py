@@ -187,7 +187,7 @@ class Config:
     SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica")
     "Name of the font to use in Scipion GUI. Defaults to Helvetica."
 
-    SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', 10))
+    SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', SCIPION_DEFAULT_FONT_SIZE))
     "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10."
 
     WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
