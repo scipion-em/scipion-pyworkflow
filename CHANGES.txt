@@ -1,3 +1,12 @@
+V3.0.27
+-------
+Users:
+ - Fixing an error refreshing the workflow:
+     * the protocol status changed intermittently
+ - "Use queue?" label and help reworded and linked to documentation site
+ - "Wait for" label and help reworded and linked to documentation site
+ - Fix: New protocols, without sibilings were wrongly located at the top.
+
 V3.0.26 (hotfix)
 -------
  - Reporting url is now pointing to https.

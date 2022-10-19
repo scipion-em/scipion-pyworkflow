@@ -1018,6 +1018,11 @@ class Protocol(Step):
         super().setFailed(msg)
         self._closeOutputSet()
 
+    def _finalizeStep(self, status, msg=None):
+        """ Closes the step and setting up the protocol process id """
+        super()._finalizeStep(status, msg)
+        self._pid.set(None)
+
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
         :parameter updater callback/lambda receiving a step and editing it inside
