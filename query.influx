@@ -1,3 +1,0 @@
-curl --request GET http://localhost:8086/query?db=scipion-benchmarks \
-  --header "Authorization: Token MlbSjjfr_9t36QoQImQA7uFG61EZvtIPgUlC-IM1dtC0uk0d0eIYiEt4goGZ9IZ9WgUCPooHmf0b8w0o1o2NIA==" \
-  --data-urlencode "q=SELECT pid FROM scipion-benchmarks.performance_test_1"
