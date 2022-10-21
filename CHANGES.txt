@@ -1,3 +1,12 @@
+V3.0.28
+users:
+  - Fix: rare error making subsets of self referencing output.
+
+developers:
+  - Fix: rare error when loading pointers with extended from the database
+  - More modules using logging: gui/project.py, mapper/sqlite.py
+  - Pointer.set: optional parameter to cancel extended reset. Used from mapper.
+
 V3.0.27
 -------
 Users:
