@@ -6,6 +6,7 @@ developers:
   - Fix: rare error when loading pointers with extended from the database
   - More modules using logging: gui/project.py, mapper/sqlite.py
   - Pointer.set: optional parameter to cancel extended reset. Used from mapper.
+  - Pyworkflow Domain now is operational. Still ED plugins needs adaptation.
 
 V3.0.27
 -------

@@ -417,11 +417,11 @@ class SqliteMapper(Mapper):
     def _getObjectFromRow(self, row):
 
         # Get the ID first
-        id = row[ID]
+        identifier = row[ID]
 
         # If already in the dictionary we skipp al this
-        if id in self.objDict.keys():
-            return self.objDict[id]
+        if identifier in self.objDict.keys():
+            return self.objDict[identifier]
 
         # Build the object without children
         obj = self.__buildObject(row)
@@ -933,7 +933,7 @@ class SqliteFlatMapper(Mapper):
             # THIS SHOULD NOT HAPPEN
             logger.warning("'creation' column not found in object: %s" % obj.getObjId())
             logger.warning("         db: %s" % self.db.getDbName())
-            logger.warning("         objRow: ", dict(objRow))
+            logger.warning("         objRow: %s." % dict(objRow))
 
         for c, attrName in self._objColumns:
             obj.setAttributeValue(attrName, objRow[c])
@@ -1197,7 +1197,7 @@ class SqliteFlatDb(SqliteDb):
         """
         self.setVersion(self.VERSION)
         for pragma in self._pragmas.items():
-            logger.debug("Executing pragma:", pragma)
+            logger.debug("Executing pragma: %s" % pragma)
             self.executeCommand("PRAGMA %s = %s;" % pragma)
         # Create a general Properties table to store some needed values
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Properties
