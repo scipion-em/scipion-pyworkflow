@@ -119,11 +119,31 @@ def _getAppsProgram(prog):
 
 
 def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
-    # Check first if we need to launch with MPI or not
-    command = ('%s %s "%s" "%s" %s'
-               % (pw.PYTHON, pw.join(pw.APPS, 'pw_protocol_run.py'),
-                  protocol.getProject().path, protocol.getDbPath(),
-                  protocol.strId()))
+    """
+
+    :param protocol: Protocol to launch
+    :param wait: Pass true if you want to wait for the process to finish
+    :param stdin: stdin object to direct stdin to
+    :param stdout: stdout object to send process stdout
+    :param stderr: stderr object to send process stderr
+    :return: PID of queue's JOBID
+    """
+
+    command = '{python} {prot_run} "{project_path}" "{db_path}" {prot_id} "{stdout_log}" "{stderr_log}"'.format(
+        python=pw.PYTHON,
+        prot_run=pw.join(pw.APPS, 'pw_protocol_run.py'),
+        project_path=protocol.getProject().path,
+        db_path=protocol.getDbPath(),
+        prot_id=protocol.strId(),
+        stdout_log=protocol.getStdoutLog(),
+        stderr_log=protocol.getStderrLog()
+    )
+
+    #command = ('%s %s "%s" "%s" %s "%s" "%s"'
+    #           % (pw.PYTHON, pw.join(pw.APPS, 'pw_protocol_run.py'),
+    #              protocol.getProject().path, protocol.getDbPath(),
+    #              protocol.strId()))
+
     hostConfig = protocol.getHostConfig()
     useQueue = protocol.useQueue()
     # Check if need to submit to queue    
