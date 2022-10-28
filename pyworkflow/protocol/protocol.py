@@ -41,7 +41,6 @@ from .constants import *
 from .params import Form
 from ..utils import getFileSize
 
-SCHEDULE_LOG = 'schedule.log'
 
 import  logging
 # Get the root logger
@@ -1018,6 +1017,11 @@ class Protocol(Step):
         super().setFailed(msg)
         self._closeOutputSet()
 
+    def _finalizeStep(self, status, msg=None):
+        """ Closes the step and setting up the protocol process id """
+        super()._finalizeStep(status, msg)
+        self._pid.set(None)
+
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
         :parameter updater callback/lambda receiving a step and editing it inside
@@ -1479,8 +1483,6 @@ class Protocol(Step):
         to run should exists.
         """
         try:
-            LoggingConfigurator.setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
-
             self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
             self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
                                                                project_name=self.getProject().getName(),
@@ -1541,11 +1543,16 @@ class Protocol(Step):
 
 
     def getLogPaths(self):
-        return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', SCHEDULE_LOG]))
+        return [self.getStdoutLog(),self.getStderrLog() , self.getScheduleLog()]
+
+    def getStdoutLog(self):
+        return self._getLogsPath("run.stdout")
+
+    def getStderrLog(self):
+        return self._getLogsPath('run.stderr')
 
     def getScheduleLog(self):
-        return self._getLogsPath(SCHEDULE_LOG)
+        return self._getLogsPath('schedule.log')
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """

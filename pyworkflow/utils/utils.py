@@ -248,6 +248,15 @@ def getUniqueItems(originalList):
     resultList = [auxDict.setdefault(x, x) for x in originalList if x not in auxDict]
     return resultList
 
+def sortListByList(inList, priorityList):
+    """ Returns a list sorted by some elements in a second priorityList"""
+    if priorityList:
+        sortedList = priorityList + [item for item in inList
+                                                     if item not in priorityList]
+        return sortedList
+    else:
+        return inList
+
 
 def executeRemoteX(command, hostName, userName, password):
     """

@@ -29,14 +29,40 @@ from pyworkflow.gui import cfgFontSize
 
 logger = logging.getLogger(__name__)
 
-from pyworkflow import Config
+from pyworkflow import Config, SCIPION_DEFAULT_FONT_SIZE
+
 
 
 class GraphLayout(object):
     """ Base class for all algorithm that implement
     functions to organize a graph in a plane.
     """
-    
+    def __init__(self):
+        super().__init__()
+        self.DY = 65
+        self.DX = 15
+        self._fontScaleFactor = None
+
+    def getY(self):
+        """
+        :return: Y distance affected by the font size
+
+        """
+
+        return self.DY*self.getFontScaleFactor()
+
+    def getFontScaleFactor(self):
+        """
+        :return: The scale factor between default font size 10, and current one
+
+        """
+        if self._fontScaleFactor is None:
+
+            self._fontScaleFactor = cfgFontSize/SCIPION_DEFAULT_FONT_SIZE
+
+        return self._fontScaleFactor
+
+
     def draw(self, graph, **kwargs):
         """ Setup the nodes position in the plane. """
         pass
@@ -46,12 +72,6 @@ class BasicLayout(GraphLayout):
     """ This layout will keep node position as much as possible.
     It will try to allocate the nodes with x=0 and y=0.
     """
-    
-    def __init__(self):
-        GraphLayout.__init__(self)
-        self.DY = 65
-        self.DX = 15
-        
     def draw(self, graph, **kwargs):
         """ Organize nodes of the graph in the plane.
         Nodes should have: x, y, width and height attributes
@@ -105,29 +125,7 @@ class LevelTreeLayout(GraphLayout):
     
     def __init__(self):
         GraphLayout.__init__(self)
-        self.DY = 65
-        self.DX = 15
         self.maxLevel = 9999
-        self._fontScaleFactor = None
-
-    def getY(self):
-        """
-        :return: Y distance affected by the font size
-
-        """
-
-        return self.DY*self.getFontScaleFactor()
-
-    def getFontScaleFactor(self):
-        """
-        :return: The scale factor between default font size 10, and current one
-
-        """
-        if self._fontScaleFactor is None:
-
-            self._fontScaleFactor = cfgFontSize/10
-
-        return self._fontScaleFactor
 
     def draw(self, graph, **kwargs):
         """

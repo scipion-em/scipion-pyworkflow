@@ -867,12 +867,12 @@ class Pointer(Object):
             
         return value
     
-    def set(self, other):
+    def set(self, other, cleanExtended=True):
         """ Set the pointer value but cleaning the extended property. """
         Object.set(self, other)
         # This check is needed because set is call from the Object constructor
         # when this attribute is not setup yet (a dirty patch, I know)
-        if hasattr(self, '_extended'):
+        if cleanExtended and hasattr(self, '_extended'):
             self._extended.set(None)
         
     def hasExtended(self):
