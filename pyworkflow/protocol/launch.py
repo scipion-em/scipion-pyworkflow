@@ -42,6 +42,8 @@ B. Remote execution:
 
 import os
 import re
+import logging
+logger = logging.getLogger(__file__)
 from subprocess import Popen, PIPE
 import pyworkflow as pw
 from pyworkflow.exceptions import PyworkflowException
@@ -117,11 +119,31 @@ def _getAppsProgram(prog):
 
 
 def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
-    # Check first if we need to launch with MPI or not
-    command = ('%s %s "%s" "%s" %s'
-               % (pw.PYTHON, pw.join(pw.APPS, 'pw_protocol_run.py'),
-                  protocol.getProject().path, protocol.getDbPath(),
-                  protocol.strId()))
+    """
+
+    :param protocol: Protocol to launch
+    :param wait: Pass true if you want to wait for the process to finish
+    :param stdin: stdin object to direct stdin to
+    :param stdout: stdout object to send process stdout
+    :param stderr: stderr object to send process stderr
+    :return: PID of queue's JOBID
+    """
+
+    command = '{python} {prot_run} "{project_path}" "{db_path}" {prot_id} "{stdout_log}" "{stderr_log}"'.format(
+        python=pw.PYTHON,
+        prot_run=pw.join(pw.APPS, 'pw_protocol_run.py'),
+        project_path=protocol.getProject().path,
+        db_path=protocol.getDbPath(),
+        prot_id=protocol.strId(),
+        stdout_log=protocol.getStdoutLog(),
+        stderr_log=protocol.getStderrLog()
+    )
+
+    #command = ('%s %s "%s" "%s" %s "%s" "%s"'
+    #           % (pw.PYTHON, pw.join(pw.APPS, 'pw_protocol_run.py'),
+    #              protocol.getProject().path, protocol.getDbPath(),
+    #              protocol.strId()))
+
     hostConfig = protocol.getHostConfig()
     useQueue = protocol.useQueue()
     # Check if need to submit to queue    
@@ -164,7 +186,7 @@ def _runRemote(protocol, mode):
             'protId': protocol.getObjId()
             }
     cmd = tpl % args
-    print("** Running remote: %s" % greenStr(cmd))
+    logger.info("** Running remote: %s" % greenStr(cmd))
     p = Popen(cmd, shell=True, stdout=PIPE)
 
     return p
@@ -256,7 +278,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     # "qsub %(JOB_SCRIPT)s"
     command = hostConfig.getSubmitCommand() % submitDict
     gcmd = greenStr(command)
-    print("** Submitting to queue: '%s'" % gcmd)
+    logger.info("** Submitting to queue: '%s'" % gcmd)
 
     p = Popen(command, shell=True, stdout=PIPE, cwd=cwd, env=env)
     out = p.communicate()[0]
@@ -265,17 +287,17 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     s = re.search('(\d+)', str(out))
     if p.returncode == 0 and s:
         job = int(s.group(0))
-        print("Launched job with id %s" % job)
+        logger.info("Launched job with id %s" % job)
         return job
     else:
-        print("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
+        logger.info("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
         return UNKNOWN_JOBID
 
 
 def _run(command, wait, stdin=None, stdout=None, stderr=None):
     """ Execute a command in a subprocess and return the pid. """
     gcmd = greenStr(command)
-    print("** Running command: '%s'" % gcmd)
+    logger.info("** Running command: '%s'" % gcmd)
     p = Popen(command, shell=True, stdout=stdout, stderr=stderr)
     jobId = p.pid
     if wait:

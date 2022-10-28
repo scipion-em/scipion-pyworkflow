@@ -139,6 +139,19 @@ class TestObject(pwtests.BaseTest):
         s.set(now)
         self.assertEqual(now, s.datetime())
 
+        # Ranges and values
+        s2.set("1 2 3 4")
+        self.assertEqual(s2.getListFromValues(caster=float), [1.,2.,3.,4.])
+        self.assertEqual(s2.getListFromRange(), [1, 2, 3, 4])
+
+        # Values ...
+        s2.set("2x4, 4, 7")
+        self.assertEqual(s2.getListFromValues(), [4, 4, 4, 7])
+
+        # Ranges
+        s2.set("2-8, 1-2, 7")
+        self.assertEqual(s2.getListFromRange(), [2, 3, 4, 5, 6, 7, 8, 1, 2, 7])
+
     def test_Pointer(self):
         c = Complex.createComplex()
         p = pwobj.Pointer()

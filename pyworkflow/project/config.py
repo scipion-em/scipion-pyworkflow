@@ -41,7 +41,8 @@ class ProjectSettings(pwobj.Object):
     COLOR_MODE_STATUS = 0
     COLOR_MODE_LABELS = 1
     COLOR_MODE_AGE = 2
-    COLOR_MODES = (COLOR_MODE_STATUS, COLOR_MODE_LABELS, COLOR_MODE_AGE)
+    COLOR_MODE_SIZE = 3
+    COLOR_MODES = (COLOR_MODE_STATUS, COLOR_MODE_LABELS, COLOR_MODE_AGE, COLOR_MODE_SIZE)
 
     def __init__(self, confs={}, **kwargs):
         super().__init__(**kwargs)
@@ -127,6 +128,9 @@ class ProjectSettings(pwobj.Object):
 
     def ageColorMode(self):
         return self.getColorMode() == self.COLOR_MODE_AGE
+
+    def sizeColorMode(self):
+        return self.getColorMode() == self.COLOR_MODE_SIZE
 
     def write(self, dbPath=None):
         self.setName('ProjectSettings')

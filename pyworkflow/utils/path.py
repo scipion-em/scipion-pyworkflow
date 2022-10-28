@@ -41,19 +41,29 @@ ROOT = "/"
 
 
 def findFileRecursive(filename, path):
+    """
+    Finds a file/folder in a single path recursively
+
+    :param filename: Name (myfile.txt) of the file to look for.
+    :param path: folder to start the search from.
+    :return: The absolute path to the 'filename' found or None if not found.
+    """
     for root, dirs, files in os.walk(path):
-        if filename in files:
+        if filename in files or filename in dirs:
             return os.path.join(root, filename)
     return None   
         
-        
-def findFile(filename, *paths, **kwargs):
-    """ Search if the file is present in some path in the *paths provided.
-    Return None if not found.
-    'recursive' can be passed in kwargs to iterate into subfolders.
+
+def findFile(filename, *paths, recursive=False):
     """
-    recursive = kwargs.get('recursive', False)
-    
+    Search if a file/folder is present in any of the paths provided.
+
+    :param filename: Name (myfile.txt) of the file to look for.
+    :param paths: N number of folders to look at.
+    :param recursive: If True it will iterate into the subfolders.
+    :return: None if nothing is found.
+    """
+
     if filename:
         for p in paths:
             fn = os.path.join(p, filename)
@@ -320,10 +330,12 @@ def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
     """
     Call callback function add() on each fragment of text from file fname,
     delimited by lines and/or color codes.
-      add: callback function add(txt, tag='normal')
-      offset: byte offset - we start reading the file from there
-      lineNo: lines will be numbered from this value on
-      numberLines: whether to prepend the line numbers
+
+    :param add: callback function with signature (txt, tag='normal')
+    :param offset: byte offset - we start reading the file from there
+    :param lineNo: lines will be numbered from this value on
+    :param numberLines: whether to prepend the line numbers
+
     """
     textfile = open(fname, encoding='utf-8', errors=errors)
     size = (os.stat(fname).st_size - offset) / 1024  # in kB
@@ -446,14 +458,28 @@ def createUniqueFileName(fn):
 
 
 def getFileSize(fn):
-    """ Shortcut to inspect the size of a file. """
-    return os.stat(fn).st_size
+    """ Shortcut to inspect the size of a file or a folder. """
+
+    if not os.path.exists(fn):
+        return  0
+
+    elif os.path.isdir(fn):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(fn):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                if not os.path.islink(fp):
+                    total_size += os.path.getsize(fp)
+        return total_size
+
+    else:
+        return os.path.getsize(fn)
 
 
 def getFileLastModificationDate(fn):
     """ Returns the last modification date of a file or None
     if it doesn't exist. """
-    if os.path.os.path.exists(fn):
+    if os.path.exists(fn):
         ts = os.path.getmtime(fn)
         return datetime.datetime.fromtimestamp(ts)
     else:

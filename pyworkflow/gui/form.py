@@ -28,6 +28,8 @@ This modules implements the automatic
 creation of protocol form GUI from its
 params definition.
 """
+import logging
+logger = logging.getLogger(__name__)
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -218,6 +220,11 @@ class MultiPointerVar:
             self.provider.removeObject(v)
         self._updateObjectsList()
 
+    def clear(self):
+        self.provider.clear()
+        self._updateObjectsList()
+
+
     def getSelectedObjects(self):
         return self.tree.getSelectedObjects()
 
@@ -300,6 +307,9 @@ class MultiPointerTreeProvider(TreeProvider):
     def getObjectInfo(self, obj):
         label, info = getPointerLabelAndInfo(obj, self._mapper)
         return {'key': obj._strId, 'text': label, 'values': ('  ' + info,)}
+
+    def clear(self):
+        self._objectDict.clear()
 
 
 class ComboVar:
@@ -1014,9 +1024,9 @@ class ParamWidget:
         self.window = window
         self._protocol = self.window.protocol
         if self._protocol.getProject() is None:
-            print(">>> ERROR: Project is None for protocol: %s, "
+            logger.error(">>> ERROR: Project is None for protocol: %s, "
                   "start winpdb to debug it" % self._protocol)
-            pwutils.startDebugger()
+
         self.row = row
         self.column = column
         self.paramName = paramName
@@ -1368,16 +1378,20 @@ class ParamWidget:
                          selectmode=self._selectmode, selectOnDoubleClick=True)
 
         if dlg.values:
-            if isinstance(self.param, pwprot.MultiPointerParam):
+            if self.isMultiPointer():
                 self.set(dlg.values)
             elif isinstance(self.param, pwprot.PointerParam):
                 self.set(dlg.values[0])
             else:
                 raise Exception('Invalid param class: %s' % type(self.param))
 
+    def isMultiPointer(self):
+        """ True if dealing with MultiPointer params """
+        return isinstance(self.param, pwprot.MultiPointerParam)
+
     def _browseScalar(self, e=None):
         """Select a scalar from outputs
-        This function is suppose to be used only for Scalar Params
+        This function is supposed to be used only for Scalar Params
         It's a copy of browseObject...so there could be a refactor here."""
         value = self.get()
         selected = []
@@ -1412,6 +1426,16 @@ class ParamWidget:
     def _removeObject(self, e=None):
         """ Remove an object from a MultiPointer param. """
         self.var.remove()
+
+    def clear(self):
+
+        # If dealing with Multipointers ...
+        if self.isMultiPointer():
+            # .. use var clear to remove all eletents since
+            # _removeObject() will remove only the selected ones
+            self.var.clear()
+        else:
+            self._removeObject()
 
     def _browseRelation(self, e=None):
         """Select a relation from DB
@@ -1957,7 +1981,8 @@ class FormWindow(Window):
 
         btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
                              highlightthickness=0,
-                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE % pw.Config.SCIPION_HOSTS))
+                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE %
+                                                             (pw.Config.SCIPION_HOSTS, pw.DOCSITEURLS.HOST_CONFIG)))
 
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=5, sticky='w')
 
@@ -1974,7 +1999,7 @@ class FormWindow(Window):
 
         btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
                              highlightthickness=0,
-                             command=self._createHelpCommand(pwutils.Message.HELP_WAIT_FOR))
+                             command=self._createHelpCommand(pwutils.Message.HELP_WAIT_FOR % pw.DOCSITEURLS.WAIT_FOR))
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=2, sticky='e')
 
         # Run Name not editable
@@ -2275,6 +2300,10 @@ class FormWindow(Window):
             # Set the protocol label
             self.updateProtocolLabel()
 
+            # Clear parameters that are pointers and do not match the condition
+            # to avoid ghost inputs
+            self._checkAllChanges(toggleWidgetVisibility=False)
+
             message = self.callback(self.protocol, onlySave, doSchedule)
             if not self.visualizeMode:
                 if len(message):
@@ -2408,7 +2437,7 @@ class FormWindow(Window):
             c += 2
             self.widgetDict[paramName] = widget
 
-    def _checkCondition(self, paramName):
+    def _checkCondition(self, paramName, toggleWidgetVisibility=True):
         """Check if the condition of a param is satisfied
         hide or show it depending on the result"""
         widget = self.widgetDict.get(paramName, None)
@@ -2418,8 +2447,14 @@ class FormWindow(Window):
                 param = widget.param
             else:
                 param = self.protocol.getParam(paramName)
-            cond = self.protocol.evalParamCondition(paramName) and self.protocol.evalParamExpertLevel(param)
-            widget.display(cond)
+            show = self.protocol.evalParamCondition(paramName) and self.protocol.evalParamExpertLevel(param)
+
+            if toggleWidgetVisibility:
+                widget.display(show)
+            else:
+                # If condition is false and param is a pointer, or Multipointer ...
+                if (not show) and isinstance(param, pwprot.PointerParam):
+                    widget.clear()
 
     def _checkChanges(self, paramName):
         """Check the conditions of all params affected
@@ -2432,9 +2467,9 @@ class FormWindow(Window):
 
         self.adjustSections()
 
-    def _checkAllChanges(self):
+    def _checkAllChanges(self, toggleWidgetVisibility=True):
         for paramName in self.widgetDict:
-            self._checkCondition(paramName)
+            self._checkCondition(paramName, toggleWidgetVisibility=toggleWidgetVisibility)
 
     def _onExpertLevelChanged(self, *args):
         self._checkAllChanges()

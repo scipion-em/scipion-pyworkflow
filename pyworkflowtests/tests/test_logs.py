@@ -56,7 +56,7 @@ class TestLogs(BaseTest):
         testMessage(fileWarningTest, None, genLogFn, False)
 
         fileErrorTest = 'ERROR to FILE and not GEN'
-        testMessage(fileErrorTest, log2.error, logFn, True)
+        testMessage(fileErrorTest, log2.error, logErrFn, True)
         testMessage(fileErrorTest, None, genLogFn, False)
 
         # Test print goes to the log file (stdout is captured)

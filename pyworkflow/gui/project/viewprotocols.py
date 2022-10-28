@@ -24,15 +24,16 @@
 # **************************************************************************
 import logging
 import threading
-
-from pyworkflow.gui import TextFileViewer, getDefaultFont
+from pyworkflow import Config
+from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut
 from pyworkflow.gui.project.constants import ACTION_REFRESH, ACTION_EDIT, ACTION_COPY, ACTION_DELETE, ACTION_STEPS, \
     ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, \
     ACTION_COLLAPSE, ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ActionIcons, ACTION_TREE, ACTION_SWITCH_VIEW, \
     ACTION_SELECT_TO, ACTION_RENAME, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, ACTION_DEFAULT, \
     ACTION_SELECT_FROM, ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW
+from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
-INIT_REFRESH_SECONDS = 5
+INIT_REFRESH_SECONDS = Config.SCIPION_GUI_REFRESH_INITIAL_WAIT
 
 """
 View with the protocols inside the main project window.
@@ -139,6 +140,11 @@ class ProtocolsView(tk.Frame):
     """
 
     RUNS_CANVAS_NAME = "runs_canvas"
+
+    SIZE_COLORS = {SIZE_1MB: "green",
+                    SIZE_1GB: "orange",
+                    SIZE_1TB: "red"}
+
     _protocolViews = None
 
     def __init__(self, parent, windows, **args):
@@ -286,7 +292,7 @@ class ProtocolsView(tk.Frame):
         dframe = tk.Frame(tab, bg='white')
         pwgui.configureWeigths(dframe, row=0)
         pwgui.configureWeigths(dframe, row=2)
-        # Just configure the provider, later bellow, in updateSelection, it will be
+        # Just configure the provider, later below, in updateSelection, it will be
         # provided with the protocols.
         provider = RunIOTreeProvider(self, None,
                                      self.project.mapper)
@@ -439,12 +445,12 @@ class ProtocolsView(tk.Frame):
             import psutil
             proc = psutil.Process(os.getpid())
             mem = psutil.virtual_memory()
-            print("------------- refreshing ---------- ")
+            logger.debug("------------- refreshing ---------- ")
             files = proc.open_files()
-            print("  open files: ", len(files))
+            logger.debug("  open files: %s" % len(files))
             for f in files:
-                print("    - %s, %s" % (f.path, f.fd))
-            print("  memory percent: ", proc.memory_percent())
+                logger.debug("    - %s, %s" % (f.path, f.fd))
+            logger.debug("  memory percent: %s" % proc.memory_percent())
 
         if self.runsView == VIEW_LIST:
             self.updateRunsTree(True)
@@ -470,7 +476,7 @@ class ProtocolsView(tk.Frame):
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
         """ Schedule automatic refresh increasing the time between refreshes. """
-        if pwutils.envVarOn('DO_NOT_AUTO_REFRESH'):
+        if pwutils.envVarOn(Config.SCIPION_GUI_CANCEL_AUTO_REFRESH):
             return
 
         self.refreshRuns(initRefreshCounter=False, checkPids=True)
@@ -593,13 +599,10 @@ class ProtocolsView(tk.Frame):
             action, cond = actionTuple
             displayAction(action, i, cond)
 
-    def _createProtocolsTree(self, parent, background=Color.LIGHT_GREY_COLOR,
+    def _createProtocolsTree(self, parent,
                              show='tree', columns=None):
-        defaultFont = pwgui.getDefaultFont()
-        self.style.configure("W.Treeview", background=background, borderwidth=0,
-                             fieldbackground=background,
-                             rowheight=defaultFont.metrics()['linespace'])
-        t = pwgui.tree.Tree(parent, show=show, style='W.Treeview',
+
+        t = pwgui.tree.Tree(parent, show=show, style=LIST_TREEVIEW,
                             columns=columns)
         t.column('#0', minwidth=300)
 
@@ -782,13 +785,7 @@ class ProtocolsView(tk.Frame):
         # Ne need to force the check pids here, temporary
         self.provider._checkPids = True
 
-        # To specify the height of the rows based on the font size.
-        # Should be centralized somewhere.
-        style = ttk.Style()
-        rowheight = pwgui.getDefaultFont().metrics()['linespace']
-        style.configure('List.Treeview', rowheight=rowheight)
-
-        t = pwgui.tree.BoundTree(parent, self.provider, style='List.Treeview')
+        t = pwgui.tree.BoundTree(parent, self.provider, style=LIST_TREEVIEW)
         self.provider._checkPids = False
 
         t.itemDoubleClick = self._runItemDoubleClick
@@ -925,6 +922,13 @@ class ProtocolsView(tk.Frame):
                 else:
                     boxColor = DEFAULT_BOX_COLOR
 
+            elif self.settings.sizeColorMode():
+
+                # Get the protocol size
+                protSize = self._getRunSize(node)
+
+                boxColor = self._sizeColor(protSize)
+
             # ... box is for the labels.
             elif self.settings.labelsColorMode():
                 # If there is only one label use the box for the color.
@@ -947,10 +951,39 @@ class ProtocolsView(tk.Frame):
 
             return boxColor
         except Exception as e:
+            logger.debug("Can't get color for %s. %s" % (node, e))
             return DEFAULT_BOX_COLOR
 
     @staticmethod
-    def _ageColor(rgbColor, projectAge, protocolAge):
+    def _getRunSize(node):
+        """
+        Returns the size "recursively" of a run
+
+        :param node: node of the graph.
+        :return: size in bytes
+
+        """
+
+        if not node.run:
+            return 0
+        else:
+            return node.run.getSize()
+
+    @classmethod
+    def _sizeColor(cls, size):
+        """
+        Returns the color that corresponds to the size
+        :param size:
+        :return:
+        """
+
+        for threshold, color in cls.SIZE_COLORS.items():
+            if size <= threshold:
+                return color
+
+        return "#000000"
+    @staticmethod
+    def _ageColor(rgbColorStr, projectAge, protocolAge):
 
         #  Get the ratio
         ratio = protocolAge.seconds / float(projectAge.seconds)
@@ -961,8 +994,9 @@ class ProtocolsView(tk.Frame):
         # There are cases coming with protocols older than the project.
         ratio = 0 if ratio < 0 else ratio
 
-        return pwutils.rgb_to_hex(pwutils.lighter(pwutils.hex_to_rgb(rgbColor),
-                                                  ratio))
+        hexTuple = pwutils.hex_to_rgb(rgbColorStr)
+        lighterTuple = pwutils.lighter(hexTuple, ratio)
+        return pwutils.rgb_to_hex(lighterTuple)
 
     @staticmethod
     def _getLabelsCount(nodeInfo):
@@ -1097,7 +1131,29 @@ class ProtocolsView(tk.Frame):
         self._updateActionToolbar()
         # self.updateRunsGraph()
         self.drawRunsGraph()
+        self._infoAboutColorScheme()
 
+    def _infoAboutColorScheme(self):
+        """ Writes in the info widget a brief description abot the color scheme."""
+
+        colorScheme = self.settings.getColorMode()
+
+        msg = "Color mode changed to %s. %s"
+        if colorScheme == self.settings.COLOR_MODE_AGE:
+            msg = msg % ("AGE", "Young boxes will have an darker color.")
+        elif colorScheme == self.settings.COLOR_MODE_SIZE:
+            keys = list(self.SIZE_COLORS.keys())
+            msg = msg % ("SIZE", "Semaphore color scheme. Green <= %s, Orange <=%s, Red <=%s, Dark quite big." %
+                         (pwutils.prettySize(keys[0]),
+                          pwutils.prettySize(keys[1]),
+                          pwutils.prettySize(keys[2]))
+                         )
+        elif colorScheme == self.settings.COLOR_MODE_STATUS:
+            msg = msg % ("STATUS", "Color based on the status. A black circle indicates it has labels")
+        elif colorScheme == self.settings.COLOR_MODE_LABELS:
+            msg = msg % ("LABELS", "Color based on custom labels you've assigned. Small circles reflect the protocol status")
+
+        self.info(msg)
     def _toggleDebug(self, e=None):
         Config.toggleDebug()
 
@@ -1282,6 +1338,7 @@ class ProtocolsView(tk.Frame):
             tm += 'Status: %s\n' % prot.getStatusMessage()
             tm += 'Wall time: %s\n' % pwutils.prettyDelta(prot.getElapsedTime())
             tm += 'CPU time: %s\n' % pwutils.prettyDelta(dt.timedelta(seconds=prot.cpuTime))
+            tm += 'Folder size: %s\n' % pwutils.prettySize(prot.getSize())
 
             if not hasattr(tw, 'tooltipText'):
                 frame = tk.Frame(tw)
@@ -1361,9 +1418,11 @@ class ProtocolsView(tk.Frame):
         workingDir = protocol.getWorkingDir()
         if os.path.exists(workingDir):
 
+            protFolderShortCut = ShortCut.factory(workingDir,name="Protocol folder", icon=None ,toolTip="Protocol directory")
             window = pwgui.browser.FileBrowserWindow("Browsing: " + workingDir,
                                                      master=self.windows,
-                                                     path=workingDir)
+                                                     path=workingDir,
+                                                     shortCuts=[protFolderShortCut])
             window.show()
         else:
             self.windows.showInfo("Protocol working dir does not exists: \n %s"
