@@ -549,7 +549,7 @@ class NumericRangeParam(StringParam):
     """
     def __init__(self, **args):
         StringParam.__init__(self, **args)
-        # TODO: ADD a syntax validator
+        self.addValidator(NumericRangeValidator())
         
         
 class TupleParam(Param):
@@ -559,6 +559,7 @@ class TupleParam(Param):
     """
     def __init__(self, **args):
         Param.__init__(self, **args)
+
 
 class DeprecatedParam:
     """ Deprecated param. To be used when you want to rename an existing param
@@ -680,18 +681,33 @@ class Range(Conditional):
         
 class NumericListValidator(Conditional):
     """ Validator for ListParam. See ListParam. """
-    def __init__(self, error='Incorrect format for numeric list param. '):
+    def __init__(self, error='Incorrect format for numeric list param'):
         Conditional.__init__(self, error)
         
     def _condition(self, value):
         try:
-            value = value.replace('x', '')
-            parts = value.split()
+            parts = re.split(r"[x\s]", value)
             for p in parts:
                 float(p)
             return True
         except Exception:
-            return False    
+            return False
+
+
+class NumericRangeValidator(Conditional):
+    """ Validator for RangeParam. See RangeParam. """
+
+    def __init__(self, error='Incorrect format for numeric range param'):
+        Conditional.__init__(self, error)
+
+    def _condition(self, value):
+        try:
+            parts = re.split(r"[-,\s]", value)
+            for p in parts:
+                float(p)
+            return True
+        except Exception:
+            return False
 
 
 class NonEmptyBoolCondition(Conditional):
