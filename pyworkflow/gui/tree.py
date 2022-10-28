@@ -283,6 +283,7 @@ class BoundTree(Tree):
         for c, w in cols[1:]:
             self.column(c, width=w)
             self.heading(c, text=c, command=lambda _c=c: self.sortTree(_c, _c))
+
         self.grid(row=0, column=0, sticky='news')
 
         self.menu = tk.Menu(self, tearoff=0)

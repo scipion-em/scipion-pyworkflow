@@ -22,6 +22,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+logger = logging.getLogger(__name__)
 import re
 from collections import OrderedDict
 
@@ -72,7 +74,7 @@ class SqliteMapper(Mapper):
         
     def __insert(self, obj, namePrefix=None):
         if not hasattr(obj, '_objDoStore'):
-            print("MAPPER: object '%s' doesn't seem to be an Object subclass,"
+            logger.info("MAPPER: object '%s' doesn't seem to be an Object subclass,"
                   "       it does not have attribute '_objDoStore'. "
                   "Insert skipped." % obj)
             return
@@ -94,7 +96,7 @@ class SqliteMapper(Mapper):
         
     def insertChild(self, obj, key, attr, namePrefix=None):
         if not hasattr(attr, '_objDoStore'):
-            print("MAPPER: object '%s' doesn't seem to be an Object subclass,"
+            logger.info("MAPPER: object '%s' doesn't seem to be an Object subclass,"
                   "       it does not have attribute '_objDoStore'. \n"
                   "Insert skipped." % attr)
             return 
@@ -134,10 +136,10 @@ class SqliteMapper(Mapper):
         return obj.strId()
     
     def __printObj(self, obj):
-        print("obj._objId", obj._objId)
-        print("obj._objParentId", obj._objParentId)
-        print("obj._objName", obj._objName)
-        print("obj.getObjValue()", obj.getObjValue())
+        logger.info("obj._objId: %s" % obj._objId)
+        logger.info("obj._objParentId: %s" % obj._objParentId)
+        logger.info("obj._objName: %s"% obj._objName)
+        logger.info("obj.getObjValue(): %s" % obj.getObjValue())
 
     def updateTo(self, obj, level=1):
         self.__initUpdateDict()
@@ -203,15 +205,20 @@ class SqliteMapper(Mapper):
         
     def fillObjectWithRow(self, obj, objRow):
         """ Fill the object with row data. """
+
+        rowId = objRow[ID]
+        rowName = self._getStrValue(objRow['name'])
+
         if not hasattr(obj, '_objId'):
             raise Exception("Entry '%s' (id=%s) in the database, stored as '%s'"
                             ", is being mapped to %s object. " %
-                            (self._getStrValue(objRow['name']), objRow[ID],
+                            (rowName, rowId,
                              objRow['classname'], type(obj)))
 
-        obj._objId = objRow[ID]
-        self.objDict[obj._objId] = obj
-        obj._objName = self._getStrValue(objRow['name'])
+        obj._objId = rowId
+
+        self.objDict[rowId] = obj
+        obj._objName = rowName
         obj._objLabel = self._getStrValue(objRow['label'])
         obj._objComment = self._getStrValue(objRow['comment'])
         obj._objCreation = self._getStrValue(objRow[CREATION])
@@ -221,9 +228,25 @@ class SqliteMapper(Mapper):
         if obj.isPointer():
             if objValue is not None:
                 objValue = self.selectById(int(objValue))
-            else:
-                objValue = None
-        obj.set(objValue)
+            # This is necessary in some specific cases. E.g.:
+            # CTF consensus creating:
+            #   A.- Micrographs
+            #   B.- CTFs --> pointing to micrographs in this same protocol(#1)
+            # When loading this kind of protocol the sequence is as follows:
+            #  1 Loading of protocol consuming consensus CTF output ..
+            #    ...
+            #    finds inputCtf (DIRECT pointer to B)
+            #    2 loads set properties
+            #      ...
+            #      2.4 pointer to micrographs (Pointer to Consensus + extended)
+            #        2.4.1 pointee loads (Consensus protocol)
+            #        ...
+            #        ...
+            #        2.4.n _extended of 2.4 is loaded since is a child of consensus
+            #      2.4 obj.set() for 2.4 pointer --> will reset the extended to None.
+            obj.set(objValue, cleanExtended=False)
+        else:
+            obj.set(objValue)
         
     def fillObject(self, obj, objRow, includeChildren=True):
         self.fillObjectWithRow(obj, objRow)
@@ -233,14 +256,22 @@ class SqliteMapper(Mapper):
             childs = self.db.selectObjectsByAncestor(namePrefix)
 
             for childRow in childs:
+
                 childParts = childRow[NAME].split('.')
                 childName = childParts[-1]
+                childId = childRow[ID]
                 parentId = int(childParts[-2])
                 # Here we are assuming that always the parent have
                 # been processed first, so it will be in the dictionary
                 parentObj = self.objDict.get(parentId, None)
                 if parentObj is None:  # Something went wrong
                     continue
+
+                # If id already in the objDict skip all this
+                if childId in self.objDict.keys():
+                    setattr(parentObj, childName, self.objDict[childId])
+                    continue
+
                 childObj = getattr(parentObj, childName, None)
                 if childObj is None:
                     childObj = self._buildObjectFromClass(childRow[CLASSNAME])
@@ -268,7 +299,7 @@ class SqliteMapper(Mapper):
             # Get the parent, we should have it cached
             parentObj = self.objDict.get(parentId, None)
             if parentObj is None:  # Something went wrong
-                print("WARNING: Parent object (id=%d) was not found, "
+                logger.warning("Parent object (id=%d) was not found, "
                       "object: %s. Ignored." % (parentId, name))
                 return None
 
@@ -384,6 +415,13 @@ class SqliteMapper(Mapper):
         return objs
 
     def _getObjectFromRow(self, row):
+
+        # Get the ID first
+        identifier = row[ID]
+
+        # If already in the dictionary we skipp al this
+        if identifier in self.objDict.keys():
+            return self.objDict[identifier]
 
         # Build the object without children
         obj = self.__buildObject(row)
@@ -585,10 +623,10 @@ class SqliteObjectsDb(SqliteDb):
                 (parent_id, name, classname, value, label, comment))
             return self.cursor.lastrowid
         except Exception as ex:
-            print("insertObject: ERROR")
-            print('INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation)' +
+            logger.error("insertObject: ERROR")
+            logger.error('INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation)' +
                   ' VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))')
-            print((parent_id, name, classname, value, label, comment))
+            logger.error((parent_id, name, classname, value, label, comment))
             raise ex
         
     def insertRelation(self, relName, parent_id, object_parent_id, object_child_id, 
@@ -892,10 +930,10 @@ class SqliteFlatMapper(Mapper):
             obj.setEnabled(objRow['enabled'])
             obj.setObjCreation(self._getStrValue(objRow[CREATION]))
         except Exception:
-            # THIS SHOULD NOT HAPPENS
-            print("WARNING: 'creation' column not found in object: %s" % obj.getObjId())
-            print("         db: %s" % self.db.getDbName())
-            print("         objRow: ", dict(objRow))
+            # THIS SHOULD NOT HAPPEN
+            logger.warning("'creation' column not found in object: %s" % obj.getObjId())
+            logger.warning("         db: %s" % self.db.getDbName())
+            logger.warning("         objRow: %s." % dict(objRow))
 
         for c, attrName in self._objColumns:
             obj.setAttributeValue(attrName, objRow[c])
@@ -1159,7 +1197,7 @@ class SqliteFlatDb(SqliteDb):
         """
         self.setVersion(self.VERSION)
         for pragma in self._pragmas.items():
-            print("executing pragma", pragma)
+            logger.debug("Executing pragma: %s" % pragma)
             self.executeCommand("PRAGMA %s = %s;" % pragma)
         # Create a general Properties table to store some needed values
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Properties
@@ -1399,6 +1437,7 @@ class SqliteFlatDb(SqliteDb):
         whereList = ['%s=?' % k for k in args.keys()]
         whereStr = ' AND '.join(whereList)
         whereTuple = tuple(args.values())
+        whereStr = self._whereToWhereStr(whereStr)
         self.executeCommand(self.selectCmd(whereStr), whereTuple)
         return self._results(iterate)
 

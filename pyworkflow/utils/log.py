@@ -43,6 +43,8 @@ from logging import FileHandler
 from pyworkflow.constants import PROJECT_SETTINGS, PROJECT_DBNAME
 from pyworkflow.utils import Config
 
+CONSOLE_HANDLER = 'consoleHandler'
+
 SCIPION_PROT_ID = "SCIPION_PROT_ID"
 SCIPION_PROJ_ID = "SCIPION_PROJ_ID"
 
@@ -55,19 +57,34 @@ class STATUS:
     EVENT = "EVENT"
 
 
+class LevelFilter(object):
+    """ Logging handler filter to filter some levels. e.g.: ERROR """
+    def __init__(self, level):
+        """
+
+        :param level: Level integer value,from which include messages. Value is compared to record.levelno.
+        """
+
+        self.level = level
+
+    def filter(self, record):
+        return record.levelno <= self.level
+
 class LoggingConfigurator:
     """ Class to configure logging scenarios:
 
     1.- GUI logging
 
-    2.- Protocol run logging"""
+    2.- Protocol run logging
+
+    3.- Other loggings: tests, sync data"""
 
     customLoggingActive = False  # Holds if a custom logging configuration has taken place.
 
     @classmethod
-    def setupLogging(cls):
+    def setupLogging(cls, logFile=None, console=True):
         if not cls.loadCustomLoggingConfig():
-            cls.setupDefaultLogging()
+            cls.setupDefaultLogging(logFile=logFile, console=console)
 
     @classmethod
     def loadCustomLoggingConfig(cls):
@@ -87,16 +104,25 @@ class LoggingConfigurator:
         return False
 
     @staticmethod
-    def setupDefaultLogging():
+    def setupDefaultLogging(logFile=None, console=True):
+        """ Configures logging in a default way that is to file (rotating) and console
+
+        :param logFile: Optional, path to the log file. Defaults to SCIPION_LOG variable value. If folder
+            does not exists it will be created.
+        :param console: Optional, defaults to True, so log messages are sent to the terminal as well
+
+        """
         from pyworkflow import Config
+
+        logFile = logFile or Config.SCIPION_LOG
+
         # Log configuration
         config = {
             'version': 1,
             'disable_existing_loggers': False,
             'formatters': {
                 'standard': {
-                    'format': '%(asctime)s %(name)s %(levelname)s:  %(message)s'
-                    # TODO: use formattime to show the time less verbose
+                    'format': Config.SCIPION_LOG_FORMAT
                 }
             },
             'handlers': {
@@ -104,18 +130,14 @@ class LoggingConfigurator:
                     'level': Config.SCIPION_LOG_LEVEL,
                     'class': 'logging.handlers.RotatingFileHandler',
                     'formatter': 'standard',
-                    'filename': Config.SCIPION_LOG,
-                    'maxBytes': 100000,
-                },
-                'consoleHandler': {
-                    'level': Config.SCIPION_LOG_LEVEL,
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'standard',
+                    'filename': logFile,
+                    'maxBytes': 1000000,
+                    'backupCount': 10
                 },
             },
             'loggers': {
                 '': {
-                    'handlers': ['consoleHandler', 'fileHandler'],
+                    'handlers': ['fileHandler'],
                     'level': Config.SCIPION_LOG_LEVEL,
                     'propagate': False,
                     'qualname': 'pyworkflow',
@@ -123,8 +145,17 @@ class LoggingConfigurator:
             }
         }
 
+        if console:
+            config["handlers"][CONSOLE_HANDLER] = {
+                        'level': Config.SCIPION_LOG_LEVEL,
+                        'class': 'logging.StreamHandler',
+                        'formatter': 'standard',
+                        }
+
+            config['loggers']['']['handlers'].append(CONSOLE_HANDLER)
+
         # Create the log folder
-        os.makedirs(Config.SCIPION_LOGS, exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(logFile)), exist_ok=True)
 
         logging.config.dictConfig(config)
 
@@ -138,7 +169,11 @@ class LoggingConfigurator:
         """ Sets up the logging library for the protocols run processes, loads the custom configuration plus
         2 FileHandlers for stdout and stderr"""
 
+        # std out: Only warning, info and debug. Error and critical should go exclusively to stderr handler
         stdoutHandler = FileHandler(stdoutLogFile)
+        stdoutHandler.addFilter(LevelFilter(logging.WARNING))
+
+        # std err: just errors and critical
         stderrHandler = FileHandler(stderrLogFile)
         stderrHandler.setLevel(logging.ERROR)
 
@@ -155,8 +190,19 @@ class LoggingConfigurator:
         rootLogger.addHandler(stdoutHandler)
         rootLogger.setLevel(Config.SCIPION_LOG_LEVEL)
 
+        # create formatter and add it to the handlers
+        formatter = logging.Formatter(Config.SCIPION_LOG_FORMAT)
+        stdoutHandler.setFormatter(formatter)
+        stderrHandler.setFormatter(formatter)
+
         # Capture std out and std err and send it to the file handlers
         rootLogger.info("Logging configured. STDOUT --> %s , STDERR --> %s" % (stdoutLogFile, stderrLogFile))
+
+        # TO IMPROVE: This redirects the std out and stderr to the stream contained by the FileHandlers.
+        # The problem with this is that output stderr and stdout from subprocesses  is written directly to the file
+        # and therefore not being formatted or propagated to other loggers in case of a custom logging configuration.
+        # I've (Pablo) have attempted what is described here: https://stackoverflow.com/questions/19425736/how-to-redirect-stdout-and-stderr-to-logger-in-python
+        # but didn't work--> check_call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr ) . This leads to an error cause deep in the code python does this: c2pwrite = stdout.fileno()
         sys.stderr = stderrHandler.stream
         sys.stdout = stdoutHandler.stream
 
@@ -191,7 +237,7 @@ def getExtraLogInfo(measurement, status, project_name=None, prot_id=None, prot_n
             dbName = splitDb[-1]
             runName = ""
             # project.sqlite and settings.sqlite may not have elements
-            if dbName not in [PROJECT_SETTINGS, PROJECT_DBNAME]:
+            if dbName not in [PROJECT_SETTINGS, PROJECT_DBNAME, ":memory:"]:
                 runName = splitDb[1]
             dbfilename = os.path.join(runName, dbName)
 
@@ -206,4 +252,4 @@ def getExtraLogInfo(measurement, status, project_name=None, prot_id=None, prot_n
                 }
 
     except Exception as e:
-        print("getExtraLogInfo failed: %s" % e)
+        print("getExtraLogInfo failed: %s.Params were: dbFilename %s" % (e, dbfilename))

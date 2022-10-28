@@ -130,23 +130,38 @@ class Scrollable(object):
         # Bind ourselves
         self.bindWidget(self)
 
+
     def scroll(self, event):
-        # print "scrolling, event.num", event.num, "delta", event.delta
+        print("Deprecated, use scrollV")
+        self.scrollV(event)
+
+    def scrollV(self, event):
+        self._basescroll(event, self.yview)
+
+    def scrollH(self, event):
+        self._basescroll(event, self.xview)
+
+    def _basescroll(self, event, view):
+
         if event.num == 5 or event.delta < 0:
             count = 1
         if event.num == 4 or event.delta > 0:
             count = -1
-        self.yview("scroll", count, "units")
+        view("scroll", count, "units")
 
     def bindWidget(self, widget):
         """ Make the scroll in the widget, respond to this.
         Useful for child widgets.
         """
         # with Windows OS
-        widget.bind("<MouseWheel>", self.scroll)
+        widget.bind("<MouseWheel>", self.scrollV)
         # with Linux OS
-        widget.bind("<Button-4>", self.scroll)
-        widget.bind("<Button-5>", self.scroll)
+        widget.bind("<Button-4>", self.scrollV)
+        widget.bind("<Button-5>", self.scrollV)
+
+        widget.bind("<Control-Button-4>", self.scrollH)
+        widget.bind("<Control-Button-5>", self.scrollH)
+
 
     def getVScroll(self):
         return self.vscroll.get()

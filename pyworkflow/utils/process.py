@@ -28,6 +28,9 @@
 This module handles process execution
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
 import sys
 from subprocess import check_call
 import psutil
@@ -45,7 +48,7 @@ def runJob(log, programname, params,
                               env, gpuList=gpuList)
     
     if log is None:
-        print("** Running command: %s" % greenStr(command))
+        logger.info("** Running command: %s" % greenStr(command))
     else:
         log.info(greenStr(command))
 
@@ -56,7 +59,7 @@ def runCommand(command, env=None, cwd=None):
     """ Execute command with given environment env and directory cwd """
 
     # First let us create core dumps if in debug mode
-    if Config.debugOn(env):
+    if Config.debugOn():
         import resource
         resource.setrlimit(resource.RLIMIT_CORE,
                            (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
@@ -80,6 +83,9 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
     if gpuList:
         params = params % {'GPU': ' '.join(str(g) for g in gpuList)}
+        if "CUDA_VISIBLE_DEVICES" in programname:
+            sep = "," if len(gpuList) > 1 else ""
+            programname = programname % {'GPU': sep.join(str(g) for g in gpuList)}
 
     prepend = '' if env is None else env.getPrepend()
 
@@ -102,17 +108,17 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
 def killWithChilds(pid):
     """ Kill the process with given pid and all children processes.
-    Params:
-     pid: the process id to terminate
+
+    :param pid: the process id to terminate
     """
     proc = psutil.Process(pid)
     for c in proc.children(recursive=True):
         if c.pid is not None:
-            print("Terminating child pid: %d" % c.pid)
+            logger.info("Terminating child pid: %d" % c.pid)
             c.kill()
-    print("Terminating process pid: %s" % pid)
+    logger.info("Terminating process pid: %s" % pid)
     if pid is None:
-        print("WARNING! Got None PID!!!")
+        logger.warning("Got None PID!!!")
     else:
         proc.kill()
 

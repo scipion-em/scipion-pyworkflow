@@ -29,6 +29,7 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 import os
 
 import pyworkflow.object as pwobj
+from pyworkflow.utils import cleanPath
 
 NO_INDEX = 0
 
@@ -483,6 +484,31 @@ class MockSet(pwobj.Set, MockObject):
     def getFiles(self):
         return pwobj.Set.getFiles(self)
 
+    @classmethod
+    def create(cls, outputPath,
+               prefix=None, suffix=None, ext=None,
+               **kwargs):
+        """ Create an empty set from the current Set class.
+         Params:
+            outputPath: where the output file will be written.
+            prefix: prefix of the created file, if None, it will be deduced
+                from the ClassName.
+            suffix: additional suffix that will be added to the prefix with a
+                "_" in between.
+            ext: extension of the output file, be default will use .sqlite
+        """
+        fn = prefix or cls.__name__.lower().replace('setof', '')
+
+        if suffix:
+            fn += '_%s' % suffix
+
+        fn += '.%s' % (ext or 'sqlite')
+
+        setPath = os.path.join(outputPath, fn)
+        cleanPath(setPath)
+
+        return cls(filename=setPath, **kwargs)
+
 
 class MockSetOfImages(MockSet):
     """ Represents a set of Images """
@@ -788,96 +814,4 @@ class MockCoordinate(MockObject):
 
     def getMicName(self):
         return self._micName.get()
-
-
-class SetOfCoordinates(MockSet):
-    """ Encapsulate the logic of a set of particles coordinates.
-    Each coordinate has a (x,y) position and is related to a Micrograph
-    The SetOfCoordinates can also have information about TiltPairs.
-    """
-    ITEM_TYPE = MockCoordinate
-
-    def __init__(self, **kwargs):
-        MockSet.__init__(self, **kwargs)
-        self._micrographsPointer = pwobj.Pointer()
-        self._boxSize = pwobj.Integer()
-
-    def getBoxSize(self):
-        """ Return the box size of the particles.
-        """
-        return self._boxSize.get()
-
-    def setBoxSize(self, boxSize):
-        """ Set the box size of the particles. """
-        self._boxSize.set(boxSize)
-
-    def iterMicrographs(self):
-        """ Iterate over the micrographs set associated with this
-        set of coordinates.
-        """
-        return self.getMicrographs()
-
-    def iterMicrographCoordinates(self, micrograph):
-        """ Iterates over the set of coordinates belonging to that micrograph.
-        """
-        pass
-
-    def iterCoordinates(self, micrograph=None):
-        """ Iterate over the coordinates associated with a micrograph.
-        If micrograph=None, the iteration is performed over the whole
-        set of coordinates.
-        """
-        if micrograph is None:
-            micId = None
-        elif isinstance(micrograph, int):
-            micId = micrograph
-        elif isinstance(micrograph, MockMicrograph):
-            micId = micrograph.getObjId()
-        else:
-            raise Exception('Invalid input micrograph of type %s'
-                            % type(micrograph))
-
-        # Iterate over all coordinates if micId is None,
-        # otherwise use micId to filter the where selection
-        coordWhere = '1' if micId is None else '_micId=%d' % micId
-
-        for coord in self.iterItems(where=coordWhere):
-            yield coord
-
-    def getMicrographs(self):
-        """ Returns the SetOfMicrographs associated with
-        this SetOfCoordinates"""
-        return self._micrographsPointer.get()
-
-    def setMicrographs(self, micrographs):
-        """ Set the micrographs associated with this set of coordinates.
-        Params:
-            micrographs: Either a SetOfMicrographs object or a pointer to it.
-        """
-        if micrographs.isPointer():
-            self._micrographsPointer.copy(micrographs)
-        else:
-            self._micrographsPointer.set(micrographs)
-        
-    def getFiles(self):
-        filePaths = set()
-        filePaths.add(self.getFileName())
-        return filePaths
-
-    def __str__(self):
-        """ String representation of a set of coordinates. """
-        if self._boxSize.hasValue():
-            boxSize = self._boxSize.get()
-            boxStr = ' %d x %d' % (boxSize, boxSize)
-        else:
-            boxStr = 'No-Box'
-        s = "%s (%d items, %s%s)" % (self.getClassName(), self.getSize(),
-                                     boxStr, self._appendStreamState())
-
-        return s
-
-    def copyInfo(self, other):
-        """ Copy basic information (boxsize)
-                from other set of coordinates to current one"""
-        self.copyAttributes(other, '_boxSize')
 

@@ -30,7 +30,8 @@ It is composed by three panels:
 3. Summary/Details
 """
 
-
+import logging
+logger = logging.getLogger(__name__)
 import os
 import threading
 import shlex
@@ -87,8 +88,14 @@ class ProjectWindow(ProjectBaseWindow):
         projMenu.addSubMenu('Toggle color mode', 'color_mode',
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
-                            shortCut="Ctrl+a")
+                            shortCut="Ctrl+a", icon='workflow.gif')
         projMenu.addSubMenu('Find protocol to add', 'find protocol',
+                            shortCut="Ctrl+f", icon='binoculares.gif')
+        projMenu.addSubMenu('Scipion log', 'scipion log',
+                            icon='fa-file-o.gif')
+        projMenu.addSubMenu('Locate a protocol', 'locate protocol',
+                            shortCut="Ctrl+l")
+        projMenu.addSubMenu('Add a protocol', 'find protocol',
                             shortCut="Ctrl+f")
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
@@ -150,7 +157,7 @@ class ProjectWindow(ProjectBaseWindow):
             if not self.project.openedAsReadOnly():
                 self.saveSettings()
         except Exception as ex:
-            print("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
+            logger.info("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
         ProjectBaseWindow._onClosing(self)
      
     def loadProject(self):
@@ -162,7 +169,7 @@ class ProjectWindow(ProjectBaseWindow):
         if os.path.exists(settingsPath):
             self.settings = proj.getSettings()
         else:
-            print('Warning: settings.sqlite not found! '
+            logger.info('Warning: settings.sqlite not found! '
                   'Creating default settings..')
             self.settings = proj.createSettings()
 
@@ -256,9 +263,9 @@ class ProjectWindow(ProjectBaseWindow):
             openTextFileEditor(dotFile.name)
 
         if useId:
-            print("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
+            logger.info("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
         else:
-            print("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
+            logger.info("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
 
     def onManageProjectLabels(self):
         self.manageLabels()
@@ -269,8 +276,14 @@ class ProjectWindow(ProjectBaseWindow):
     def onSelectAllProtocols(self):
         self.getViewWidget()._selectAllProtocols(None)
 
-    def onFindProtocolToAdd(self):
+    def onAddAProtocol(self):
         self.getViewWidget()._findProtocol(None)
+
+    def onLocateAProtocol(self):
+        self.getViewWidget()._locateProtocol(None)
+
+    def onScipionLog(self):
+        self.getViewWidget()._scipionLog(None)
 
     def manageLabels(self):
         return LabelsDialog(self.root,
@@ -315,7 +328,7 @@ class ProjectWindow(ProjectBaseWindow):
             func = self._OBJECT_COMMANDS.get(cmd, None)
 
             if func is None:
-                print("Error, command '%s' not found. " % cmd)
+                logger.info("Error, command '%s' not found. " % cmd)
             else:
                 def myfunc():
                     func(inputObj, objId)
@@ -323,8 +336,7 @@ class ProjectWindow(ProjectBaseWindow):
                 self.enqueue(myfunc)
 
         except Exception as ex:
-            print("There was an error executing object command !!!:")
-            print(ex)
+            logger.error("There was an error executing object command !!!:", exc_info=ex)
     
     def recalculateCTF(self, inputObjId, sqliteFile):
         """ Load the project and launch the protocol to
@@ -353,7 +365,7 @@ class ProjectWindow(ProjectBaseWindow):
 class ProjectManagerWindow(ProjectBaseWindow):
     """ Windows to manage all projects. """
     # To allow plugins to add their own menus
-    _pluginMenus = list()
+    _pluginMenus = dict()
 
     def __init__(self, **kwargs):
         # Load global configuration
@@ -448,6 +460,8 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
             msg = msg.decode()
             tokens = shlex.split(msg)
             if msg.startswith('run protocol'):
+                
+                logger.debug("run protocol messaged arrived: %s" % msg)
                 protocolName = tokens[2]
                 protocolClass = pw.Config.getDomain().getProtocols()[protocolName]
                 # Create the new protocol instance and set the input values

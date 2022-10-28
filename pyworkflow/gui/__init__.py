@@ -31,5 +31,6 @@ from .graph_layout import *
 from .tree import *
 from .browser import *
 from .text import *
+from .dialog import *
 
 from . import tooltip

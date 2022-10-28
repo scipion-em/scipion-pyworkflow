@@ -28,6 +28,8 @@ This modules implements the automatic
 creation of protocol form GUI from its
 params definition.
 """
+import logging
+logger = logging.getLogger(__name__)
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -218,6 +220,11 @@ class MultiPointerVar:
             self.provider.removeObject(v)
         self._updateObjectsList()
 
+    def clear(self):
+        self.provider.clear()
+        self._updateObjectsList()
+
+
     def getSelectedObjects(self):
         return self.tree.getSelectedObjects()
 
@@ -300,6 +307,9 @@ class MultiPointerTreeProvider(TreeProvider):
     def getObjectInfo(self, obj):
         label, info = getPointerLabelAndInfo(obj, self._mapper)
         return {'key': obj._strId, 'text': label, 'values': ('  ' + info,)}
+
+    def clear(self):
+        self._objectDict.clear()
 
 
 class ComboVar:
@@ -487,6 +497,7 @@ class SubclassesTreeProvider(TreeProvider):
 
                             match = False
                             cancelConditionEval = False
+                            possibleOutput = isinstance(attr, type)
 
                             # Go through all compatible Classes coming from in pointerClass string
                             for c in classes:
@@ -496,7 +507,7 @@ class SubclassesTreeProvider(TreeProvider):
                                     break
                                 # If it is a class already: "possibleOutput" case. In this case attr is the class and not
                                 # an instance of c. In this special case
-                                elif attr == c:
+                                elif possibleOutput and attr == c:
                                     match = True
                                     cancelConditionEval = True
 
@@ -506,12 +517,13 @@ class SubclassesTreeProvider(TreeProvider):
                                     p = pwobj.Pointer(prot, extended=paramName)
                                     p._allowsSelection = True
                                     objects.append(p)
+                                    return
 
                             # JMRT: For all sets, we don't want to include the
                             # subitems here for performance reasons (e.g SetOfParticles)
                             # Thus, a Set class can define EXPOSE_ITEMS = True
                             # to enable the inclusion of its items here
-                            if getattr(attr, 'EXPOSE_ITEMS', False):
+                            if getattr(attr, 'EXPOSE_ITEMS', False) and not possibleOutput:
                                 # If the ITEM type match any of the desired classes
                                 # we will add some elements from the set
                                 if (attr.ITEM_TYPE is not None and
@@ -1012,9 +1024,9 @@ class ParamWidget:
         self.window = window
         self._protocol = self.window.protocol
         if self._protocol.getProject() is None:
-            print(">>> ERROR: Project is None for protocol: %s, "
+            logger.error(">>> ERROR: Project is None for protocol: %s, "
                   "start winpdb to debug it" % self._protocol)
-            pwutils.startDebugger()
+
         self.row = row
         self.column = column
         self.paramName = paramName
@@ -1096,6 +1108,9 @@ class ParamWidget:
     def _showWizard(self, e=None):
         wizClass = self.window.wizards[self.wizParamName]
         wizard = wizClass()
+        # wizParamName: form attribute, the wizard object can check from which parameter it was called
+        # Used into VariableWizard objects (scipion-chem), where input and output parameters used for each wizard are defined
+        self.window.wizParamName = self.wizParamName
         wizard.show(self.window)
 
     def _findParamWizard(self):
@@ -1189,6 +1204,7 @@ class ParamWidget:
             tp = MultiPointerTreeProvider(self._protocol.mapper)
             tree = BoundTree(content, tp, height=5)
             var = MultiPointerVar(tp, tree)
+            var.trace('w', self.window._onPointerChanged)
             tree.grid(row=0, column=0, sticky='we')
             self._addButton("Select", pwutils.Icon.ACTION_SEARCH, self._browseObject)
             self._addButton("Remove", pwutils.Icon.ACTION_DELETE, self._removeObject)
@@ -1369,16 +1385,20 @@ class ParamWidget:
                          selectmode=self._selectmode, selectOnDoubleClick=True)
 
         if dlg.values:
-            if isinstance(self.param, pwprot.MultiPointerParam):
+            if self.isMultiPointer():
                 self.set(dlg.values)
             elif isinstance(self.param, pwprot.PointerParam):
                 self.set(dlg.values[0])
             else:
                 raise Exception('Invalid param class: %s' % type(self.param))
 
+    def isMultiPointer(self):
+        """ True if dealing with MultiPointer params """
+        return isinstance(self.param, pwprot.MultiPointerParam)
+
     def _browseScalar(self, e=None):
         """Select a scalar from outputs
-        This function is suppose to be used only for Scalar Params
+        This function is supposed to be used only for Scalar Params
         It's a copy of browseObject...so there could be a refactor here."""
         value = self.get()
         selected = []
@@ -1413,6 +1433,16 @@ class ParamWidget:
     def _removeObject(self, e=None):
         """ Remove an object from a MultiPointer param. """
         self.var.remove()
+
+    def clear(self):
+
+        # If dealing with Multipointers ...
+        if self.isMultiPointer():
+            # .. use var clear to remove all eletents since
+            # _removeObject() will remove only the selected ones
+            self.var.clear()
+        else:
+            self._removeObject()
 
     def _browseRelation(self, e=None):
         """Select a relation from DB
@@ -1672,7 +1702,7 @@ class FormWindow(Window):
             t = ('  Missing protocol: %s'
                  % (Mapper.getObjectPersistingClassName(prot)))
         else:
-            t = '  Protocol: %s' % (prot.getClassLabel())
+            t = '  %s' % (prot.getClassLabel())
 
         logoPath = prot.getPluginLogoPath() or getattr(package, '_logo', '')
 
@@ -1958,7 +1988,8 @@ class FormWindow(Window):
 
         btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
                              highlightthickness=0,
-                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE % pw.Config.SCIPION_HOSTS))
+                             command=self._createHelpCommand(pwutils.Message.HELP_USEQUEUE %
+                                                             (pw.Config.SCIPION_HOSTS, pw.DOCSITEURLS.HOST_CONFIG)))
 
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=5, sticky='w')
 
@@ -1975,7 +2006,7 @@ class FormWindow(Window):
 
         btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
                              highlightthickness=0,
-                             command=self._createHelpCommand(pwutils.Message.HELP_WAIT_FOR))
+                             command=self._createHelpCommand(pwutils.Message.HELP_WAIT_FOR % pw.DOCSITEURLS.WAIT_FOR))
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=2, sticky='e')
 
         # Run Name not editable
@@ -2054,17 +2085,17 @@ class FormWindow(Window):
     def _createLegacyInfo(self, parent):
         frame = tk.Frame(parent, name="legacy")
         t = tk.Label(frame,
-                     text="This protocol is missing from the installation. "
+                     text="This protocol is missing in this installation. "
                           "\nThis could be because you are opening an old "
-                          "project and some of \nthe executed protocols does "
-                          "not exist in the current version and were deprecated"
+                          "project and some of \nthe executed protocols do "
+                          "not exist anymore and were deprecated"
                           ",\n or because your scipion installation requires a "
                           "plugin where this protocol can be found.\n\n"
                           "If you are a developer, it could be the case that "
                           "you have changed \nto another branch where the "
                           "protocol does not exist.\n\n"
                           "Anyway, you can still inspect the parameters by "
-                          "opening the DB from the toolbar."
+                          "opening the DB from the toolbar activating the Debug mode."
                      )
         t.grid(row=0, column=0, padx=5, pady=5)
 
@@ -2276,6 +2307,10 @@ class FormWindow(Window):
             # Set the protocol label
             self.updateProtocolLabel()
 
+            # Clear parameters that are pointers and do not match the condition
+            # to avoid ghost inputs
+            self._checkAllChanges(toggleWidgetVisibility=False)
+
             message = self.callback(self.protocol, onlySave, doSchedule)
             if not self.visualizeMode:
                 if len(message):
@@ -2409,7 +2444,7 @@ class FormWindow(Window):
             c += 2
             self.widgetDict[paramName] = widget
 
-    def _checkCondition(self, paramName):
+    def _checkCondition(self, paramName, toggleWidgetVisibility=True):
         """Check if the condition of a param is satisfied
         hide or show it depending on the result"""
         widget = self.widgetDict.get(paramName, None)
@@ -2419,8 +2454,14 @@ class FormWindow(Window):
                 param = widget.param
             else:
                 param = self.protocol.getParam(paramName)
-            cond = self.protocol.evalParamCondition(paramName) and self.protocol.evalParamExpertLevel(param)
-            widget.display(cond)
+            show = self.protocol.evalParamCondition(paramName) and self.protocol.evalParamExpertLevel(param)
+
+            if toggleWidgetVisibility:
+                widget.display(show)
+            else:
+                # If condition is false and param is a pointer, or Multipointer ...
+                if (not show) and isinstance(param, pwprot.PointerParam):
+                    widget.clear()
 
     def _checkChanges(self, paramName):
         """Check the conditions of all params affected
@@ -2433,9 +2474,9 @@ class FormWindow(Window):
 
         self.adjustSections()
 
-    def _checkAllChanges(self):
+    def _checkAllChanges(self, toggleWidgetVisibility=True):
         for paramName in self.widgetDict:
-            self._checkCondition(paramName)
+            self._checkCondition(paramName, toggleWidgetVisibility=toggleWidgetVisibility)
 
     def _onExpertLevelChanged(self, *args):
         self._checkAllChanges()
@@ -2564,12 +2605,12 @@ class FormWindow(Window):
         if btnExecute is None:
             return
         btnState = tk.DISABLED if (self.protocol.isActive() and not self.protocol.isInteractive()) else tk.NORMAL
-        emptyPointers, openSetPointer = self.protocol.getInputStatus()
+        emptyInput, openSetPointer, emptyPointers = self.protocol.getInputStatus()
 
-        if emptyPointers:
+        if emptyInput:
             btnState = tk.DISABLED
 
-        if openSetPointer:
+        if openSetPointer or emptyPointers:
             btnText = 'Schedule'
             cmd = self.schedule
         else:

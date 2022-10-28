@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.18'
+VERSION_3_0 = '3.0.27'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -69,6 +69,9 @@ SCIPION_PYTHON_DEFAULT = 'python3'
 SCIPION_HOME_VAR = 'SCIPION_HOME'
 SCIPION_TESTS = 'SCIPION_TESTS'
 SCIPION_SCRATCH = 'SCIPION_SCRATCH'
+
+# FONT
+SCIPION_DEFAULT_FONT_SIZE = 10
 
 # NOTES CONSTANTS
 SCIPION_NOTES_FILE = 'SCIPION_NOTES_FILE'
@@ -122,14 +125,17 @@ PROJECT_SETTINGS = 'settings.sqlite'
 
 class DOCSITEURLS:
     """Documentation site URL useful when exceptions happens and you want to point to some pages"""
-    HOME = 'https://scipion-em.github.io/docs/'
+    HOME = 'https://scipion-em.github.io/docs/release-3.0.0/'
     DOCS = HOME + 'docs/'
     CONFIG = DOCS + 'scipion-modes/scipion-configuration.html'
     CONFIG_SECTION = CONFIG + '#%s'
     CONTACTUS = 'http://scipion.i2pc.es/contact'
     USER = DOCS + 'user/'
+    GUI = USER + 'scipion-gui.html'
+    WAIT_FOR = GUI + '#waiting-for-other-protocols'
     PLUGIN_MANAGER = USER + 'plugin-manager.html'
     HOST_CONFIG = DOCS + "scipion-modes/host-configuration.html"
+
 
 # tkinter bind constants
 class TK:

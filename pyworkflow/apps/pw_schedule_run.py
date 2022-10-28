@@ -25,6 +25,7 @@
 # *
 # **************************************************************************
 
+import logging
 import os
 import sys
 import time
@@ -37,7 +38,7 @@ from pyworkflow.protocol import (getProtocolFromDb,
 from pyworkflow.constants import PROTOCOL_UPDATED
 
 # Add callback for remote debugging if available.
-from pyworkflow.utils import prettyTimestamp
+from pyworkflow.utils import LoggingConfigurator
 
 try:
     from rpdb2 import start_embedded_debugger
@@ -58,7 +59,9 @@ class RunScheduler:
         # Enter to the project directory and load protocol from db
         self.protocol = self._loadProtocol()
         self.project = self.protocol.getProject()
-        self.log = open(self.protocol.getScheduleLog(), 'w')
+        LoggingConfigurator.setupDefaultLogging(self.protocol.getScheduleLog(),
+                                                console=False)
+        self.log = logging.getLogger(__name__)
         self.protPid = os.getpid()
         self.protocol.setPid(self.protPid)
         self.protocol._store(self.protocol._pid)
@@ -109,8 +112,7 @@ class RunScheduler:
                                  self._args.protId, chdir=True)
 
     def _log(self, msg):
-        self.log.write("%s: %s\n" % (prettyTimestamp(), msg))
-        self.log.flush()
+        self.log.info(msg)
 
     def _updateProtocol(self, protocol):
 
@@ -125,6 +127,8 @@ class RunScheduler:
             updateResult = self.project._updateProtocol(protocol)
             if updateResult == PROTOCOL_UPDATED:
                 self._log("Updated protocol: %s (%s)" % (protId, protocol))
+            else:
+                self._log("The protocol %s (%s) is up to date" % (protId, protocol))
             self.updatedProtocols[protId] = protocol
 
         return protocol
@@ -221,6 +225,7 @@ class RunScheduler:
         self._log("Checking input data...")
         # Updating input protocols
         for key, attr in self.protocol.iterInputAttributes():
+            self.log.debug("Turn for %s" % key)
             inputProt = self._getProtocolFromPointer(attr)
             inputProt = self._updateProtocol(inputProt)
             penalize += self._getSecondsToWait(inputProt)
@@ -236,14 +241,21 @@ class RunScheduler:
                 inSet = attr.get()
                 if isinstance(inSet, Set) and inSet.isStreamOpen():
                     inputMissing = True
-                    self._log("Waiting for closing %s... (%s does not work in "
-                              "streaming)" % (inSet, self.protocol))
+                    self._log("Waiting for closing %s... (does not work in "
+                              "streaming)" % inSet)
+                    break
+                elif isinstance(inSet, Protocol) and not inSet.isFinished():  # Then is a pointer to a protocol
+                    inputMissing = True
+                    self._log("Waiting for protocol %s to finish... (does not work in "
+                              "streaming)" % inSet)
                     break
 
         if not inputMissing:
-            inputProtocolDict = self.protocol.inputProtocolDict()
-            for prot in inputProtocolDict.values():
-                self._updateProtocol(prot)
+            inputProtocolIds = self.protocol.getProtocolsToUpdate()
+            for protId in inputProtocolIds:
+                protocol = self.project.getProtocol(protId)
+                self.log.debug("Turn from inputProtocolDict for %s" % protocol)
+                self._updateProtocol(protocol)
 
         return inputMissing, penalize
 
@@ -284,7 +296,6 @@ class RunScheduler:
             time.sleep(sleepTime)
 
         self._log("Launching the protocol >>>>")
-        self.log.close()
         self.project.launchProtocol(self.protocol, scheduled=True, force=True)
 
 
@@ -304,4 +315,4 @@ if __name__ == '__main__':
             runScheduler.schedule()
         except Exception as ex:
             print(ex)
-            print("Schedule fail with this parameters: ", sys.argv)
+            print("Scheduling failed with these parameters: ", sys.argv)

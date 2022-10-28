@@ -39,8 +39,8 @@ from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
 from .params import Form
+from ..utils import getFileSize
 
-SCHEDULE_LOG = 'schedule.log'
 
 import  logging
 # Get the root logger
@@ -325,7 +325,7 @@ class Protocol(Step):
 
     # Version where protocol appeared first time
     _lastUpdateVersion = pw.VERSION_1
-    _stepsCheckSecs = 3
+    _stepsCheckSecs = pw.Config.getStepsCheckSeconds()
     # Protocol develop status: PROD, BETA, NEW
     _devStatus = pw.PROD
 
@@ -352,6 +352,7 @@ class Protocol(Step):
 
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
+        self._size = None
         self._steps = []  # List of steps that will be executed
         # All generated filePaths should be inside workingDir
         self.workingDir = String(kwargs.get('workingDir', '.'))
@@ -431,6 +432,7 @@ class Protocol(Step):
         self.summaryWarnings = []
         # Get a lock for threading execution
         self._lock = threading.Lock()
+        self.forceSchedule = Boolean(False)
 
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
@@ -477,7 +479,7 @@ class Protocol(Step):
         self.__tryUpdateOutputSet(outputName, outputSet, state)
 
     def __tryUpdateOutputSet(self, outputName, outputSet,
-                            state=Set.STREAM_OPEN, tries=1):
+                            state=Set.STREAM_OPEN, tries=1, firstException=None):
         try:
             # Update the set with the streamState value (either OPEN or CLOSED)
             outputSet.setStreamState(state)
@@ -497,14 +499,16 @@ class Protocol(Step):
             outputSet.close()
 
         except Exception as ex:
-            print("Error trying to update output of protocol, tries=%d" % tries)
 
-            if tries > 3:
-                raise ex
+            if tries > pw.Config.getUpdateSetAttempts():
+                raise BlockingIOError("Can't update %s (output) of %s after %s attempts. Reason: %s. "
+                                      "Concurrency, a non writable file system or a quota exceeded could be among the causes." %
+                                      (outputName, self,tries-1, ex)) from firstException
             else:
-                time.sleep(tries)
+                logger.warning("Trying to update %s (output) of protocol %s, attempt=%d: %s " % (outputName, self, tries, ex))
+                time.sleep(pw.Config.getUpdateSetAttemptsWait())
                 self.__tryUpdateOutputSet(outputName, outputSet, state,
-                                          tries + 1)
+                                          tries + 1, firstException= ex if tries==1 else firstException)
 
     def hasExpert(self):
         """ This function checks if the protocol has
@@ -555,10 +559,11 @@ class Protocol(Step):
         """ This function will retrieve the text value
         of an enum parameter in the definition, taking the actual value in
         the protocol.
-        Params:
-            paramName: the name of the enum param.
-        Returns:
-            the string value corresponding to the enum choice.
+
+        :param paramName: the name of the enum param.
+
+        :returns: the string value corresponding to the enum choice.
+
         """
         index = getattr(self, paramName).get()
         return self.getParam(paramName).choices[index]
@@ -644,8 +649,9 @@ class Protocol(Step):
 
             # Consider here scalars with pointers inside
             elif isinstance(attr, Scalar) and attr.hasPointer():
-                if attr.get() is not None:
-                    yield key, attr.getPointer()
+                # Scheduling was stale cause this Scalar with pointers where not returned
+                #if attr.get() is not None:
+                yield key, attr.getPointer()
 
     def iterInputPointers(self):
         """ This function is similar to iterInputAttributes, but it yields
@@ -664,34 +670,36 @@ class Protocol(Step):
             elif attr.isPointer():
                 yield key, attr
 
-    def inputProtocolDict(self):
+    def getProtocolsToUpdate(self):
         """
-        This function returns a dictionary of protocols that need to update
+        This function returns a list of protocols ids that need to update
         their database to launch this protocol (this method is only used
         when a WORKFLOW is restarted or continued).
         Actions done here are:
-        1. Iterate over the main input Pointer of this protocol
-           (here, 3 different cases are analyzed)
 
-           A) When the pointer points to a protocol
+        #. Iterate over the main input Pointer of this protocol
+            (here, 3 different cases are analyzed):
 
-           B) When the pointer points to another object (INDIRECTLY).
-              - The pointer has an _extended value (new parameters configuration
+            A #. When the pointer points to a protocol
+
+            B #. When the pointer points to another object (INDIRECTLY).
+                The pointer has an _extended value (new parameters configuration
                 in the protocol)
 
-           C) When the pointer points to another object (DIRECTLY).
+            C #. When the pointer points to another object (DIRECTLY).
+
               - The pointer has not an _extended value (old parameters
                 configuration in the protocol)
 
-        2. The PROTOCOL to which the pointer points is determined and saved in
-           the dictionary
+        #. The PROTOCOL to which the pointer points is determined and saved in
+            the list
 
-        3. If this pointer points to another object (case B and C):
-           - Iterate over the main attributes of this pointer
-           - if any attribute is a pointer, then we move to PROTOCOL and repeat
-             this procedure from step 1
+        #. If this pointer points to a set (case B and C):
+
+          - Iterate over the main attributes of the set
+            - if attribute is a pointer then we add the pointed protocol to the ids list
         """
-        protocolDict = {}
+        protocolIds = []
         protocol = None
         for key, attrInput in self.iterInputAttributes():
             output = attrInput.get()
@@ -707,29 +715,30 @@ class Protocol(Step):
                     else:
                         # This is a problem, since protocols coming from
                         # Pointers do not have the __project set.
-                        # We do not have an clear way to get the protocol if
+                        # We do not have a clear way to get the protocol if
                         # we do not have the project object associated
                         # This case implies Direct Pointers to Sets
                         # (without extended): hopefully this will only be
                         # created from tests
-                        print("Can't get protocol info from input attribute."
+                        logger.warning("Can't get %s info from %s."
                               " This could render unexpected results when "
-                              "scheduling protocols.")
+                              "scheduling protocols. Value: %s" % (key, self, attrInput))
                         continue
 
+                # If there is output
                 if output is not None:
+                    # For each output attribute: Looking for pointers like SetOfCoordinates.micrographs
                     for k, attr in output.getAttributes():
+                        # If it's a pointer
                         if isinstance(attr, Pointer):
-                            if attr.get() is not None:
-                                auxDict = protocol.inputProtocolDict()
-                                for auxKey in auxDict:
-                                    if auxKey not in protocolDict.keys():
-                                        protocolDict[auxKey] = auxDict[auxKey]
-                                break
+                            logger.debug("Pointer found in output: %s.%s (%s)" % (output, k, attr))
+                            prot = attr.getObjValue()
+                            if prot is not None:
+                                protocolIds.append(prot.getObjId())
 
-            protocolDict[protocol.getObjId()] = protocol
+            protocolIds.append(protocol.getObjId())
 
-        return protocolDict
+        return protocolIds
 
     def getInputStatus(self):
         """ Returns if any input pointer is not ready yet and if there is
@@ -737,6 +746,7 @@ class Protocol(Step):
         """
         emptyPointers = False
         openSetPointer = False
+        emptyInput = False
 
         for paramName, attr in self.iterInputPointers():
 
@@ -755,14 +765,18 @@ class Protocol(Step):
             condition = self.evalParamCondition(paramName)
 
             obj = attr.get()
+            if isinstance(obj, Protocol) and obj.getStatus() == STATUS_SAVED:  # the pointer points to a protocol
+                emptyPointers = True
+            if obj is None and attr.hasValue():
+                emptyPointers = True
             if condition and obj is None and not param.allowsNull:
                 if not attr.hasValue():
-                   emptyPointers = True
+                   emptyInput = True
 
             if not self.worksInStreaming() and isinstance(obj, Set) and obj.isStreamOpen():
                 openSetPointer = True
 
-        return emptyPointers, openSetPointer
+        return emptyInput, openSetPointer, emptyPointers
 
     def iterOutputAttributes(self, outputClass=None, includePossible=False):
         """ Iterate over the outputs produced by this protocol. """
@@ -890,9 +904,13 @@ class Protocol(Step):
             for paramName, param in self._definition.iterParams():
                 # Create the var with value coming from kwargs or from
                 # the default param definition
-                var = param.paramClass(value=kwargs.get(paramName,
-                                                        param.default.get()))
-                setattr(self, paramName, var)
+                try:
+                    value = kwargs.get(paramName, param.default.get())
+                    var = param.paramClass(value=value)
+                    setattr(self, paramName, var)
+                except Exception as e:
+                    raise ValueError("Can't create parameter '%s' and set it to %s" %
+                                     (paramName, value)) from e
         else:
             print("FIXME: Protocol '%s' has not DEFINITION"
                   % self.getClassName())
@@ -954,10 +972,9 @@ class Protocol(Step):
 
     def __insertStep(self, step, **kwargs):
         """ Insert a new step in the list.
-        Params:
-         **kwargs:
-            prerequisites: a list with the steps index that need to be done
-                           previous than the current one."""
+
+        :param prerequisites: a single integer or a list with the steps index that need to be done
+                           previous to the current one."""
         prerequisites = kwargs.get('prerequisites', None)
 
         if prerequisites is None:
@@ -965,6 +982,10 @@ class Protocol(Step):
                 # By default add the previous step as prerequisite
                 step.addPrerequisites(len(self._steps))
         else:
+            # Allow passing just an id
+            if not isinstance(prerequisites, list):
+                prerequisites = [prerequisites]
+
             step.addPrerequisites(*prerequisites)
 
         self._steps.append(step)
@@ -996,6 +1017,11 @@ class Protocol(Step):
         super().setFailed(msg)
         self._closeOutputSet()
 
+    def _finalizeStep(self, status, msg=None):
+        """ Closes the step and setting up the protocol process id """
+        super()._finalizeStep(status, msg)
+        self._pid.set(None)
+
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
         :parameter updater callback/lambda receiving a step and editing it inside
@@ -1006,6 +1032,10 @@ class Protocol(Step):
             stepsSet.update(step)
         stepsSet.write()
         stepsSet.close()  # Close the connection
+
+    def getPath(self, *paths):
+        """ Same as _getPath but without underscore. """
+        return self._getPath(*paths)
 
     def _getPath(self, *paths):
         """ Return a path inside the workingDir. """
@@ -1310,6 +1340,15 @@ class Protocol(Step):
         pass
 
     def copy(self, other, copyId=True, excludeInputs=False):
+        """
+        Copies its attributes into the passed protocol
+
+        :param other: protocol instance to copt the attributes to
+        :param copyId: True (default) copies the identifier
+        :param excludeInputs: False (default). If true input attributes are excluded
+
+        """
+
         # Input attributes list
         inputAttributes = []
 
@@ -1444,8 +1483,6 @@ class Protocol(Step):
         to run should exists.
         """
         try:
-            LoggingConfigurator.setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
-
             self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
             self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
                                                                project_name=self.getProject().getName(),
@@ -1506,11 +1543,16 @@ class Protocol(Step):
 
 
     def getLogPaths(self):
-        return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', SCHEDULE_LOG]))
+        return [self.getStdoutLog(),self.getStderrLog() , self.getScheduleLog()]
+
+    def getStdoutLog(self):
+        return self._getLogsPath("run.stdout")
+
+    def getStderrLog(self):
+        return self._getLogsPath('run.stderr')
 
     def getScheduleLog(self):
-        return self._getLogsPath(SCHEDULE_LOG)
+        return self._getLogsPath('schedule.log')
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
@@ -1723,14 +1765,16 @@ class Protocol(Step):
 
     @classmethod
     def validatePackageVersion(cls, varName, errors):
-        """ Function to validate the the package version specified in
+        """
+        Function to validate the package version specified in
         configuration file ~/.config/scipion/scipion.conf is among the available
         options and it is properly installed.
-        Params:
-            package: the package object (ej: eman2 or relion). Package should contain the
-                     following methods: getVersion(), getSupportedVersions()
-            varName: the expected environment var containing the path (and version)
-            errors: list to added error if found
+
+        :param package: the package object (ej: eman2 or relion). Package should contain the
+            following methods: getVersion(), getSupportedVersions()
+        :param varName: the expected environment var containing the path (and version)
+        :param errors: list of strings to add errors if found
+
         """
         package = cls.getClassPackage()
         packageName = cls.getClassPackageName()
@@ -2242,6 +2286,12 @@ class Protocol(Step):
         """
         pass
 
+    def getSize(self):
+        """ Returns the size of the folder corresponding to this protocol"""
+        if not self._size:
+            self._size = getFileSize(self.getPath())
+
+        return self._size
 
 class LegacyProtocol(Protocol):
     """ Special subclass of Protocol to be used when a protocol class
@@ -2262,14 +2312,18 @@ class LegacyProtocol(Protocol):
 # ---------- Helper functions related to Protocols --------------------
 
 def runProtocolMain(projectPath, protDbPath, protId):
-    """ Main entry point when a protocol will be executed.
-    This function should be called when:
-    scipion runprotocol ...
-    Params:
-        projectPath: the absolute path to the project directory.
-        protDbPath: path to protocol db relative to projectPath
-        protId: id of the protocol object in db.
     """
+    Main entry point when a protocol will be executed.
+    This function should be called when::
+
+        scipion runprotocol ...
+
+    :param projectPath: the absolute path to the project directory.
+    :param protDbPath: path to protocol db relative to projectPath
+    :param protId: id of the protocol object in db.
+
+    """
+
     # Enter to the project directory and load protocol from db
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
 
@@ -2390,7 +2444,7 @@ def isProtocolUpToDate(protocol):
     dbTS = pwutils.getFileLastModificationDate(protocol.getDbPath())
 
     if not (protTS and dbTS):
-        print("Can't compare if protocol is up to date: "
+        logger.info("Can't compare if protocol is up to date: "
               "Protocol %s, protocol time stamp: %s, %s timeStamp: %s"
               % (protocol, protTS, protocol, dbTS))
     else:

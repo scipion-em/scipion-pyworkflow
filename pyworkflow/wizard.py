@@ -34,33 +34,30 @@ WEB_DJANGO = 'django'
 
 
 class Wizard(object):
-    """ This is a special case of GUI to help the user
-    selecting important parameters.
-    The _targets will serve to define to which Definition and 
-    parameters the Wizard is defined, it will be a list of tuples such as:
-    _targets = [(DefImportMicrographs, ['voltage', sphericalAberration']),
-                (DefCTFMicrographs, ['lowRes', 'highRes'])]
-    The _environments will serve to define when this wizard can be used.
-    For example>
-    _environments = [DESKTOP_TKINTER, WEB_DJANGO]
+    """ This is a special case of GUI to help the user selecting important parameters.
+
+    The _targets attribute is used to define to which parameters the Wizard can deal with.
+    It will be a list of tuples such as::
+
+        _targets = [(DefImportMicrographs, ['voltage', sphericalAberration']), (DefCTFMicrographs, ['lowRes', 'highRes'])]
+
     """
+
     _targets = []
-    _environments = [DESKTOP_TKINTER]
-    
+    _environments = [DESKTOP_TKINTER] # This can be ignored
+
     def show(self, form, *params):
-        """ This will show up the wizard to select parameters.
-        Params:
-            form: the protocol form, given access to to all parameters.
-                Some times the same wizard will modify several elements
-                in the form.
-            *params: a list of params to modify, sometimes the wizard can 
-                be generic and can be used for different parameters in the
-                same form.
+        """
+        EMPTY METHOD. Needs to be implemented in your class. This will be called to show the wizard.
+
+        :param form: the protocol form, given access to to all parameters. Some times the same wizard will modify several elements in the form.
+        :param params: a list of params to modify. Sometimes the wizard can be generic and can be used for different parameters in the same form.
         """
         pass
     
     def getView(self):
-        """ This method should return the string value of the view in web
+        """
+        EMPTY METHOD. Deprecated.This method should return the string value of the view in web
         that will respond to this wizard. This method only should be implemented
         in those wizards that have WEB_DJANGO environment defined. 
         """

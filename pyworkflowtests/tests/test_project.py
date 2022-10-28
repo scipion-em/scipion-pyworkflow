@@ -28,6 +28,8 @@ from unittest import TestCase
 from unittest.mock import patch
 
 
+# NOTE: This test as it is might serve as a skeleton for future testing the fixLinks
+# but as it is now it does not test anything at all. I leave it as an example of using patch (mock testing)
 class TestProject(TestCase):
 
     def test_fixlinks(self):
@@ -35,6 +37,6 @@ class TestProject(TestCase):
 
         with patch("pyworkflow.project.Project.getRuns") as getruns:
 
-            getruns.return_value = [1]
+            getruns.return_value = []
             proj = Project("domain", "path")
             proj.fixLinks("foo")
