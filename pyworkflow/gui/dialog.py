@@ -341,7 +341,7 @@ class YesNoDialog(MessageDialog):
             buttonList.append(('Cancel', RESULT_CANCEL))
 
         MessageDialog.__init__(self, master, title, msg,
-                               'fa-exclamation-triangle_alert.gif', default='No',
+                               Icon.ALERT, default='No',
                                buttons=buttonList)
 
 
@@ -501,7 +501,7 @@ def askYesNoCancel(title, msg, parent):
 
 def askSingleAllCancel(title, msg, parent):
     d = GenericDialog(parent, title, msg,
-                      'fa-exclamation-triangle_alert.gif',
+                      Icon.ALERT,
                       buttons=[('Single', RESULT_RUN_SINGLE),
                                ('All', RESULT_RUN_ALL),
                                ('Cancel', RESULT_CANCEL)],
@@ -514,15 +514,15 @@ def askSingleAllCancel(title, msg, parent):
 
 
 def showInfo(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-info-circle_alert.gif')
+    MessageDialog(parent, title, msg, Icon.INFO)
 
 
 def showWarning(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-exclamation-triangle_alert.gif')
+    MessageDialog(parent, title, msg, Icon.ALERT)
 
 
 def showError(title, msg, parent, exception=None):
-    ExceptionDialog(parent, title, msg, 'fa-times-circle_alert.gif', exception=exception)
+    ExceptionDialog(parent, title, msg, Icon.ERROR, exception=exception)
 
 
 def askString(title, label, parent, entryWidth=20, defaultValue='', headerLabel=None):
@@ -782,7 +782,7 @@ class FileBrowseDialog(Dialog):
         self._createTree(bodyFrame)
         if self.message:
             label = tk.Label(bodyFrame, text=self.message, bg='white',
-                             image=self.getImage('fa-lightbulb-o.gif'), compound=tk.LEFT)
+                             image=self.getImage(Icon.LIGHTBULB), compound=tk.LEFT)
             label.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
         self.initial_focus = self.tree
 

@@ -18,6 +18,9 @@ PULL_REQUEST = 'pull'
 DAILY = 'daily'
 WEEKLY = 'weekly'
 
+# Type hint when creating protocols
+from typing import TypeVar
+T = TypeVar('T')
 
 # Procedure to check if a test class has an attribute called _labels and if so
 # then it checks if the class test matches any of the labels in input label parameter.
@@ -180,7 +183,7 @@ class BaseTest(unittest.TestCase):
         cls.proj._updateProtocol(prot)
 
     @classmethod
-    def newProtocol(cls, protocolClass, **kwargs):
+    def newProtocol(cls, protocolClass:T, **kwargs)->T:
         """ Create new protocols instances through the project
         and return a newly created protocol of the given class
         """
