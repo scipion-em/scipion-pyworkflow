@@ -585,12 +585,14 @@ class DeprecatedParam:
         self._objId = None
         self._objIsPointer = False
 
-    def set(self, value):
+    def set(self, value, cleanExtended=False):
         if hasattr(self.prot, self._newParamName):
             newParam = self._getNewParam()
-            newParam.set(value)
             if newParam.isPointer():
+                newParam.set(value, cleanExtended)
                 self._extended = newParam._extended
+            else:
+                newParam.set(value)
 
     def isPointer(self):
         return self._getNewParam().isPointer()
