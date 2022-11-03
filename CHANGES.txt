@@ -1,4 +1,6 @@
+
 V3.0.28
+-------
 users:
   - Fix: rare error making subsets of self referencing output.
 
@@ -7,6 +9,8 @@ developers:
   - More modules using logging: gui/project.py, mapper/sqlite.py
   - Pointer.set: optional parameter to cancel extended reset. Used from mapper.
   - Pyworkflow Domain now is operational. Still ED plugins needs adaptation.
+  - String class offers getListFromRange and getListFromValues for convenience when param any ot the Ranges
+  - getListFromValues, returns str list as before, but optionally you can pass a caster (int, float,..)
 
 V3.0.27
 -------
@@ -16,6 +20,7 @@ Users:
  - "Use queue?" label and help reworded and linked to documentation site
  - "Wait for" label and help reworded and linked to documentation site
  - Fix: New protocols, without sibilings were wrongly located at the top.
+
 
 V3.0.26 (hotfix)
 -------
