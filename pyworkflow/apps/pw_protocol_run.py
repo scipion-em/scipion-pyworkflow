@@ -39,7 +39,6 @@ if __name__ == '__main__':
         stdOut = sys.argv[4]
         stdErr = sys.argv[5]
 
-        LoggingConfigurator.loadCustomLoggingConfig()
         LoggingConfigurator.setUpProtocolRunLogging(stdOut, stdErr)
 
         from pyworkflow.protocol import runProtocolMain

@@ -734,8 +734,12 @@ class Protocol(Step):
                             logger.debug("Pointer found in output: %s.%s (%s)" % (output, k, attr))
                             prot = attr.getObjValue()
                             if prot is not None:
-                                protocolIds.append(prot.getObjId())
-
+                                if isinstance(prot, Protocol):
+                                    protocolIds.append(prot.getObjId())
+                                else:
+                                    logger.warning(f"We have found that {output}.{key} points to {attr} "
+                                                   f"and is a direct pointer. Direct pointers are less reliable "
+                                                   f"in streaming scenarios. Developers should avoid them.")
             protocolIds.append(protocol.getObjId())
 
         return protocolIds

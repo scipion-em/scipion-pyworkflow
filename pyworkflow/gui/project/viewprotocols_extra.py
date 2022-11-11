@@ -41,11 +41,19 @@ from pyworkflow.viewer import DESKTOP_TKINTER
 class RunIOTreeProvider(pwgui.tree.TreeProvider):
     """Create the tree elements from a Protocol Run input/output children"""
 
-    def __init__(self, parent, protocol, mapper):
-        # TreeProvider.__init__(self)
+    def __init__(self, parent, protocol, mapper, loggerCallback):
+        """
+
+        :param parent:
+        :param protocol:
+        :param mapper:
+        :param loggerCallback: method to call to log events in the gui.
+        """
+
         self.parent = parent
         self.protocol = protocol
         self.mapper = mapper
+        self._loggerCallback = loggerCallback
 
     @staticmethod
     def getColumns():
@@ -122,6 +130,13 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         else:
             isPointer = False
         actions = []
+
+        # If viewers not loaded yet (firstime)
+        domain = Config.getDomain()
+
+        if not domain.viewersLoaded():
+            self._loggerCallback("Discovering viewers for the first time across all the plugins.")
+
 
         viewers = Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
 
