@@ -295,7 +295,7 @@ class ProtocolsView(tk.Frame):
         # Just configure the provider, later below, in updateSelection, it will be
         # provided with the protocols.
         provider = RunIOTreeProvider(self, None,
-                                     self.project.mapper)
+                                     self.project.mapper, self.info)
 
         rowheight = pwgui.getDefaultFont().metrics()['linespace']
         self.style.configure("NoBorder.Treeview", background='white',
@@ -1469,7 +1469,7 @@ class ProtocolsView(tk.Frame):
             prot = self.getSelectedProtocol()
 
             if prot:
-                provider = RunIOTreeProvider(self, prot, self.project.mapper)
+                provider = RunIOTreeProvider(self, prot, self.project.mapper, self.info)
                 self.infoTree.setProvider(provider)
                 self.infoTree.grid(row=0, column=0, sticky='news')
                 self.infoTree.update_idletasks()
