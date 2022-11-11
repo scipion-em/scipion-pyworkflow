@@ -254,6 +254,11 @@ class Domain:
         return cls.__getSubclasses('objects', cls._objectClass)
 
     @classmethod
+    def viewersLoaded(cls):
+        """ Returns true if viewers have been already discovered"""
+        return len(cls._viewers) != 0
+
+    @classmethod
     def getViewers(cls):
         """ Return all Viewer subclasses from all plugins for this domain."""
         return cls.__getSubclasses('viewers', cls._viewerClass,

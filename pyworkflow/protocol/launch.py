@@ -86,9 +86,11 @@ def schedule(protocol, initialSleepTime=0, wait=False):
     run yet. Right now it only make sense to schedule jobs locally.
     """
     cmd = '%s %s' % (pw.PYTHON, pw.getScheduleScript())
-    cmd += ' "%s" "%s" %s --initial_sleep %s' % (protocol.getProject().path,
+    cmd += ' "%s" "%s" %s "%s" --initial_sleep %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
-                              protocol.strId(), initialSleepTime)
+                              protocol.strId(),
+                              protocol.getScheduleLog(),
+                              initialSleepTime)
     jobId = _run(cmd, wait)
     protocol.setJobId(jobId)
 

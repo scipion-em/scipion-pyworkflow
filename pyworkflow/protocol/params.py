@@ -672,7 +672,7 @@ class GT(Conditional):
 class GE(Conditional):
     def __init__(self, thresold, error='Value should be greater or equal than the threshold'):
         Conditional.__init__(self, error)
-        self._condition = lambda value: value >= thresold               
+        self._condition = lambda value: value is not None and value >= thresold
 
 
 class Range(Conditional):

@@ -3,7 +3,8 @@ V3.0.28
 -------
 users:
   - Fix: rare error making subsets of self referencing output.
-
+  - Schedule process: Logging starts from the very beginning. Better feedback when there is an error.
+  - Message is shown in project's info log when discovering viewers for the firs time.
 developers:
   - Fix: rare error when loading pointers with extended from the database
   - More modules using logging: gui/project.py, mapper/sqlite.py
@@ -11,6 +12,7 @@ developers:
   - Pyworkflow Domain now is operational. Still ED plugins needs adaptation.
   - String class offers getListFromRange and getListFromValues for convenience when param any ot the Ranges
   - getListFromValues, returns str list as before, but optionally you can pass a caster (int, float,..)
+  - GE validator: tolerates None values.
 
 V3.0.27
 -------
