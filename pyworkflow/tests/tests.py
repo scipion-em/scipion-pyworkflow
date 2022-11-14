@@ -221,7 +221,7 @@ class BaseTest(unittest.TestCase):
             if diffDelta:
                 self.assertLessEqual(abs(setObjSize - size), round(diffDelta * size), msg)
             else:
-                self.assertEqual(setObjSize, size)
+                self.assertEqual(setObjSize, size, msg)
 
     def assertIsNotEmpty(self, setObject, msg=None):
         """ Check if the pyworkflow object is not None nor is empty"""
