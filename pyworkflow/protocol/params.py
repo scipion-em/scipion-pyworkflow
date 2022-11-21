@@ -233,7 +233,11 @@ class Form(object):
     def addParam(self, *args, **kwargs):
         """Add a new param to last section"""
         return self.lastSection.addParam(*args, **kwargs)
-    
+
+    # Adhoc method for specific params
+    def addBooleanParam(self, name, label, help, default=True, **kwargs):
+        return self.addParam(name, BooleanParam, label=label, help=help, default=default, **kwargs)
+
     def addHidden(self, *args, **kwargs):
         return self.lastSection.addHidden(*args, **kwargs)
     
