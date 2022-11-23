@@ -2447,13 +2447,16 @@ class FormWindow(Window):
                 param = widget.param
             else:
                 param = self.protocol.getParam(paramName)
-            show = self.protocol.evalParamCondition(paramName) and self.protocol.evalParamExpertLevel(param)
+
+            showLevel = self.protocol.evalParamExpertLevel(param)
+            showCondition = self.protocol.evalParamCondition(paramName)
+            show = showCondition and showLevel
 
             if toggleWidgetVisibility:
                 widget.display(show)
             else:
                 # If condition is false and param is a pointer, or Multipointer ...
-                if (not show) and isinstance(param, pwprot.PointerParam):
+                if (not showCondition) and isinstance(param, pwprot.PointerParam):
                     widget.clear()
 
     def _checkChanges(self, paramName):

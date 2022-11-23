@@ -5,6 +5,7 @@ users:
   - Fix: rare error making subsets of self referencing output.
   - Schedule process: Logging starts from the very beginning. Better feedback when there is an error.
   - Message is shown in project's info log when discovering viewers for the firs time.
+  - Fix: Expert level pointers not clearer anymore after copying or deacivating expert level.
 developers:
   - Fix: rare error when loading pointers with extended from the database
   - More modules using logging: gui/project.py, mapper/sqlite.py
@@ -13,6 +14,7 @@ developers:
   - String class offers getListFromRange and getListFromValues for convenience when param any ot the Ranges
   - getListFromValues, returns str list as before, but optionally you can pass a caster (int, float,..)
   - GE validator: tolerates None values.
+  - Form.addBoolean() helper added to facilitate Boolean param definitions. TODO: Do it with the rest?
   - dependencies updated
   - icons changed to png 32, so transparency is understood by pillow latest version
   - unused icons removed
