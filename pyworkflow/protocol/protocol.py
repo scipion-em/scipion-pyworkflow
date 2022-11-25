@@ -25,21 +25,26 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-import sys
+import sys, os
 import json
+import threading
 import time
 
 import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
-from pyworkflow.utils.log import ScipionLogger
+from pyworkflow.utils.log import LoggingConfigurator, getExtraLogInfo, STATUS, setDefaultLoggingContext
 from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
                        QueueStepExecutor)
 from .constants import *
 from .params import Form
+from ..utils import getFileSize
 
-SCHEDULE_LOG = 'schedule.log'
+
+import  logging
+# Get the root logger
+logger = logging.getLogger(__name__)
 
 
 class Step(Object):
@@ -320,12 +325,34 @@ class Protocol(Step):
 
     # Version where protocol appeared first time
     _lastUpdateVersion = pw.VERSION_1
-    _stepsCheckSecs = 3
+    _stepsCheckSecs = pw.Config.getStepsCheckSeconds()
     # Protocol develop status: PROD, BETA, NEW
     _devStatus = pw.PROD
 
+    """" Possible Outputs:
+    This is an optional but recommended attribute to fill.
+    It has to be an enum with names being the name of the output and value the class of the output:
+    
+        class MyOutput(enum.Enum):
+            outputMicrographs = SetOfMicrographs
+            outputMicrographDW = SetOfMicrographs
+    
+    When defining outputs you can, optionally, use this enum like:
+    self._defineOutputs(**{MyOutput.outputMicrographs.name, setOfMics})
+    It will help to keep output names consistently
+    
+    Alternative an inline dictionary will work:
+    _possibleOutputs = {"outputMicrographs" : SetOfMicrographs}
+    
+    For a more fine detailed/dynamic output based on parameters, you can overwrite the getter:
+    getPossibleOutputs() in your protocol.
+    
+    """
+    _possibleOutputs = None
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
+        self._size = None
         self._steps = []  # List of steps that will be executed
         # All generated filePaths should be inside workingDir
         self.workingDir = String(kwargs.get('workingDir', '.'))
@@ -340,22 +367,7 @@ class Protocol(Step):
         self._definition = Form(self)
         self._defineParams(self._definition)
         self._createVarsFromDefinition(**kwargs)
-        self.__stdOut = None
-        self.__stdErr = None
-        self.__fOut = None
-        self.__fErr = None
-
-        class BasicLog:
-            def warning(self, message, redirectStandard=True):
-                print("WARNING", message)
-
-            def info(self, message, redirectStandard=True):
-                print("INFO", message)
-
-            def error(self, message, redirectStandard=True):
-                print("ERROR", message)
-
-        self._log = BasicLog()
+        self._log = logger
         self._buffer = ''  # text buffer for reading log files
         # Project to which the protocol belongs
         self.__project = kwargs.get('project', None)
@@ -418,6 +430,9 @@ class Protocol(Step):
 
         # Store warnings here
         self.summaryWarnings = []
+        # Get a lock for threading execution
+        self._lock = threading.Lock()
+        self.forceSchedule = Boolean(False)
 
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
@@ -451,6 +466,12 @@ class Protocol(Step):
         self._useOutputList.set(True)
         self._insertChild("_useOutputList", self._useOutputList)
 
+    def _closeOutputSet(self):
+        """Close all output set"""
+        for outputName, output in self.iterOutputAttributes():
+            if isinstance(output, Set) and output.isStreamOpen():
+                self.__tryUpdateOutputSet(outputName, output, state=Set.STREAM_CLOSED)
+
     def _updateOutputSet(self, outputName, outputSet,
                          state=Set.STREAM_OPEN):
         """ Use this function when updating an Stream output set.
@@ -458,7 +479,7 @@ class Protocol(Step):
         self.__tryUpdateOutputSet(outputName, outputSet, state)
 
     def __tryUpdateOutputSet(self, outputName, outputSet,
-                            state=Set.STREAM_OPEN, tries=1):
+                            state=Set.STREAM_OPEN, tries=1, firstException=None):
         try:
             # Update the set with the streamState value (either OPEN or CLOSED)
             outputSet.setStreamState(state)
@@ -478,14 +499,16 @@ class Protocol(Step):
             outputSet.close()
 
         except Exception as ex:
-            print("Error trying to update output of protocol, tries=%d" % tries)
 
-            if tries > 3:
-                raise ex
+            if tries > pw.Config.getUpdateSetAttempts():
+                raise BlockingIOError("Can't update %s (output) of %s after %s attempts. Reason: %s. "
+                                      "Concurrency, a non writable file system or a quota exceeded could be among the causes." %
+                                      (outputName, self,tries-1, ex)) from firstException
             else:
-                time.sleep(tries)
+                logger.warning("Trying to update %s (output) of protocol %s, attempt=%d: %s " % (outputName, self, tries, ex))
+                time.sleep(pw.Config.getUpdateSetAttemptsWait())
                 self.__tryUpdateOutputSet(outputName, outputSet, state,
-                                          tries + 1)
+                                          tries + 1, firstException= ex if tries==1 else firstException)
 
     def hasExpert(self):
         """ This function checks if the protocol has
@@ -536,10 +559,11 @@ class Protocol(Step):
         """ This function will retrieve the text value
         of an enum parameter in the definition, taking the actual value in
         the protocol.
-        Params:
-            paramName: the name of the enum param.
-        Returns:
-            the string value corresponding to the enum choice.
+
+        :param paramName: the name of the enum param.
+
+        :returns: the string value corresponding to the enum choice.
+
         """
         index = getattr(self, paramName).get()
         return self.getParam(paramName).choices[index]
@@ -625,8 +649,9 @@ class Protocol(Step):
 
             # Consider here scalars with pointers inside
             elif isinstance(attr, Scalar) and attr.hasPointer():
-                if attr.get() is not None:
-                    yield key, attr.getPointer()
+                # Scheduling was stale cause this Scalar with pointers where not returned
+                #if attr.get() is not None:
+                yield key, attr.getPointer()
 
     def iterInputPointers(self):
         """ This function is similar to iterInputAttributes, but it yields
@@ -645,34 +670,36 @@ class Protocol(Step):
             elif attr.isPointer():
                 yield key, attr
 
-    def inputProtocolDict(self):
+    def getProtocolsToUpdate(self):
         """
-        This function returns a dictionary of protocols that need to update
+        This function returns a list of protocols ids that need to update
         their database to launch this protocol (this method is only used
         when a WORKFLOW is restarted or continued).
         Actions done here are:
-        1. Iterate over the main input Pointer of this protocol
-           (here, 3 different cases are analyzed)
 
-           A) When the pointer points to a protocol
+        #. Iterate over the main input Pointer of this protocol
+            (here, 3 different cases are analyzed):
 
-           B) When the pointer points to another object (INDIRECTLY).
-              - The pointer has an _extended value (new parameters configuration
+            A #. When the pointer points to a protocol
+
+            B #. When the pointer points to another object (INDIRECTLY).
+                The pointer has an _extended value (new parameters configuration
                 in the protocol)
 
-           C) When the pointer points to another object (DIRECTLY).
+            C #. When the pointer points to another object (DIRECTLY).
+
               - The pointer has not an _extended value (old parameters
                 configuration in the protocol)
 
-        2. The PROTOCOL to which the pointer points is determined and saved in
-           the dictionary
+        #. The PROTOCOL to which the pointer points is determined and saved in
+            the list
 
-        3. If this pointer points to another object (case B and C):
-           - Iterate over the main attributes of this pointer
-           - if any attribute is a pointer, then we move to PROTOCOL and repeat
-             this procedure from step 1
+        #. If this pointer points to a set (case B and C):
+
+          - Iterate over the main attributes of the set
+            - if attribute is a pointer then we add the pointed protocol to the ids list
         """
-        protocolDict = {}
+        protocolIds = []
         protocol = None
         for key, attrInput in self.iterInputAttributes():
             output = attrInput.get()
@@ -684,40 +711,46 @@ class Protocol(Step):
                 else:  # case C
 
                     if self.getProject() is not None:
-                        protocol = self.getProject().getRunsGraph().getNode(str(output.getObjParentId())).run
+                        protocol = self.getProject().getRunsGraph(refresh=True).getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
                         # Pointers do not have the __project set.
-                        # We do not have an clear way to get the protocol if
+                        # We do not have a clear way to get the protocol if
                         # we do not have the project object associated
                         # This case implies Direct Pointers to Sets
                         # (without extended): hopefully this will only be
                         # created from tests
-                        print("Can't get protocol info from input attribute."
+                        logger.warning("Can't get %s info from %s."
                               " This could render unexpected results when "
-                              "scheduling protocols.")
+                              "scheduling protocols. Value: %s" % (key, self, attrInput))
                         continue
 
+                # If there is output
                 if output is not None:
+                    # For each output attribute: Looking for pointers like SetOfCoordinates.micrographs
                     for k, attr in output.getAttributes():
+                        # If it's a pointer
                         if isinstance(attr, Pointer):
-                            if attr.get() is not None:
-                                auxDict = protocol.inputProtocolDict()
-                                for auxKey in auxDict:
-                                    if auxKey not in protocolDict.keys():
-                                        protocolDict[auxKey] = auxDict[auxKey]
-                                break
+                            logger.debug("Pointer found in output: %s.%s (%s)" % (output, k, attr))
+                            prot = attr.getObjValue()
+                            if prot is not None:
+                                if isinstance(prot, Protocol):
+                                    protocolIds.append(prot.getObjId())
+                                else:
+                                    logger.warning(f"We have found that {output}.{key} points to {attr} "
+                                                   f"and is a direct pointer. Direct pointers are less reliable "
+                                                   f"in streaming scenarios. Developers should avoid them.")
+            protocolIds.append(protocol.getObjId())
 
-            protocolDict[protocol.getObjId()] = protocol
+        return protocolIds
 
-        return protocolDict
-
-    def hasLinkedInputs(self):
-        """ Return if True if some of the input pointers are referring to
-        an output that is not ready yet.
+    def getInputStatus(self):
+        """ Returns if any input pointer is not ready yet and if there is
+         any pointer to an open set
         """
-        linkedPointers = []
-        emptyPointers = []
+        emptyPointers = False
+        openSetPointer = False
+        emptyInput = False
 
         for paramName, attr in self.iterInputPointers():
 
@@ -736,23 +769,43 @@ class Protocol(Step):
             condition = self.evalParamCondition(paramName)
 
             obj = attr.get()
+            if isinstance(obj, Protocol) and obj.getStatus() == STATUS_SAVED:  # the pointer points to a protocol
+                emptyPointers = True
+            if obj is None and attr.hasValue():
+                emptyPointers = True
             if condition and obj is None and not param.allowsNull:
-                if attr.hasValue():
-                    linkedPointers.append(paramName)
-                else:
-                    emptyPointers.append(paramName)
+                if not attr.hasValue():
+                   emptyInput = True
 
-        return linkedPointers and not emptyPointers
+            if not self.worksInStreaming() and isinstance(obj, Set) and obj.isStreamOpen():
+                openSetPointer = True
 
-    def iterOutputAttributes(self, outputClass=None):
+        return emptyInput, openSetPointer, emptyPointers
+
+    def iterOutputAttributes(self, outputClass=None, includePossible=False):
         """ Iterate over the outputs produced by this protocol. """
 
         iterator = self._iterOutputsNew if self._useOutputList else self._iterOutputsOld
 
-        # Iterate
+        hasOutput=False
+
+        # Iterate through actual outputs
         for key, attr in iterator():
             if outputClass is None or isinstance(attr, outputClass):
+                hasOutput = True
                 yield key, attr
+
+        # NOTE: This will only happen in case there is no actual output.
+        # There is no need to avoid duplication of actual output and possible output.
+        if includePossible and not hasOutput and self.getPossibleOutputs() is not None:
+            for possibleOutput in self.getPossibleOutputs():
+                if isinstance(possibleOutput, str):
+                    yield possibleOutput, self._possibleOutputs[possibleOutput]
+                else:
+                    yield possibleOutput.name, possibleOutput.value
+
+    def getPossibleOutputs(self):
+        return self._possibleOutputs
 
     def _iterOutputsNew(self):
         """ This methods iterates through a list where outputs have been
@@ -855,9 +908,13 @@ class Protocol(Step):
             for paramName, param in self._definition.iterParams():
                 # Create the var with value coming from kwargs or from
                 # the default param definition
-                var = param.paramClass(value=kwargs.get(paramName,
-                                                        param.default.get()))
-                setattr(self, paramName, var)
+                try:
+                    value = kwargs.get(paramName, param.default.get())
+                    var = param.paramClass(value=value)
+                    setattr(self, paramName, var)
+                except Exception as e:
+                    raise ValueError("Can't create parameter '%s' and set it to %s" %
+                                     (paramName, value)) from e
         else:
             print("FIXME: Protocol '%s' has not DEFINITION"
                   % self.getClassName())
@@ -880,12 +937,13 @@ class Protocol(Step):
         If not objects are passed, the whole protocol is stored.
         """
         if self.mapper is not None:
-            if len(objs) == 0:
-                self.mapper.store(self)
-            else:
-                for obj in objs:
-                    self.mapper.store(obj)
-            self.mapper.commit()
+            with self._lock:
+                if len(objs) == 0:
+                    self.mapper.store(self)
+                else:
+                    for obj in objs:
+                        self.mapper.store(obj)
+                self.mapper.commit()
 
     def _insertChild(self, key, child):
         """ Insert a new child not stored previously.
@@ -918,10 +976,9 @@ class Protocol(Step):
 
     def __insertStep(self, step, **kwargs):
         """ Insert a new step in the list.
-        Params:
-         **kwargs:
-            prerequisites: a list with the steps index that need to be done
-                           previous than the current one."""
+
+        :param prerequisites: a single integer or a list with the steps index that need to be done
+                           previous to the current one."""
         prerequisites = kwargs.get('prerequisites', None)
 
         if prerequisites is None:
@@ -929,6 +986,10 @@ class Protocol(Step):
                 # By default add the previous step as prerequisite
                 step.addPrerequisites(len(self._steps))
         else:
+            # Allow passing just an id
+            if not isinstance(prerequisites, list):
+                prerequisites = [prerequisites]
+
             step.addPrerequisites(*prerequisites)
 
         self._steps.append(step)
@@ -941,15 +1002,29 @@ class Protocol(Step):
         """ Do not reset the init time in RESUME_MODE"""
         previousStart = self.initTime.get()
         super().setRunning()
-        if self.getRunMode() == MODE_RESUME:
+        if self.getRunMode() == MODE_RESUME and previousStart is not None:
             self.initTime.set(previousStart)
         else:
             self._cpuTime.set(0)
 
     def setAborted(self):
-        """ Abort the protocol and finalize the steps"""
-        super().setAborted()
-        self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+        """ Abort the protocol, finalize the steps and close all open sets"""
+        try:
+            super().setAborted()
+            self._updateSteps(lambda step: step.setAborted(), where="status='%s'" % STATUS_RUNNING)
+            self._closeOutputSet()
+        except Exception as e:
+            print("An error occurred aborting the protocol (%s)" % e)
+
+    def setFailed(self, msg):
+        """ Set the run failed and close all open  sets. """
+        super().setFailed(msg)
+        self._closeOutputSet()
+
+    def _finalizeStep(self, status, msg=None):
+        """ Closes the step and setting up the protocol process id """
+        super()._finalizeStep(status, msg)
+        self._pid.set(None)
 
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
@@ -961,6 +1036,10 @@ class Protocol(Step):
             stepsSet.update(step)
         stepsSet.write()
         stepsSet.close()  # Close the connection
+
+    def getPath(self, *paths):
+        """ Same as _getPath but without underscore. """
+        return self._getPath(*paths)
 
     def _getPath(self, *paths):
         """ Return a path inside the workingDir. """
@@ -1161,7 +1240,12 @@ class Protocol(Step):
         has started running.
         """
         self.info(pwutils.magentaStr("STARTED") + ": %s, step %d, time %s" %
-                  (step.funcName.get(), step._index, step.initTime.datetime()))
+                  (step.funcName.get(), step._index, step.initTime.datetime()),
+                  extra=getExtraLogInfo("PROTOCOL", STATUS.START,
+                                        project_name=self.getProject().getName(),
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName(),
+                                        step_id=step._index))
         self.__updateStep(step)
 
     def _stepFinished(self, step):
@@ -1185,7 +1269,12 @@ class Protocol(Step):
         self._store(self._stepsDone,  self._cpuTime)
 
         self.info(pwutils.magentaStr(step.getStatus().upper()) + ": %s, step %d, time %s"
-                  % (step.funcName.get(), step._index, step.endTime.datetime()))
+                  % (step.funcName.get(), step._index, step.endTime.datetime()),
+                  extra=getExtraLogInfo("PROTOCOL",STATUS.STOP,
+                                        project_name=self.getProject().getName(),
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName(),
+                                        step_id=step._index))
         if step.isFailed() and self.stepsExecutionMode == STEPS_PARALLEL:
             # In parallel mode the executor will exit to close
             # all working threads, so we need to close
@@ -1255,6 +1344,15 @@ class Protocol(Step):
         pass
 
     def copy(self, other, copyId=True, excludeInputs=False):
+        """
+        Copies its attributes into the passed protocol
+
+        :param other: protocol instance to copt the attributes to
+        :param copyId: True (default) copies the identifier
+        :param excludeInputs: False (default). If true input attributes are excluded
+
+        """
+
         # Input attributes list
         inputAttributes = []
 
@@ -1388,29 +1486,38 @@ class Protocol(Step):
         """ Before calling this method, the working dir for the protocol
         to run should exists.
         """
-        self.__initLogs()
-
-        self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
-
-        # Store the full machine name where the protocol is running
-        # and also its PID
-        self.setPid(os.getpid())
-        self.setHostFullName(pwutils.getHostFullName())
-
-        self.info('Hostname: %s' % self.getHostFullName())
-        self.info('PID: %s' % self.getPid())
-        self.info('pyworkflow: %s' % pw.__version__)
-        self.info('plugin: %s' % self.getClassPackageName())
-        if hasattr(self.getClassPackage(), "__version__"):
-            self.info('plugin v: %s' % self.getClassPackage().__version__)
-        self.info('currentDir: %s' % os.getcwd())
-        self.info('workingDir: %s' % self.workingDir)
-        self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
         try:
-            self.info('          MPI: %d' % self.numberOfMpi)
-            self.info('      threads: %d' % self.numberOfThreads)
+            self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
+            self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
+                                                               project_name=self.getProject().getName(),
+                                                               prot_id=self.getObjId(),
+                                                               prot_name=self.getClassName()))
+            # Store the full machine name where the protocol is running
+            # and also its PID
+            self.setPid(os.getpid())
+            self.setHostFullName(pwutils.getHostFullName())
+
+            self.info('Hostname: %s' % self.getHostFullName())
+            self.info('PID: %s' % self.getPid())
+            self.info('pyworkflow: %s' % pw.__version__)
+            self.info('plugin: %s' % self.getClassPackageName())
+            if hasattr(self.getClassPackage(), "__version__"):
+                self.info('plugin v: %s' % self.getClassPackage().__version__)
+            self.info('currentDir: %s' % os.getcwd())
+            self.info('workingDir: %s' % self.workingDir)
+            self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
+            try:
+                self.info('          MPI: %d' % self.numberOfMpi)
+                self.info('      threads: %d' % self.numberOfThreads)
+            except Exception as e:
+                self.info('  * Cannot get information about MPI/threads (%s)' % e)
+        # Something went wrong ans at this point status is launched. We mark it as failed.
         except Exception as e:
-            self.info('  * Cannot get information about MPI/threads (%s)' % e)
+            print(e)
+            self.setFailed(str(e))
+            self._store(self.status, self.getError())
+            self._endRun()
+            return
 
         Step.run(self)
         if self.isFailed():
@@ -1432,40 +1539,24 @@ class Protocol(Step):
             self.cleanTmp()
 
         self.info(pwutils.greenStr('------------------- PROTOCOL ' +
-                                   self.getStatusMessage().upper()))
-        self.__closeLogs()
+                                   self.getStatusMessage().upper()),
+                  extra=getExtraLogInfo("PROTOCOL",STATUS.STOP,
+                                        project_name=self.getProject().getName(),
+                                        prot_id=self.getObjId(),
+                                        prot_name=self.getClassName()))
 
-    def __initLogs(self):
-        """ Open the log file overwriting its content if the protocol is going
-        to be execute from zero.
-        Otherwise append the new content to the old one.
-        Also open logs files and redirect the systems streams.
-        """
-        self._log = ScipionLogger(self.getLogPaths()[2])
-
-        if self.runMode.get() == MODE_RESTART:
-            mode = 'w+'
-        else:
-            mode = 'a'
-        # Backup the the system streams
-        self.__stdErr = sys.stderr
-        self.__stdOut = sys.stdout
-        self.__openLogsFiles(mode)
-        # Redirect the system streams to the protocol files
-        sys.stdout = self.__fOut
-        if pwutils.envVarOn('SCIPION_SEPARATE_STDERR'):
-            sys.stderr = self.__fErr
-        else:
-            sys.stderr = self.__fOut  # send stderr to wherever stdout appears
-            # TODO: maybe do not show separate "run.stdout" and "run.stderr"
-            # in the "Output Log" section if we put them together.
 
     def getLogPaths(self):
-        return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', 'run.log', SCHEDULE_LOG]))
+        return [self.getStdoutLog(),self.getStderrLog() , self.getScheduleLog()]
+
+    def getStdoutLog(self):
+        return self._getLogsPath("run.stdout")
+
+    def getStderrLog(self):
+        return self._getLogsPath('run.stderr')
 
     def getScheduleLog(self):
-        return self._getLogsPath(SCHEDULE_LOG)
+        return self._getLogsPath('schedule.log')
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
@@ -1475,20 +1566,6 @@ class Protocol(Step):
         """ Return the steps.sqlite file under logs directory. """
         return self._getLogsPath('steps.sqlite')
 
-    def __openLogsFiles(self, mode):
-        self.__fOut = open(self.getLogPaths()[0], mode)
-        self.__fErr = open(self.getLogPaths()[1], mode)
-
-    def __closeLogsFiles(self):
-        self.__fOut.close()
-        self.__fErr.close()
-
-    def __closeLogs(self):
-        self._log.close()
-        # Restore system streams
-        sys.stderr = self.__stdErr
-        sys.stdout = self.__stdOut
-        self.__closeLogsFiles()
 
     def _addChunk(self, txt, fmt=None):
         """
@@ -1527,15 +1604,18 @@ class Protocol(Step):
                 outputs.append('File "%s" does not exist' % fname)
         return outputs
 
-    def getLogsLastLines(self, lastLines=None):
+    def getLogsLastLines(self, lastLines=None, logFile=0):
         """
-        Get the log last(lastLines) lines
+        Get the last(lastLines) lines of a log file.
+
+        :param lastLines, if None, will try 'PROT_LOGS_LAST_LINES' env variable, otherwise 20
+        :param logFile: Log file to take the lines from, default = 0 (std.out). 1 for stdErr.
         """
         if not lastLines:
             lastLines = int(os.environ.get('PROT_LOGS_LAST_LINES', 20))
 
         # Get stdout
-        stdoutFn =self.getLogPaths()[0]
+        stdoutFn =self.getLogPaths()[logFile]
 
         if not os.path.exists(stdoutFn):
             return []
@@ -1555,17 +1635,16 @@ class Protocol(Step):
             return output
 
     def warning(self, message, redirectStandard=True):
-        self._log.warning(message, redirectStandard)
+        self._log.warning(message)
 
-    def info(self, message, redirectStandard=True):
-        self._log.info(message, redirectStandard)
+    def info(self, message, extra=None):
+        self._log.info(message, extra= extra)
 
     def error(self, message, redirectStandard=True):
-        self._log.error(message, redirectStandard)
+        self._log.error(message)
 
     def debug(self, message):
-        if pw.Config.debugOn():
-            self.info(message)
+        self._log.debug(message)
 
     def getWorkingDir(self):
         return self.workingDir.get()
@@ -1690,14 +1769,16 @@ class Protocol(Step):
 
     @classmethod
     def validatePackageVersion(cls, varName, errors):
-        """ Function to validate the the package version specified in
+        """
+        Function to validate the package version specified in
         configuration file ~/.config/scipion/scipion.conf is among the available
         options and it is properly installed.
-        Params:
-            package: the package object (ej: eman2 or relion). Package should contain the
-                     following methods: getVersion(), getSupportedVersions()
-            varName: the expected environment var containing the path (and version)
-            errors: list to added error if found
+
+        :param package: the package object (ej: eman2 or relion). Package should contain the
+            following methods: getVersion(), getSupportedVersions()
+        :param varName: the expected environment var containing the path (and version)
+        :param errors: list of strings to add errors if found
+
         """
         package = cls.getClassPackage()
         packageName = cls.getClassPackageName()
@@ -1961,19 +2042,27 @@ class Protocol(Step):
         """ Return a summary message to provide some information to users. """
         try:
             baseSummary = self._summary() or ['No summary information.']
+
+            if isinstance(baseSummary, str):
+                baseSummary = [baseSummary]
+
+            if not isinstance(baseSummary, list):
+                raise Exception("Developers error: _summary() is not returning "
+                                "a list")
+
+            comments = self.getObjComment()
+            if comments:
+                baseSummary += ['', '*COMMENTS:* ', comments]
+
+            if self.getError().hasValue():
+                baseSummary += ['', '*ERROR:*', self.getError().get()]
+
+            if self.summaryWarnings:
+                baseSummary += ['', '*WARNINGS:*']
+                baseSummary += self.summaryWarnings
+
         except Exception as ex:
             baseSummary = [str(ex)]
-
-        comments = self.getObjComment()
-        if comments:
-            baseSummary += ['', '*COMMENTS:* ', comments]
-
-        if self.getError().hasValue():
-            baseSummary += ['', '*ERROR:*', self.getError().get()]
-
-        if self.summaryWarnings:
-            baseSummary += ['', '*WARNINGS:*']
-            baseSummary += self.summaryWarnings
 
         return baseSummary
 
@@ -2201,6 +2290,12 @@ class Protocol(Step):
         """
         pass
 
+    def getSize(self):
+        """ Returns the size of the folder corresponding to this protocol"""
+        if not self._size:
+            self._size = getFileSize(self.getPath())
+
+        return self._size
 
 class LegacyProtocol(Protocol):
     """ Special subclass of Protocol to be used when a protocol class
@@ -2221,16 +2316,22 @@ class LegacyProtocol(Protocol):
 # ---------- Helper functions related to Protocols --------------------
 
 def runProtocolMain(projectPath, protDbPath, protId):
-    """ Main entry point when a protocol will be executed.
-    This function should be called when:
-    scipion runprotocol ...
-    Params:
-        projectPath: the absolute path to the project directory.
-        protDbPath: path to protocol db relative to projectPath
-        protId: id of the protocol object in db.
     """
+    Main entry point when a protocol will be executed.
+    This function should be called when::
+
+        scipion runprotocol ...
+
+    :param projectPath: the absolute path to the project directory.
+    :param protDbPath: path to protocol db relative to projectPath
+    :param protId: id of the protocol object in db.
+
+    """
+
     # Enter to the project directory and load protocol from db
     protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
+
+    setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 
     hostConfig = protocol.getHostConfig()
 
@@ -2347,7 +2448,7 @@ def isProtocolUpToDate(protocol):
     dbTS = pwutils.getFileLastModificationDate(protocol.getDbPath())
 
     if not (protTS and dbTS):
-        print("Can't compare if protocol is up to date: "
+        logger.info("Can't compare if protocol is up to date: "
               "Protocol %s, protocol time stamp: %s, %s timeStamp: %s"
               % (protocol, protTS, protocol, dbTS))
     else:

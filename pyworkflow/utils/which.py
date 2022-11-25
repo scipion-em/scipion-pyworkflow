@@ -92,22 +92,23 @@ def _cull(potential, matches, verbose=0):
 def whichgen(command, path=None, verbose=0, exts=None):
     """Return a generator of full paths to the given command.
     
-    "command" is a the name of the executable to search for.
-    "path" is an optional alternate path list to search. The default it
+    :param command: is a the name of the executable to search for.
+    :param path: is an optional alternate path list to search. The default it
         to use the PATH environment variable.
-    "verbose", if true, will cause a 2-tuple to be returned for each
+    :param verbose: if true, will cause a 2-tuple to be returned for each
         match. The second element is a textual description of where the
         match was found.
-    "exts" optionally allows one to specify a list of extensions to use
+    :param exts: optionally allows one to specify a list of extensions to use
         instead of the standard list for this system. This can
         effectively be used as an optimization to, for example, avoid
         stat's of "foo.vbs" when searching for "foo" and you know it is
         not a VisualBasic script but ".vbs" is on PATHEXT. This option
         is only supported on Windows.
 
-    This method returns a generator which yields either full paths to
-    the given command or, if verbose, tuples of the form (<path to
-    command>, <where path found>).
+    :return: This method returns a generator which yields either full paths to
+        the given command or, if verbose, tuples of the form (<path to
+        command>, <where path found>).
+
     """
     matches = []
     if path is None:
@@ -179,20 +180,21 @@ def whichgen(command, path=None, verbose=0, exts=None):
 def which(command, path=None, verbose=0, exts=None):
     """Return the full path to the first match of the given command on
     the path.
-    
-    "command" is a the name of the executable to search for.
-    "path" is an optional alternate path list to search. The default is
-        to use the PATH environment variable.
-    "verbose", if true, will cause a 2-tuple to be returned. The second
-        element is a textual description of where the match was found.
-    "exts" optionally allows one to specify a list of extensions to use
+
+    :param command: is a the name of the executable to search for.
+    :param path: is an optional alternate path list to search.
+        The default is to use the PATH environment variable.
+    :param verbose: if true, will cause a 2-tuple to be returned.
+        The second element is a textual description of where the match was found.
+    :param exts: optionally allows one to specify a list of extensions to use
         instead of the standard list for this system. This can
         effectively be used as an optimization to, for example, avoid
         stat's of "foo.vbs" when searching for "foo" and you know it is
         not a VisualBasic script but ".vbs" is on PATHEXT. This option
         is only supported on Windows.
 
-    If no match is found for the command, an empty String is returned.
+    :return If no match is found for the command, an empty string is returned.
+
     """
     try:
         match = next(whichgen(command, path, verbose, exts))
@@ -210,17 +212,18 @@ def whichall(command, path=None, verbose=0, exts=None):
     """Return a list of full paths to all matches of the given command
     on the path.  
 
-    "command" is a the name of the executable to search for.
-    "path" is an optional alternate path list to search. The default it
+    :param command: is a the name of the executable to search for.
+    :param path: is an optional alternate path list to search. The default it
         to use the PATH environment variable.
-    "verbose", if true, will cause a 2-tuple to be returned for each
+    :param verbose: if true, will cause a 2-tuple to be returned for each
         match. The second element is a textual description of where the
         match was found.
-    "exts" optionally allows one to specify a list of extensions to use
+    :param exts: optionally allows one to specify a list of extensions to use
         instead of the standard list for this system. This can
         effectively be used as an optimization to, for example, avoid
         stat's of "foo.vbs" when searching for "foo" and you know it is
         not a VisualBasic script but ".vbs" is on PATHEXT. This option
         is only supported on Windows.
+
     """
     return list(whichgen(command, path, verbose, exts))

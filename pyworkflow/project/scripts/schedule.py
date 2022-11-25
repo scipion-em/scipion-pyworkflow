@@ -40,7 +40,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python -m pyworkflow/project/scripts/schedule projectName 
+    Usage: python -m pyworkflow.project.scripts.schedule projectName 
     
               options: --ignore ProtClassName1 ProtClassName2 ProtClassLabel1 ...
               
@@ -85,7 +85,7 @@ except:
 project = Project(pw.Config.getDomain(), projectPath)
 project.load()
 
-runGraph = project.getRunsGraph(False)
+runGraph = project.getRunsGraph()
 roots = runGraph.getRootNodes()
 
 # Now assuming that there is no dependencies between runs
@@ -94,12 +94,18 @@ roots = runGraph.getRootNodes()
 for root in roots:
     for child in root.getChilds():
         workflow, _ = project._getWorkflowFromProtocol(child.run)
-        for prot in workflow:
+        for prot, level in workflow.values():
+            if prot.forceSchedule.get():
+                print(pwutils.blueStr("\nStopping scheduling at '%s'. Force scheduling found.\n"
+                                      % protLabelName))
+                sys.exit()
+
             protClassName = prot.getClassName()
             protLabelName = prot.getObjLabel()
             if (protClassName not in sys.argv[3:] and
                     protLabelName not in sys.argv[3:]):
-                project.scheduleProtocol(prot, workflow[prot]*INITIAL_SLEEP_TIME)
+                project.scheduleProtocol(prot,
+                                         initialSleepTime=level*INITIAL_SLEEP_TIME)
             else:
                 print(pwutils.blueStr("\nNot scheduling '%s' protocol named '%s'.\n"
                                       % (protClassName, protLabelName)))

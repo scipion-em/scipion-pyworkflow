@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # **************************************************************************
 # *
-# * Authors:     Pablo Conesa (pconesa@cnb.csic.es) [1]
+# * Authors:     J.M. De la Rosa Trevin (delarosatrevin@scilifelab.se) [1]
 # *
-# * [1] Unidad de  Bioinformatica of Centro Nacional de Biotecnologia , CSIC
+# * [1] SciLifeLab, Stockholm University
 # *
 # * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,25 @@
 # *
 # **************************************************************************
 
-from pyworkflow.project.project import Project
-from unittest import TestCase
-from unittest.mock import patch
+import pyworkflow.tests as pwtests
+
+from pyworkflow import Config
+from pyworkflowtests.protocols import  ConcurrencyProtocol
 
 
-# NOTE: This test as it is might serve as a skeleton for future testing the fixLinks
-# but as it is now it does not test anything at all. I leave it as an example of using patch (mock testing)
-class TestProject(TestCase):
+class TestConcurrency(pwtests.BaseTest):
+    
+    @classmethod
+    def setUpClass(cls):
+        pwtests.setupTestOutput(cls)
 
-    def test_fixlinks(self):
-        """ Test fixlinks call."""
+    
+       # Set the application domain
+        Config.setDomain("pyworkflowtests")
+        pwtests.setupTestProject(cls)
 
-        with patch("pyworkflow.project.Project.getRuns") as getruns:
 
-            getruns.return_value = []
-            proj = Project("domain", "path")
-            proj.fixLinks("foo")
+    def test_simple_steps_concurrency(self):
+        prot = self.newProtocol(ConcurrencyProtocol, numberOfThreads=3)
+
+        self.launchProtocol(prot)

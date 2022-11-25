@@ -21,7 +21,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import logging
+logger = logging.getLogger(__name__)
 
 import os
 import tkinter as tk
@@ -125,9 +126,10 @@ class ProjectsView(tk.Frame):
                 frame = self.createProjectLabel(parent, p, color=colors[i % 2])
                 frame.grid(row=r, column=0, padx=10, pady=5, sticky='new')
                 r += 1
+
             except Exception as ex:
-                print("ERROR loading project: %s" % p.getName())
-                print(ex)
+                logger.error("Couldn't load project %s" % p.getName(), exc_info=True)
+
         text.window_create(tk.INSERT, window=parent)
         text.bindWidget(parent)
         text.setReadOnly(True)
@@ -209,6 +211,8 @@ class ProjectsView(tk.Frame):
 
         if askYesNo(Message.TITLE_DELETE_PROJECT,
                     "Project *%s*. " % projName + Message.MESSAGE_DELETE_PROJECT, self.root):
+
+            logger.info("User agreed to delete project %s" % projName)
             self.manager.deleteProject(projName)
 
             #Delete the frame

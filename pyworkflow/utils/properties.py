@@ -129,7 +129,7 @@ class Message:
     LABEL_HOST = 'Host'
     LABEL_THREADS = 'Threads'
     LABEL_MPI = 'MPI'
-    LABEL_QUEUE = 'Use queue?'
+    LABEL_QUEUE = 'Use a queue engine?'
     LABEL_QUEUE_FOR_JOBS = 'Use queue for Jobs?'
 
     LABEL_WAIT_FOR = 'Wait for'
@@ -158,9 +158,11 @@ Define the number of processors to be used in the execution.
     """
 
     HELP_USEQUEUE = """
-    Click *Yes* if you want to submit a single job per protocol to a Queue system.
-    The queue commands to launch and stop jobs should be configured
-    for the current host in the _%s_ file.
+    Click Yes if you want to send this execution to a queue engine like Slurm, Torque, ...
+    The queue commands to launch and stop jobs should be configured at
+    _%s_ file.
+    
+    See %s for more information.
         """
     HELP_USEQUEUEPERJOB = """
     Click *Yes* if you want to submit the multiple jobs per protocol to a Queue system.
@@ -170,9 +172,13 @@ Define the number of processors to be used in the execution.
 
     HELP_WAIT_FOR = """
     Specify a comma separated list of protocol IDs if you want
-that this protocol starts after the input protocols in the list
-are finished. This function will allow you to "schedule" many
-runs that will be executed after each other.
+    to *schedule* this protocol and wait for those protocols to finish before
+    starting this one.
+    
+    This function will allow you to "schedule" many
+    runs that will be executed after each other.
+     
+    See %s for more information.
     """
     
     TITLE_NAME_RUN = ' Protocol Run: '
@@ -283,14 +289,18 @@ Do you really want to continue?'
 You are going to *RESTART* the run: 
   %s
 
-Do you really want to restart?'
+Do you really want to restart it?'
 """
-    LABEL_RESTART_PROTOCOL = """
-    Do you want to *RESTART* ONLY the run: 
-      %s 
-    *ALL DATA* related with the rest of protocols that depends on this, 
-    will be permanently removed.  
-    """
+    LABEL_RESTART_FORM_MANY = """
+Following data will be *REMOVED* : 
+  %s
+
+What do you want to restart?
+
+  *Single* : Just this protocol, rest will be reset.
+  *All*: All above listed protocols will be restarted.
+"""
+
     TITLE_STOP_FORM = 'Confirm STOP'
     LABEL_STOP_FORM = 'Do you really want to *STOP* this run?'
     
@@ -309,6 +319,7 @@ Do you really want to restart?'
     TITLE_STOPPED_WORKFLOW_FAILED = 'Error while stopping the workflow'
     TITLE_RESETED_WORKFLOW_FAILED = 'Error while resetting the workflow'
     TITLE_LAUNCHED_WORKFLOW_FAILED = 'The workflow can not be relaunched from this protocol.\n'
+    TITLE_ACTIVE_PROTOCOLS = 'The following protocols are active:'
     
     # SHOWJ_WEB
     SHOWJ_TITLE = 'Showj'
@@ -385,6 +396,7 @@ class PluginStates:
     TO_UPDATE = 'to_update'
     SUCCESS = 'success'
     ERRORS = 'errors'
+    WAITING = 'waiting'
 
 
 class PluginInformation:
@@ -403,6 +415,7 @@ class Icon:
     RUNS_LIST = 'fa-bars.gif'
     ACTION_NEW = 'fa-plus-circle.gif'
     ACTION_EDIT = 'fa-pencil.gif'
+    ACTION_SELECT_FROM = 'fa-arrow-down.gif'
     ACTION_SELECT_TO = 'fa-arrow-up.gif'
     ACTION_COPY = 'fa-files-o.gif'
     ACTION_DELETE = 'fa-trash-o.gif'

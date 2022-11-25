@@ -283,6 +283,7 @@ class BoundTree(Tree):
         for c, w in cols[1:]:
             self.column(c, width=w)
             self.heading(c, text=c, command=lambda _c=c: self.sortTree(_c, _c))
+
         self.grid(row=0, column=0, sticky='news')
 
         self.menu = tk.Menu(self, tearoff=0)
@@ -405,7 +406,7 @@ class BoundTree(Tree):
 
                 except Exception as ex:
                     print("error: ", ex)
-                    if obj.getObjId():
+                    if hasattr(obj, "getObjId") and obj.getObjId():
                         print("error object with id=%d (%s) is duplicated!!!"
                               % (obj.getObjId(), str(obj)))
                     else:
@@ -651,3 +652,31 @@ class ListTreeProviderTemplate(ListTreeProviderString):
 
     def getValues(self, obj):
         return (obj.description,)
+
+class AttributesTreeProvider(ListTreeProviderString):
+    def __init__(self, item):
+        TreeProvider.__init__(self)
+        self.objList = self._attributesToObjectList(item)
+        self.getColumns = lambda: [('attribute', 250),
+                                   ('value', 125)]
+        self.getObjects = lambda: self.objList
+
+    def _attributesToObjectList(self, item):
+        """ Returns a list of all available attributes ready as a list of objects for the tree"""
+        objList = []
+
+        for key, attr in item.getAttributesToStore():
+            clone = attr.clone()
+            clone.attrName = key
+            objList.append(clone)
+        return objList
+
+    def getObjectInfo(self, obj):
+        info = {'key': obj.attrName, 'text': self.getText(obj), 'values': self.getValues(obj)}
+        return info
+
+    def getText(self, obj):
+        return obj.attrName
+
+    def getValues(self, obj):
+        return (obj.get(),)

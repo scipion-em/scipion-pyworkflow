@@ -28,8 +28,12 @@
 This module handles process execution
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
 import sys
 from subprocess import check_call
+import psutil
 
 from .utils import greenStr
 from pyworkflow import Config
@@ -44,9 +48,9 @@ def runJob(log, programname, params,
                               env, gpuList=gpuList)
     
     if log is None:
-        print("** Running command: %s" % greenStr(command))
+        logger.info("** Running command: %s" % greenStr(command))
     else:
-        log.info(greenStr(command), True)
+        log.info(greenStr(command))
 
     return runCommand(command, env, cwd)
         
@@ -55,7 +59,7 @@ def runCommand(command, env=None, cwd=None):
     """ Execute command with given environment env and directory cwd """
 
     # First let us create core dumps if in debug mode
-    if Config.debugOn(env):
+    if Config.debugOn():
         import resource
         resource.setrlimit(resource.RLIMIT_CORE,
                            (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
@@ -79,9 +83,14 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
     if gpuList:
         params = params % {'GPU': ' '.join(str(g) for g in gpuList)}
+        if "CUDA_VISIBLE_DEVICES" in programname:
+            sep = "," if len(gpuList) > 1 else ""
+            programname = programname % {'GPU': sep.join(str(g) for g in gpuList)}
+
+    prepend = '' if env is None else env.getPrepend()
 
     if numberOfMpi <= 1:
-        return '%s %s' % (programname, params)
+        return '%s %s %s' % (prepend, programname, params)
     else:
         assert hostConfig is not None, 'hostConfig needed to launch MPI processes.'
 
@@ -90,34 +99,33 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
             
         mpiFlags = '' if env is None else env.get('SCIPION_MPI_FLAGS', '') 
 
-        return hostConfig.mpiCommand.get() % {
+        mpiCmd = hostConfig.mpiCommand.get() % {
             'JOB_NODES': numberOfMpi,
             'COMMAND': "%s `which %s` %s" % (mpiFlags, programname, params),
         }
+        return '%s %s' % (prepend, mpiCmd)
 
 
 def killWithChilds(pid):
     """ Kill the process with given pid and all children processes.
-    Params:
-     pid: the process id to terminate
+
+    :param pid: the process id to terminate
     """
-    import psutil
     proc = psutil.Process(pid)
     for c in proc.children(recursive=True):
         if c.pid is not None:
-            print("Terminating child pid: %d" % c.pid)
+            logger.info("Terminating child pid: %d" % c.pid)
             c.kill()
-    print("Terminating process pid: %s" % pid)
+    logger.info("Terminating process pid: %s" % pid)
     if pid is None:
-        print("WARNING! Got None PID!!!")
+        logger.warning("Got None PID!!!")
     else:
         proc.kill()
 
 
 def isProcessAlive(pid):
-    import psutil
     try:
-        proc = psutil.Process(pid)
-        return proc.is_running()
-    except psutil.NoSuchProcess:
+        psutil.Process(pid)
+        return True
+    except Exception:
         return False

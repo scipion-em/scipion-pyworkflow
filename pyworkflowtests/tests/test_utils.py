@@ -14,7 +14,7 @@ from io import StringIO
 from pyworkflow import APPS
 from pyworkflow.utils.process import killWithChilds
 from pyworkflow.tests import *
-from pyworkflow.utils import utils, prettyDict
+from pyworkflow.utils import utils, prettyDict, getListFromValues
 from pyworkflow.utils import ProgressBar
 
 
@@ -80,14 +80,37 @@ class TestProccess(BaseTest):
 class TestGetListFromRangeString(BaseTest):
 
     def test_getListFromRangeString(self):
-        inputStrings = ["1,5-8,10",         "2,6,9-11",        "2 5, 6-8"]
-        outputLists = [[1, 5, 6, 7, 8, 10], [2, 6, 9, 10, 11], [2, 5, 6, 7, 8]]
+        inputStrings = ["1,5-8,10"        , "2,6,9-11"       , "2 5, 6-8"     , "1-4 8"]
+        outputLists = [[1, 5, 6, 7, 8, 10], [2, 6, 9, 10, 11], [2, 5, 6, 7, 8], [1,2,3,4, 8]]
 
         for s, o in zip(inputStrings, outputLists):
             self.assertEqual(o, pwutils.getListFromRangeString(s))
             # Check that also works properly with spaces as delimiters
             s2 = s.replace(',', ' ')
             self.assertEqual(o, pwutils.getListFromRangeString(s2))
+
+
+class TestListFromValues(unittest.TestCase):
+    """ Tests list created from str"""
+
+    def _callAndAssert(self, strValue, expected, length=None, caster=str):
+
+        result = getListFromValues( strValue, length, caster)
+
+        self.assertEqual(result, expected, "List from string does not work for %s" % strValue)
+
+    def test_getListFromValues(self):
+        """ Test numeric list definitions like:
+            '1 1 2x2 4 4' -> ['1', '1', '2', '2', '4', '4']
+            '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']"
+        """
+
+        self._callAndAssert('1 1 2x2 4 4', ['1', '1', '2', '2', '4', '4'])
+        self._callAndAssert('2x3, 3x4, 1',['3', '3', '4', '4', '4', '1'])
+        self._callAndAssert('2,3,4,1', [2, 3, 4, 1], caster=int)
+        self._callAndAssert('2 , 3 , 4 , 1', [2, 3, 4, 1], caster=int)
+        self._callAndAssert('2,3.3,4', [2.0, 3.3, 4.0], caster=float)
+
 
 
 class TestProgressBar(unittest.TestCase):

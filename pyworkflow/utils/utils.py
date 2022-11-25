@@ -21,7 +21,10 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+logger = logging.getLogger(__name__)
 
+import contextlib
 import sys
 import os
 import re
@@ -142,11 +145,14 @@ class UtcConverter:
 to_utc = UtcConverter()
 
 def prettyLog(msg):
-    print(cyan(prettyTime(datetime.now(), secs=True)), msg)
+    logger.info(cyanStr(msg))
 
 
 class Timer(object):
     """ Simple Timer base in datetime.now and timedelta. """
+
+    def __init__(self, message=""):
+        self._message = message
 
     def tic(self):
         self._dt = datetime.now()
@@ -155,7 +161,7 @@ class Timer(object):
         return datetime.now() - self._dt
 
     def toc(self, message='Elapsed:'):
-        print(message, self.getElapsedTime())
+        logger.info(message + str(self.getElapsedTime()))
 
     def getToc(self):
         return prettyDelta(self.getElapsedTime())
@@ -164,16 +170,18 @@ class Timer(object):
         self.tic()
 
     def __exit__(self, type, value, traceback):
-        self.toc()
+        self.toc(self._message)
+
 
 def timeit(func):
-    """ Decorator function to have a simple measurement
-    of the execution time of a given function.
-    Just use:
-    @timeit
-    def func(...)
-        ...
-    to use it.
+    """
+    Decorator function to have a simple measurement of the execution time of a given function.
+    To use it ::
+
+        @timeit
+        def func(...)
+            ...
+
     """
 
     def timedFunc(*args, **kwargs):
@@ -240,16 +248,26 @@ def getUniqueItems(originalList):
     resultList = [auxDict.setdefault(x, x) for x in originalList if x not in auxDict]
     return resultList
 
+def sortListByList(inList, priorityList):
+    """ Returns a list sorted by some elements in a second priorityList"""
+    if priorityList:
+        sortedList = priorityList + [item for item in inList
+                                                     if item not in priorityList]
+        return sortedList
+    else:
+        return inList
+
 
 def executeRemoteX(command, hostName, userName, password):
-    """ Execute a remote command with X11 forwarding.
-    Params:
-        command: Command to execute.
-        hostName: Remote host name.
-        userName: User name.
-        password: Password.
-    Returns: 
-        Tuple with standard output and error output.
+    """
+    Execute a remote command with X11 forwarding. Currently not used.
+
+    :param command: Command to execute.
+    :param hostName: Remote host name.
+    :param userName: User name.
+    :param password: Password.
+
+    :returns Tuple with standard output and error output.
     """
     scriptPath = os.path.abspath(os.path.join(os.path.dirname(__file__), "sshAskPass.sh"))
     pswCommand = "echo '" + password + "' | " + scriptPath + " ssh -X " + userName + "@" + hostName + " " + command
@@ -260,14 +278,14 @@ def executeRemoteX(command, hostName, userName, password):
 
 
 def executeRemote(command, hostName, userName, password):
-    """ Execute a remote command.
-    Params:
-        command: Command to execute.
-        hostName: Remote host name.
-        userName: User name.
-        password: Password.
-    Returns: 
-        Tuple with standard input, standard output and error output.
+    """ Execute a remote command. Currently not used
+
+    :param command: Command to execute.
+    :param hostName: Remote host name.
+    :param userName: User name.
+    :param password: Password.
+
+    :returns Tuple with standard input, standard output and error output.
     """
     import paramiko
     ssh = paramiko.SSHClient()
@@ -281,13 +299,14 @@ def executeRemote(command, hostName, userName, password):
 
 def executeLongRemote(command, hostName, userName, password):
     """ Execute a remote command.
-    Params:
-        command: Command to execute.
-        hostName: Remote host name.
-        userName: User name.
-        password: Password.
-    Returns: 
-        Tuple with standard input, standard output and error output.
+
+    :param command: Command to execute.
+    :param hostName: Remote host name.
+    :param userName: User name.
+    :param password: Password.
+
+    :returns Tuple with standard input, standard output and error output.
+
     """
     import paramiko
     import select
@@ -330,29 +349,49 @@ def getHostFullName():
     return socket.getfqdn()
 
 
+# ******************************File utils *******************************
+
 def isInFile(text, filePath):
-    """ Checks if given text is in the given file.
-    params:
-        text: Text to check.
-        filePath : File path to check.
-    returns: True if the given text is in the given file, 
-             False if it is not in the file.
+    """
+    Checks if given text is in the given file.
+
+    :param text: Text to check.
+    :param filePath: File path to check.
+
+    :returns True if the given text is in the given file,
+        False if it is not in the file.
+
     """
     return any(text in line for line in open(filePath))
 
 
 def getLineInFile(text, fileName):
     """ Find the line where the given text is located in the given file.
-    params:
-       text: Text to check.
-       filePath : File path to check.
-    returns: File number where the text was located.
+
+    :param text: Text to check.
+    :param filePath: File path to check.
+
+    :return line number where the text was located.
+
     """
     with open(fileName) as f:
         for i, line in enumerate(f):
             if text in line:
                 return i + 1
     return None
+
+def hasAnyFileChanged(files, time):
+    """ Returns true if any of the files in files list has been changed after 'time'"""
+    for file in files:
+        if hasFileChangedSince(file, time):
+            return True
+
+    return False
+
+def hasFileChangedSince(file, time):
+    """ Returns true if the file has changed after 'time'"""
+    modTime = datetime.datetime.fromtimestamp(getmtime(file))
+    return time < modTime
 
 
 # ------------- Colored message strings -----------------------------
@@ -369,12 +408,12 @@ class StrColors(Enum):
 
 def getColorStr(text, color, bold=False):
     """ Add ANSI color codes to the string if there is a terminal sys.stdout.
-    Params:
-     text: text to be colored
-     color: red or green
-     bold: bold the text
+
+    :param text: text to be colored
+    :param color: red or green
+    :param bold: bold the text
     """
-    if envVarOn('SCIPION_SAFE_COLORS') and not sys.stdout.isatty():
+    if not Config.colorsInTerminal():
         return text
 
     attr = [str(color.value)]
@@ -422,15 +461,15 @@ blackB, redB, greenB, yellowB, blueB, magentaB, cyanB, whiteB = [
     ansi(i, bold=True) for i in range(30, 38)]
 
 # -------------- Hyper text highlighting ----------------------------
-"""
-We use a subset of TWiki hyper text conventions.
-In particular:
-    *some_text* will display some_text in bold
-    _some_text_ will display some_text in italic
-    Links:
-        http://www.link-page.com  -> hyperlink using the url as label
-        [[http://www.link-page.com][Link page]] -> hyperlink using "Link page" as label
-"""
+#
+# We use a subset of TWiki hyper text conventions.
+# In particular:
+#     *some_text* will display some_text in bold
+#     _some_text_ will display some_text in italic
+#     Links:
+#         http://www.link-page.com  -> hyperlink using the url as label
+#         [[http://www.link-page.com][Link page]] -> hyperlink using "Link page" as label
+
 # Types of recognized styles
 HYPER_BOLD = 'bold'
 HYPER_ITALIC = 'italic'
@@ -462,11 +501,11 @@ HYPER_ALL_RE = re.compile(PATTERN_ALL)
 
 def parseHyperText(text, matchCallback):
     """ Parse the text recognizing Hyper definitions below.
-    Params:
-        matchCallback: a callback function to processing each matching,
-                       it should accept the type of match (HYPER_BOLD, ITALIC or LINK)
-    Return:
-        The input text with the replacements made by matchCallback
+
+    :param matchCallback: a callback function to processing each matching,
+        it should accept the type of match (HYPER_BOLD, ITALIC or LINK)
+
+    :return The input text with the replacements made by matchCallback
     """
 
     def _match(match):
@@ -584,24 +623,26 @@ def getRangeStringFromList(list):
     return ','.join(ranges)
 
 
-def getListFromValues(valuesStr, length=None):
+def getListFromValues(valuesStr, length=None, caster=str):
     """ Convert a string representing list items into a list.
-    The items should be separated by spaces and a multiplier 'x' can be used.
+    The items should be separated by spaces or commas and a multiplier 'x' can be used.
     If length is not None, then the last element will be repeated
     until the desired length is reached.
+
     Examples:
     '1 1 2x2 4 4' -> ['1', '1', '2', '2', '4', '4']
     '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']
+
     """
     result = []
-
+    valuesStr = valuesStr.replace(","," ")
     for chunk in valuesStr.split():
         values = chunk.split('x')
         n = len(values)
         if n == 1:  # 'x' is not present in the chunk, single value
-            result += values
+            result += [caster(values[0])]
         elif n == 2:  # multiple the values by the number after 'x'
-            result += [values[1]] * int(values[0])
+            result += [caster(values[1])] * int(values[0])
         else:
             raise Exception("More than one 'x' is not allowed in list string value.")
 
@@ -609,7 +650,7 @@ def getListFromValues(valuesStr, length=None):
     # the last element until length is reached
     if length is not None and length > len(result):
         item = result[-1]
-        result += [item] * (length - len(result))
+        result += [caster(item)] * (length - len(result))
 
     return result
 
@@ -646,21 +687,21 @@ class Environ(dict):
                 return self.get(k)
 
         if mandatory:
-            print("None of the variables: %s found in the Environment. "
+            logger.info("None of the variables: %s found in the Environment. "
                   "Please check scipion.conf files." % (str(keys)))
 
         return None
 
     def set(self, varName, varValue, position=REPLACE):
         """ Modify the value for some variable.
-        Params:
-            varName: for example LD_LIBRARY_PATH
-            varValue: the value to add or replace.
-            position: controls how the value will be changed.
-                If REPLACE, it will overwrite the value of
-                the var.
-                BEGIN or END will preserve the current value
-                and add (at begin or end) the new value.
+
+        :param varName: for example LD_LIBRARY_PATH
+        :param varValue: the value to set, prefix or suffix.
+        :param position: controls how the value will be changed.
+            If REPLACE, it will overwrite the value of
+            the var. BEGIN or END will preserve the current value
+            and will add, at the beginning or end, the new value.
+
         """
         if varName in self and position != self.REPLACE:
             if position == self.BEGIN:
@@ -685,7 +726,19 @@ class Environ(dict):
         if existsVariablePaths(libraryPath):
             self.update({'LD_LIBRARY_PATH': libraryPath}, position=position)
         else:
-            print("Some paths do not exist in: % s" % libraryPath)
+            logger.info("Some paths do not exist in: % s" % libraryPath)
+
+    def setPrepend(self, prepend):
+        """ Use this method to set a prepend string that will be added at
+        the beginning of any command that will be run in this environment.
+        This can be useful for example when 'modules' need to be loaded and
+        a simple environment variables setup is not enough.
+        """
+        setattr(self, '__prepend', prepend)
+
+    def getPrepend(self):
+        """ Return if there is any prepend value. See setPrepend function. """
+        return getattr(self, '__prepend', '')
 
 
 def existsVariablePaths(variableValue):
@@ -713,6 +766,7 @@ def envVarOn(varName, env=None):
     return strToBoolean(v)
 
 def strToBoolean(string):
+    """ Converts a string into a Boolean if the string is on of true, yes, on, 1. Case insensitive."""
     return string is not None and string.lower() in ['true', 'yes', 'on', '1']
 
 
@@ -722,27 +776,15 @@ def getMemoryAvailable():
     return virtual_memory().total // 1024 ** 2
 
 
-def startDebugger(password='a'):
-    if Config.debugOn():
-        try:
-            # FIXME: rpdb2 does not support python 3
-            from rpdb2 import start_embedded_debugger
-            print("Starting debugger...")
-            start_embedded_debugger(password)
-        except Exception:
-            print("Error importing rpdb2 debugging module, consider installing winpdb.")
-
-
 def getFreePort(basePort=0, host=''):
     import socket
-    port = 0
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((host, basePort))
         ipaddr, port = s.getsockname()
         s.close()
     except Exception as e:
-        print(e)
+        logger.error("Can't get a free port", exc_info=e)
         return 0
     return port
 
@@ -771,7 +813,7 @@ def hex_to_rgb(value):
 
 
 def rgb_to_hex(rgb):
-    return '#%02x%02x%02x' % rgb
+    return '#%02x%02x%02x' % (int(rgb[0]), int(rgb[1]), int(rgb[2]))
 
 
 def lighter(color, percent):
@@ -813,3 +855,27 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
             return default
     else:
         return value
+
+
+@contextlib.contextmanager
+def weakImport(package):
+    """
+    This method can be used to tolerate imports that may fail.
+
+    e.g::
+
+        from .protocol_ctffind import CistemProtCTFFind
+        with weakImport('tomo'):
+            from .protocol_ts_ctffind import CistemProtTsCtffind
+
+    In this case CistemProtTsCtffind should fail if tomo package is missing,
+    but exception is captured and all the imports above should be available
+
+    :param package: name of the package that is expected to fail
+
+    """
+    try:
+        yield
+    except ImportError as e:
+        if "'%s'" % package not in str(e):
+            raise e

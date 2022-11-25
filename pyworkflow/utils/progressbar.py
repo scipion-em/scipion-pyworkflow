@@ -37,7 +37,8 @@ class ProgressBar(object):
     A text progress bar is typically used to display the progress of a long
     running operation, providing a visual cue that processing is underway.
 
-    Example:
+    Example::
+
         N = 1000
         pb = ProgressBar(N, fmt=ProgressBar.FULL)
         pb.start()
@@ -45,6 +46,7 @@ class ProgressBar(object):
             pb.update(x+1)
             sleep(0.1)
         pb.finish()
+
     """
     DEFAULT = 'Progress: %(bar)s %(percent)3d%%'
     FULL = '%(bar)s %(current)d/%(total)d (%(percent)3d%%) %(remaining)d to go'

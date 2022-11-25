@@ -91,6 +91,7 @@ class Param(FormElement):
         # Allow pointers (used for scalars)
         self.allowsPointers = args.get('allowsPointers', False)
         self.validators = args.get('validators', [])
+        self.readOnly = args.get("readOnly", False)
         
     def __str__(self):
         return "    label: %s" % self.label.get()
@@ -232,7 +233,11 @@ class Form(object):
     def addParam(self, *args, **kwargs):
         """Add a new param to last section"""
         return self.lastSection.addParam(*args, **kwargs)
-    
+
+    # Adhoc method for specific params
+    def addBooleanParam(self, name, label, help, default=True, **kwargs):
+        return self.addParam(name, BooleanParam, label=label, help=help, default=default, **kwargs)
+
     def addHidden(self, *args, **kwargs):
         return self.lastSection.addHidden(*args, **kwargs)
     
@@ -329,6 +334,12 @@ class Form(object):
   
     def addParallelSection(self, threads=1, mpi=8, condition="",
                            hours=72, jobsize=0):
+
+        """ Adds the parallelization section to the form
+            pass threads=0 to disable threads parameter and mpi=0 to disable mpi params
+
+        :param threads: default value for of threads, defaults to 1
+        :param mpi: default value for mpi, defaults to 8"""
 
         self.addSection(label='Parallelization')
         self.addParam('hostName', StringParam, default="localhost",
@@ -442,19 +453,28 @@ class PointerParam(Param):
     def __init__(self,  paramClass=Pointer, **args):
         Param.__init__(self, paramClass=paramClass, **args)
         # This will be the class to be pointed
-        pointerClass = args.get('pointerClass')
-        if ',' in pointerClass:
-            self.pointerClass = CsvList()
-            self.pointerClass.set(pointerClass)
-        else:
-            self.pointerClass = String(pointerClass) 
-
+        self.setPointerClass(args['pointerClass'])
         # Some conditions on the pointed candidates
         self.pointerCondition = String(args.get('pointerCondition', None))
         self.allowsNull = Boolean(args.get('allowsNull', False))
         
     def setPointerClass(self, newPointerClass):
-        self.pointerClass.set(newPointerClass)
+
+        # Tolerate passing classes instead of their names
+        if isinstance(newPointerClass, list):
+            self.pointerClass = CsvList()
+            self.pointerClass.set(",". join([clazz.__name__ for clazz in newPointerClass]))
+
+        elif(isinstance(newPointerClass, str)):
+            if ',' in newPointerClass:
+                self.pointerClass = CsvList()
+                self.pointerClass.set(newPointerClass)
+            else:
+                self.pointerClass = String(newPointerClass)
+
+        # Single class item, not the string
+        else:
+            self.pointerClass = String(newPointerClass.__name__)
 
 
 class MultiPointerParam(PointerParam):
@@ -524,14 +544,16 @@ class NumericListParam(StringParam):
         
 class NumericRangeParam(StringParam):
     """ This class will serve to specify range of numbers with a string representation.
-     Possible notation are:
+     Possible notation are::
+
         "1,5-8,10" -> [1,5,6,7,8,10]
         "2,6,9-11" -> [2,6,9,10,11]
         "2 5, 6-8" -> [2,5,6,7,8]
+
     """
     def __init__(self, **args):
         StringParam.__init__(self, **args)
-        # TODO: ADD a syntax validator
+        self.addValidator(NumericRangeValidator())
         
         
 class TupleParam(Param):
@@ -542,6 +564,48 @@ class TupleParam(Param):
     def __init__(self, **args):
         Param.__init__(self, **args)
 
+
+class DeprecatedParam:
+    """ Deprecated param. To be used when you want to rename an existing param
+    and still be able to recover old param value. It acts like a redirector, passing the
+    value received when its value is set to the new renamed parameter
+
+    usage: In defineParams method, before the renamed param definition line add the following:
+
+    self.oldName = DeprecatedParam("newName", self)
+    form.addParam('newName', ...)
+
+    """
+    def __init__(self, newParamName, prot):
+        """
+
+        :param newParamName: Name of the renamed param
+        :param prot: Protocol hosting this and the renamed param
+
+        """
+        self._newParamName = newParamName
+        self.prot = prot
+        # Need to fake being a Object at loading time
+        self._objId = None
+        self._objIsPointer = False
+
+    def set(self, value, cleanExtended=False):
+        if hasattr(self.prot, self._newParamName):
+            newParam = self._getNewParam()
+            if newParam.isPointer():
+                newParam.set(value, cleanExtended)
+                self._extended = newParam._extended
+            else:
+                newParam.set(value)
+
+    def isPointer(self):
+        return self._getNewParam().isPointer()
+
+    def getObjValue(self):
+        return None
+
+    def _getNewParam(self):
+        return getattr(self.prot, self._newParamName)
 
 # -----------------------------------------------------------------------------
 #         Validators
@@ -612,7 +676,7 @@ class GT(Conditional):
 class GE(Conditional):
     def __init__(self, thresold, error='Value should be greater or equal than the threshold'):
         Conditional.__init__(self, error)
-        self._condition = lambda value: value >= thresold               
+        self._condition = lambda value: value is not None and value >= thresold
 
 
 class Range(Conditional):
@@ -623,18 +687,33 @@ class Range(Conditional):
         
 class NumericListValidator(Conditional):
     """ Validator for ListParam. See ListParam. """
-    def __init__(self, error='Incorrect format for numeric list param. '):
+    def __init__(self, error='Incorrect format for numeric list param'):
         Conditional.__init__(self, error)
         
     def _condition(self, value):
         try:
-            value = value.replace('x', '')
-            parts = value.split()
+            parts = re.split(r"[x\s]", value)
             for p in parts:
                 float(p)
             return True
         except Exception:
-            return False    
+            return False
+
+
+class NumericRangeValidator(Conditional):
+    """ Validator for RangeParam. See RangeParam. """
+
+    def __init__(self, error='Incorrect format for numeric range param'):
+        Conditional.__init__(self, error)
+
+    def _condition(self, value):
+        try:
+            parts = re.split(r"[-,\s]", value)
+            for p in parts:
+                float(p)
+            return True
+        except Exception:
+            return False
 
 
 class NonEmptyBoolCondition(Conditional):

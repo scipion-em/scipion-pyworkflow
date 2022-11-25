@@ -28,14 +28,13 @@ import webbrowser
 import tkinter as tk
 
 import pyworkflow as pw
-from pyworkflow.gui import Window, Message, Color, getBigFont
+from pyworkflow.gui import Window, Message, Color, getBigFont, defineStyle
 from pyworkflow.gui.widgets import GradientFrame
 from pyworkflow.utils.properties import Icon
 
 from .viewprojects import ProjectsView
 from .viewprotocols import ProtocolsView
 from .viewdata import ProjectDataView
-
 
 VIEW_PROJECTS = Message.VIEW_PROJECTS
 VIEW_PROTOCOLS = Message.VIEW_PROTOCOLS
@@ -57,6 +56,8 @@ class ProjectBaseWindow(Window):
         content.rowconfigure(1, weight=1)
         content.grid(row=0, column=0, sticky='news')
         self.content = content
+
+        defineStyle()
 
         if getattr(self, 'menuCfg', None):
             Window.createMainMenu(self, self.menuCfg)
@@ -90,7 +91,9 @@ class ProjectBaseWindow(Window):
         logoLabel = tk.Label(header, image=logoImg, 
                              borderwidth=0, anchor='nw', bg='white')
         logoLabel.grid(row=0, column=0, sticky='nw', padx=(5, 0), pady=5)
-        versionLabel = tk.Label(header, text=os.environ['SCIPION_VERSION'],
+        version = "%s - %s (core)" % (os.environ.get('SCIPION_VERSION', ""), pw.LAST_VERSION)
+
+        versionLabel = tk.Label(header, text=version,
                                 bg='white')
         versionLabel.grid(row=0, column=1, sticky='sw', pady=20)
         

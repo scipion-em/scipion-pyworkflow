@@ -29,10 +29,11 @@
 This module contains some sqlite basic tools to handle Databases.
 """
 
+import logging
+logger = logging.getLogger(__name__)
 from sqlite3 import dbapi2 as sqlite
-
-from pyworkflow import SCIPION_DEBUG_SQLITE
-from pyworkflow.utils import envVarOn
+from sqlite3 import OperationalError as OperationalError
+from pyworkflow.utils import STATUS, getExtraLogInfo, Config
 
 
 class SqliteDb:
@@ -40,23 +41,28 @@ class SqliteDb:
     It will create connection, execute queries and commands.
     """
     OPEN_CONNECTIONS = {}  # Store all connections made
-    
+
     def __init__(self):
         self._reuseConnections = False
-        
+
     def _createConnection(self, dbName, timeout):
         """Establish db connection"""
         self._dbName = dbName
         if self._reuseConnections and dbName in self.OPEN_CONNECTIONS:
             self.connection = self.OPEN_CONNECTIONS[dbName]
         else:
+            # self.closeConnection(dbName)  # Close the connect if exists for this db
             self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
             self.connection.row_factory = sqlite.Row
             self.OPEN_CONNECTIONS[dbName] = self.connection
-            
+            logger.debug("Connection open for %s" % dbName, extra=getExtraLogInfo(
+                "CONNECTIONS",
+                STATUS.START,
+                dbfilename=dbName))
+
         self.cursor = self.connection.cursor()
         # Define some shortcuts functions
-        if envVarOn(SCIPION_DEBUG_SQLITE):
+        if Config.debugSQLOn():
             self.executeCommand = self._debugExecute
         else:
             self.executeCommand = self.cursor.execute
@@ -68,19 +74,28 @@ class SqliteDb:
             connection = cls.OPEN_CONNECTIONS[dbName]
             del cls.OPEN_CONNECTIONS[dbName]
             connection.close()
-        
+            logger.debug("Connection closed for %s" % dbName,
+                         extra=getExtraLogInfo('CONNECTIONS', STATUS.STOP, dbfilename=dbName))
+
     def getDbName(self):
         return self._dbName
     
     def close(self):
         self.connection.close()
+        logger.debug("Connection closed for %s" % self._dbName,
+                     extra=getExtraLogInfo(
+                                        "CONNECTIONS",
+                                        STATUS.STOP,
+                                        dbfilename=self._dbName))
         if self._dbName in self.OPEN_CONNECTIONS:
             del self.OPEN_CONNECTIONS[self._dbName]
         
     def _debugExecute(self, *args):
         try:
-            print("COMMAND: ", args[0], self._dbName)
-            print("ARGUMENTS: ", args[1:])
+            logger.debug("COMMAND: %s; %s" %(args[0] , self._dbName),
+                extra=getExtraLogInfo("QUERY", STATUS.EVENT, dbfilename=self._dbName)
+            )
+            logger.debug("ARGUMENTS: " + str(args[1:]))
             return self.cursor.execute(*args)
         except Exception as ex:
             print(">>>> FAILED cursor.execute on db: '%s'" % self._dbName)

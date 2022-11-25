@@ -28,12 +28,11 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
-import os
 from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
 
-from pyworkflow import utils
+from pyworkflow.utils import getListFromValues, getListFromRangeString
 from pyworkflow.utils.reflection import getSubclasses
 
 
@@ -373,6 +372,8 @@ class Object(object):
             elif isinstance(attr, PointerList):
                 for pointer in otherAttr:
                     attr.append(pointer)
+            elif isinstance(attr, Scalar) and otherAttr.hasPointer():
+                attr.copy(otherAttr)
             else:
                 attr.set(otherAttr.get())
             
@@ -395,15 +396,20 @@ class Object(object):
                 v.__getObjDict(kPrefix, objDict, includeClass)
 
     def getObjDict(self, includeClass=False, includeBasic=False):
-        """ Return all attributes and values in a dictionary.
+        """
+        Return all attributes and values in a dictionary.
         Nested attributes will be separated with a dot in the dict key.
-        Params:
-            includeClass: if True, the values will be a tuple (ClassName, value)
-                otherwise only the values of the attributes
-            includeBasic: if True include the id, label and comment.
-                object.id: objId
-                object.label: objLabel
-                object.comment: objComment
+
+        :param includeClass: if True, the values will be a tuple (ClassName, value)
+            otherwise only the values of the attributes
+        :param includeBasic: if True include the id, label and comment.
+
+        includeBasic example::
+
+            object.id: objId
+            object.label: objLabel
+            object.comment: objComment
+
         """
         d = OrderedDict()
 
@@ -465,12 +471,14 @@ class Object(object):
         return [v.getObjValue() for v in mappedDict.values()]
     
     def copy(self, other, copyId=True, ignoreAttrs=[]):
-        """ Copy all attributes values from one object to the other.
+        """
+        Copy all attributes values from one object to the other.
         The attributes will be created if needed with the corresponding type.
-        Params:
-            other: the other object from which to make the copy.
-            copyId: if true, the _objId will be also copied.
+
+        :param other: the other object from which to make the copy.
+        :param copyId: if true, the _objId will be also copied.
             ignoreAttrs: pass a list with attributes names to ignore.
+
         """
         copyDict = {'internalPointers': []} 
         self._copy(other, copyDict, copyId, ignoreAttrs=ignoreAttrs)
@@ -528,15 +536,19 @@ class Object(object):
         return clone    
     
     def evalCondition(self, condition):
-        """ Check if condition is meet.
-        Params:
-            condition: the condition string, it can contains variables
-                or methods without arguments to be evaluated.
-            Examples:
-                hasCTF
-                hasCTF and not hasAlignment
-        Return:
-            The value of the condition evaluated with values
+        """
+        Check if condition is meet.
+
+        Examples of condition::
+
+            "hasCTF"
+            "hasCTF and not hasAlignment"
+
+        :param condition: the condition string, it can contain variables
+            or methods without arguments to be evaluated.
+
+        :return The value of the condition evaluated with values
+
         """
         # Split in possible tokens
         import re
@@ -628,14 +640,20 @@ class Scalar(Object):
         """Get the value, if internal value is None
         the default argument passed is returned. """
         if self.hasPointer():
-            return self._pointer.get().get(default)
+            # Get pointed value
+            pointedValue = self._pointer.get()
+
+            return default if pointedValue is None else pointedValue.get(default)
 
         if self.hasValue():
             return self._objValue
         return default
     
     def _copy(self, other, *args, **kwargs):
-        self.set(other.get())
+        if other.hasPointer():
+            self.setPointer(other.getPointer())
+        else:
+            self.set(other.get())
         
     def swap(self, other):
         """ Swap the contained value between
@@ -699,11 +717,13 @@ class String(Scalar):
 
     @classmethod
     def getDatetime(cls, strValue, formatStr=None, fs=True):
-        """ Get the datetime from the given string value.
-        Params:
-            strValue: string representation of the date
-            formatStr: if is None, use the default DATETIME_FORMAT.
-            fs: Use femto seconds or not, only when format=None
+        """
+        Converts the given string value to a datetime object.
+
+        :param strValue: string representation of the date
+        :param formatStr: if None, uses the default cls:String.DATETIME_FORMAT.
+        :param fs: Use femto seconds or not, only when format=None
+
         """
         if formatStr is None:
             try:
@@ -732,6 +752,15 @@ class String(Scalar):
     def datetime(self, formatStr=None, fs=True):
         """ Get the datetime from this object string value. """
         return String.getDatetime(self._objValue, formatStr, fs)
+
+    def getListFromValues(self, length=None, caster=int):
+        """ Returns a list from a string with values as described at getListFromValues. Useful for """
+        return getListFromValues(self._objValue, length, caster)
+
+    def getListFromRange(self):
+        """ Returns a list from a string with values as described at getListFromRangeString.
+         Useful for NumericRangeParam params"""
+        return getListFromRangeString(self._objValue)
 
 
 class Float(Scalar):
@@ -784,9 +813,9 @@ class Boolean(Scalar):
         return self.get() 
     
     def __bool__(self):
-        return self.get()  
-    
-    
+        return self.get()
+
+
 class Pointer(Object):
     """Reference object to other one"""
     EXTENDED_ATTR = '__attribute__'
@@ -834,7 +863,7 @@ class Pointer(Object):
             parts = ext.split('.')
             value = self._objValue
             for p in parts:
-                if p.isdigit():
+                if hasattr(value, "__getitem__") and p.isdigit():
                     value = value[int(p)]  # item case
                 else:
                     value = getattr(value, p, None)
@@ -845,12 +874,12 @@ class Pointer(Object):
             
         return value
     
-    def set(self, other):
+    def set(self, other, cleanExtended=True):
         """ Set the pointer value but cleaning the extended property. """
         Object.set(self, other)
         # This check is needed because set is call from the Object constructor
         # when this attribute is not setup yet (a dirty patch, I know)
-        if hasattr(self, '_extended'):
+        if cleanExtended and hasattr(self, '_extended'):
             self._extended.set(None)
         
     def hasExtended(self):
@@ -1055,7 +1084,6 @@ class Set(Object):
     STREAM_OPEN = 1
     STREAM_CLOSED = 2
 
-    FILE_TEMPLATE_NAME = 'set%s.sqlite'
     indexes = ['_index']
     
     def __init__(self, filename=None, prefix='', 
@@ -1091,6 +1119,14 @@ class Set(Object):
         return self._mapper
             
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+        """
+         This method operate on sets of values. They are used with a
+         GROUP BY clause to group values into subsets
+        :param operations: list of aggregate function such as COUNT, MAX, MIN,...
+        :param operationLabel: label to use by the aggregate function
+        :param groupByLabels: list of labels to group
+        :return: the aggregated value of each group
+        """
         return self._getMapper().aggregate(operations, operationLabel, groupByLabels)
 
     def setMapperClass(self, MapperClass):
@@ -1103,7 +1139,14 @@ class Set(Object):
     def __getitem__(self, itemId):
         """ Get the image with the given id. """
         closedMapper = self._mapper is None
-        item = self._getMapper().selectById(itemId)
+
+        if isinstance(itemId, dict):
+            for obj in self._getMapper().selectBy(**itemId):
+                item = obj
+                break
+        else:
+            item = self._getMapper().selectById(itemId)
+
         if closedMapper:
             self.close()
         return item
@@ -1159,11 +1202,12 @@ class Set(Object):
     def write(self, properties=True):
         """
         Commit the changes made to the Set underlying database.
-        Params:
-            properties: this flag controls when to write Set attributes to 
-                special table 'Properties' in the database. False value is 
-                use for example in SetOfClasses for not writing each Class2D 
-                properties.
+
+        :param properties: this flag controls when to write Set attributes to
+            special table 'Properties' in the database. False value is
+            use for example in SetOfClasses for not writing each Class2D
+            properties.
+
         """
         if properties:
             # self._getMapper().setProperty('self', (self.getClassName(), None))
@@ -1315,22 +1359,7 @@ class Set(Object):
         """
         self._getMapper().enableAppend()
 
-    @classmethod
-    def create(cls, path, template=None, suffix='', **kwargs):
-        """ Create a set and set the filename using the suffix.
-        If the file exists, it will be delete. """
 
-        if template is None:
-            template = cls.FILE_TEMPLATE_NAME
-
-        setFn = os.path.join(path, template % suffix)
-        # Close the connection to the database if
-        # it is open before deleting the file
-        utils.cleanPath(setFn)
-        import pyworkflow.mapper as pwmapper
-        pwmapper.SqliteDb.closeConnection(setFn)
-        setObj = cls(filename=setFn, **kwargs)
-        return setObj
 
 
     # ******* Streaming helpers to deal with sets **********

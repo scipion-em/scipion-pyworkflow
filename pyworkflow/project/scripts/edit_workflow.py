@@ -40,7 +40,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python scripts/edit_workflow.py workflow.json
+    Usage: python -m pyworkflow.project.scripts.edit_workflow workflow.json
         Edit the provide json file with scipion workflow.
         It will create a project, import the workflow and save
         the workflow back before closing the project.
@@ -77,7 +77,7 @@ class EditorProjectWindow(ProjectWindow):
     def close(self, e=None):
         try:
             print("Writing protocols to: ", jsonFn)
-            proj.getRunsGraph()  # Build project runs graph
+            proj.getRunsGraph(refresh=True)  # Build project runs graph
             proj.exportProtocols(proj.getRuns(), jsonFn)
             print("Deleting temporary folder: ", customUserData)
             pwutils.cleanPath(customUserData)

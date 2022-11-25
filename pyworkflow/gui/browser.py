@@ -33,9 +33,11 @@ import os.path
 import stat
 import tkinter as tk
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 import pyworkflow.utils as pwutils
-from . import gui
+from . import gui, LIST_TREEVIEW
 from .tree import BoundTree, TreeProvider
 from .text import TaggedText, openTextFileEditor
 from .widgets import Button, HotButton
@@ -84,7 +86,7 @@ class ObjectBrowser(tk.Frame):
 
     def _fillLeftPanel(self, frame):
         gui.configureWeigths(frame)
-        self.tree = BoundTree(frame, self.treeProvider)
+        self.tree = BoundTree(frame, self.treeProvider, style=LIST_TREEVIEW)
         self.tree.grid(row=0, column=0, sticky='news')
         self.itemConfig = self.tree.itemConfig
         self.getImage = self.tree.getImage
@@ -178,6 +180,9 @@ class FileInfo(object):
     def getDate(self):
         return self._stat.st_mtime if self._stat else 0
 
+    def isLink(self):
+        return os.path.islink(self._fullpath)
+
 
 class FileHandler(object):
     """ This class will be used to get the icon, preview and info
@@ -189,9 +194,9 @@ class FileHandler(object):
     def getFileIcon(self, objFile):
         """ Return the icon name for a given file. """
         if objFile.isDir():
-            icon = 'file_folder.gif'
+            icon = 'file_folder.gif' if not objFile.isLink() else 'file_folder_link.gif'
         else:
-            icon = 'file_generic.gif'
+            icon = 'file_generic.gif' if not objFile.isLink() else 'file_generic_link.gif'
 
         return icon
 
@@ -240,7 +245,9 @@ class FileTreeProvider(TreeProvider):
                 FileHandler.
         """
         for fileExt in extensions:
-            cls._FILE_HANDLERS[fileExt] = fileHandler
+            handlersList = cls._FILE_HANDLERS.get(fileExt, [])
+            handlersList.append(fileHandler)
+            cls._FILE_HANDLERS[fileExt] = handlersList
 
     def __init__(self, currentDir=None, showHidden=False, onlyFolders=False):
         TreeProvider.__init__(self, sortingColumnName=self.FILE_COLUMN)
@@ -250,15 +257,15 @@ class FileTreeProvider(TreeProvider):
         self.getColumns = lambda: [(self.FILE_COLUMN, 300),
                                    (self.SIZE_COLUMN, 70), ('Time', 150)]
 
-    def getFileHandler(self, obj):
+    def getFileHandlers(self, obj):
         filename = obj.getFileName()
         fileExt = pwutils.getExt(filename)
-        return self._FILE_HANDLERS.get(fileExt, self._DEFAULT_HANDLER)
+        return self._FILE_HANDLERS.get(fileExt, [self._DEFAULT_HANDLER])
 
     def getObjectInfo(self, obj):
         filename = obj.getFileName()
-        fileHandler = self.getFileHandler(obj)
-        icon = fileHandler.getFileIcon(obj)
+        fileHandlers = self.getFileHandlers(obj)
+        icon = fileHandlers[0].getFileIcon(obj)
 
         info = {'key': filename, 'text': filename,
                 'values': (obj.getSizeStr(), obj.getDateStr()), 'image': icon
@@ -267,12 +274,19 @@ class FileTreeProvider(TreeProvider):
         return info
 
     def getObjectPreview(self, obj):
-        fileHandler = self.getFileHandler(obj)
-        return fileHandler.getFilePreview(obj)
+        # Look for any preview available
+        fileHandlers = self.getFileHandlers(obj)
+
+        for fileHandler in fileHandlers:
+            preview = fileHandler.getFilePreview(obj)
+            if preview:
+                return preview
 
     def getObjectActions(self, obj):
-        fileHandler = self.getFileHandler(obj)
-        actions = fileHandler.getFileActions(obj)
+        fileHandlers = self.getFileHandlers(obj)
+        actions = []
+        for fileHandler in fileHandlers:
+            actions += fileHandler.getFileActions(obj)
         # Always allow the option to open as text
         # specially useful for unknown formats
         fn = obj.getPath()
@@ -305,7 +319,7 @@ class FileTreeProvider(TreeProvider):
                 # All ok...add item.
                 fileInfoList.append(FileInfo(self._currentDir, f))
         except Exception as e:
-            print("Can't list files at " + self._currentDir, e)
+            logger.error("Can't list files at " + self._currentDir, e)
 
         # Sort objects
         fileInfoList.sort(key=self.fileKey, reverse=not self.isSortingAscending())
@@ -338,6 +352,12 @@ class FileBrowser(ObjectBrowser):
     where the "objects" are just files and directories.
     """
 
+    _lastSelectedFile = None
+    "Class scope attribute to keep the lastSelected file"
+
+    _fileSelectedAtLoading = None
+    "Class scope attribute to offer *Recent* shortcut"
+
     def __init__(self, parent, initialDir='.',
                  selectionType=SELECT_FILE,
                  selectionSingle=True,
@@ -352,6 +372,19 @@ class FileBrowser(ObjectBrowser):
                  shortCuts=None,  # Shortcuts to common locations/paths
                  onlyFolders=False
                  ):
+        """
+
+        :param parent: Parent tkinter window.
+        :param initialDir: Folder to show when loading the dialog.
+        :param selectionType: Any of SELECT_NONE, SELECT_FILE, SELECT_FOLDER, SELECT_PATH.
+        :param showHidden: Pass True to show hidden files.
+        :param selectButton: text for the select button. Defaults to *Select*.
+        :param entryLabel: text for the entry widget. Default None. There will be no entry.
+        :param entryValue: default value for the entry. Needs entryLabel.
+        :param showInfo: callback to show a string message, otherwise _showInfo will be used.
+        :param shortCuts: list of extra :class:`ShortCut`
+        :param onlyFolders: Pass True to show only folders.
+        """
         self.pathVar = tk.StringVar()
         self.pathVar.set(os.path.abspath(initialDir))
         self.pathEntry = None
@@ -379,9 +412,9 @@ class FileBrowser(ObjectBrowser):
         buttonsFrame.grid(row=1, column=0)
 
     def _showInfo(self, msg):
-        """ Default way (print to console) to show a message with a given info.
+        """ Default way (logger.info to console) to show a message with a given info.
         """
-        print(msg)
+        logger.info(msg)
 
     def _fillLeftPanel(self, frame):
         """ Redefine this method to include a buttons toolbar and
@@ -449,6 +482,11 @@ class FileBrowser(ObjectBrowser):
                         self._actionWorkingDir)
         self._addButton(frame, 'Up', pwutils.Icon.ARROW_UP, self._actionUp)
 
+        self._fileSelectedAtLoading = FileBrowser._lastSelectedFile
+
+        if self._fileSelectedAtLoading is not None:
+            self._addButton(frame, 'Recent', None, self._actionRecent)
+
         # Add shortcuts
         self._addShortCuts(frame)
 
@@ -496,11 +534,17 @@ class FileBrowser(ObjectBrowser):
         # Current dir remains in _lastSelected
         self._lastSelected = FileInfo(os.path.dirname(newDir),
                                       os.path.basename(newDir))
+
+        FileBrowser._lastSelectedFile = self._lastSelected
+
         self.tree.focus(itemKeyToFocus)
 
     def _actionUp(self, e=None):
         parentFolder = pwutils.getParentFolder(self.treeProvider.getDir())
         self._goDir(parentFolder)
+
+    def _actionRecent(self, e=None):
+        self._goDir(self._fileSelectedAtLoading.getPath())
 
     def _actionHome(self, e=None):
         self._goDir(pwutils.getHomePath())
@@ -565,20 +609,21 @@ class FileBrowser(ObjectBrowser):
             self.pathEntry.focus()
 
     def onClose(self):
+        """ This onClose is replaced at init time in the FileBrowserWindow with its own callback"""
         pass
 
-    def onSelect(self, obj):
-        print(obj, "type: ", type(obj))
-
     def _close(self, e=None):
+        """ This _close is bound to the close button"""
         self.onClose()
 
     def _select(self, e=None):
-        _lastSelected = self.getSelected()
-        if _lastSelected is not None:
-            self.onSelect(_lastSelected)
+
+        self._lastSelected = self.getSelected()
+
+        if self._lastSelected is not None:
+            self.onSelect(self._lastSelected)
         else:
-            print('Select a valid file/folder')
+            self.showInfo('Select a valid file/folder')
 
     def getEntryValue(self):
         return self.entryVar.get()
@@ -638,8 +683,8 @@ class FileBrowserWindow(BrowserWindow):
                               **kwargs)
         if onSelect:
             def selected(obj):
-                onSelect(obj)
                 self.close()
+                onSelect(obj)
 
             browser.onSelect = selected
         browser.onClose = self.close

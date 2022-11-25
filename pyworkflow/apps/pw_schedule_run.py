@@ -25,6 +25,10 @@
 # *
 # **************************************************************************
 
+import logging
+
+from pyworkflow.utils import LoggingConfigurator
+
 import os
 import sys
 import time
@@ -36,35 +40,25 @@ from pyworkflow.protocol import (getProtocolFromDb,
                                  STATUS_LAUNCHED, Set, Protocol, MAX_SLEEP_TIME)
 from pyworkflow.constants import PROTOCOL_UPDATED
 
-# Add callback for remote debugging if available.
-from pyworkflow.utils import prettyTimestamp
-
-try:
-    from rpdb2 import start_embedded_debugger
-    from signal import signal, SIGUSR2
-
-    signal(SIGUSR2, lambda sig, frame: start_embedded_debugger('a'))
-except ImportError:
-    pass
-
 stopStatuses = [STATUS_FINISHED, STATUS_ABORTED, STATUS_FAILED]
 
 
 class RunScheduler:
     """ Check that all dependencies are met before launching a run. """
 
-    def __init__(self):
-        self._parseArgs()
+    def __init__(self, args, logger):
+        self._args = args
         # Enter to the project directory and load protocol from db
         self.protocol = self._loadProtocol()
         self.project = self.protocol.getProject()
-        self.log = open(self.protocol.getScheduleLog(), 'w')
+        self.log = logger
         self.protPid = os.getpid()
         self.protocol.setPid(self.protPid)
+        self.protocol._store(self.protocol._pid)
         self.prerequisites = list(map(int, self.protocol.getPrerequisites()))
         # Keep track of the last time the protocol was checked and
         # its modification date to avoid unnecessary db opening
-        self.updatedProtocols = []
+        self.updatedProtocols = dict()
         self.initial_sleep = self._args.initial_sleep
 
     def getSleepTime(self):
@@ -73,50 +67,20 @@ class RunScheduler:
     def getInitialSleepTime(self):
         return self.initial_sleep
 
-    def _parseArgs(self):
-        parser = argparse.ArgumentParser()
-        _addArg = parser.add_argument  # short notation
-
-        _addArg("projPath", metavar='PROJECT_NAME',
-                help="Project database path.")
-
-        _addArg("dbPath", metavar='DATABASE_PATH',
-                help="Protocol database path.")
-
-        _addArg("protId", type=int, metavar='PROTOCOL_ID',
-                help="Protocol ID.")
-
-        _addArg("--initial_sleep", type=int, default=0,
-                dest='initial_sleep', metavar='SECONDS',
-                help="Initial sleeping time (in seconds)")
-
-        _addArg("--sleep_time", type=int, default=15,
-                dest='sleepTime', metavar='SECONDS',
-                help="Sleeping time (in seconds) between updates.")
-
-        _addArg("--wait_for", nargs='*', type=int, default=[],
-                dest='waitProtIds', metavar='PROTOCOL_ID',
-                help="List of protocol ids that should be not running "
-                     "(i.e, finished, aborted or failed) before this "
-                     "run will be executed.")
-
-        self._args = parser.parse_args()
-
     def _loadProtocol(self):
         return getProtocolFromDb(self._args.projPath,
                                  self._args.dbPath,
                                  self._args.protId, chdir=True)
 
     def _log(self, msg):
-        self.log.write("%s: %s\n" % (prettyTimestamp(), msg))
-        self.log.flush()
+        self.log.info(msg)
 
     def _updateProtocol(self, protocol):
 
         protId = protocol.getObjId()
 
         if protId in self.updatedProtocols:
-            return
+            return self.updatedProtocols[protId]
 
         protDb = protocol.getDbPath()
 
@@ -124,8 +88,11 @@ class RunScheduler:
             updateResult = self.project._updateProtocol(protocol)
             if updateResult == PROTOCOL_UPDATED:
                 self._log("Updated protocol: %s (%s)" % (protId, protocol))
-            self.updatedProtocols.append(protId)
+            else:
+                self._log("The protocol %s (%s) is up to date" % (protId, protocol))
+            self.updatedProtocols[protId] = protocol
 
+        return protocol
 
     def _getProtocolFromPointer(self, pointer):
         """
@@ -183,9 +150,23 @@ class RunScheduler:
         penalize = 0
         self._log("Checking prerequisites... %s" % prerequisites)
         for protId in prerequisites:
-            prot = project.runGraph.getNode(str(protId)).run
+            # Check if prerequisites exist. In the case of metaprotocols, it
+            # may be necessary to load them from the project database.
+            node = project.getRunsGraph().getNode(str(protId))
+
+            if node is None:
+                self._log("Updating runs graph. Missing protocol ... %s" % protId)
+                project.getRunsGraph(refresh=True)
+
+            node = project.getRunsGraph().getNode(str(protId))
+            # Check if the protocol is within our workflow
+            if node is None:
+                self._log("Protocol can't wait for %s. Missing prerequisite " % protId)
+                break
+
+            prot = project.getRunsGraph().getNode(str(protId)).run
             if prot is not None:
-                self._updateProtocol(prot)
+                prot = self._updateProtocol(prot)
                 penalize += self._getSecondsToWait(prot)
                 if prot.getStatus() not in stopStatuses:
                     wait = True
@@ -205,8 +186,9 @@ class RunScheduler:
         self._log("Checking input data...")
         # Updating input protocols
         for key, attr in self.protocol.iterInputAttributes():
+            self.log.debug("Turn for %s" % key)
             inputProt = self._getProtocolFromPointer(attr)
-            self._updateProtocol(inputProt)
+            inputProt = self._updateProtocol(inputProt)
             penalize += self._getSecondsToWait(inputProt)
 
         validation = self.protocol.validate()
@@ -220,19 +202,26 @@ class RunScheduler:
                 inSet = attr.get()
                 if isinstance(inSet, Set) and inSet.isStreamOpen():
                     inputMissing = True
-                    self._log("Waiting for closing %s... (%s does not work in "
-                              "streaming)" % (inSet, self.protocol))
+                    self._log("Waiting for closing %s... (does not work in "
+                              "streaming)" % inSet)
+                    break
+                elif isinstance(inSet, Protocol) and not inSet.isFinished():  # Then is a pointer to a protocol
+                    inputMissing = True
+                    self._log("Waiting for protocol %s to finish... (does not work in "
+                              "streaming)" % inSet)
                     break
 
         if not inputMissing:
-            inputProtocolDict = self.protocol.inputProtocolDict()
-            for prot in inputProtocolDict.values():
-                self._updateProtocol(prot)
+            inputProtocolIds = self.protocol.getProtocolsToUpdate()
+            for protId in inputProtocolIds:
+                protocol = self.project.getProtocol(protId)
+                self.log.debug("Turn from inputProtocolDict for %s" % protocol)
+                self._updateProtocol(protocol)
 
         return inputMissing, penalize
 
     def schedule(self):
-        self._log("Scheduling protocol %s, pid: %s, prerequisites: %s" %
+        self._log("Scheduling protocol %s, PID: %s,prerequisites: %s" %
                   (self.protocol.getObjId(), self.protPid, self.prerequisites))
 
         initialSleepTime = runScheduler.getInitialSleepTime()
@@ -268,14 +257,62 @@ class RunScheduler:
             time.sleep(sleepTime)
 
         self._log("Launching the protocol >>>>")
-        self.log.close()
         self.project.launchProtocol(self.protocol, scheduled=True, force=True)
+
+def parseArgs():
+    parser = argparse.ArgumentParser()
+    _addArg = parser.add_argument  # short notation
+
+    _addArg("projPath", metavar='PROJECT_NAME',
+            help="Project database path.")
+
+    _addArg("dbPath", metavar='DATABASE_PATH',
+            help="Protocol database path.")
+
+    _addArg("protId", type=int, metavar='PROTOCOL_ID',
+            help="Protocol ID.")
+
+    _addArg("logPath", metavar='LOG_PATH', help='Path to the log file.')
+
+    _addArg("--initial_sleep", type=int, default=0,
+            dest='initial_sleep', metavar='SECONDS',
+            help="Initial sleeping time (in seconds)")
+
+    _addArg("--sleep_time", type=int, default=15,
+            dest='sleepTime', metavar='SECONDS',
+            help="Sleeping time (in seconds) between updates.")
+
+    _addArg("--wait_for", nargs='*', type=int, default=[],
+            dest='waitProtIds', metavar='PROTOCOL_ID',
+            help="List of protocol ids that should be not running "
+                 "(i.e, finished, aborted or failed) before this "
+                 "run will be executed.")
+
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
-    try:
-        runScheduler = RunScheduler()
-        runScheduler.schedule()
-    except Exception as ex:
-        print(ex)
-        print("Schedule fail with this parameters: ", sys.argv)
+
+    # Create a child process
+    # using os.fork() method
+    pid = os.fork()
+
+    # pid greater than 0 represents
+    # the parent process
+    if pid > 0:
+        sys.exit(0)
+    else:
+        try:
+            # Parse arguments
+            args = parseArgs()
+
+            # Configure logging
+            LoggingConfigurator.setUpProtocolSchedulingLog(args.logPath)
+            logger = logging.getLogger(__name__)
+
+            runScheduler = RunScheduler(args, logger)
+            runScheduler.schedule()
+
+        except Exception as ex:
+            print("Scheduling failed with these parameters: ", sys.argv)
+            raise ex from None

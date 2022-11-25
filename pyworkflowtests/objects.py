@@ -27,10 +27,11 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 """
 
 import os
-# This dos not allow expose basic Objects (Float, Scalar, ...) in the globals() and therefore
+# This does not allow expose basic Objects (Float, Scalar, ...) in the globals() and therefore
 # The Set (_classesDict dos not have it) --- pwobj.vars() could work too instead ofclassDict.update(globals()) in MockSet
 # import pyworkflow.object as pwobj
 from pyworkflow.object import Object, Float, CsvList, Integer, String, Set, Boolean, Pointer
+from pyworkflow.utils import cleanPath
 
 NO_INDEX = 0
 
@@ -483,6 +484,31 @@ class MockSet(Set, MockObject):
 
     def getFiles(self):
         return Set.getFiles(self)
+
+    @classmethod
+    def create(cls, outputPath,
+               prefix=None, suffix=None, ext=None,
+               **kwargs):
+        """ Create an empty set from the current Set class.
+         Params:
+            outputPath: where the output file will be written.
+            prefix: prefix of the created file, if None, it will be deduced
+                from the ClassName.
+            suffix: additional suffix that will be added to the prefix with a
+                "_" in between.
+            ext: extension of the output file, be default will use .sqlite
+        """
+        fn = prefix or cls.__name__.lower().replace('setof', '')
+
+        if suffix:
+            fn += '_%s' % suffix
+
+        fn += '.%s' % (ext or 'sqlite')
+
+        setPath = os.path.join(outputPath, fn)
+        cleanPath(setPath)
+
+        return cls(filename=setPath, **kwargs)
 
 
 class MockSetOfImages(MockSet):

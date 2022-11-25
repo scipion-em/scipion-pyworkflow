@@ -26,6 +26,7 @@
 
 import os
 import datetime as dt
+from logging import DEBUG, lastResort
 from time import sleep
 
 import pyworkflow
@@ -35,6 +36,10 @@ import pyworkflowtests
 from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
+
+NUMERIC_ATRIBUTE_NAME = "1"
+
+NUMERIC_ATTRIBUTE_VALUE = "numeric_attribute"
 
 
 class ListContainer(pwobj.Object):
@@ -140,6 +145,19 @@ class TestObject(pwtests.BaseTest):
         s.set(now)
         self.assertEqual(now, s.datetime())
 
+        # Ranges and values
+        s2.set("1 2 3 4")
+        self.assertEqual(s2.getListFromValues(caster=float), [1.,2.,3.,4.])
+        self.assertEqual(s2.getListFromRange(), [1, 2, 3, 4])
+
+        # Values ...
+        s2.set("2x4, 4, 7")
+        self.assertEqual(s2.getListFromValues(), [4, 4, 4, 7])
+
+        # Ranges
+        s2.set("2-8, 1-2, 7")
+        self.assertEqual(s2.getListFromRange(), [2, 3, 4, 5, 6, 7, 8, 1, 2, 7])
+
     def test_Pointer(self):
         c = Complex.createComplex()
         p = pwobj.Pointer()
@@ -234,6 +252,11 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(imgSet[7], ptr4.get())
         self.assertEqual(ptr4.getExtended(), 'outputImages.7')
 
+        # Test numeric attributes.
+        setattr(o2, NUMERIC_ATRIBUTE_NAME, NUMERIC_ATTRIBUTE_VALUE)
+        ptr5 = pwobj.Pointer(value=o2, extended=NUMERIC_ATRIBUTE_NAME)
+        self.assertEqual(NUMERIC_ATTRIBUTE_VALUE, ptr5.get())
+
     def test_set_properties(self):
         fn = self.getOutputPath('test_set_properties.sqlite')
         print("Writing to sqlite: %s" % fn)
@@ -259,7 +282,6 @@ class TestObject(pwtests.BaseTest):
     def test_Sets(self):
         stackFn = "images.stk"
         fn = self.getOutputPath('test_images2.sqlite')
-        print("Writing to sqlite: %s" % fn)
 
         imgSet = MockSetOfImages(filename=fn)
 
@@ -290,8 +312,6 @@ class TestObject(pwtests.BaseTest):
         # PERFORMANCE functionality
         def checkSetIteration(limit, skipRows=None):
 
-            print("Checking set iteration with limit:%s and skipRows: %s"
-                  % (limit, skipRows))
             expectedId = 1 if skipRows is None else skipRows+1
             index = 0
             for item in imgSet.iterItems(limit=(limit, skipRows)):
@@ -347,6 +367,13 @@ class TestObject(pwtests.BaseTest):
         self.assertIsInstance(ids, set, "getIdSet does not return a set")
         self.assertIsInstance(next(iter(ids)), int, "getIdSet items are not integer")
         self.assertEqual(len(ids), 10, "getIdSet does not return 10 items")
+
+        # Test load properties queries
+        from pyworkflow.mapper.sqlite_db import logger
+        logger.setLevel(DEBUG)
+        lastResort.setLevel(DEBUG)
+        imgSetVerbose = MockSetOfImages(filename=fn)
+        imgSetVerbose.loadAllProperties()
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values
