@@ -1112,6 +1112,14 @@ class Set(Object):
         return self._mapper
             
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+        """
+         This method operate on sets of values. They are used with a
+         GROUP BY clause to group values into subsets
+        :param operations: list of aggregate function such as COUNT, MAX, MIN,...
+        :param operationLabel: label to use by the aggregate function
+        :param groupByLabels: list of labels to group
+        :return: the aggregated value of each group
+        """
         return self._getMapper().aggregate(operations, operationLabel, groupByLabels)
 
     def setMapperClass(self, MapperClass):
