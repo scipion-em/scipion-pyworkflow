@@ -188,11 +188,12 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
     # Rename .gif by .png. In Linux with pillow 9.2.0 gif transparency is broken so
     # we need to go for png. But in the past, in Macs png didn't work and made us go from png to gif
     # We are now providing the 2 formats, prioritising pngs. If png work in MAC and windows then gif
-    # could be deleted. Otherwise we may need to do this replacement based on the OS.
+    # could be deleted. Otherwise, we may need to do this replacement based on the OS.
     # NOTE: "convert  my-image.gif PNG32:my-image.png" has converted gifs to pngs RGBA (32 bits) it seems pillow
     # needs RGBA format to deal with transparencies.
 
-    imageName = imageName.replace(".gif", ".png")
+    if not os.path.isabs(imageName):
+        imageName = imageName.replace(".gif", ".png")
     # imageName = "class_obj.png"
 
     if imageName in image_cache:
