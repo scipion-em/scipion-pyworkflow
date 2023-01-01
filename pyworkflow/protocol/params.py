@@ -693,6 +693,7 @@ class NumericListValidator(Conditional):
     def _condition(self, value):
         try:
             parts = re.split(r"[x\s]", value)
+            parts = list(filter(None, parts))
             for p in parts:
                 float(p)
             return True
@@ -709,6 +710,7 @@ class NumericRangeValidator(Conditional):
     def _condition(self, value):
         try:
             parts = re.split(r"[-,\s]", value)
+            parts = list(filter(None, parts))
             for p in parts:
                 float(p)
             return True
