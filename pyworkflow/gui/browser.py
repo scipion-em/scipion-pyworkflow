@@ -457,7 +457,8 @@ class FileBrowser(ObjectBrowser):
             tk.Entry(entryFrame,
                      textvariable=self.entryVar,
                      bg='white',
-                     width=65).grid(row=0, column=1, sticky='nw', pady=3)
+                     width=65,
+                     font=gui.getDefaultFont()).grid(row=0, column=1, sticky='nw', pady=3)
 
         frame.rowconfigure(treeRow, weight=1)
 
