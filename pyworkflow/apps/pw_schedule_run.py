@@ -67,7 +67,7 @@ class RunScheduler:
     def getInitialSleepTime(self):
         return self.initial_sleep
 
-    def _loadProtocol(self):
+    def _loadProtocol(self) -> Protocol:
         return getProtocolFromDb(self._args.projPath,
                                  self._args.dbPath,
                                  self._args.protId, chdir=True)
@@ -211,6 +211,9 @@ class RunScheduler:
                               "streaming)" % inSet)
                     break
 
+                else:
+                    self._log("%s is not blocking this protocol. All ready." % inSet)
+
         if not inputMissing:
             inputProtocolIds = self.protocol.getProtocolsToUpdate()
             for protId in inputProtocolIds:
@@ -221,8 +224,9 @@ class RunScheduler:
         return inputMissing, penalize
 
     def schedule(self):
-        self._log("Scheduling protocol %s, PID: %s,prerequisites: %s" %
-                  (self.protocol.getObjId(), self.protPid, self.prerequisites))
+        self._log("Scheduling protocol %s, PID: %s,prerequisites: %s, works in streaming: %s." %
+                  (self.protocol.getObjId(), self.protPid, self.prerequisites,
+                   self.protocol.worksInStreaming()))
 
         initialSleepTime = runScheduler.getInitialSleepTime()
         self._log("Waiting %s seconds before start checking inputs " % initialSleepTime)

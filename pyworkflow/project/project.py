@@ -1154,7 +1154,7 @@ class Project(object):
             protClass = emProtocols.get(protClassName, None)
 
             if protClass is None:
-                logger.error("Protocol with class name '%s' not found. Are you missing it's plugin?." % protClassName)
+                logger.error("Protocol with class name '%s' not found. Are you missing its plugin?." % protClassName)
             else:
                 protLabel = protDict.get('object.label', None)
                 prot = self.newProtocol(protClass,
@@ -1392,6 +1392,9 @@ class Project(object):
         """
         from pyworkflow.protocol.launch import _runsLocally
         pid = protocol.getPid()
+
+        if pid == 0:
+            return
 
         # Include running and scheduling ones
         # Exclude interactive protocols
