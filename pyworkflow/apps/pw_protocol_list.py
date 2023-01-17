@@ -128,8 +128,8 @@ if __name__ == '__main__':
         for group, prots in iterGroups(protDict):
             print("Package: ", group, "(%d protocols)" % len(prots))
             for p in prots:
-                print("   %s ( %s )" % (p[0], p[1].getClassLabel()))
-                print("      doc: ", p[1].__doc__)
+                print("   %s ( %s ):" % (p[1].getClassLabel(), p[0]))
+                print("    ", p[1].__doc__)
             print("-" * 100)
 
     else:

@@ -2105,15 +2105,18 @@ class Protocol(Step):
         try:
 
             journal = cite.get("journal", cite.get("booktitle", ""))
-            doi = cite.get("doi", "")
+            doi = cite.get("doi", "").strip()
+            url = cite.get("url", "").strip()
             # Get the first author surname
             if useKeyLabel:
                 label = cite['ID']
             else:
                 label = cite['author'].split(' and ')[0].split(',')[0].strip()
                 label += ' et al., %s, %s' % (journal, cite['year'])
-            if len(doi.strip()) > 0:
-                text = '[[%s][%s]] ' % (doi.strip(), label)
+            if len(doi) > 0:
+                text = '[[%s][%s]] ' % (doi, label)
+            elif len(url) > 0:
+                text = '[[%s][%s]] ' % (url, label)
             else:
                 text = label.strip()
             return text
@@ -2164,11 +2167,11 @@ class Protocol(Step):
         """ Return a citation message to provide some information to users. """
         citations = list(self.getCitations().values())
         if citations:
-            citations.insert(0, '*References:* ')
+            citations.insert(0, '*Protocol references:* ')
 
         packageCitations = self.getPackageCitations().values()
         if packageCitations:
-            citations.append('*Package References:*')
+            citations.append('*Package references:*')
             citations += packageCitations
         if not citations:
             return ['No references provided']

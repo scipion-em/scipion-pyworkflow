@@ -1797,7 +1797,7 @@ class ProtocolsView(tk.Frame):
                                           "*%s* already exists, do you want "
                                           "to overwrite it?" % filename)):
                     self.project.exportProtocols(protocols, filename)
-                    self.windows.showInfo("Workflow successfully saved to '%s' "
+                    logger.info("Workflow successfully saved to '%s' "
                                           % filename)
                 else:  # try again
                     self._exportProtocols(defaultPath=browser.getCurrentDir(),
