@@ -27,6 +27,11 @@
 # *
 # **************************************************************************
 import logging
+
+from .protocol import Protocol
+from .viewer import Viewer
+from .wizard import Wizard
+
 logger = logging.getLogger(__name__)
 import glob
 import os
@@ -55,11 +60,11 @@ class Domain:
     """
 
     # The following classes should be defined in subclasses of Domain
-    _name = None
-    _protocolClass = None
+    _name = __name__
+    _protocolClass = Protocol
     _objectClass = pwobj.Object
-    _viewerClass = None
-    _wizardClass = None
+    _viewerClass = Viewer
+    _wizardClass = Wizard
     _baseClasses = {}  # Update this with the base classes of the Domain
 
     # Dictionaries to store different type of objects
@@ -247,6 +252,11 @@ class Domain:
     def getObjects(cls):
         """ Return all EMObject subclasses from all plugins for this domain."""
         return cls.__getSubclasses('objects', cls._objectClass)
+
+    @classmethod
+    def viewersLoaded(cls):
+        """ Returns true if viewers have been already discovered"""
+        return len(cls._viewers) != 0
 
     @classmethod
     def getViewers(cls):

@@ -30,7 +30,8 @@ It is composed by three panels:
 3. Summary/Details
 """
 
-
+import logging
+logger = logging.getLogger(__name__)
 import os
 import threading
 import shlex
@@ -156,7 +157,7 @@ class ProjectWindow(ProjectBaseWindow):
             if not self.project.openedAsReadOnly():
                 self.saveSettings()
         except Exception as ex:
-            print("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
+            logger.info("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
         ProjectBaseWindow._onClosing(self)
      
     def loadProject(self):
@@ -168,7 +169,7 @@ class ProjectWindow(ProjectBaseWindow):
         if os.path.exists(settingsPath):
             self.settings = proj.getSettings()
         else:
-            print('Warning: settings.sqlite not found! '
+            logger.info('Warning: settings.sqlite not found! '
                   'Creating default settings..')
             self.settings = proj.createSettings()
 
@@ -262,9 +263,9 @@ class ProjectWindow(ProjectBaseWindow):
             openTextFileEditor(dotFile.name)
 
         if useId:
-            print("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
+            logger.info("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
         else:
-            print("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
+            logger.info("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
 
     def onManageProjectLabels(self):
         self.manageLabels()
@@ -327,7 +328,7 @@ class ProjectWindow(ProjectBaseWindow):
             func = self._OBJECT_COMMANDS.get(cmd, None)
 
             if func is None:
-                print("Error, command '%s' not found. " % cmd)
+                logger.info("Error, command '%s' not found. " % cmd)
             else:
                 def myfunc():
                     func(inputObj, objId)
@@ -335,8 +336,7 @@ class ProjectWindow(ProjectBaseWindow):
                 self.enqueue(myfunc)
 
         except Exception as ex:
-            print("There was an error executing object command !!!:")
-            print(ex)
+            logger.error("There was an error executing object command !!!:", exc_info=ex)
     
     def recalculateCTF(self, inputObjId, sqliteFile):
         """ Load the project and launch the protocol to
@@ -460,6 +460,8 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
             msg = msg.decode()
             tokens = shlex.split(msg)
             if msg.startswith('run protocol'):
+                
+                logger.debug("run protocol messaged arrived: %s" % msg)
                 protocolName = tokens[2]
                 protocolClass = pw.Config.getDomain().getProtocols()[protocolName]
                 # Create the new protocol instance and set the input values

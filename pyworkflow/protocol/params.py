@@ -233,7 +233,11 @@ class Form(object):
     def addParam(self, *args, **kwargs):
         """Add a new param to last section"""
         return self.lastSection.addParam(*args, **kwargs)
-    
+
+    # Adhoc method for specific params
+    def addBooleanParam(self, name, label, help, default=True, **kwargs):
+        return self.addParam(name, BooleanParam, label=label, help=help, default=default, **kwargs)
+
     def addHidden(self, *args, **kwargs):
         return self.lastSection.addHidden(*args, **kwargs)
     
@@ -549,7 +553,7 @@ class NumericRangeParam(StringParam):
     """
     def __init__(self, **args):
         StringParam.__init__(self, **args)
-        # TODO: ADD a syntax validator
+        self.addValidator(NumericRangeValidator())
         
         
 class TupleParam(Param):
@@ -559,6 +563,7 @@ class TupleParam(Param):
     """
     def __init__(self, **args):
         Param.__init__(self, **args)
+
 
 class DeprecatedParam:
     """ Deprecated param. To be used when you want to rename an existing param
@@ -584,12 +589,14 @@ class DeprecatedParam:
         self._objId = None
         self._objIsPointer = False
 
-    def set(self, value):
+    def set(self, value, cleanExtended=False):
         if hasattr(self.prot, self._newParamName):
             newParam = self._getNewParam()
-            newParam.set(value)
             if newParam.isPointer():
+                newParam.set(value, cleanExtended)
                 self._extended = newParam._extended
+            else:
+                newParam.set(value)
 
     def isPointer(self):
         return self._getNewParam().isPointer()
@@ -669,7 +676,7 @@ class GT(Conditional):
 class GE(Conditional):
     def __init__(self, thresold, error='Value should be greater or equal than the threshold'):
         Conditional.__init__(self, error)
-        self._condition = lambda value: value >= thresold               
+        self._condition = lambda value: value is not None and value >= thresold
 
 
 class Range(Conditional):
@@ -680,18 +687,35 @@ class Range(Conditional):
         
 class NumericListValidator(Conditional):
     """ Validator for ListParam. See ListParam. """
-    def __init__(self, error='Incorrect format for numeric list param. '):
+    def __init__(self, error='Incorrect format for numeric list param'):
         Conditional.__init__(self, error)
         
     def _condition(self, value):
         try:
-            value = value.replace('x', '')
-            parts = value.split()
+            parts = re.split(r"[x\s]", value)
+            parts = list(filter(None, parts))
             for p in parts:
                 float(p)
             return True
         except Exception:
-            return False    
+            return False
+
+
+class NumericRangeValidator(Conditional):
+    """ Validator for RangeParam. See RangeParam. """
+
+    def __init__(self, error='Incorrect format for numeric range param'):
+        Conditional.__init__(self, error)
+
+    def _condition(self, value):
+        try:
+            parts = re.split(r"[-,\s]", value)
+            parts = list(filter(None, parts))
+            for p in parts:
+                float(p)
+            return True
+        except Exception:
+            return False
 
 
 class NonEmptyBoolCondition(Conditional):

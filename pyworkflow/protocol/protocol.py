@@ -25,7 +25,7 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-import sys
+import sys, os
 import json
 import threading
 import time
@@ -41,7 +41,6 @@ from .constants import *
 from .params import Form
 from ..utils import getFileSize
 
-SCHEDULE_LOG = 'schedule.log'
 
 import  logging
 # Get the root logger
@@ -735,8 +734,12 @@ class Protocol(Step):
                             logger.debug("Pointer found in output: %s.%s (%s)" % (output, k, attr))
                             prot = attr.getObjValue()
                             if prot is not None:
-                                protocolIds.append(prot.getObjId())
-
+                                if isinstance(prot, Protocol):
+                                    protocolIds.append(prot.getObjId())
+                                else:
+                                    logger.warning(f"We have found that {output}.{key} points to {attr} "
+                                                   f"and is a direct pointer. Direct pointers are less reliable "
+                                                   f"in streaming scenarios. Developers should avoid them.")
             protocolIds.append(protocol.getObjId())
 
         return protocolIds
@@ -1484,8 +1487,6 @@ class Protocol(Step):
         to run should exists.
         """
         try:
-            LoggingConfigurator.setUpProtocolRunLogging(self.getLogPaths()[0], self.getLogPaths()[1] )
-
             self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
             self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
                                                                project_name=self.getProject().getName(),
@@ -1546,11 +1547,16 @@ class Protocol(Step):
 
 
     def getLogPaths(self):
-        return list(map(self._getLogsPath,
-                        ['run.stdout', 'run.stderr', SCHEDULE_LOG]))
+        return [self.getStdoutLog(),self.getStderrLog() , self.getScheduleLog()]
+
+    def getStdoutLog(self):
+        return self._getLogsPath("run.stdout")
+
+    def getStderrLog(self):
+        return self._getLogsPath('run.stderr')
 
     def getScheduleLog(self):
-        return self._getLogsPath(SCHEDULE_LOG)
+        return self._getLogsPath('schedule.log')
 
     def getSteps(self):
         """ Return the steps.sqlite file under logs directory. """
@@ -2099,15 +2105,18 @@ class Protocol(Step):
         try:
 
             journal = cite.get("journal", cite.get("booktitle", ""))
-            doi = cite.get("doi", "")
+            doi = cite.get("doi", "").strip()
+            url = cite.get("url", "").strip()
             # Get the first author surname
             if useKeyLabel:
                 label = cite['ID']
             else:
                 label = cite['author'].split(' and ')[0].split(',')[0].strip()
                 label += ' et al., %s, %s' % (journal, cite['year'])
-            if len(doi.strip()) > 0:
-                text = '[[%s][%s]] ' % (doi.strip(), label)
+            if len(doi) > 0:
+                text = '[[%s][%s]] ' % (doi, label)
+            elif len(url) > 0:
+                text = '[[%s][%s]] ' % (url, label)
             else:
                 text = label.strip()
             return text
@@ -2158,11 +2167,11 @@ class Protocol(Step):
         """ Return a citation message to provide some information to users. """
         citations = list(self.getCitations().values())
         if citations:
-            citations.insert(0, '*References:* ')
+            citations.insert(0, '*Protocol references:* ')
 
         packageCitations = self.getPackageCitations().values()
         if packageCitations:
-            citations.append('*Package References:*')
+            citations.append('*Package references:*')
             citations += packageCitations
         if not citations:
             return ['No references provided']

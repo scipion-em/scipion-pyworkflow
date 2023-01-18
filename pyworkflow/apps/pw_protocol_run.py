@@ -32,14 +32,20 @@ from pyworkflow.utils import LoggingConfigurator
 
 if __name__ == '__main__':
 
-    LoggingConfigurator.loadCustomLoggingConfig()
-    if len(sys.argv) > 2:
+    if len(sys.argv) == 6:
         projPath = sys.argv[1]
         dbPath = sys.argv[2]
         protId = int(sys.argv[3])
+        stdOut = sys.argv[4]
+        stdErr = sys.argv[5]
+
+        LoggingConfigurator.setUpProtocolRunLogging(stdOut, stdErr)
+
         from pyworkflow.protocol import runProtocolMain
         runProtocolMain(projPath, dbPath, protId)
         
     else:
         from os.path import basename
-        print("usage: %s projPath dbPath protocolID" % basename(sys.argv[0]))
+        print("usage: %s projPath dbPath protocolID pathToStdoutLog pathToStdErrLog." % basename(sys.argv[0]))
+        print("sys.argv: %s" % sys.argv)
+        sys.exit(1)

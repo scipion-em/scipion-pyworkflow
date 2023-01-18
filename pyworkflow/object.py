@@ -28,12 +28,11 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
-import os
 from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
 
-from pyworkflow import utils
+from pyworkflow.utils import getListFromValues, getListFromRangeString
 from pyworkflow.utils.reflection import getSubclasses
 
 
@@ -747,6 +746,15 @@ class String(Scalar):
         """ Get the datetime from this object string value. """
         return String.getDatetime(self._objValue, formatStr, fs)
 
+    def getListFromValues(self, length=None, caster=int):
+        """ Returns a list from a string with values as described at getListFromValues. Useful for """
+        return getListFromValues(self._objValue, length, caster)
+
+    def getListFromRange(self):
+        """ Returns a list from a string with values as described at getListFromRangeString.
+         Useful for NumericRangeParam params"""
+        return getListFromRangeString(self._objValue)
+
 
 class Float(Scalar):
     """Float object"""
@@ -798,9 +806,9 @@ class Boolean(Scalar):
         return self.get() 
     
     def __bool__(self):
-        return self.get()  
-    
-    
+        return self.get()
+
+
 class Pointer(Object):
     """Reference object to other one"""
     EXTENDED_ATTR = '__attribute__'
@@ -859,12 +867,12 @@ class Pointer(Object):
             
         return value
     
-    def set(self, other):
+    def set(self, other, cleanExtended=True):
         """ Set the pointer value but cleaning the extended property. """
         Object.set(self, other)
         # This check is needed because set is call from the Object constructor
         # when this attribute is not setup yet (a dirty patch, I know)
-        if hasattr(self, '_extended'):
+        if cleanExtended and hasattr(self, '_extended'):
             self._extended.set(None)
         
     def hasExtended(self):
@@ -1104,6 +1112,14 @@ class Set(Object):
         return self._mapper
             
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+        """
+         This method operate on sets of values. They are used with a
+         GROUP BY clause to group values into subsets
+        :param operations: list of aggregate function such as COUNT, MAX, MIN,...
+        :param operationLabel: label to use by the aggregate function
+        :param groupByLabels: list of labels to group
+        :return: the aggregated value of each group
+        """
         return self._getMapper().aggregate(operations, operationLabel, groupByLabels)
 
     def setMapperClass(self, MapperClass):
