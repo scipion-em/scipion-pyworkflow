@@ -545,6 +545,7 @@ class Protocol(Step):
     def isBeta(cls):
         return cls._devStatus == pw.BETA
 
+    @classmethod
     def isUpdated(cls):
         return cls._devStatus == pw.UPDATED
 

@@ -623,7 +623,7 @@ class ProtocolsView(tk.Frame):
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_UPDATED, 'updated.gif')
         # Disable protocols (not installed) are allowed to be added.
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                     'prot_disabled.gif')
+                     'disabled.gif')
 
         t.tag_configure('protocol_base', image=self.getImage('class_obj.gif'))
         t.tag_configure('protocol_group', image=self.getImage('class_obj.gif'))
