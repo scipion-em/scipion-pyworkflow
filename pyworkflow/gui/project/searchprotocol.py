@@ -97,7 +97,8 @@ class SearchProtocolWindow(SearchBaseWindow):
                         prot.getHelpText().strip().replace('\r', '').replace('\n', '').lower(),
                         "streamified" if prot.worksInStreaming() else "static",
                         "beta" if prot.isBeta() else "",
-                        "new" if prot.isNew() else "")
+                        "new" if prot.isNew() else "",
+                        "updated" if prot.isUpdated() else "")
 
                 line = self._addSearchWeight(line, keyword)
                 # something was found: weight > 0
