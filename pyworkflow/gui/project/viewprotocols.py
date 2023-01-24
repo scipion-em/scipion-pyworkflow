@@ -614,16 +614,16 @@ class ProtocolsView(tk.Frame):
             t.tag_bind(tag, TK.ENTER, self._protocolItemClick)
 
         # Protocol nodes
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, 'production.gif')
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, 'productionTag.gif')
         # New protocols
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_NEW, 'new.gif')
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_NEW, 'newTag.gif')
         # Beta protocols
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_BETA, 'beta.gif')
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_BETA, 'betaTag.gif')
         # Updated protocols
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_UPDATED, 'updated.gif')
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_UPDATED, 'updatedTag.gif')
         # Disable protocols (not installed) are allowed to be added.
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                     'disabled.gif')
+                     'disabledTag.gif')
 
         t.tag_configure('protocol_base', image=self.getImage('class_obj.gif'))
         t.tag_configure('protocol_group', image=self.getImage('class_obj.gif'))
