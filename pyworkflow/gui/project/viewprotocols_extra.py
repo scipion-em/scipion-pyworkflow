@@ -396,14 +396,14 @@ class ProtocolTreeConfig:
         # check if it is disabled
         protClassName = item["value"]
         protClass = Config.getDomain().getProtocols().get(protClassName)
-        icon = 'production.gif'
+        icon = 'productionTag.gif'
         if protClass is not None:
             if protClass.isBeta():
-                icon = "beta.gif"
+                icon = "betaTag.gif"
             elif protClass.isNew():
-                icon = "new.gif"
+                icon = "newTag.gif"
             elif protClass.isUpdated():
-                icon = "updated.gif"
+                icon = "updatedTag.gif"
         item['icon'] = icon
         return False if protClass is None else not protClass.isDisabled()
 
