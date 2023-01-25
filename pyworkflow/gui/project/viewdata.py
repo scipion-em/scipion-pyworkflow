@@ -157,7 +157,7 @@ class ProjectDataView(tk.Frame):
         self.dataTree = Tree(parent, show='tree', style='W.Treeview')
         self.dataTree.column('#0', minwidth=300)
         self.dataTree.tag_configure('protocol',
-                                    image=self.getImage(pwutils.Icon.PYTHON_FILE))
+                                    image=self.getImage(pwutils.Icon.PRODUCTION))
         self.dataTree.tag_configure('protocol_base',
                                     image=self.getImage(pwutils.Icon.GROUP))
         f = tkFont.Font(family='helvetica', size='10', weight='bold')

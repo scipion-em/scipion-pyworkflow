@@ -1130,7 +1130,19 @@ class Set(Object):
         Object.__setattr__(self, '_MapperClass', MapperClass)
         
     def __getitem__(self, itemId):
-        """ Get the image with the given id. """
+        """ Get the image with the given id.
+
+        NOTE: Performance warning: this method is expensive in terms of performance use of
+        iterItems is preferred. Use this one only for a single item retrieval.
+
+        :param itemId: the objId (integer) of the item. Alternatively itemId could be a dictionary like
+
+            {_alternative_identifier: 'RG-1234'}
+
+            where '_alternative_identifier' is an attribute of the item and 'RG-1234' the value to look for
+            only the first matching item is returned in case there are more
+
+        """
         closedMapper = self._mapper is None
 
         if isinstance(itemId, dict):

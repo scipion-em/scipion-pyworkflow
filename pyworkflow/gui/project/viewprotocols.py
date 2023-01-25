@@ -613,7 +613,7 @@ class ProtocolsView(tk.Frame):
             t.tag_bind(tag, TK.ENTER, self._protocolItemClick)
 
         # Protocol nodes
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, Icon.PYTHON_FILE)
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, Icon.PRODUCTION)
         # New protocols
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_NEW, Icon.NEW)
         # Beta protocols

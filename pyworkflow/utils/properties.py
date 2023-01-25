@@ -409,9 +409,12 @@ class PluginInformation:
 
 # To get font awesome icons into png use: http://fa2png.io/
 class Icon:
+    # Protocols status
     PROT_DISABLED = 'prot_disabled.png'
     BETA = 'beta.png'
     NEW = 'new.png'
+    PRODUCTION = 'production.png'
+    UPDATED = 'updated.png'
     GROUP = 'class_obj.png'
     DEBUG = 'debug.png'
     DOWNLOAD = 'fa-download.png'

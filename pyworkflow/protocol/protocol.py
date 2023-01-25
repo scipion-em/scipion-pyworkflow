@@ -540,12 +540,14 @@ class Protocol(Step):
     def isNew(cls):
         if cls._devStatus == pw.NEW:
             return True
-        elif cls._devStatus == pw.PROD:
-            return cls._lastUpdateVersion not in pw.OLD_VERSIONS
 
     @classmethod
     def isBeta(cls):
         return cls._devStatus == pw.BETA
+
+    @classmethod
+    def isUpdated(cls):
+        return cls._devStatus == pw.UPDATED
 
     def getDefinition(self):
         """ Access the protocol definition. """
