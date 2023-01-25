@@ -1,11 +1,9 @@
-bibtexparser<=1.2.0 # up to date on 07-2022
-psutil<=5.9.1 # # up to date on 07-2022
-configparser<=5.2.0 # # up to date on 07-2022
-matplotlib==3.3.4; python_version == '3.6'
-matplotlib==3.5.2; python_version >= '3.7' # up to date on 07-2022
-numpy<=1.23.0 # up to date on 07-2022. Careful. Xmipp is compiled agains numpy!
-pillow==8.4.0; python_version == '3.6'
-pillow==9.2.0; python_version >= '3.7' # up to date on 07-2022
-requests<=2.28.1 # up to date on 07-2022
-mpi4py <= 3.1.3 # up to date on 07-2022
-git+https://github.com/scipion-em/tkColorPicker@master#egg=tkcolorpicker # updated 10-2022
+bibtexparser<=1.4.0 # up to date on 01-2023
+psutil<=5.9.4 # # up to date on 01-2023
+configparser<=5.3.0 # # up to date on 01-2023
+matplotlib<=3.6.3 # up to date on 01-2023
+numpy<=1.24.1 # up to date on 07-2023. Careful. Xmipp is compiled agains numpy!
+pillow<=9.4.0 # up to date on 07-2023
+requests<=2.28.2 # up to date on 07-2023
+mpi4py<=3.1.4 # up to date on 07-2023
+git+https://github.com/scipion-em/tkColorPicker#egg=tkcolorpicker # updated 10-2022
