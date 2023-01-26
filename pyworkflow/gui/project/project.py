@@ -382,7 +382,8 @@ class ProjectManagerWindow(ProjectBaseWindow):
         if os.path.exists(pw.Config.SCIPION_CONFIG):
             confMenu.addSubMenu('General', 'general')
         confMenu.addSubMenu('Hosts', 'hosts')
-        confMenu.addSubMenu('Protocols', 'protocols')
+        if os.path.exists(pw.Config.SCIPION_PROTOCOLS):
+            confMenu.addSubMenu('Protocols', 'protocols')
         if os.path.exists(pw.Config.SCIPION_LOCAL_CONFIG):
             confMenu.addSubMenu('User', 'user')
 
@@ -438,12 +439,6 @@ class ProjectManagerWindow(ProjectBaseWindow):
     @staticmethod
     def onUser():
         ProjectManagerWindow._openConfigFile(pw.Config.SCIPION_LOCAL_CONFIG)
-
-    # Moved to scipion-app
-    # def onPlugins(self):
-    #     # Config -> Plugins
-    #     PluginManager("Plugin Manager", self, pw.Config.SCIPION_USER_DATA,
-    #                   selectButton=None).show()
 
 
 class ProjectTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
