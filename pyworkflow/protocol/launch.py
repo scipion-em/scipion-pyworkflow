@@ -137,8 +137,13 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
         project_path=protocol.getProject().path,
         db_path=protocol.getDbPath(),
         prot_id=protocol.strId(),
-        stdout_log=protocol.getStdoutLog(),
-        stderr_log=protocol.getStderrLog()
+        # We make them absolute in case working dir is not passed to the node when running through a queue.
+        # The reason is that since 3.0.27, the first thing that is affected by the current working dir is the
+        # creation of the logs. Before event than loading the project, which was and is setting the working dir to
+        # the project path. IMPORTANT: This assumes the paths before the queue and after the queue (nodes) are the same
+        # Which I think is safe since we are passing here "project_path" that is absolute.
+        stdout_log=os.path.abspath(protocol.getStdoutLog()),
+        stderr_log=os.path.abspath(protocol.getStderrLog())
     )
 
     #command = ('%s %s "%s" "%s" %s "%s" "%s"'
