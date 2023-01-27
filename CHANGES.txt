@@ -1,3 +1,8 @@
+V3.0.29
+-------
+users:
+  - Fix: with some host.conf, where current working dir is not "transferred" to the node, execution failed when
+    creating the logs cause they where relative. Now they (log paths) are passed to pw_protocol_run as absolute paths
 
 V3.0.28
 -------
