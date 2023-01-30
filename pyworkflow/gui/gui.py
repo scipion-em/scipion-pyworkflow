@@ -72,7 +72,7 @@ cfgWrapLenght = cfgMaxWidth - 50
 # Style of treeviews where row height is variable based on the font size
 LIST_TREEVIEW = 'List.Treeview'
 
-
+image_cache = dict()
 
 class Config(Object):
     pass
@@ -179,10 +179,25 @@ def changeFontSize(font, event, minSize=-999, maxSize=999):
 def getImage(imageName, imgDict=None, tkImage=True, percent=100,
              maxheight=None):
     """ Search for the image in the RESOURCES path list. """
+
+    global image_cache
+
     if imageName is None:
         return None
-    if imgDict is not None and imageName in imgDict:
-        return imgDict[imageName]
+
+    # Rename .gif by .png. In Linux with pillow 9.2.0 gif transparency is broken so
+    # we need to go for png. But in the past, in Macs png didn't work and made us go from png to gif
+    # We are now providing the 2 formats, prioritising pngs. If png work in MAC and windows then gif
+    # could be deleted. Otherwise, we may need to do this replacement based on the OS.
+    # NOTE: "convert  my-image.gif PNG32:my-image.png" has converted gifs to pngs RGBA (32 bits) it seems pillow
+    # needs RGBA format to deal with transparencies.
+
+    if not os.path.isabs(imageName):
+        imageName = imageName.replace(".gif", ".png")
+
+    if imageName in image_cache:
+        return image_cache[imageName]
+
     if not os.path.isabs(imageName):
         imagePath = pw.findResource(imageName)
     else:
@@ -203,8 +218,7 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         if tkImage:
             from PIL import ImageTk
             image = ImageTk.PhotoImage(image)
-        if imgDict is not None:
-            imgDict[imageName] = image
+        image_cache[imageName] = image
     return image
 
 

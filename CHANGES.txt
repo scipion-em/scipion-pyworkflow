@@ -24,6 +24,11 @@ developers:
   - getListFromValues, returns str list as before, but optionally you can pass a caster (int, float,..)
   - GE validator: tolerates None values.
   - Form.addBoolean() helper added to facilitate Boolean param definitions. TODO: Do it with the rest?
+  - dependencies updated
+  - icons changed to png 32, so transparency is understood by pillow latest version
+  - unused icons removed
+  - icon names all centralized in Icon class
+  - getImage: caches the images, rename gif to png.
 
 V3.0.27
 -------

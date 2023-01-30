@@ -33,6 +33,12 @@ from pyworkflow.gui.dialog import SearchBaseWindow
 from pyworkflow.gui.project.utils import isAFinalProtocol
 from pyworkflow.gui.project.viewprotocols_extra import ProtocolTreeConfig
 
+UPDATED = "updated"
+
+NEW = "new"
+
+BETA = "beta"
+
 
 class ProtocolTreeProvider(pwgui.tree.ObjectTreeProvider):
     """Create the tree elements for a Protocol run"""
@@ -79,7 +85,7 @@ class SearchProtocolWindow(SearchBaseWindow):
         protList = self.scoreProtocols()
 
         # Sort by weight
-        protList.sort(reverse=True, key=lambda x: x[7])
+        protList.sort(reverse=True, key=lambda x: x[8])
 
         self._addProtocolToTree(protList)
 
@@ -96,13 +102,13 @@ class SearchProtocolWindow(SearchBaseWindow):
                         "installed" if prot.isInstalled() else "missing installation",
                         prot.getHelpText().strip().replace('\r', '').replace('\n', '').lower(),
                         "streamified" if prot.worksInStreaming() else "static",
-                        "beta" if prot.isBeta() else "",
-                        "new" if prot.isNew() else "",
-                        "updated" if prot.isUpdated() else "")
+                        BETA if prot.isBeta() else "",
+                        NEW if prot.isNew() else "",
+                        UPDATED if prot.isUpdated() else "")
 
                 line = self._addSearchWeight(line, keyword)
                 # something was found: weight > 0
-                if line[7] != 0:
+                if line[8] != 0:
                     protList.append(line)
 
         return protList
@@ -134,10 +140,12 @@ class SearchProtocolWindow(SearchBaseWindow):
 
         :param protList: List of tuples with all the values/colunms used in search ans shown in the tree"""
 
-        for key, label, installed, help, streamified, beta, new, weight in protList:
+        for key, label, installed, help, streamified, beta, new, updated, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed',
-                                                    beta == 'beta',
-                                                    new == 'new')
+                                                    beta == BETA,
+                                                    new == NEW,
+                                                    updated == UPDATED)
+
             self._resultsTree.insert(
                 '', 'end', key, text="", tags=tag,
                 values=(label, streamified, installed, help, weight))

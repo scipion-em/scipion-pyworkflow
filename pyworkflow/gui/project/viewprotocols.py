@@ -69,7 +69,6 @@ DEFAULT_BOX_COLOR = '#f8f8f8'
 
 
 RUNS_TREE = Icon.RUNS_TREE
-RUNS_LIST = Icon.RUNS_LIST
 
 VIEW_LIST = 0
 VIEW_TREE = 1
@@ -614,19 +613,17 @@ class ProtocolsView(tk.Frame):
             t.tag_bind(tag, TK.ENTER, self._protocolItemClick)
 
         # Protocol nodes
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, 'productionTag.png')
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL, Icon.PRODUCTION)
         # New protocols
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_NEW, 'newTag.png')
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_NEW, Icon.NEW)
         # Beta protocols
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_BETA, 'betaTag.png')
-        # Updated protocols
-        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_UPDATED, 'updatedTag.png')
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_BETA, Icon.BETA)
         # Disable protocols (not installed) are allowed to be added.
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
-                     'disabledTag.png')
+                     Icon.PROT_DISABLED)
 
-        t.tag_configure('protocol_base', image=self.getImage('class_obj.gif'))
-        t.tag_configure('protocol_group', image=self.getImage('class_obj.gif'))
+        t.tag_configure('protocol_base', image=self.getImage(Icon.GROUP))
+        t.tag_configure('protocol_group', image=self.getImage(Icon.GROUP))
         t.tag_configure('section', font=self.windows.fontBold)
         return t
 
@@ -732,18 +729,7 @@ class ProtocolsView(tk.Frame):
 
             # I think this mode is deprecated
             if obj.value is not None and tag == 'protocol_base':
-                print('protocol_base tags are deprecated')
-                # if prot is not None:
-                #     tree.item(item, image=self.getImage('class_obj.gif'))
-                #
-                #     for k, v in emProtocolsDict.items():
-                #         if (k not in subclassedDict and v is not prot and
-                #            issubclass(v, prot)):
-                #             key = '%s.%s' % (item, k)
-                #             t = v.getClassLabel()
-                #             tree.insert(item, 'end', key, text=t, tags='protocol')
-                # else:
-                #     raise Exception("Class '%s' not found" % obj.value.get())
+                logger.warning('protocol_base tags are deprecated')
         else:
             key = prefix
 
@@ -1675,7 +1661,7 @@ class ProtocolsView(tk.Frame):
                 pwgui.dialog.MessageDialog(
                     self, Message.TITLE_STOPPED_WORKFLOW_FAILED,
                     Message.TITLE_STOPPED_WORKFLOW_FAILED + ' with: ' + msg,
-                    'fa-times-circle_alert.gif')
+                    Icon.ERROR)
 
     def _resetWorkFlow(self, action):
 
@@ -1695,7 +1681,7 @@ class ProtocolsView(tk.Frame):
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_RESETED_WORKFLOW_FAILED,
                 Message.TITLE_RESETED_WORKFLOW_FAILED + ' with: ' + msg,
-                'fa-times-circle_alert.gif')
+                Icon.ERROR)
 
     def _launchWorkFlow(self, action):
         """
@@ -1716,7 +1702,7 @@ class ProtocolsView(tk.Frame):
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
                 Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" +
                 Message.TITLE_ACTIVE_PROTOCOLS + "\n" + msg,
-                'fa-times-circle_alert.gif')
+                Icon.ERROR)
 
         elif action == ACTION_RESTART_WORKFLOW:
             if pwgui.dialog.askYesNo(Message.TITLE_RESTART_WORKFLOW_FORM,
@@ -1739,7 +1725,7 @@ class ProtocolsView(tk.Frame):
             pwgui.dialog.MessageDialog(
                 self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
                 Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" + msg,
-                'fa-times-circle_alert.gif')
+                Icon.ERROR)
         self.refreshRuns()
 
     def _selectLabels(self):

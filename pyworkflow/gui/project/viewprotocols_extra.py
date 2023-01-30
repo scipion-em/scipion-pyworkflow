@@ -396,14 +396,14 @@ class ProtocolTreeConfig:
         # check if it is disabled
         protClassName = item["value"]
         protClass = Config.getDomain().getProtocols().get(protClassName)
-        icon = 'productionTag.png'
+        icon = Icon.PRODUCTION
         if protClass is not None:
             if protClass.isBeta():
-                icon = "betaTag.png"
+                icon = Icon.BETA
             elif protClass.isNew():
-                icon = "newTag.png"
+                icon = Icon.NEW
             elif protClass.isUpdated():
-                icon = "updatedTag.png"
+                icon = Icon.UPDATED
         item['icon'] = icon
         return False if protClass is None else not protClass.isDisabled()
 
@@ -551,7 +551,7 @@ class ProtocolConfig(MenuConfig):
         if 'icon' not in args:
             tag = args.get('tag', None)
             if tag == 'protocol_base':
-                args['icon'] = 'class_obj.gif'
+                args['icon'] = Icon.GROUP
 
         args['shortCut'] = shortCut
         return MenuConfig.addSubMenu(self, text, value, **args)

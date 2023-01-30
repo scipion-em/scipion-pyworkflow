@@ -33,6 +33,8 @@ from pyworkflow.mapper.sqlite import ID
 from pyworkflowtests.objects import Complex, MockImage
 import pyworkflowtests
 
+IMAGES_STK = 'images.stk'
+
 
 class TestSqliteMapper(pwtests.BaseTest):
     @classmethod
@@ -263,7 +265,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         indexes = list(range(1, n + 1))
         for i in indexes:
             img = MockImage()
-            img.setLocation(i, 'images.stk')
+            img.setLocation(i, IMAGES_STK)
             mapper.insert(img)
 
         self.assertEqual(n, mapper.count())
@@ -272,13 +274,13 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         # Store one more image with bigger id
         img = MockImage()
         bigId = 1000
-        img.setLocation(i + 1, 'images.stk')
+        img.setLocation(i + 1, IMAGES_STK)
         img.setObjId(bigId)
         mapper.insert(img)
         self.assertEqual(bigId, mapper.maxId())
 
         # Insert another image with None as id, it should take bigId + 1
-        img.setLocation(i + 2, 'images.stk')
+        img.setLocation(i + 2, IMAGES_STK)
         img.setObjId(None)
         mapper.insert(img)
         self.assertEqual(bigId + 1, mapper.maxId())
