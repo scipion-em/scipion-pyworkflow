@@ -194,7 +194,6 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
 
     if not os.path.isabs(imageName):
         imageName = imageName.replace(".gif", ".png")
-    # imageName = "class_obj.png"
 
     if imageName in image_cache:
         return image_cache[imageName]
