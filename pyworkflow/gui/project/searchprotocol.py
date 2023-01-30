@@ -85,7 +85,7 @@ class SearchProtocolWindow(SearchBaseWindow):
         protList = self.scoreProtocols()
 
         # Sort by weight
-        protList.sort(reverse=True, key=lambda x: x[7])
+        protList.sort(reverse=True, key=lambda x: x[8])
 
         self._addProtocolToTree(protList)
 
