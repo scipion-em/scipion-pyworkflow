@@ -35,6 +35,8 @@ from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
 
+IMAGES_STK = "images.stk"
+
 NUMERIC_ATRIBUTE_NAME = "1"
 
 NUMERIC_ATTRIBUTE_VALUE = "numeric_attribute"
@@ -160,7 +162,7 @@ class TestObject(pwtests.BaseTest):
         c.Name = pwobj.String('Paquito')
 
         self.assertEqual(p.get(), 'Paquito')
-        stackFn = "images.stk"
+        stackFn = IMAGES_STK
         mrcsFn = "images.mrcs"
         fn = self.getOutputPath('test_images.sqlite')
         imgSet = MockSetOfImages(filename=fn)
@@ -252,7 +254,7 @@ class TestObject(pwtests.BaseTest):
         self.assertEqual(NUMERIC_ATTRIBUTE_VALUE, ptr5.get())
 
     def test_Sets(self):
-        stackFn = "images.stk"
+        stackFn = IMAGES_STK
         fn = self.getOutputPath('test_images2.sqlite')
 
         imgSet = MockSetOfImages(filename=fn)
@@ -489,7 +491,7 @@ class TestUtils(pwtests.BaseTest):
 
     def _createSet(self, size=10):
 
-        stackFn = "images.stk"
+        stackFn = IMAGES_STK
         fn = self.getOutputPath('test_images2.sqlite')
 
         imgSet = MockSetOfImages(filename=fn)
