@@ -1,3 +1,13 @@
+V3.0.30
+-------
+users:
+  - File browser: error while getting the preview thumbnail are reported as the preview string and logged.
+  - Wrong status when updating: When scheduling protocols, they were wrongly showed as failure temporarily.
+
+
+developers:
+  - Using logger in executor.py
+
 V3.0.29
 -------
 users:
