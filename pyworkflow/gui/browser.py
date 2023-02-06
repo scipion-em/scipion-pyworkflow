@@ -274,13 +274,19 @@ class FileTreeProvider(TreeProvider):
         return info
 
     def getObjectPreview(self, obj):
-        # Look for any preview available
-        fileHandlers = self.getFileHandlers(obj)
 
-        for fileHandler in fileHandlers:
-            preview = fileHandler.getFilePreview(obj)
-            if preview:
-                return preview
+        try:
+            # Look for any preview available
+            fileHandlers = self.getFileHandlers(obj)
+
+            for fileHandler in fileHandlers:
+                preview = fileHandler.getFilePreview(obj)
+                if preview:
+                    return preview
+        except Exception as e:
+            msg = "Couldn't get preview for %s" % obj
+            logger.error(msg, exc_info=e)
+            return None, msg + " See scipion GUI log window for more details."
 
     def getObjectActions(self, obj):
         fileHandlers = self.getFileHandlers(obj)
