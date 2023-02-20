@@ -354,6 +354,7 @@ class Protocol(Step):
         Step.__init__(self, **kwargs)
         self._size = None
         self._steps = []  # List of steps that will be executed
+        self._newSteps = False  # Boolean to annotate when there are new steps added to the above list. And need persistence.
         # All generated filePaths should be inside workingDir
         self.workingDir = String(kwargs.get('workingDir', '.'))
         self.mapper = kwargs.get('mapper', None)
@@ -995,6 +996,7 @@ class Protocol(Step):
             step.addPrerequisites(*prerequisites)
 
         self._steps.append(step)
+        self._newSteps = True
         # Setup and return step index
         step.setIndex(len(self._steps))
 
@@ -1891,6 +1893,7 @@ class Protocol(Step):
         self._storeSteps()
         self._numberOfSteps.set(len(self._steps))
         self._store(self._numberOfSteps)
+        self._newSteps = False
 
     def getStatusMessage(self):
         """ Return the status string and if running the steps done.
