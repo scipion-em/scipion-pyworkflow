@@ -8,6 +8,7 @@ users:
 developers:
  - CONDA_ACTIVATION_CMD is now a Config variable.
  - Flag to indicate if steps list has new steps. Useful for new streaming approach.
+ - Base streaming protocol: ProtStreamingBase.
 
 
 V3.0.29
