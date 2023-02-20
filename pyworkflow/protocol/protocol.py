@@ -2465,3 +2465,47 @@ def isProtocolUpToDate(protocol):
 
 class ProtImportBase(Protocol):
     """ Base Import protocol"""
+
+class ProtStreamingBase(Protocol):
+    """ Base protocol to implement streaming protocols.
+    stepsGeneratorStep should be implemented (see its description) and output
+    should be created at the end of the processing Steps created by the stepsGeneratorStep.
+    To avoid concurrency error, when creating the output, do it in a with self._lock: block.
+    Minimum number of threads is 3 and should run in parallel mode.
+    """
+
+    def __init__(self, **kwargs):
+
+        super().__init__()
+        self.stepsExecutionMode = STEPS_PARALLEL
+    def _insertAllSteps(self):
+        # Insert the step that generates the steps
+        self._insertFunctionStep(self.stepsGeneratorStep)
+
+    def _stepsCheck(self):
+
+        # Just store steps created in checkNewInputStep
+        if self._newSteps:
+            self.updateSteps()
+
+    def stepsGeneratorStep(self):
+        """
+        This step should be implemented by any streaming protocol.
+        It should check its input and when ready conditions are met
+        call the self._insertFunctionStep method.
+
+        :return: None
+        """
+        pass
+
+    def _validateThreads(self, messages:list):
+
+        if self.numberOfThreads.get() < 3:
+            messages.append("At least 3 threads are needed for running this protocol. 1 for the core process, "
+                            "1 for the 'step-generator step' and one more for the actual processing" )
+    def _validate(self):
+        """ If you want to implement a validate method do it but call _validateThreads or validate threads value."""
+        errors = []
+        self._validateThreads(errors)
+
+        return errors
