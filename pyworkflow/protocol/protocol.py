@@ -2468,7 +2468,7 @@ class ProtImportBase(Protocol):
 
 class ProtStreamingBase(Protocol):
     """ Base protocol to implement streaming protocols.
-    stepsGeneratorStep should be implemented (see it's description) and output
+    stepsGeneratorStep should be implemented (see its description) and output
     should be created at the end of the processing Steps created by the stepsGeneratorStep.
     To avoid concurrency error, when creating the output, do it in a with self._lock: block.
     Minimum number of threads is 3 and should run in parallel mode.
