@@ -498,7 +498,7 @@ class Icon:
     FAILURE = 'fa-failure.png'
     DELETE_OPERATION = 'fa-delete-operation.png'
     TO_UPDATE = 'fa-update.png'
-    WAITING = 'wait.png'
+    WAITING = 'wait.gif'
     ACTION_UNDO = 'fa-undo.png'
 
     PLUGIN_AUTHORS = 'users.png'

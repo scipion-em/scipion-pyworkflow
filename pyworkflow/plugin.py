@@ -544,7 +544,7 @@ class Plugin:
     @classmethod
     def getCondaActivationCmd(cls):
         if cls._condaActivationCmd is None:
-            condaActivationCmd = os.environ.get(CONDA_ACTIVATION_CMD_VAR, "")
+            condaActivationCmd = pw.Config.CONDA_ACTIVATION_CMD
             if not condaActivationCmd:
                 logger.info("WARNING!!_condaActivationCmd: %s variable not defined. "
                       "Relying on conda being in the PATH" % CONDA_ACTIVATION_CMD_VAR)

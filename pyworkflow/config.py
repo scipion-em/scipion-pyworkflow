@@ -103,6 +103,9 @@ class Config:
     _root = Root(SCIPION_HOME)
     _join = _root.join
 
+    CONDA_ACTIVATION_CMD = _get(CONDA_ACTIVATION_CMD_VAR,'')
+    "Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\""
+
     # SCIPION PATHS
     SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
     "Path where Scipion will install the software. Defaults to SCIPION_HOME/software."

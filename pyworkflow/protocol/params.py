@@ -349,13 +349,13 @@ class Form(object):
             self.addParam('numberOfThreads', IntParam, default=threads,
                           label='Threads',
                           help='This option provides shared-memory parallelization on multi-core machines.'
-                                'It does not require any additional software, other than <Xmipp>')
+                                'It does not require any additional software.')
         if mpi > 0:
             self.addParam('numberOfMpi', IntParam, default=mpi,
                           label='MPI processes',
                           help='This option provides the number of independent processes spawned'
                                 'in parallel by <mpirun> command in a cluster, usually through'
-                                'a queue system. This will require that you have compile <Xmipp>'
+                                'a queue system. This will require that you have compile this software '
                                 'with <mpi> support.')
         if jobsize > 0:
             self.addParam('mpiJobSize', IntParam, default=jobsize,

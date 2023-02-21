@@ -7,6 +7,12 @@ users:
 
 developers:
   - Using logger in executor.py
+  - Fix: --overwrite problem. CONDA_ACTIVATION_CMD was disappearing form the config
+  - Fix: plugin manager error. wait.png renamed to wait.gif
+  - Improvement: Tolerate protocol loading when attribute type is changed by developers.
+  - CONDA_ACTIVATION_CMD is now a Config variable.
+  - Flag to indicate if steps list has new steps. Useful for new streaming approach.
+  - Base streaming protocol: ProtStreamingBase.
 
 V3.0.29
 -------

@@ -192,7 +192,7 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
     # NOTE: "convert  my-image.gif PNG32:my-image.png" has converted gifs to pngs RGBA (32 bits) it seems pillow
     # needs RGBA format to deal with transparencies.
 
-    if not os.path.isabs(imageName):
+    if not os.path.isabs(imageName) and imageName not in [Icon.WAITING]:
         imageName = imageName.replace(".gif", ".png")
 
     if imageName in image_cache:
