@@ -28,6 +28,9 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
@@ -157,11 +160,10 @@ class Object(object):
             try:
                 if attr is not None and attr._objDoStore:
                     yield key, attr
-            except:
-                print("Object.getAttributesToStore: attribute '%s' seems to "
-                      "be overwritten," % key)
-                print("   since '_objDoStore' was not found. "
-                      "Ignoring attribute. ")
+            except Exception as e:
+                logger.info("Object.getAttributesToStore: attribute '%s' (%s) seems to "
+                      "be overwritten, since '_objDoStore' was not found. Ignoring attribute." % (key, type(attr)))
+                logger.debug("Exception: %s" % e)
 
     def isPointer(self):
         """If this is true, the value field is a pointer 
@@ -341,9 +343,7 @@ class Object(object):
                 comp = v1 == v2
             if not comp:
                 if verbose:
-                    print("Different attributes: ")
-                    print("self.%s = %s" % (k, v1))
-                    print("other.%s = %s" % (k, v2))
+                    logger.info("Different attributes: self.%s = %s, other.%s = %s" % (k, v1, k, v2))
                 return False
         return True
             
@@ -559,14 +559,14 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = ''  # ' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            print(tab, self.getClassName(), idStr)
+            logger.info(tab, self.getClassName(), idStr)
         else:
             if name == 'submitTemplate':  # Skip this because very large value
                 value = '...'
             else:
                 value = self.getObjValue()
                 
-            print(tab, '%s = %s' % (name, value), idStr)
+            logger.info(tab, '%s = %s' % (name, value), idStr)
         for k, v in self.getAttributes():
             v.printAll(k, level + 1)
             
