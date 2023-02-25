@@ -1,15 +1,18 @@
 V3.0.30
 -------
 users:
+  - File browser: error while getting the preview thumbnail are reported as the preview string and logged.
+  - Wrong status when updating: When scheduling protocols, they were wrongly showed as failure temporarily.
+
+
+developers:
+  - Using logger in executor.py
   - Fix: --overwrite problem. CONDA_ACTIVATION_CMD was disappearing form the config
   - Fix: plugin manager error. wait.png renamed to wait.gif
   - Improvement: Tolerate protocol loading when attribute type is changed by developers.
-
-developers:
- - CONDA_ACTIVATION_CMD is now a Config variable.
- - Flag to indicate if steps list has new steps. Useful for new streaming approach.
- - Base streaming protocol: ProtStreamingBase.
-
+  - CONDA_ACTIVATION_CMD is now a Config variable.
+  - Flag to indicate if steps list has new steps. Useful for new streaming approach.
+  - Base streaming protocol: ProtStreamingBase.
 
 V3.0.29
 -------
