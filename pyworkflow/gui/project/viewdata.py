@@ -50,15 +50,11 @@ ACTION_DELETE = pwutils.Message.LABEL_DELETE
 ACTION_REFRESH = pwutils.Message.LABEL_REFRESH
 ACTION_STEPS = pwutils.Message.LABEL_BROWSE
 ACTION_TREE = pwutils.Message.LABEL_TREE
-ACTION_LIST = pwutils.Message.LABEL_LIST
 ACTION_STOP = pwutils.Message.LABEL_STOP
 ACTION_DEFAULT = pwutils.Message.LABEL_DEFAULT
 ACTION_CONTINUE = pwutils.Message.LABEL_CONTINUE
 ACTION_RESULTS = pwutils.Message.LABEL_ANALYZE
 
-RUNS_TREE = pwutils.Icon.RUNS_TREE
-RUNS_LIST = pwutils.Icon.RUNS_LIST
- 
 ActionIcons = {
     ACTION_EDIT: pwutils.Icon.ACTION_EDIT,
     ACTION_COPY: pwutils.Icon.ACTION_COPY,
@@ -66,7 +62,6 @@ ActionIcons = {
     ACTION_REFRESH:  pwutils.Icon.ACTION_REFRESH,
     ACTION_STEPS:  pwutils.Icon.ACTION_STEPS,
     ACTION_TREE:  None,  # should be set
-    ACTION_LIST:  pwutils.Icon.ACTION_LIST,
     ACTION_STOP: pwutils.Icon.ACTION_STOP,
     ACTION_CONTINUE: pwutils.Icon.ACTION_CONTINUE,
     ACTION_RESULTS: pwutils.Icon.ACTION_RESULTS,
@@ -162,9 +157,9 @@ class ProjectDataView(tk.Frame):
         self.dataTree = Tree(parent, show='tree', style='W.Treeview')
         self.dataTree.column('#0', minwidth=300)
         self.dataTree.tag_configure('protocol',
-                                    image=self.getImage('python_file.gif'))
+                                    image=self.getImage(pwutils.Icon.PRODUCTION))
         self.dataTree.tag_configure('protocol_base',
-                                    image=self.getImage('class_obj.gif'))
+                                    image=self.getImage(pwutils.Icon.GROUP))
         f = tkFont.Font(family='helvetica', size='10', weight='bold')
         self.dataTree.tag_configure('non-empty', font=f)
         self.dataTree.grid(row=0, column=0, sticky='news')

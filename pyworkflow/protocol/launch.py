@@ -153,6 +153,10 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
 
     hostConfig = protocol.getHostConfig()
     useQueue = protocol.useQueue()
+
+    # Empty PID: 0
+    protocol.setPid(0)
+
     # Check if need to submit to queue    
     if useQueue and (protocol.getSubmitDict()["QUEUE_FOR_JOBS"] == "N"):
         submitDict = dict(hostConfig.getQueuesDefault())

@@ -110,7 +110,7 @@ class ObjectBrowser(tk.Frame):
         self._fillRightBottom(bottom)
 
     def _fillRightTop(self, top):
-        self.noImage = self.getImage('no-image128.gif')
+        self.noImage = self.getImage(pwutils.Icon.NO_IMAGE_128)
         self.label = tk.Label(top, image=self.noImage)
         self.label.grid(row=0, column=0, sticky='news')
 
@@ -194,16 +194,16 @@ class FileHandler(object):
     def getFileIcon(self, objFile):
         """ Return the icon name for a given file. """
         if objFile.isDir():
-            icon = 'file_folder.gif' if not objFile.isLink() else 'file_folder_link.gif'
+            icon = pwutils.Icon.FOLDER if not objFile.isLink() else pwutils.Icon.FOLDER_LINK
         else:
-            icon = 'file_generic.gif' if not objFile.isLink() else 'file_generic_link.gif'
+            icon = pwutils.Icon.FILE if not objFile.isLink() else pwutils.Icon.FILE_LINK
 
         return icon
 
     def getFilePreview(self, objFile):
         """ Return the preview image and description for the specific object."""
         if objFile.isDir():
-            return 'fa-folder-open.gif', None
+            return pwutils.Icon.FOLDER_OPEN, None
         return None, None
 
     def getFileActions(self, objFile):
@@ -225,7 +225,7 @@ class TextFileHandler(FileHandler):
 
 class SqlFileHandler(FileHandler):
     def getFileIcon(self, objFile):
-        return 'file_sqlite.gif'
+        return pwutils.Icon.DB
 
 
 class FileTreeProvider(TreeProvider):
@@ -274,13 +274,19 @@ class FileTreeProvider(TreeProvider):
         return info
 
     def getObjectPreview(self, obj):
-        # Look for any preview available
-        fileHandlers = self.getFileHandlers(obj)
 
-        for fileHandler in fileHandlers:
-            preview = fileHandler.getFilePreview(obj)
-            if preview:
-                return preview
+        try:
+            # Look for any preview available
+            fileHandlers = self.getFileHandlers(obj)
+
+            for fileHandler in fileHandlers:
+                preview = fileHandler.getFilePreview(obj)
+                if preview:
+                    return preview
+        except Exception as e:
+            msg = "Couldn't get preview for %s" % obj
+            logger.error(msg, exc_info=e)
+            return None, msg + " See scipion GUI log window for more details."
 
     def getObjectActions(self, obj):
         fileHandlers = self.getFileHandlers(obj)
@@ -700,11 +706,11 @@ class FileBrowserWindow(BrowserWindow):
     def registerHandlers(self):
         register = FileTreeProvider.registerFileHandler  # shortcut
 
-        register(TextFileHandler('file_text.gif'),
+        register(TextFileHandler(pwutils.Icon.TXT_FILE),
                  '.txt', '.log', '.out', '.err', '.stdout', '.stderr', '.emx',
                  '.json', '.xml', '.pam')
-        register(TextFileHandler('file_python.gif'), '.py')
-        register(TextFileHandler('file_java.gif'), '.java')
+        register(TextFileHandler(pwutils.Icon.PYTHON_FILE), '.py')
+        register(TextFileHandler(pwutils.Icon.JAVA_FILE), '.java')
         register(SqlFileHandler(), '.sqlite', '.db')
         # register(MdFileHandler(), '.xmd', '.star', '.pos', '.ctfparam', '.doc')
         # register(ParticleFileHandler(),

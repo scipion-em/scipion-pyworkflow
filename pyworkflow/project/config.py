@@ -183,7 +183,7 @@ class ProjectConfig(pwobj.Object):
 
     def __init__(self, **args):
         super().__init__(**args)
-        self.logo = pwobj.String('scipion_logo_small.gif')
+        self.logo = pwobj.String('scipion_logo_small.png')
         # Do not store this object, unless we implement some kind of
         # icon customization
         self._objDoStore = False
@@ -191,7 +191,7 @@ class ProjectConfig(pwobj.Object):
 
 class MenuConfig(object):
     """Menu configuration in a tree fashion.
-    Each menu can contains submenus.
+    Each menu can contain submenus.
     Leaf elements can contain actions"""
 
     def __init__(self, text=None, value=None,

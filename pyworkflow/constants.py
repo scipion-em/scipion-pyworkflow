@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.29'
+VERSION_3_0 = '3.0.30'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -51,6 +51,7 @@ OLD_VERSIONS = (VERSION_1, VERSION_1_1, VERSION_1_2, VERSION_2_0)
 PROD = 0
 BETA = 1
 NEW = 2
+UPDATED = 3
 
 # Dir names
 APPS = 'apps'

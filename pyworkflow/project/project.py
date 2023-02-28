@@ -661,9 +661,6 @@ class Project(object):
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
 
-            if checkPid:
-                self.checkPid(protocol)
-
             if skipUpdatedProtocols:
                 # If we are already updated, comparing timestamps
                 if pwprot.isProtocolUpToDate(protocol):
@@ -699,9 +696,13 @@ class Project(object):
             protocol.setObjLabel(label)
             protocol.setObjComment(comment)
             # Use the run.db timestamp instead of the system TS to prevent
-            # possible inconsistencies
-            # protocol.lastUpdateTimeStamp.set(datetime.datetime.now())
+            # possible inconsistencies.
             protocol.lastUpdateTimeStamp.set(lastUpdateTime)
+
+            # Check pid at the end, once updated
+            if checkPid:
+                self.checkPid(protocol)
+
 
             self.mapper.store(protocol)
 

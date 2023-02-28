@@ -274,10 +274,11 @@ class ProtocolTreeConfig:
     TAG_PROTOCOL_GROUP = 'protocol_group'
     TAG_PROTOCOL_BETA = 'protocol_beta'
     TAG_PROTOCOL_NEW = 'protocol_new'
+    TAG_PROTOCOL_UPDATED = 'protocol_updated'
     PLUGIN_CONFIG_PROTOCOLS = 'protocols.conf'
 
     @classmethod
-    def getProtocolTag(cls, isInstalled, isBeta=False, isNew=False):
+    def getProtocolTag(cls, isInstalled, isBeta=False, isNew=False, isUpdated=False):
         """ Return the proper tag depending if the protocol is installed or not.
         """
         if isInstalled:
@@ -285,6 +286,8 @@ class ProtocolTreeConfig:
                 return cls.TAG_PROTOCOL_BETA
             elif isNew:
                 return cls.TAG_PROTOCOL_NEW
+            elif isUpdated:
+                return cls.TAG_PROTOCOL_UPDATED
             return cls.TAG_PROTOCOL
         else:
             return cls.TAG_PROTOCOL_DISABLED
@@ -393,12 +396,14 @@ class ProtocolTreeConfig:
         # check if it is disabled
         protClassName = item["value"]
         protClass = Config.getDomain().getProtocols().get(protClassName)
-        icon = 'python_file.gif'
+        icon = Icon.PRODUCTION
         if protClass is not None:
             if protClass.isBeta():
-                icon = "beta.gif"
+                icon = Icon.BETA
             elif protClass.isNew():
-                icon = "new.gif"
+                icon = Icon.NEW
+            elif protClass.isUpdated():
+                icon = Icon.UPDATED
         item['icon'] = icon
         return False if protClass is None else not protClass.isDisabled()
 
@@ -431,7 +436,7 @@ class ProtocolTreeConfig:
                     packages[packageName] = packageMenu
 
                 # Add the protocol
-                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew())
+                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew(), v.isUpdated())
 
                 protLine = {"tag": tag, "value": k,
                             "text": v.getClassLabel(prependPackageName=False)}
@@ -546,7 +551,7 @@ class ProtocolConfig(MenuConfig):
         if 'icon' not in args:
             tag = args.get('tag', None)
             if tag == 'protocol_base':
-                args['icon'] = 'class_obj.gif'
+                args['icon'] = Icon.GROUP
 
         args['shortCut'] = shortCut
         return MenuConfig.addSubMenu(self, text, value, **args)
