@@ -1507,6 +1507,7 @@ class Protocol(Step):
             self.info('plugin: %s' % self.getClassPackageName())
             if hasattr(self.getClassPackage(), "__version__"):
                 self.info('plugin v: %s' % self.getClassPackage().__version__)
+            self.info('plugin binary v: %s' % self.getClassPackage().Plugin.getActiveVersion())
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
