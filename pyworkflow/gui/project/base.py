@@ -101,7 +101,7 @@ class ProjectBaseWindow(Window):
         projName = getattr(self, 'projName', '')
         projLabel = tk.Label(header, text=projName, font=getBigFont(),
                              borderwidth=0, anchor='nw', bg='white',
-                             fg=Color.DARK_GREY_COLOR)
+                             fg=Color.ALT_COLOR_DARK)
         projLabel.grid(row=0, column=2, sticky='sw', padx=(20, 5), pady=10)
         # Create gradient
         GradientFrame(header, height=8, borderwidth=0).grid(row=1, column=0,
@@ -118,12 +118,12 @@ class ProjectBaseWindow(Window):
 
         def addLink(elementText):
             btn = tk.Label(viewFrame, text=elementText, cursor='hand2',
-                           fg="#6F3232", bg="white")
+                           fg=pw.Config.SCIPION_MAIN_COLOR, bg="white")
             btn.bind('<Button-1>', lambda e: self._viewComboSelected(elementText))
             return btn
         
         def addTube():        
-            return tk.Label(viewFrame, text="|", fg="#6F3232", bg="white", padx=5)
+            return tk.Label(viewFrame, text="|", fg=pw.Config.SCIPION_MAIN_COLOR, bg="white", padx=5)
 
         for i, elementText in enumerate(VIEW_LIST):
             btn = addLink(elementText)

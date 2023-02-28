@@ -112,7 +112,7 @@ class HyperlinkManager:
     http://effbot.org/zone/tkinter-text-hyperlink.htm """
     def __init__(self, text):
         self.text = text
-        self.text.tag_config("hyper", foreground=Color.RED_COLOR, underline=1)
+        self.text.tag_config("hyper", foreground=pw.Config.SCIPION_MAIN_COLOR, underline=1)
         self.text.tag_bind("hyper", "<Enter>", self._enter)
         self.text.tag_bind("hyper", "<Leave>", self._leave)
         self.text.tag_bind("hyper", "<Button-1>", self._click)

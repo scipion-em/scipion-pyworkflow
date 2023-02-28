@@ -44,29 +44,29 @@ cfgFontName = pw.Config.SCIPION_FONT_NAME
 cfgFontSize = pw.Config.SCIPION_FONT_SIZE
 cfgFontBigSize = cfgFontSize + 8
 # TextColor
-cfgCitationTextColor = "dark olive green"
-cfgLabelTextColor = "black"
-cfgSectionTextColor = "blue4"
+# cfgCitationTextColor = "dark olive green"
+# cfgLabelTextColor = "black"
+# cfgSectionTextColor = "blue4"
 # Background Color
-cfgBgColor = "light grey"
-cfgLabelBgColor = "white"
-cfgHighlightBgColor = cfgBgColor
+# cfgBgColor = "light grey"
+# cfgLabelBgColor = "white"
+# cfgHighlightBgColor = cfgBgColor
 cfgButtonFgColor = "white"
 cfgButtonActiveFgColor = "white"
-cfgButtonBgColor = Color.RED_COLOR
-cfgButtonActiveBgColor = "#A60C0C"
+cfgButtonBgColor = pw.Config.SCIPION_MAIN_COLOR
+cfgButtonActiveBgColor = pw.Config.getActiveColor()
 cfgEntryBgColor = "lemon chiffon"
-cfgExpertLabelBgColor = "light salmon"
-cfgSectionBgColor = cfgButtonBgColor
+# cfgExpertLabelBgColor = "light salmon"
+# cfgSectionBgColor = cfgButtonBgColor
 # Color
-cfgListSelectColor = "DeepSkyBlue4"
-cfgBooleanSelectColor = "white"
-cfgButtonSelectColor = "DeepSkyBlue2"
+# cfgListSelectColor = "DeepSkyBlue4"
+# cfgBooleanSelectColor = "white"
+# cfgButtonSelectColor = "DeepSkyBlue2"
 # Dimensions limits
-cfgMaxHeight = 650
+# cfgMaxHeight = 650
 cfgMaxWidth = 800
-cfgMaxFontSize = 14
-cfgMinFontSize = 6
+# cfgMaxFontSize = 14
+# cfgMinFontSize = 6
 cfgWrapLenght = cfgMaxWidth - 50
 
 # Style of treeviews where row height is variable based on the font size

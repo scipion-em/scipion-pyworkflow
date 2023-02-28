@@ -1644,9 +1644,9 @@ class FormWindow(Window):
         self.protocol = protocol
         # This control when to close or not after execute
         self.visualizeMode = kwargs.get('visualizeMode', False)
-        self.headerBgColor = pwutils.Color.RED_COLOR
+        self.headerBgColor = pw.Config.SCIPION_MAIN_COLOR
         if self.visualizeMode:
-            self.headerBgColor = pwutils.Color.DARK_GREY_COLOR
+            self.headerBgColor = pwutils.Color.ALT_COLOR_DARK
         # Allow to open child protocols form (for workflows)
         self.childMode = kwargs.get('childMode', False)
         self.updateProtocolCallback = kwargs.get('updateProtocolCallback', None)

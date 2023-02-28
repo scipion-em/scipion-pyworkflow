@@ -212,7 +212,7 @@ class ProtocolsView(tk.Frame):
             Right: containing the Runs list
         """
         p = tk.PanedWindow(self, orient=tk.HORIZONTAL, bg='white')
-        bgColor = Color.LIGHT_GREY_COLOR
+        bgColor = Color.ALT_COLOR
         # Left pane, contains Protocols Pane
         leftFrame = tk.Frame(p, bg=bgColor)
         leftFrame.columnconfigure(0, weight=1)
@@ -277,11 +277,11 @@ class ProtocolsView(tk.Frame):
         self.infoLabel.grid(row=0, column=0, sticky='w', padx=3)
         # Create the Analyze results button
         self.btnAnalyze = pwgui.Button(infoFrame, text=Message.LABEL_ANALYZE,
-                                       fg='white', bg=Color.RED_COLOR,
+                                       fg='white', bg=Config.SCIPION_MAIN_COLOR,
                                        image=self.getImage(Icon.ACTION_VISUALIZE),
                                        compound=tk.LEFT,
                                        activeforeground='white',
-                                       activebackground='#A60C0C',
+                                       activebackground=Config.getActiveColor(),
                                        command=self._analyzeResultsClicked)
         self.btnAnalyze.grid(row=0, column=0, sticky='ne', padx=15)
         # self.style.configure("W.TNotebook")#, background='white')
@@ -326,7 +326,7 @@ class ProtocolsView(tk.Frame):
         self.methodText.grid(row=0, column=0, sticky='news')
         # Reference export button
         # btnExportBib = pwgui.Button(mframe, text=Message.LABEL_BIB_BTN,
-        #                             fg='white', bg=Color.RED_COLOR,
+        #                             fg='white', bg=Color.MAIN_COLOR,
         #                             image=self.getImage(Icon.ACTION_BROWSE),
         #                             compound=tk.LEFT,
         #                             activeforeground='white',
@@ -1333,7 +1333,7 @@ class ProtocolsView(tk.Frame):
                 frame.grid(row=0, column=0)
                 tw.tooltipText = pwgui.dialog.createMessageBody(frame, tm, None,
                                                                 textPad=0,
-                                                                textBg=Color.LIGHT_GREY_COLOR_2)
+                                                                textBg=Color.ALT_COLOR_2)
                 tw.tooltipText.config(bd=1, relief=tk.RAISED)
             else:
                 pwgui.dialog.fillMessageText(tw.tooltipText, tm)
