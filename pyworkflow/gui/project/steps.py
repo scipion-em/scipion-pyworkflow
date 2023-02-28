@@ -145,7 +145,7 @@ class StepsWindow(pwgui.browser.BrowserWindow):
             frame = tk.Frame(tw)
             frame.grid(row=0, column=0)
             tw.tooltipText = pwgui.dialog.createMessageBody(
-                frame, tm, None, textPad=0, textBg=pwutils.Color.LIGHT_GREY_COLOR_2)
+                frame, tm, None, textPad=0, textBg=pwutils.Color.ALT_COLOR_2)
             tw.tooltipText.config(bd=1, relief=tk.RAISED)
         else:
             pwgui.dialog.fillMessageText(tw.tooltipText, tm)

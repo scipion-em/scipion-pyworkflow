@@ -1,3 +1,8 @@
+V3.1.0
+______
+users:
+  - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal wshould work(like in CSS)
+
 V3.0.30
 -------
 users:
