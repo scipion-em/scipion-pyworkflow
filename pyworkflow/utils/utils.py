@@ -399,7 +399,7 @@ def hasFileChangedSince(file, time):
 class StrColors(Enum):
     gray = 30
     red = 31
-    green = 32
+    green = 92
     yellow = 33
     blue = 34
     magenta = 35

@@ -2,6 +2,7 @@ V3.1.0
 ______
 users:
   - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal wshould work(like in CSS)
+  - Toolbar and actions refactored: Most of them have shortcuts and appear in the toolbar without text, but have tooltips
 
 V3.0.30
 -------

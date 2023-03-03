@@ -24,11 +24,12 @@
 # **************************************************************************
 import logging
 import threading
+
 from pyworkflow import Config
-from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut
-from pyworkflow.gui.project.constants import ACTION_REFRESH, ACTION_EDIT, ACTION_COPY, ACTION_DELETE, ACTION_STEPS, \
+from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut, ToolTip
+from pyworkflow.gui.project.constants import ActionIcons, ActionShortCuts, ACTION_REFRESH, ACTION_EDIT, ACTION_COPY, ACTION_DELETE, ACTION_STEPS, \
     ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, \
-    ACTION_COLLAPSE, ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ActionIcons, ACTION_TREE, ACTION_SWITCH_VIEW, \
+    ACTION_COLLAPSE, ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ACTION_TREE, ACTION_SWITCH_VIEW, \
     ACTION_SELECT_TO, ACTION_RENAME, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, ACTION_DEFAULT, \
     ACTION_SELECT_FROM, ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
@@ -165,24 +166,15 @@ class ProtocolsView(tk.Frame):
         self._lastRightClickPos = None  # Keep last right-clicked position
 
         self.style = ttk.Style()
-        self.root.bind("<F5>", self.refreshRuns)
         self.root.bind("<Control-f>", self._findProtocol)
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
         self.root.bind("<Control-d>", self._toggleDebug)
         self.root.bind("<Control-l>", self._locateProtocol)
-        self.root.bind("<F2>", self._F2Pressed)
 
         if Config.debugOn():
             self.root.bind("<Control-i>", self._inspectProtocols)
 
-        # To bind key press to methods
-        # Listen to any key: send event to keyPressed method
-        self.root.bind("<Key>", self.keyPressed)
-        self.keybinds = dict()
-
-        # Register key binds
-        self._bindKeyPress(KEYSYM.DELETE, self._onDelPressed)
 
         self.__autoRefresh = None
         self.__autoRefreshCounter = INIT_REFRESH_SECONDS  # start by 3 secs
@@ -194,16 +186,6 @@ class ProtocolsView(tk.Frame):
         pwgui.configureWeigths(self)
         c.grid(row=0, column=0, sticky='news')
 
-    def _bindKeyPress(self, key, method):
-
-        self.keybinds[key] = method
-
-    def keyPressed(self, event):
-
-        if event.keysym in self.keybinds:
-            method = self.keybinds[event.keysym]
-
-            method()
 
     def createContent(self):
         """ Create the Protocols View for the Project.
@@ -526,20 +508,36 @@ class ProtocolsView(tk.Frame):
         """ Prepare the buttons that will be available for protocol actions. """
 
         self.actionButtons = {}
-        self.actionList = [ACTION_EDIT, ACTION_COPY, ACTION_DELETE,
-                           ACTION_STEPS, ACTION_BROWSE, ACTION_DB,
-                           ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS,
-                           ACTION_EXPORT, ACTION_EXPORT_UPLOAD, ACTION_COLLAPSE,
-                           ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH]
+        actionList = [
+            ACTION_EDIT, ACTION_COPY, ACTION_DELETE,
+            ACTION_STEPS, ACTION_BROWSE, ACTION_DB,
+            ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS,
+            ACTION_EXPORT, ACTION_EXPORT_UPLOAD, ACTION_COLLAPSE,
+            ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ACTION_RENAME,
+            ACTION_STOP_WORKFLOW, ACTION_RESTART_WORKFLOW, ACTION_RESET_WORKFLOW,
+            ACTION_SELECT_FROM, ACTION_SELECT_TO, ACTION_STEPS,
+            ACTION_CONTINUE_WORKFLOW
+        ]
 
         def addButton(action, text, toolbar):
-            btn = tk.Label(toolbar, text=text,
+            btn = tk.Label(toolbar, text="",
                            image=self.getImage(ActionIcons.get(action, None)),
                            compound=tk.LEFT, cursor='hand2', bg='white')
-            btn.bind(TK.LEFT_CLICK, lambda e: self._runActionClicked(action))
+
+            callback = lambda e: self._runActionClicked(action)
+            btn.bind(TK.LEFT_CLICK, callback)
+
+            # Shortcuts:
+            shortCut = ActionShortCuts.get(action, None)
+            if shortCut:
+                text += " (%s)" % shortCut
+                self.root.bind(shortCut, callback)
+
+            ToolTip(btn,text , 500)
+
             return btn
 
-        for action in self.actionList:
+        for action in actionList:
             self.actionButtons[action] = addButton(action, action,
                                                    self.runsToolbar)
 
@@ -1621,13 +1619,23 @@ class ProtocolsView(tk.Frame):
         """ Invoked then F2 if pressed: Protocol rename"""
         self._runActionClicked(ACTION_RENAME)
 
+    def _F5Pressed(self, event):
+        """ Invoked then F2 if pressed: Protocol rename"""
+        self._runActionClicked(ACTION_REFRESH)
+
+    def _sPressed(self, event):
+        self._runActionClicked(ACTION_TREE)
+    def _ePressed(self, event):
+        """ Invoked then e if pressed: Protocol rename"""
+        self._runActionClicked(ACTION_EDIT)
+
     def _editProtocol(self, protocol):
         disableRunMode = False
         if protocol.isSaved():
             disableRunMode = True
         self._openProtocolForm(protocol, disableRunMode=disableRunMode)
 
-    def _copyProtocols(self):
+    def _copyProtocols(self, e=None):
         protocols = self._getSelectedProtocols()
         if len(protocols) == 1:
             newProt = self.project.copyProtocol(protocols[0])
