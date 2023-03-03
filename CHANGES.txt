@@ -1,3 +1,7 @@
+V3.0.31
+-------
+  - Hotfix: Fixed updated protocol icon
+
 V3.0.30
 -------
 users:
