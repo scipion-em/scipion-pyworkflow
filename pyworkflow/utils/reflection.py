@@ -95,7 +95,8 @@ def getSubclasses(BaseClass, inputDict):
     """
     outputDict = {}
     for k, v in inputDict.items():
-        if isclass(v) and issubclass(v, BaseClass):
+        # Do not add the base class that is imported in all modules
+        if (not v==BaseClass) and isclass(v) and issubclass(v, BaseClass):
             outputDict[k] = v
     return outputDict
 

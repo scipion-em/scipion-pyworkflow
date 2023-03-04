@@ -31,6 +31,7 @@ import re
 from datetime import datetime
 import traceback
 from enum import Enum
+import sysconfig
 
 import bibtexparser
 import numpy as np
@@ -347,6 +348,16 @@ def getHostFullName():
     """ Return the fully-qualified name of the local machine. """
     import socket
     return socket.getfqdn()
+
+def getPython():
+    return sys.executable
+
+def getPythonPackagesFolder():
+    # This does not work on MAC virtual envs
+    # import site
+    # return site.getsitepackages()[0]
+
+    return sysconfig.get_path("platlib")
 
 
 # ******************************File utils *******************************

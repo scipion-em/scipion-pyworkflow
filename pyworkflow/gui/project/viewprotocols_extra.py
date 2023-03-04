@@ -412,16 +412,17 @@ class ProtocolTreeConfig:
         # Add all protocols
         allProts = domain.getProtocols()
 
-        # Sort the dictionary
-        allProtsSorted = pwobj.OrderedDict(sorted(allProts.items(),
-                                            key=lambda e: e[1].getClassLabel()))
+        # Sort the list
+        allProtsSorted = sorted(allProts.items(), key=lambda e: e[1].getClassLabel())
+
         allProtMenu = ProtocolConfig(cls.ALL_PROTOCOLS)
         packages = {}
 
         # Group protocols by package name
-        for k, v in allProtsSorted.items():
+        for k, v in allProtsSorted:
             if isAFinalProtocol(v, k):
-                packageName = v.getClassPackageName()
+                packageName = v.getClassPlugin().getName()
+
                 # Get the package submenu
                 packageMenu = packages.get(packageName)
 

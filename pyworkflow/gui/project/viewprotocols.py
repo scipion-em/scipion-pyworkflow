@@ -524,7 +524,7 @@ class ProtocolsView(tk.Frame):
                            image=self.getImage(ActionIcons.get(action, None)),
                            compound=tk.LEFT, cursor='hand2', bg='white')
 
-            callback = lambda e: self._runActionClicked(action)
+            callback = lambda e: self._runActionClicked(action, event=e)
             btn.bind(TK.LEFT_CLICK, callback)
 
             # Shortcuts:
@@ -1615,19 +1615,6 @@ class ProtocolsView(tk.Frame):
             self._scheduleRunsUpdate()
             self.cleanInfo()
 
-    def _F2Pressed(self, event):
-        """ Invoked then F2 if pressed: Protocol rename"""
-        self._runActionClicked(ACTION_RENAME)
-
-    def _F5Pressed(self, event):
-        """ Invoked then F2 if pressed: Protocol rename"""
-        self._runActionClicked(ACTION_REFRESH)
-
-    def _sPressed(self, event):
-        self._runActionClicked(ACTION_TREE)
-    def _ePressed(self, event):
-        """ Invoked then e if pressed: Protocol rename"""
-        self._runActionClicked(ACTION_EDIT)
 
     def _editProtocol(self, protocol):
         disableRunMode = False
@@ -1933,7 +1920,15 @@ class ProtocolsView(tk.Frame):
         if dlg.resultYes():
             self._updateProtocol(prot)
 
-    def _runActionClicked(self, action):
+    def _runActionClicked(self, action, event=None):
+
+        if event is not None:
+            # log Search box events are reaching here
+            # Since this method is bound to the window events
+            if event.widget.widgetName == 'entry':
+                return
+
+
         prot = self.getSelectedProtocol()
         if prot:
             try:

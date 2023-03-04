@@ -1,10 +1,15 @@
+
 V3.1.0
 ______
 users:
   - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal wshould work(like in CSS)
-  - Toolbar and actions refactored: Most of them have shortcuts and appear in the toolbar without text, but have tooltips
+  - Toolbar and actions refactored: Most of them have shortcuts and appear in the toolbar without text, but have tooltips showing the shortcut
+  - Plugins in devel mode are shown with a delta suffix after the package name.
 
+ developers:
+  - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
 V3.0.30
+
 -------
 users:
   - File browser: error while getting the preview thumbnail are reported as the preview string and logged.
