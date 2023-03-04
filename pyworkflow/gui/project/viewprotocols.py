@@ -619,7 +619,9 @@ class ProtocolsView(tk.Frame):
         # Disable protocols (not installed) are allowed to be added.
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
                      Icon.PROT_DISABLED)
-
+        # Updates protocols
+        configureTag(ProtocolTreeConfig.TAG_PROTOCOL_UPDATED,
+                     Icon.UPDATED)
         t.tag_configure('protocol_base', image=self.getImage(Icon.GROUP))
         t.tag_configure('protocol_group', image=self.getImage(Icon.GROUP))
         t.tag_configure('section', font=self.windows.fontBold)
