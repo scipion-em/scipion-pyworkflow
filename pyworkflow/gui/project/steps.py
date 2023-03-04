@@ -95,14 +95,14 @@ class StepsWindow(pwgui.browser.BrowserWindow):
 
         # Tree button
         btn = tk.Label(toolbar, text="Tree",
-                       image=self.getImage(Icon.RUNS_TREE),
+                       image=self.getImage(Icon.CODE_BRANCH),
                        compound=tk.LEFT, cursor='hand2')
         btn.bind(TK.LEFT_CLICK, self._showTree)
         btn.grid(row=0, column=0, sticky='nw')
 
         # Reset status
         btn = tk.Label(toolbar, text="Reset",
-                       image=self.getImage(Icon.ACTION_REFRESH),
+                       image=self.getImage(Icon.BROOM),
                        compound=tk.LEFT, cursor='hand2')
         btn.bind('<Button-1>', self._resetStep)
         btn.grid(row=0, column=1, sticky='nw')

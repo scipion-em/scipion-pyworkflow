@@ -437,7 +437,6 @@ class Icon:
     ACTION_DELETE = 'fa-trash-o.png'
     ACTION_REFRESH = 'fa-refresh.png'
     ACTION_RENAME = 'rename.png'
-    # TODO: change action_steps icon - fa-codefork?
     ACTION_STEPS = 'fa-list-ul.png'
     ACTION_BROWSE = 'fa-folder-open.png'
     ACTION_DB = 'fa-database.png'
@@ -482,6 +481,10 @@ class Icon:
     FOLDER_OPEN = 'fa-folder-open.png'
     DB = 'file_sqlite.png'
     TXT_FILE = 'file_text.png'
+    POWER_OFF = 'power-off-solid.png'
+    BROOM = 'broom-solid.png'
+    BACKWARD = 'backward-solid.png'
+    CODE_BRANCH = 'code-branch-solid.png'
 
     SCIPION_ICON = 'scipion_icon.png'
     SCIPION_ICON_PROJ = SCIPION_ICON  # 'scipion_icon_proj.png'
