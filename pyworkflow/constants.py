@@ -40,7 +40,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.31'
+VERSION_3_0 = '3.1.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -122,6 +122,23 @@ PROTOCOL_UPDATED = 3
 PROJECT_DBNAME = 'project.sqlite'
 PROJECT_SETTINGS = 'settings.sqlite'
 
+# GUI colors
+class Color:
+    RED_COLOR = 'Firebrick'  # REMOVE when not used. Red color for background label  = #B22222
+
+    # Color agnostic constants
+    MAIN_COLOR = RED_COLOR
+    ALT_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
+    ALT_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
+    ALT_COLOR_DARK= '#6E6E6E'  # Very dark grey for project title, tubes, etc
+
+    STATUS_SAVED = '#D9F1FA',
+    STATUS_LAUNCHED = '#D9F1FA',
+    STATUS_RUNNING = '#FCCE62',
+    STATUS_FINISHED = '#D2F5CB',
+    STATUS_FAILED = '#F5CCCB',
+    STATUS_INTERACTIVE = '#F3F5CB',
+    STATUS_ABORTED = '#F5CCCB',
 
 
 class DOCSITEURLS:

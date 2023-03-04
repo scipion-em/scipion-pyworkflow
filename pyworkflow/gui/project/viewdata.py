@@ -151,7 +151,7 @@ class ProjectDataView(tk.Frame):
         """
         defaultFont = gui.getDefaultFont()
         self.style.configure("W.Treeview",
-                             background=pwutils.Color.LIGHT_GREY_COLOR,
+                             background=pwutils.Color.ALT_COLOR,
                              borderwidth=0,
                              rowheight=defaultFont.metrics()['linespace'])
         self.dataTree = Tree(parent, show='tree', style='W.Treeview')

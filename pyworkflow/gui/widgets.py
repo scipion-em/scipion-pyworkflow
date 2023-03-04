@@ -32,7 +32,8 @@ import tkinter.ttk as ttk
 
 from math import ceil
 
-from pyworkflow import TK_GRAY_DEFAULT
+from pyworkflow import TK_GRAY_DEFAULT, Config
+
 from . import gui
 from .tooltip import ToolTip
 
@@ -279,8 +280,8 @@ class GradientFrame(tk.Canvas):
 
     def __init__(self, parent, **args):
         tk.Canvas.__init__(self, parent, **args)
-        self._color1 = "#d2a7a7"
-        self._color2 = "#820808"
+        self._color1 = 'white' #"#d2a7a7"
+        self._color2 = Config.SCIPION_MAIN_COLOR #"#820808"
         self.bind("<Configure>", self._draw_gradient)
 
     def _draw_gradient(self, event=None):

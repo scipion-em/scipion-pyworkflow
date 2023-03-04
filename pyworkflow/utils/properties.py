@@ -28,7 +28,8 @@
 """
 This module defines the text used in the application.
 """
-
+# NOTE: DO NOT REMOVE UNTIL plugin manager uses Config.SCIPION_MAIN_COLOR and is released
+from pyworkflow.constants import Color
 
 class Message:
     # Example Usage: 
@@ -508,21 +509,6 @@ class Icon:
     PLUGIN_PACKAGE = 'file_folder.png'
 
 
-class Color:
-    RED_COLOR = 'Firebrick'  # Red color for background label  = #B22222
-    LIGHT_RED_COLOR = '#F3CBCB'  # Very light red for row selection
-    LIGHT_BLUE_COLOR = '#EAEBFF'  # Very light blue for even rows
-    LIGHT_GREY_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
-    LIGHT_GREY_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
-    DARK_GREY_COLOR = '#6E6E6E'  # Very dark grey for project title, tubes, etc
-    
-    STATUS_SAVED = '#D9F1FA', 
-    STATUS_LAUNCHED = '#D9F1FA', 
-    STATUS_RUNNING = '#FCCE62', 
-    STATUS_FINISHED = '#D2F5CB', 
-    STATUS_FAILED = '#F5CCCB', 
-    STATUS_INTERACTIVE = '#F3F5CB',
-    STATUS_ABORTED = '#F5CCCB',
 
 
 class colorText:
