@@ -89,7 +89,7 @@ class ProjectWindow(ProjectBaseWindow):
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
                             shortCut="Ctrl+a", icon=Icon.SELECT_ALL)
-        projMenu.addSubMenu('Find protocol to add', 'find protocol',
+        projMenu.addSubMenu('Add a protocol', 'find protocol',
                             shortCut="Ctrl+f", icon=Icon.FIND)
         projMenu.addSubMenu('Scipion log', 'scipion log',
                             icon=Icon.FILE_BW)

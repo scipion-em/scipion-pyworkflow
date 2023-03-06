@@ -32,7 +32,6 @@ import tkinter as tk
 import traceback
 from tkcolorpicker import askcolor as _askColor
 
-from pyworkflow import Config
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon, Color
 from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle
@@ -874,7 +873,7 @@ class SearchBaseWindow(Window):
         frame.grid(row=0, column=0, sticky='new', padx=5, pady=(10, 5))
 
     def _createResultsBox(self, content):
-        frame = tk.Frame(content, bg=Config.SCIPION_ALT_COLOR, padx=5, pady=5)
+        frame = tk.Frame(content, bg=Color.ALT_COLOR, padx=5, pady=5)
         configureWeigths(frame)
         self._resultsTree = self._createResultsTree(frame,
                                                     show=None,

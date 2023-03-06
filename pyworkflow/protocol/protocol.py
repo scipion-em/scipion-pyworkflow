@@ -350,6 +350,10 @@ class Protocol(Step):
     """
     _possibleOutputs = None
 
+    # Cache package and plugin
+    _package = None
+    _plugin = None
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._size = None
@@ -1504,10 +1508,10 @@ class Protocol(Step):
             self.info('Hostname: %s' % self.getHostFullName())
             self.info('PID: %s' % self.getPid())
             self.info('pyworkflow: %s' % pw.__version__)
-            self.info('plugin: %s' % self.getClassPackageName())
+            self.info('plugin: %s' % self.getClassPlugin().getName())
             if hasattr(self.getClassPackage(), "__version__"):
                 self.info('plugin v: %s' % self.getClassPackage().__version__)
-            self.info('plugin binary v: %s' % self.getClassPackage().Plugin.getActiveVersion())
+            self.info('plugin binary v: %s' % self.getClassPlugin().getActiveVersion())
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
@@ -1740,16 +1744,12 @@ class Protocol(Step):
         this method the protocol classes are registered with it Plugin
         and Domain info.
         """
-        # import pyworkflow.em as em
-        # em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
-        # TODO: Check if we need to return scipion by default anymore
-        # Now the basic EM protocols are defined by scipion-em (pwem)
-        return getattr(cls, '_package', None)
+        return cls._package
 
     @classmethod
     def getClassPlugin(cls):
-        package = cls.getClassPackage()
-        return getattr(package, 'Plugin', None)
+
+        return cls._plugin
 
     @classmethod
     def getClassPackageName(cls):
@@ -1813,7 +1813,11 @@ class Protocol(Step):
         """ Return a more readable string representing the protocol class """
         label = cls.__dict__.get('_label', cls.__name__)
         if prependPackageName:
-            label = "%s - %s" % (cls.getClassPackageName(), label)
+            try:
+                label = "%s - %s" % (cls.getClassPlugin().getName(), label)
+            except Exception as e:
+                label = "%s -%s" % ("missing", label)
+                logger.error("Couldn't get the plugin name for %s" % label, exc_info=e)
         return label
 
     @classmethod

@@ -27,6 +27,7 @@
 # *
 # **************************************************************************
 import logging
+import sys
 
 from .protocol import Protocol
 from .viewer import Viewer
@@ -186,7 +187,7 @@ class Domain:
 
     @classmethod
     def __getSubclasses(cls, submoduleName, BaseClass,
-                        updateBaseClasses=False):
+                        updateBaseClasses=False, setPackage=False):
         """ Load all detected subclasses of a given BaseClass.
         Params:
             updateBaseClasses: if True, it will try to load classes from the
@@ -203,7 +204,7 @@ class Domain:
                         if inspect.isclass(attr) and issubclass(attr, BaseClass):
                             cls._baseClasses[name] = attr
 
-            for pluginName, plugin in cls.getPlugins().items():
+            for pluginName, module in cls.getPlugins().items():
                 sub = cls.__getSubmodule(pluginName, submoduleName)
                 if sub is not None:
                     for name in cls.getModuleClasses(sub):
@@ -222,7 +223,22 @@ class Domain:
                                        pluginCollision))
                             else:
                                 # Set this special property used by Scipion
-                                attr._package = plugin
+                                # Protocols need the package to be set
+                                if setPackage:
+
+                                    plugin = getattr(module, "__pluginInstance", None)
+
+                                    if plugin is None:
+                                        pluginClass = getattr(module, "Plugin", None)
+                                        if pluginClass is None:
+                                            logger.warning("Package %s has no Plugin class!!" % name)
+                                        else:
+                                            pluginInstance = pluginClass()
+                                            setattr(module, "__pluginInstance", pluginInstance)
+
+                                    attr._plugin = pluginInstance
+                                    attr._package = module
+
                                 subclasses[name] = attr
             subclasses.update(
                 pwutils.getSubclasses(BaseClass, cls._baseClasses))
@@ -246,7 +262,7 @@ class Domain:
     @classmethod
     def getProtocols(cls):
         """ Return all Protocol subclasses from all plugins for this domain."""
-        return cls.__getSubclasses('protocols', cls._protocolClass)
+        return cls.__getSubclasses('protocols', cls._protocolClass, setPackage=True)
 
     @classmethod
     def getObjects(cls):
@@ -521,9 +537,13 @@ class Plugin:
     _homeVar = ''  # Change in subclasses to define the "home" variable
     _pathVars = []
     _supportedVersions = []
-    _name = ""
     _url = ""  # For the plugin
     _condaActivationCmd = None
+
+    def __init__(self):
+        self._path = None
+        self._inDevelMode = None
+        self._name = None
 
     @classmethod
     def _defineVar(cls, varName, defaultValue):
@@ -538,7 +558,7 @@ class Plugin:
     @classmethod
     @abstractmethod
     def getEnviron(cls):
-        """ Setup the environment variables needed to launch programs. """
+        """ Set up the environment variables needed to launch programs. """
         pass
 
     @classmethod
@@ -614,10 +634,6 @@ class Plugin:
         return ''
 
     @classmethod
-    def getName(cls):
-        return cls.__module__
-
-    @classmethod
     def validateInstallation(cls):
         """
         Check if the binaries are properly installed and if not, return
@@ -637,23 +653,36 @@ class Plugin:
             return ["validateInstallation fails: %s" % e]
 
     @classmethod
-    def getPluginDir(cls):
-        return os.path.join(pw.getModuleFolder(cls.getName()))
+    def getUrl(cls, protClass=None):
+        """ Url for the plugin to point users to it"""
+        return cls._url
 
-    @classmethod
-    def getPluginTemplateDir(cls):
-        return os.path.join(cls.getPluginDir(), 'templates')
+    # -------------- Instance methods ----------------
+    def getName(self):
+        if self._name is None:
+            self._name=  self.__class__.__module__
+
+            if self.inDevelMode():
+               self._name += " (ẟ)"
+
+        return self._name
 
 
-    @classmethod
-    def getTemplates(cls):
+    def getPluginDir(self):
+        return self.getPath()
+
+    def getPluginTemplateDir(self):
+        return os.path.join(self.getPath(), 'templates')
+
+
+    def getTemplates(self):
         """ Get the plugin templates from the templates directory.
             If more than one template is found or passed, a dialog is raised
             to choose one.
         """
         tempList = []
-        pluginName = cls.getName()
-        tDir = cls.getPluginTemplateDir()
+        pluginName = self.getName()
+        tDir = self.getPluginTemplateDir()
         if os.path.exists(tDir):
             for file in glob.glob1(tDir, "*" + SCIPION_JSON_TEMPLATES):
                 t = Template(pluginName, os.path.join(tDir, file))
@@ -661,10 +690,16 @@ class Plugin:
 
         return tempList
 
-    @classmethod
-    def getUrl(cls, protClass=None):
-        """ Url for the plugin to point users to it"""
-        return cls._url
+    def getPath(self):
+        if self._path is None:
+            self._path = sys.modules[self.__class__.__module__].__path__[0]
+
+        return self._path
+    def inDevelMode(self)-> bool:
+        """ Returns true if code is not in python's site-packages folder"""
+        if self._inDevelMode is None:
+            self._inDevelMode = pwutils.getPythonPackagesFolder() not in self.getPath()
+        return self._inDevelMode
 
 
 class PluginInfo:

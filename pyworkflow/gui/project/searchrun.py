@@ -32,7 +32,7 @@ from pyworkflow.gui import SearchBaseWindow
 from pyworkflow.gui.project.constants import ACTION_COPY, ACTION_EDIT, ACTION_RENAME, ACTION_DELETE, ACTION_STEPS, \
     ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, ACTION_COLLAPSE, ACTION_EXPAND, \
     ACTION_LABELS, ACTION_SELECT_FROM, ACTION_SELECT_TO, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, \
-    ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW, ActionIcons
+    ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW, ActionIcons, ActionShortCuts
 
 from pyworkflow.gui.tree import ProjectRunsTreeProvider
 
@@ -88,7 +88,8 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                 text = actionLabel
                 action = actionLabel
                 actionLabel = (text, lambda: self.actionFunc(action),
-                               ActionIcons.get(action, None))
+                               ActionIcons.get(action, None),
+                               ActionShortCuts.get(action,None))
             return actionLabel
 
         actions = [addAction(a)
