@@ -288,6 +288,9 @@ class ProtocolViewer(pwprot.Protocol, Viewer):
     def _citations(self):
         return self.protocol._citations()
 
+    def validateInstallation(self):
+        return
+
     # TODO deprecate this method, it's duplicate of one from pwutils.utils
     def _getListFromRangeString(self, rangeStr):
         """ Create a list of integer from a string with range definitions
