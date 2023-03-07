@@ -27,6 +27,8 @@
 """
 This modules contains constants related to Pyworkflow
 """
+from enum import Enum
+
 # This variable is useful to determinate the plugins compatibility with the
 # current Scipion core release.
 # This version does not need to change with future scipion releases
@@ -140,6 +142,33 @@ class Color:
     STATUS_INTERACTIVE = '#F3F5CB',
     STATUS_ABORTED = '#F5CCCB',
 
+
+
+# Terminal ASCII colors and tkinter map
+# Enum with ascii code colors based on -->https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences
+class StrColors(Enum):
+    gray = '30'
+    red = '31'
+    green = '32'
+    yellow = '33'
+    blue = '34'
+    magenta = '35'
+    cyan = '36'
+    white = '37'
+    lightgreen = '92'
+
+# Console (and XMIPP) escaped colors, and the related tags that we create
+# with Text.tag_config(). This dict is used in OutputText:addLine()
+ASCII_COLOR_2_TKINTER =\
+    {StrColors.gray.value: 'gray',
+     StrColors.red.value: 'red',
+     StrColors.green.value: 'yellowgreen',
+     StrColors.lightgreen.value: 'yellowgreen',
+     StrColors.yellow.value: 'yellow',
+     StrColors.blue.value: 'blue',
+     StrColors.magenta.value: 'magenta',
+     StrColors.cyan.value: 'cyan',
+     StrColors.white.value: 'white'}
 
 class DOCSITEURLS:
     """Documentation site URL useful when exceptions happens and you want to point to some pages"""

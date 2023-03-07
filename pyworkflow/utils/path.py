@@ -33,7 +33,7 @@ import sys
 from glob import glob
 import datetime
 
-from pyworkflow import SCIPION_SCRATCH, DOCSITEURLS
+from pyworkflow import SCIPION_SCRATCH, DOCSITEURLS, ASCII_COLOR_2_TKINTER
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.config import Config
 
@@ -312,18 +312,6 @@ def commonPath(*paths):
     return os.path.dirname(os.path.commonprefix(*paths))
 
 
-# Console (and XMIPP) escaped colors, and the related tags that we create
-# with Text.tag_config(). This dict is used in OutputText:addLine()
-# See also http://www.termsys.demon.co.uk/vtansi.htm#colors
-colorName = {'30': 'gray',
-             '31': 'red',
-             '32': 'green',
-             '33': 'yellow',
-             '34': 'blue',
-             '35': 'magenta',
-             '36': 'cyan',
-             '37': 'white'}
-
 
 def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
                    maxSize=400, headSize=40, tailSize=None, notifyLine=None, errors='strict'):
@@ -400,7 +388,7 @@ def renderLine(line, add, lineNo=1, numberLines=True):
         if code == '0':
             attribute = None
         else:
-            attribute = colorName.get(code[-2:], None)
+            attribute = ASCII_COLOR_2_TKINTER.get(code[-2:], None)
         pos = end + 1  # go to the character next to "m", the closing char
 
 

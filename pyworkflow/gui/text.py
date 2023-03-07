@@ -36,8 +36,9 @@ import tkinter as tk
 import tkinter.messagebox as tkMessageBox
 
 import pyworkflow as pw
+from pyworkflow import ASCII_COLOR_2_TKINTER
 from pyworkflow.utils import (HYPER_BOLD, HYPER_ITALIC, HYPER_LINK1, HYPER_LINK2,
-                              parseHyperText, renderLine, renderTextFile, colorName,
+                              parseHyperText, renderLine, renderTextFile,
                               which, envVarOn, expandPattern)
 from pyworkflow.utils.properties import Message, Color, Icon
 from . import gui
@@ -312,7 +313,7 @@ class Text(tk.Text, Scrollable):
 def configureColorTags(text):
     """ Create tags in text (of type tk.Text) for all the supported colors. """
     try:
-        for color in colorName.values():
+        for color in ASCII_COLOR_2_TKINTER.values():
             text.tag_config(color, foreground=color)
         return True
     except Exception as e:
