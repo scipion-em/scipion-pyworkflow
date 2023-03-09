@@ -2261,7 +2261,11 @@ class FormWindow(Window):
             protocolList = ""
             if self.protocol.getObjId():
                 project = self.protocol.getProject()
-                workflowProtocolList, activeProtList = project._getWorkflowFromProtocol(self.protocol)
+
+                def notSaved(aProt):
+                    return not aProt.isSaved()
+                workflowProtocolList, activeProtList = project._getSubworkflow(self.protocol, letItPass=notSaved)
+
                 for prot, level in workflowProtocolList.values():
                     protocolList += ("\n* " + prot.getRunName())
                 if len(workflowProtocolList) > 1:

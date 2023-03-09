@@ -93,7 +93,7 @@ roots = runGraph.getRootNodes()
 
 for root in roots:
     for child in root.getChilds():
-        workflow, _ = project._getWorkflowFromProtocol(child.run)
+        workflow, _ = project._getSubworkflow(child.run)
         for prot, level in workflow.values():
             if prot.forceSchedule.get():
                 print(pwutils.blueStr("\nStopping scheduling at '%s'. Force scheduling found.\n"

@@ -819,38 +819,53 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _getWorkflowFromProtocol(self, protocol, fixProtParam=True):
+    def _getSubworkflow(self, protocol, fixProtParam=True, letItPass=None):
         """
         This function get the workflow from "protocol" and determine the
         protocol level into the graph. Also, checks if there are active
         protocols excluding interactive protocols.
+
+        :param protocol from where to start the subworkflow (included)
+        :param letItPass: a callback receiving the protocol and returning false if protocol should not pass
         """
-        activeProtList = []
-        configuredProtList = {}
+        affectedProtocols = {}
+        affectedProtocolsActive = []
         auxProtList = []
         # store the protocol and your level into the workflow
-        configuredProtList[protocol.getObjId()] = [protocol, 0]
-        auxProtList.append(protocol.getObjId())
+        affectedProtocols[protocol.getObjId()] = [protocol, 0]
+        auxProtList.append([protocol.getObjId(), 0])
         runGraph = self.getRunsGraph()
 
         while auxProtList:
-            protocol = runGraph.getNode(str(auxProtList.pop(0))).run
-            level = configuredProtList[protocol.getObjId()][1] + 1
+            protId, level = auxProtList.pop(0)
+            protocol = runGraph.getNode(str(protId)).run
+
+            # Increase the level for the children
+            level = level + 1
+
             if fixProtParam:
                 self._fixProtParamsConfiguration(protocol)
-            if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                activeProtList.append(protocol)
+
+            passesFilter = True if letItPass is None else letItPass(protocol)
+
+            if passesFilter and protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
+                affectedProtocolsActive.append(protocol)
+
             node = runGraph.getNode(protocol.strId())
             dependencies = [node.run for node in node.getChilds()]
             for dep in dependencies:
                 if not dep.getObjId() in auxProtList:
-                    auxProtList.append(dep.getObjId())
-                if not dep.getObjId() in configuredProtList.keys():
-                    configuredProtList[dep.getObjId()] = [dep, level]
-                elif level > configuredProtList[dep.getObjId()][1]:
-                    configuredProtList[dep.getObjId()][1] = level
+                    auxProtList.append([dep.getObjId(), level])
 
-        return configuredProtList, activeProtList
+                if letItPass is not None and not letItPass(dep):
+                    continue
+
+                if not dep.getObjId() in affectedProtocols.keys():
+                    affectedProtocols[dep.getObjId()] = [dep, level]
+                elif level > affectedProtocols[dep.getObjId()][1]:
+                    affectedProtocols[dep.getObjId()][1] = level
+
+        return affectedProtocols, affectedProtocolsActive
 
     def deleteProtocol(self, *protocols):
         self._checkModificationAllowed(protocols, 'Cannot DELETE protocols')
