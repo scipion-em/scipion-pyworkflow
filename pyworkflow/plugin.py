@@ -270,7 +270,7 @@ class Domain:
     def getViewers(cls):
         """ Return all Viewer subclasses from all plugins for this domain."""
         return cls.__getSubclasses('viewers', cls._viewerClass,
-                                   updateBaseClasses=True)
+                                   updateBaseClasses=True, setPackage=True)
 
     @classmethod
     def getWizards(cls):

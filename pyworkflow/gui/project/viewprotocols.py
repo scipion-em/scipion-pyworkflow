@@ -2007,7 +2007,8 @@ class ProtocolsView(tk.Frame):
 
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
-
+        else:
+            self.info("Action '%s' not implemented." % action)
     def setVisibleNodes(self, node, visible=True):
         hasParentHidden = False
         for child in node.getChilds():
