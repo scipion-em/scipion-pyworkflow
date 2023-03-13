@@ -21,7 +21,10 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import datetime
 import logging
+
+REFRESH_WAIT_SEC = 60
 logger = logging.getLogger(__name__)
 
 import os
@@ -38,7 +41,7 @@ import pyworkflow.gui as pwgui
 from pyworkflow.gui.text import TaggedText
 from pyworkflow.gui.dialog import askString, askYesNo, showError
 
-from pyworkflow.gui import Message, Window, cfgEntryBgColor
+from pyworkflow.gui import Message, Window, cfgEntryBgColor, ToolTip
 from pyworkflow.gui.browser import FileBrowserWindow
 from pyworkflow.gui.widgets import IconButton, HotButton, Button
 from pyworkflow.utils.properties import Icon
@@ -52,8 +55,10 @@ class ProjectsView(tk.Frame):
         self.windows = windows
         self.manager = windows.manager
         self.root = windows.root
+        self.lastLoad = None
 
-        # tkFont.Font(size=12, family='verdana', weight='bold')
+        # Bind to root "focus in"
+        self.root.bind("<FocusIn>", self._onWindowFocusIn)
         bigSize = pwgui.cfgFontSize + 2
         smallSize = pwgui.cfgFontSize - 2
         fontName = pwgui.cfgFontName
@@ -73,11 +78,19 @@ class ProjectsView(tk.Frame):
         self.rowconfigure(1, weight=1)
         text = TaggedText(self, width=40, height=15, bd=0, bg='white')
         text.grid(row=1, columnspan=2, column=0, sticky='news')
-
-        self.createProjectList(text)
         text.setReadOnly(True)
         self.text = text
         self.filterBox.focus_set()
+
+        # Content load happens automatically _onWindowFocusIn
+
+    def _onWindowFocusIn(self, event):
+        """ Refresh on windows get focus """
+        if event.widget == self.root:
+            # Get the delta from the last time refreshed
+            delta = REFRESH_WAIT_SEC if self.lastLoad is None else (datetime.datetime.now() - self.lastLoad).seconds
+            if delta >= REFRESH_WAIT_SEC:
+                self.createProjectList()
 
     def addActionsFrame(self):
         """ Add the "toolbar" for actions like create project, import
@@ -104,10 +117,16 @@ class ProjectsView(tk.Frame):
         self.filterBox.grid(row=0, column=3, sticky='ne', padx=10, pady=12)
         self.filterBox.bind('<Return>', self._onFilter)
         self.filterBox.bind('<KP_Enter>', self._onFilter)
+        self.filterBox.bind("<F5>", self.createProjectList)
+        ToolTip(self.filterBox, "Return/enter to filter. F5 to refresh the list")
 
-    def createProjectList(self, text):
+
+    def createProjectList(self, event=None):
         """Load the list of projects"""
+
+        self.lastLoad = datetime.datetime.now()
         r = 0
+        text = self.text
         text.setReadOnly(False)
         text.clear()
         parent = tk.Frame(text, bg='white', name=self._PROJ_CONTAINER)
@@ -168,7 +187,7 @@ class ProjectsView(tk.Frame):
 
     def createNewProject(self, projName, projLocation):
         proj = self.manager.createProject(projName, location=projLocation)
-        self.createProjectList(self.text)
+        self.createProjectList()
         self.openProject(proj.getShortName())
 
     def _onCreateProject(self, e=None):
@@ -180,7 +199,7 @@ class ProjectsView(tk.Frame):
         importProjWindow.show()
 
     def _onFilter(self, e=None):
-        self.createProjectList(self.text)
+        self.createProjectList()
 
     def _setFocusToList(self, e=None):
         self.text.focus_set()
@@ -197,7 +216,7 @@ class ProjectsView(tk.Frame):
     def importProject(self, projLocation, copyFiles, projName, searchLocation):
 
         self.manager.importProject(projLocation, copyFiles, projName, searchLocation)
-        self.createProjectList(self.text)
+        self.createProjectList()
         self.openProject(projName)
 
     def openProject(self, projName):
@@ -228,7 +247,7 @@ class ProjectsView(tk.Frame):
                       "Project name already exists: %s" % newName, self.root)
             return
         self.manager.renameProject(projName, newName)
-        self.createProjectList(self.text)
+        self.createProjectList()
 
 
 class ProjectCreateWindow(Window):
