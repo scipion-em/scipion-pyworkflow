@@ -1641,8 +1641,10 @@ class ProtocolsView(tk.Frame):
     def _stopWorkFlow(self, action):
 
         protocols = self._getSelectedProtocols()
-        workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0],
-                                                                                     False)
+
+        # TODO: use filterCallback param and we may not need to return 2 elements
+        workflowProtocolList, activeProtList = self.project._getSubworkflow(protocols[0],
+                                                                            False)
         if activeProtList:
             errorProtList = []
             if pwgui.dialog.askYesNo(Message.TITLE_STOP_WORKFLOW_FORM,
@@ -1667,7 +1669,7 @@ class ProtocolsView(tk.Frame):
         if pwgui.dialog.askYesNo(Message.TITLE_RESET_WORKFLOW_FORM,
                                  Message.TITLE_RESET_WORKFLOW, self.root):
             self.info('Resetting the workflow...')
-            workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
+            workflowProtocolList, activeProtList = self.project._getSubworkflow(protocols[0])
             errorProtList = self.project.resetWorkFlow(workflowProtocolList)
             self.cleanInfo()
             self.refreshRuns()
@@ -1688,7 +1690,7 @@ class ProtocolsView(tk.Frame):
         protocols = self._getSelectedProtocols()
         errorList = []
         defaultMode = pwprot.MODE_RESUME
-        workflowProtocolList, activeProtList = self.project._getWorkflowFromProtocol(protocols[0])
+        workflowProtocolList, activeProtList = self.project._getSubworkflow(protocols[0])
 
         # Check if exists active protocols
         if activeProtList:
@@ -2005,7 +2007,8 @@ class ProtocolsView(tk.Frame):
 
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
-
+        else:
+            self.info("Action '%s' not implemented." % action)
     def setVisibleNodes(self, node, visible=True):
         hasParentHidden = False
         for child in node.getChilds():

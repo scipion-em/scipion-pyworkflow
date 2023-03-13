@@ -85,6 +85,8 @@ class Domain:
 
             # Define variables
             m.Plugin._defineVariables()
+            m._pluginInstance = m.Plugin()
+
             m.Domain = cls  # Register the domain class for this module
             # TODO avoid loading bibtex here and make a lazy load like the rest.
             # Load bibtex
@@ -226,17 +228,7 @@ class Domain:
                                 # Protocols need the package to be set
                                 if setPackage:
 
-                                    plugin = getattr(module, "__pluginInstance", None)
-
-                                    if plugin is None:
-                                        pluginClass = getattr(module, "Plugin", None)
-                                        if pluginClass is None:
-                                            logger.warning("Package %s has no Plugin class!!" % name)
-                                        else:
-                                            pluginInstance = pluginClass()
-                                            setattr(module, "__pluginInstance", pluginInstance)
-
-                                    attr._plugin = pluginInstance
+                                    attr._plugin = getattr(module, "_pluginInstance", None)
                                     attr._package = module
 
                                 subclasses[name] = attr
@@ -278,7 +270,7 @@ class Domain:
     def getViewers(cls):
         """ Return all Viewer subclasses from all plugins for this domain."""
         return cls.__getSubclasses('viewers', cls._viewerClass,
-                                   updateBaseClasses=True)
+                                   updateBaseClasses=True, setPackage=True)
 
     @classmethod
     def getWizards(cls):

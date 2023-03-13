@@ -261,7 +261,7 @@ class TemplateList:
         # Check if there is any .json.template in the template folder
         # get the template folder (we only want it to be included once)
         for pluginName, pluginModule in domain.getPlugins().items():
-            tempListPlugin = pluginModule.Plugin.getTemplates()
+            tempListPlugin = pluginModule._pluginInstance.getTemplates()
             for t in tempListPlugin:
                 if tempId is not None:
                     if t.getObjId() == tempId:
