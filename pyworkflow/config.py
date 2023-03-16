@@ -1,8 +1,6 @@
 
 import logging
 
-import matplotlib.colors
-
 logger = logging.getLogger(__file__)
 import ast
 import importlib
@@ -396,7 +394,9 @@ class Config:
         """ Returns a color lighter than the SCIPION_MAIN_COLOR"""
 
         if cls.__activeColor is None:
+            import matplotlib.colors
             from pyworkflow.utils import lighter, rgb_to_hex
+
             rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
             rgb_main = (rgb_main[0] * 255, rgb_main[1] * 255, rgb_main[2] * 255)
             rgb_active = lighter(rgb_main, 0.3)
