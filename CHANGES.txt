@@ -7,6 +7,8 @@ users:
   - Plugins in devel mode are shown with a delta suffix after the package name.
   - Green lines in log are lighter, colored lines are back in the log.
   - Commands in the log are "announced" by "** Running command: **"
+  - Project list window: F5 on the filter box will refresh the list.
+  - Project list window: Auto refresh on window activate when data is older than 60 seconds
 
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
