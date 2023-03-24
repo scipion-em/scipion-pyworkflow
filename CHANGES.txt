@@ -1,4 +1,3 @@
-
 V3.1.0
 ------
 users:
@@ -9,6 +8,7 @@ users:
   - Commands in the log are "announced" by "** Running command: **"
   - Project list window: F5 on the filter box will refresh the list.
   - Project list window: Auto refresh on window activate when data is older than 60 seconds
+  - New actions: Copy (Control+c) and Paste (Control +v) will allow to copy the selection to and from the clipboard.
 
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.

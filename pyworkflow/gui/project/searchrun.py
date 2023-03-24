@@ -29,11 +29,7 @@ from pyworkflow import Config
 import pyworkflow.protocol as pwprot
 
 from pyworkflow.gui import SearchBaseWindow
-from pyworkflow.gui.project.constants import ACTION_COPY, ACTION_EDIT, ACTION_RENAME, ACTION_DELETE, ACTION_STEPS, \
-    ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, ACTION_COLLAPSE, ACTION_EXPAND, \
-    ACTION_LABELS, ACTION_SELECT_FROM, ACTION_SELECT_TO, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, \
-    ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW, ActionIcons, ActionShortCuts
-
+from pyworkflow.gui.project.constants import *
 from pyworkflow.gui.tree import ProjectRunsTreeProvider
 
 class RunsTreeProvider(ProjectRunsTreeProvider):
@@ -63,6 +59,8 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
         return [(ACTION_EDIT, single and status and expanded),
                 (ACTION_RENAME, single and status and expanded),
                 (ACTION_COPY, status and expanded),
+                (ACTION_PASTE, status and expanded),
+                (ACTION_DUPLICATE, status and expanded),
                 (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
                 (ACTION_STEPS, single and Config.debugOn() and status and expanded),
                 (ACTION_BROWSE, single and status and expanded),

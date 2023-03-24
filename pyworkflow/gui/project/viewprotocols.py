@@ -27,11 +27,7 @@ import threading
 
 from pyworkflow import Config
 from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut, ToolTip
-from pyworkflow.gui.project.constants import ActionIcons, ActionShortCuts, ACTION_REFRESH, ACTION_EDIT, ACTION_COPY, ACTION_DELETE, ACTION_STEPS, \
-    ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, \
-    ACTION_COLLAPSE, ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ACTION_TREE, ACTION_SWITCH_VIEW, \
-    ACTION_SELECT_TO, ACTION_RENAME, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, ACTION_DEFAULT, \
-    ACTION_SELECT_FROM, ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW
+from pyworkflow.gui.project.constants import *
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
 INIT_REFRESH_SECONDS = Config.SCIPION_GUI_REFRESH_INITIAL_WAIT
@@ -509,14 +505,15 @@ class ProtocolsView(tk.Frame):
 
         self.actionButtons = {}
         actionList = [
-            ACTION_EDIT, ACTION_COPY, ACTION_DELETE,
-            ACTION_STEPS, ACTION_BROWSE, ACTION_DB,
-            ACTION_STOP, ACTION_CONTINUE, ACTION_RESULTS,
-            ACTION_EXPORT, ACTION_EXPORT_UPLOAD, ACTION_COLLAPSE,
-            ACTION_EXPAND, ACTION_LABELS, ACTION_SEARCH, ACTION_RENAME,
-            ACTION_STOP_WORKFLOW, ACTION_RESTART_WORKFLOW, ACTION_RESET_WORKFLOW,
-            ACTION_SELECT_FROM, ACTION_SELECT_TO, ACTION_STEPS,
-            ACTION_CONTINUE_WORKFLOW
+            ACTION_EDIT, ACTION_RENAME, ACTION_COPY, ACTION_PASTE, ACTION_DUPLICATE, ACTION_DELETE,
+            ACTION_BROWSE,
+            ACTION_STOP, ACTION_STOP_WORKFLOW, ACTION_CONTINUE, ACTION_CONTINUE_WORKFLOW, ACTION_RESTART_WORKFLOW, ACTION_RESET_WORKFLOW,
+            ACTION_RESULTS,
+            ACTION_EXPORT, ACTION_EXPORT_UPLOAD,
+            ACTION_COLLAPSE, ACTION_EXPAND,
+            ACTION_LABELS, ACTION_SEARCH,
+            ACTION_SELECT_FROM, ACTION_SELECT_TO,
+            ACTION_STEPS, ACTION_DB
         ]
 
         def addButton(action, text, toolbar):
@@ -1624,6 +1621,26 @@ class ProtocolsView(tk.Frame):
             disableRunMode = True
         self._openProtocolForm(protocol, disableRunMode=disableRunMode)
 
+    def _pasteProtocolsFromClipboard(self, e=None):
+        """ Pastes the content of the clipboard providing is a json workflow"""
+
+        try:
+
+            self.project.loadProtocols(jsonStr=self.clipboard_get())
+            self.info("Clipboard content pasted successfully.")
+        except Exception as e:
+            self.info("Paste failed, maybe clipboard content is not valid content? See GUI log for details.")
+            logger.error("Clipboard content couldn't be pasted." , exc_info=e)
+    def _copyProtocolsToClipboard(self, e=None):
+
+        protocols = self._getSelectedProtocols()
+
+        jsonStr = self.project.getProtocolsJson(protocols)
+
+        self.clipboard_clear()
+        self.clipboard_append(jsonStr)
+        self.info("Protocols copied to the clipboard. Now you can paste them here, another project or in a template or ... anywhere!.")
+
     def _copyProtocols(self, e=None):
         protocols = self._getSelectedProtocols()
         if len(protocols) == 1:
@@ -1942,8 +1959,13 @@ class ProtocolsView(tk.Frame):
                     self._editProtocol(prot)
                 elif action == ACTION_RENAME:
                     self._renameProtocol(prot)
-                elif action == ACTION_COPY:
+                elif action == ACTION_DUPLICATE:
                     self._copyProtocols()
+                elif action == ACTION_COPY:
+                    self._copyProtocolsToClipboard()
+                elif action == ACTION_PASTE:
+                    self._pasteProtocolsFromClipboard()
+
                 elif action == ACTION_DELETE:
                     self._deleteProtocol()
                 elif action == ACTION_STEPS:
@@ -1999,6 +2021,7 @@ class ProtocolsView(tk.Frame):
                     import traceback
                     traceback.print_exc()
 
+            return
         # Following actions do not need a select run
         if action == ACTION_TREE:
             self.drawRunsGraph(reorganize=True)
