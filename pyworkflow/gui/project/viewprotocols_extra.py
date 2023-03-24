@@ -156,7 +156,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         # since we can end up with several outputs and
         # we may want to clean up
         if self.protocol.allowsDelete(obj) and not isPointer:
-            actions.append((Message.LABEL_DELETE_ACTION,
+            actions.append((Message.LABEL_DELETE,
                             lambda: self._deleteObject(obj),
                             Icon.ACTION_DELETE))
         return actions

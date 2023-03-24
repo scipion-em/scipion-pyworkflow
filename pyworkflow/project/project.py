@@ -1151,14 +1151,22 @@ class Project(object):
         """ Load protocols generated in the same format as self.exportProtocols.
 
         :param filename: the path of the file where to read the workflow.
-        :param jsonStr: Not used.
+        :param jsonStr:
 
         Note: either filename or jsonStr should be not None.
 
         """
-        f = open(filename)
-        importDir = os.path.dirname(filename)
-        protocolsList = json.load(f)
+        importDir = None
+        if filename:
+            with open(filename) as f:
+                importDir = os.path.dirname(filename)
+                protocolsList = json.load(f)
+
+        elif jsonStr:
+            protocolsList = json.loads(jsonStr)
+        else:
+            logger.error("Invalid call to  loadProcols. Either filename or jsonStr has to be passed.")
+            return
 
         emProtocols = self._domain.getProtocols()
         newDict = OrderedDict()
@@ -1176,7 +1184,7 @@ class Project(object):
                 prot = self.newProtocol(protClass,
                                         objLabel=protLabel,
                                         objComment=protDict.get('object.comment', None))
-                protocolsList[i] = prot.processImportDict(protDict, importDir)
+                protocolsList[i] = prot.processImportDict(protDict, importDir) if importDir else protDict
 
                 prot._useQueue.set(protDict.get('_useQueue', False))
                 prot._queueParams.set(protDict.get('_queueParams', None))
@@ -1245,7 +1253,6 @@ class Project(object):
 
                 self.mapper.store(prot)
 
-        f.close()
         self.mapper.commit()
 
         return newDict
