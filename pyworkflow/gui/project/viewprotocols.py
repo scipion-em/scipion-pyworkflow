@@ -165,7 +165,7 @@ class ProtocolsView(tk.Frame):
         self.root.bind("<Control-f>", self._findProtocol)
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
-        self.root.bind("<Control-d>", self._toggleDebug)
+        self.root.bind("<Control-D>", self._toggleDebug)
         self.root.bind("<Control-l>", self._locateProtocol)
 
         if Config.debugOn():
