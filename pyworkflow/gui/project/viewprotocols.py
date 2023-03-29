@@ -165,7 +165,7 @@ class ProtocolsView(tk.Frame):
         self.root.bind("<Control-f>", self._findProtocol)
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
-        self.root.bind("<Control-d>", self._toggleDebug)
+        self.root.bind("<Control-D>", self._toggleDebug)
         self.root.bind("<Control-l>", self._locateProtocol)
 
         if Config.debugOn():
@@ -1949,79 +1949,6 @@ class ProtocolsView(tk.Frame):
             if event.widget.widgetName == 'entry':
                 return
 
-
-        prot = self.getSelectedProtocol()
-        if prot:
-            try:
-                if action == ACTION_DEFAULT:
-                    pass
-                elif action == ACTION_EDIT:
-                    self._editProtocol(prot)
-                elif action == ACTION_RENAME:
-                    self._renameProtocol(prot)
-                elif action == ACTION_DUPLICATE:
-                    self._copyProtocols()
-                elif action == ACTION_COPY:
-                    self._copyProtocolsToClipboard()
-                elif action == ACTION_PASTE:
-                    self._pasteProtocolsFromClipboard()
-
-                elif action == ACTION_DELETE:
-                    self._deleteProtocol()
-                elif action == ACTION_STEPS:
-                    self._browseSteps()
-                elif action == ACTION_BROWSE:
-                    self._browseRunDirectory()
-                elif action == ACTION_DB:
-                    self._browseRunData()
-                elif action == ACTION_STOP:
-                    self._stopProtocol(prot)
-                elif action == ACTION_CONTINUE:
-                    self._continueProtocol(prot)
-                elif action == ACTION_RESULTS:
-                    self._analyzeResults(prot)
-                elif action == ACTION_EXPORT:
-                    self._exportProtocols(defaultPath=pwutils.getHomePath())
-                elif action == ACTION_EXPORT_UPLOAD:
-                    self._exportUploadProtocols()
-                elif action == ACTION_COLLAPSE:
-                    node = self.runsGraph.getNode(str(prot.getObjId()))
-                    nodeInfo = self.settings.getNodeById(prot.getObjId())
-                    nodeInfo.setExpanded(False)
-                    self.setVisibleNodes(node, visible=False)
-                    self.updateRunsGraph(True, reorganize=False)
-                    self._updateActionToolbar()
-                elif action == ACTION_EXPAND:
-                    node = self.runsGraph.getNode(str(prot.getObjId()))
-                    nodeInfo = self.settings.getNodeById(prot.getObjId())
-                    nodeInfo.setExpanded(True)
-                    self.setVisibleNodes(node, visible=True)
-                    self.updateRunsGraph(True, reorganize=False)
-                    self._updateActionToolbar()
-                elif action == ACTION_LABELS:
-                    self._selectLabels()
-                elif action == ACTION_SELECT_FROM:
-                    self._selectDescendants()
-                elif action == ACTION_SELECT_TO:
-                    self._selectAncestors()
-                elif action == ACTION_RESTART_WORKFLOW:
-                    self._launchWorkFlow(action)
-                elif action == ACTION_CONTINUE_WORKFLOW:
-                    self._launchWorkFlow(action)
-                elif action == ACTION_STOP_WORKFLOW:
-                    self._stopWorkFlow(action)
-                elif action == ACTION_RESET_WORKFLOW:
-                    self._resetWorkFlow(action)
-                elif action == ACTION_SEARCH:
-                    self._searchProtocol()
-
-            except Exception as ex:
-                self.windows.showError(str(ex))
-                if Config.debugOn():
-                    import traceback
-                    traceback.print_exc()
-
-            return
         # Following actions do not need a select run
         if action == ACTION_TREE:
             self.drawRunsGraph(reorganize=True)
@@ -2031,7 +1958,79 @@ class ProtocolsView(tk.Frame):
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
         else:
-            self.info("Action '%s' not implemented." % action)
+            prot = self.getSelectedProtocol()
+            if prot:
+                try:
+                    if action == ACTION_DEFAULT:
+                        pass
+                    elif action == ACTION_EDIT:
+                        self._editProtocol(prot)
+                    elif action == ACTION_RENAME:
+                        self._renameProtocol(prot)
+                    elif action == ACTION_DUPLICATE:
+                        self._copyProtocols()
+                    elif action == ACTION_COPY:
+                        self._copyProtocolsToClipboard()
+                    elif action == ACTION_PASTE:
+                        self._pasteProtocolsFromClipboard()
+
+                    elif action == ACTION_DELETE:
+                        self._deleteProtocol()
+                    elif action == ACTION_STEPS:
+                        self._browseSteps()
+                    elif action == ACTION_BROWSE:
+                        self._browseRunDirectory()
+                    elif action == ACTION_DB:
+                        self._browseRunData()
+                    elif action == ACTION_STOP:
+                        self._stopProtocol(prot)
+                    elif action == ACTION_CONTINUE:
+                        self._continueProtocol(prot)
+                    elif action == ACTION_RESULTS:
+                        self._analyzeResults(prot)
+                    elif action == ACTION_EXPORT:
+                        self._exportProtocols(defaultPath=pwutils.getHomePath())
+                    elif action == ACTION_EXPORT_UPLOAD:
+                        self._exportUploadProtocols()
+                    elif action == ACTION_COLLAPSE:
+                        node = self.runsGraph.getNode(str(prot.getObjId()))
+                        nodeInfo = self.settings.getNodeById(prot.getObjId())
+                        nodeInfo.setExpanded(False)
+                        self.setVisibleNodes(node, visible=False)
+                        self.updateRunsGraph(True, reorganize=False)
+                        self._updateActionToolbar()
+                    elif action == ACTION_EXPAND:
+                        node = self.runsGraph.getNode(str(prot.getObjId()))
+                        nodeInfo = self.settings.getNodeById(prot.getObjId())
+                        nodeInfo.setExpanded(True)
+                        self.setVisibleNodes(node, visible=True)
+                        self.updateRunsGraph(True, reorganize=False)
+                        self._updateActionToolbar()
+                    elif action == ACTION_LABELS:
+                        self._selectLabels()
+                    elif action == ACTION_SELECT_FROM:
+                        self._selectDescendants()
+                    elif action == ACTION_SELECT_TO:
+                        self._selectAncestors()
+                    elif action == ACTION_RESTART_WORKFLOW:
+                        self._launchWorkFlow(action)
+                    elif action == ACTION_CONTINUE_WORKFLOW:
+                        self._launchWorkFlow(action)
+                    elif action == ACTION_STOP_WORKFLOW:
+                        self._stopWorkFlow(action)
+                    elif action == ACTION_RESET_WORKFLOW:
+                        self._resetWorkFlow(action)
+                    elif action == ACTION_SEARCH:
+                        self._searchProtocol()
+
+                except Exception as ex:
+                    self.windows.showError(str(ex))
+                    if Config.debugOn():
+                        import traceback
+                        traceback.print_exc()
+            else:
+                self.info("Action '%s' not implemented." % action)
+
     def setVisibleNodes(self, node, visible=True):
         hasParentHidden = False
         for child in node.getChilds():

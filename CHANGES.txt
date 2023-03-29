@@ -12,6 +12,7 @@ users:
 
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
+  - Short cut for devel mode is not Control+D since control+d is for duplicate (old copy)
 
 V3.0.31
 -------
