@@ -320,7 +320,7 @@ class QueueStepExecutor(ThreadStepExecutor):
         command = hostConfig.getCheckCommand() % {"JOB_ID": jobid}
         p = Popen(command, shell=True, stdout=PIPE, preexec_fn=os.setsid)
 
-        out = p.communicate()[0]
+        out = p.communicate()[0].decode(errors='backslashreplace')
 
         jobDoneRegex = hostConfig.getJobDoneRegex()
 
