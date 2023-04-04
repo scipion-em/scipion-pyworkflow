@@ -28,11 +28,12 @@ import queue
 from functools import partial
 from tkinter.ttk import Style
 
-from pyworkflow.object import Object
 import pyworkflow as pw
-from pyworkflow.utils import Message, Color, Icon
-
+from pyworkflow.object import Object
+from pyworkflow.utils import Message, Icon
+from PIL import Image, ImageTk
 from .widgets import Button
+import numpy as np
 
 # --------------- GUI CONFIGURATION parameters -----------------------
 # TODO: read font size and name from config file
@@ -51,8 +52,8 @@ cfgFontBigSize = cfgFontSize + 8
 # cfgBgColor = "light grey"
 # cfgLabelBgColor = "white"
 # cfgHighlightBgColor = cfgBgColor
-cfgButtonFgColor = "white"
-cfgButtonActiveFgColor = "white"
+cfgButtonFgColor = pw.Config.SCIPION_BG_COLOR
+cfgButtonActiveFgColor = pw.Config.SCIPION_BG_COLOR
 cfgButtonBgColor = pw.Config.SCIPION_MAIN_COLOR
 cfgButtonActiveBgColor = pw.Config.getActiveColor()
 cfgEntryBgColor = "lemon chiffon"
@@ -204,8 +205,9 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         imagePath = imageName
     image = None
     if imagePath:
-        from PIL import Image
         image = Image.open(imagePath)
+        # For a future dark mode we might need to invert the image but it requires some extra work to make it look nice:
+        # image = invertImage(image)
         w, h = image.size
         newSize = None
         if percent != 100:  # Display image with other dimensions
@@ -216,12 +218,24 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         if newSize:
             image.thumbnail(newSize, Image.ANTIALIAS)
         if tkImage:
-            from PIL import ImageTk
             image = ImageTk.PhotoImage(image)
+
         image_cache[imageName] = image
     return image
 
+def invertImage(img):
+    # Creating a numpy array out of the image object
+    img_arry = np.array(img)
 
+    # Maximum intensity value of the color mode
+    I_max = 255
+
+    # Subtracting 255 (max value possible in a given image
+    # channel) from each pixel values and storing the result
+    img_arry = I_max - img_arry
+
+    # Creating an image object from the resultant numpy array
+    return Image.fromarray(img_arry)
 # ---------------- Windows geometry utilities -----------------------
 def getGeometry(win):
     """ Return the geometry information of the windows
@@ -271,7 +285,9 @@ def defineStyle():
     defaultFont = getDefaultFont()
     rowheight = defaultFont.metrics()['linespace']
 
-    style.configure(LIST_TREEVIEW, rowheight=rowheight)
+    style.configure(LIST_TREEVIEW, rowheight=rowheight,
+                    background=pw.Config.SCIPION_BG_COLOR,
+                    fieldbackground=pw.Config.SCIPION_BG_COLOR)
     style.configure(LIST_TREEVIEW+".Heading", font=(defaultFont["family"],defaultFont["size"]))
 
 

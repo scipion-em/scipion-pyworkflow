@@ -34,6 +34,7 @@ import math
 import tkinter as tk
 import operator
 
+from pyworkflow import Config
 from pyworkflow.gui import gui, getDefaultFont, cfgFontSize
 from pyworkflow.gui.widgets import Scrollable
 
@@ -51,7 +52,7 @@ class Canvas(tk.Canvas, Scrollable):
     _images = {}
 
     def __init__(self, parent, tooltipCallback=None, tooltipDelay=1500, **kwargs):
-        defaults = {'bg': 'white'}
+        defaults = {'bg': Config.SCIPION_BG_COLOR}
         defaults.update(kwargs)
         Scrollable.__init__(self, parent, tk.Canvas, **defaults)
 

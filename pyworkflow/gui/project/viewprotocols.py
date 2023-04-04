@@ -189,7 +189,7 @@ class ProtocolsView(tk.Frame):
             Left: containing the Protocol classes tree
             Right: containing the Runs list
         """
-        p = tk.PanedWindow(self, orient=tk.HORIZONTAL, bg='white')
+        p = tk.PanedWindow(self, orient=tk.HORIZONTAL, bg=Config.SCIPION_BG_COLOR)
         bgColor = Color.ALT_COLOR
         # Left pane, contains Protocols Pane
         leftFrame = tk.Frame(p, bg=bgColor)
@@ -209,30 +209,30 @@ class ProtocolsView(tk.Frame):
         # Runs History (at Top)
 
         # Selected run info (at Bottom)
-        rightFrame = tk.Frame(p, bg='white')
+        rightFrame = tk.Frame(p, bg=Config.SCIPION_BG_COLOR)
         rightFrame.columnconfigure(0, weight=1)
         rightFrame.rowconfigure(1, weight=1)
         # rightFrame.rowconfigure(0, minsize=label.winfo_reqheight())
 
         # Create the Action Buttons TOOLBAR
-        toolbar = tk.Frame(rightFrame, bg='white')
+        toolbar = tk.Frame(rightFrame, bg=Config.SCIPION_BG_COLOR)
         toolbar.grid(row=0, column=0, sticky='news')
         pwgui.configureWeigths(toolbar)
         # toolbar.columnconfigure(0, weight=1)
         toolbar.columnconfigure(1, weight=1)
 
-        self.runsToolbar = tk.Frame(toolbar, bg='white')
+        self.runsToolbar = tk.Frame(toolbar, bg=Config.SCIPION_BG_COLOR)
         self.runsToolbar.grid(row=0, column=0, sticky='sw')
         # On the left of the toolbar will be other
         # actions that can be applied to all runs (refresh, graph view...)
-        self.allToolbar = tk.Frame(toolbar, bg='white')
+        self.allToolbar = tk.Frame(toolbar, bg=Config.SCIPION_BG_COLOR)
         self.allToolbar.grid(row=0, column=10, sticky='se')
         self.createActionToolbar()
 
         # Create the Run History tree
         v = ttk.PanedWindow(rightFrame, orient=tk.VERTICAL)
         # runsFrame = ttk.Labelframe(v, text=' History ', width=500, height=500)
-        runsFrame = tk.Frame(v, bg='white')
+        runsFrame = tk.Frame(v, bg=Config.SCIPION_BG_COLOR)
         # runsFrame.grid(row=1, column=0, sticky='news', pady=5)
         self.runsTree = self.createRunsTree(runsFrame)
         pwgui.configureWeigths(runsFrame)
@@ -266,7 +266,7 @@ class ProtocolsView(tk.Frame):
         tab = ttk.Notebook(infoFrame)  # , style='W.TNotebook')
 
         # Summary tab
-        dframe = tk.Frame(tab, bg='white')
+        dframe = tk.Frame(tab, bg=Config.SCIPION_BG_COLOR)
         pwgui.configureWeigths(dframe, row=0)
         pwgui.configureWeigths(dframe, row=2)
         # Just configure the provider, later below, in updateSelection, it will be
@@ -275,14 +275,14 @@ class ProtocolsView(tk.Frame):
                                      self.project.mapper, self.info)
 
         rowheight = pwgui.getDefaultFont().metrics()['linespace']
-        self.style.configure("NoBorder.Treeview", background='white',
+        self.style.configure("NoBorder.Treeview", background=Config.SCIPION_BG_COLOR,
                              borderwidth=0, font=self.windows.font,
-                             rowheight=rowheight)
+                             rowheight=rowheight, fieldbackground=Config.SCIPION_BG_COLOR)
         self.infoTree = pwgui.browser.BoundTree(dframe, provider, height=6,
                                                 show='tree',
                                                 style="NoBorder.Treeview")
         self.infoTree.grid(row=0, column=0, sticky='news')
-        label = tk.Label(dframe, text='SUMMARY', bg='white',
+        label = tk.Label(dframe, text='SUMMARY', bg=Config.SCIPION_BG_COLOR,
                          font=self.windows.fontBold)
         label.grid(row=1, column=0, sticky='nw', padx=(15, 0))
 
@@ -290,7 +290,7 @@ class ProtocolsView(tk.Frame):
                  'sci-bib': self._bibExportClicked}
 
         self.summaryText = pwgui.text.TaggedText(dframe, width=40, height=5,
-                                                 bg='white', bd=0,
+                                                 bg=Config.SCIPION_BG_COLOR, bd=0,
                                                  font=self.windows.font,
                                                  handlers=hView)
         self.summaryText.grid(row=2, column=0, sticky='news', padx=(30, 0))
@@ -300,7 +300,7 @@ class ProtocolsView(tk.Frame):
         pwgui.configureWeigths(mframe)
         # Methods text box
         self.methodText = pwgui.text.TaggedText(mframe, width=40, height=15,
-                                                bg='white', handlers=hView)
+                                                bg=Config.SCIPION_BG_COLOR, handlers=hView)
         self.methodText.grid(row=0, column=0, sticky='news')
         # Reference export button
         # btnExportBib = pwgui.Button(mframe, text=Message.LABEL_BIB_BTN,
@@ -519,7 +519,7 @@ class ProtocolsView(tk.Frame):
         def addButton(action, text, toolbar):
             btn = tk.Label(toolbar, text="",
                            image=self.getImage(ActionIcons.get(action, None)),
-                           compound=tk.LEFT, cursor='hand2', bg='white')
+                           compound=tk.LEFT, cursor='hand2', bg=Config.SCIPION_BG_COLOR)
 
             callback = lambda e: self._runActionClicked(action, event=e)
             btn.bind(TK.LEFT_CLICK, callback)
@@ -561,7 +561,7 @@ class ProtocolsView(tk.Frame):
 
     def _createViewCombo(self, parent):
         """ Create the select-view combobox. """
-        label = tk.Label(parent, text='View:', bg='white')
+        label = tk.Label(parent, text='View:', bg=Config.SCIPION_BG_COLOR)
         label.grid(row=0, column=0)
         viewChoices = ['List', 'Tree', 'Tree - small']
         self.switchCombo = pwgui.widgets.ComboBox(parent, width=10,

@@ -28,7 +28,7 @@ Tree widget implementation.
 """
         
 import tkinter as tk
-
+from pyworkflow import Config
 from pyworkflow.project import Label
 from pyworkflow.gui import Icon, configureWeigths
 from pyworkflow.gui.tree import TreeProvider
@@ -148,11 +148,11 @@ class EditLabelDialog(dialog.Dialog):
         dialog.Dialog.__init__(self, parent, title)
 
     def body(self, bodyFrame):
-        bodyFrame.config(bg='white')
+        bodyFrame.config(bg=Config.SCIPION_BG_COLOR)
         configureWeigths(bodyFrame, 1, 1)
 
         # Label
-        label_text = tk.Label(bodyFrame, text="Name", bg='white', bd=0)
+        label_text = tk.Label(bodyFrame, text="Name", bg=Config.SCIPION_BG_COLOR, bd=0)
         label_text.grid(row=0, column=0, sticky='nw', padx=(15, 10), pady=15)
         # Label box
         var = tk.StringVar()
@@ -163,7 +163,7 @@ class EditLabelDialog(dialog.Dialog):
 
         # Comment
         colorLabel = tk.Label(bodyFrame, text='Color \n(Click to change)',
-                              bg='white', bd=0)
+                              bg=Config.SCIPION_BG_COLOR, bd=0)
         colorLabel.grid(row=1, column=0, sticky='nw', padx=(15, 10), pady=15)
         self.colorVar = tk.StringVar()
         self.colorVar.set(self.label.getColor())

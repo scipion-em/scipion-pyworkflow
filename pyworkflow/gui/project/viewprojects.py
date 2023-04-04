@@ -51,7 +51,7 @@ class ProjectsView(tk.Frame):
     _PROJ_CONTAINER = "projectsframe"
 
     def __init__(self, parent, windows, **args):
-        tk.Frame.__init__(self, parent, bg='white', **args)
+        tk.Frame.__init__(self, parent, bg=pw.Config.SCIPION_BG_COLOR, **args)
         self.windows = windows
         self.manager = windows.manager
         self.root = windows.root
@@ -76,7 +76,7 @@ class ProjectsView(tk.Frame):
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
-        text = TaggedText(self, width=40, height=15, bd=0, bg='white')
+        text = TaggedText(self, width=40, height=15, bd=0, bg=pw.Config.SCIPION_BG_COLOR)
         text.grid(row=1, columnspan=2, column=0, sticky='news')
         text.setReadOnly(True)
         self.text = text
@@ -96,7 +96,7 @@ class ProjectsView(tk.Frame):
         """ Add the "toolbar" for actions like create project, import
          project or filter"""
         # Add the create project button
-        bg = "white"
+        bg = pw.Config.SCIPION_BG_COLOR
         btnFrame = tk.Frame(self, bg=bg)
         btn = HotButton(btnFrame, text=Message.LABEL_CREATE_PROJECT,
                         font=self.projNameFont,
@@ -129,9 +129,9 @@ class ProjectsView(tk.Frame):
         text = self.text
         text.setReadOnly(False)
         text.clear()
-        parent = tk.Frame(text, bg='white', name=self._PROJ_CONTAINER)
+        parent = tk.Frame(text, bg=pw.Config.SCIPION_BG_COLOR, name=self._PROJ_CONTAINER)
         parent.columnconfigure(0, weight=1)
-        colors = ['white', '#EAEBFF']
+        colors = [pw.Config.SCIPION_BG_COLOR, '#EAEBFF']
         for i, p in enumerate(self.manager.listProjects()):
             try:
                 # Add creation time to project info
@@ -260,7 +260,7 @@ class ProjectCreateWindow(Window):
         """
         Window.__init__(self, title, parent.windows, weight=weight,
                         icon=icon, minsize=minsize, enableQueue=True)
-        self.root['background'] = 'white'
+        self.root['background'] = pw.Config.SCIPION_BG_COLOR
 
         self.parent = parent
         self.projectsPath = self.parent.manager.PROJECTS
@@ -272,21 +272,21 @@ class ProjectCreateWindow(Window):
         content = tk.Frame(self.root)
         content.columnconfigure(0, weight=1)
         content.columnconfigure(1, weight=3)
-        content.config(bg='white')
+        content.config(bg=pw.Config.SCIPION_BG_COLOR)
         content.grid(row=0, column=0, sticky='news', padx=5, pady=5)
 
         # Info line
-        labelInfo = tk.Label(content, text="Spaces will be replaced by underscores!", bg='white', bd=0)
+        labelInfo = tk.Label(content, text="Spaces will be replaced by underscores!", bg=pw.Config.SCIPION_BG_COLOR, bd=0)
         labelInfo.grid(row=0, sticky=tk.W, padx=5, pady=5)
         #  Project name line
-        labelName = tk.Label(content, text=Message.LABEL_PROJECT + ' name', bg='white', bd=0)
+        labelName = tk.Label(content, text=Message.LABEL_PROJECT + ' name', bg=pw.Config.SCIPION_BG_COLOR, bd=0)
         labelName.grid(row=1, sticky=tk.W, padx=5, pady=5)
         entryName = tk.Entry(content, bg=cfgEntryBgColor, width=20, textvariable=self.projName)
         entryName.grid(row=1, column=1, columnspan=2, sticky=tk.EW, padx=5, pady=5)
         entryName.bind("<Return>", self._create)
         entryName.bind("<KP_Enter>", self._create)
         # Project location line
-        labelLocation = tk.Label(content, text=Message.LABEL_PROJECT + ' location', bg='white', bd=0)
+        labelLocation = tk.Label(content, text=Message.LABEL_PROJECT + ' location', bg=pw.Config.SCIPION_BG_COLOR, bd=0)
         labelLocation.grid(row=2, column=0, sticky='nw', padx=5, pady=5)
 
         self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40, textvariable=self.projLocation)
@@ -301,7 +301,7 @@ class ProjectCreateWindow(Window):
         btnFrame = tk.Frame(content)
         btnFrame.columnconfigure(0, weight=1)
         btnFrame.grid(row=3, column=0, sticky='sew', padx=5, pady=(0, 5), columnspan=2)
-        btnFrame.config(bg='white')
+        btnFrame.config(bg=pw.Config.SCIPION_BG_COLOR)
 
         # Create buttons
         btnCreate = HotButton(btnFrame, 'Create', Icon.BUTTON_SELECT, command=self._create)
@@ -359,7 +359,7 @@ class ProjectImportWindow(Window):
         """
         Window.__init__(self, title, parent.windows, weight=weight,
                         icon=icon, minsize=minsize, enableQueue=True)
-        self.root['background'] = 'white'
+        self.root['background'] = pw.Config.SCIPION_BG_COLOR
         self.parent = parent
         # Dirty hack, need to add a slash for the explorer to pick up the right default path.
         self.projectsPath = getHomePath() + "/"
@@ -375,12 +375,12 @@ class ProjectImportWindow(Window):
         content = tk.Frame(self.root)
         content.columnconfigure(0, weight=1)
         content.columnconfigure(1, weight=1)
-        content.config(bg='white')
+        content.config(bg=pw.Config.SCIPION_BG_COLOR)
         content.grid(row=0, column=0, sticky='news',
                      padx=5, pady=5)
 
         # Path explorer
-        labelProjectLocation = tk.Label(content, text="Project location", bg='white', bd=0)
+        labelProjectLocation = tk.Label(content, text="Project location", bg=pw.Config.SCIPION_BG_COLOR, bd=0)
         labelProjectLocation.grid(row=0, column=0, sticky='nw', padx=5, pady=5)
         # it seems tk.Entry does not uses default font...grrrr!!
         self.entryBrowse = tk.Entry(content, bg=cfgEntryBgColor, width=40,
@@ -391,12 +391,12 @@ class ProjectImportWindow(Window):
         self.btnBrowse.grid(row=0, column=2, sticky='e', padx=5, pady=5)
 
         # Copy files check
-        labelCheck = tk.Label(content, text="Copy project", bg='white', borderwidth=0)
+        labelCheck = tk.Label(content, text="Copy project", bg=pw.Config.SCIPION_BG_COLOR, borderwidth=0)
         labelCheck.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
 
         self.tkCheckVar = tk.IntVar()
-        btnCheck = tk.Checkbutton(content, variable=self.tkCheckVar, highlightthickness=0, activebackground='white',
-                                  bg='white', bd=0)
+        btnCheck = tk.Checkbutton(content, variable=self.tkCheckVar, highlightthickness=0, activebackground=pw.Config.SCIPION_BG_COLOR,
+                                  bg=pw.Config.SCIPION_BG_COLOR, bd=0)
         btnCheck.grid(row=1, column=1, sticky='nw', padx=0, pady=5)
 
         btnCopyHelp = IconButton(content, Message.LABEL_BUTTON_HELP, Icon.ACTION_HELP, highlightthickness=0,
@@ -405,13 +405,13 @@ class ProjectImportWindow(Window):
         btnCopyHelp.grid(row=1, column=3, sticky='e', padx=2, pady=2)
 
         # Project name
-        labelName = tk.Label(content, text='Project name (Optional)', bg='white', bd=0)
+        labelName = tk.Label(content, text='Project name (Optional)', bg=pw.Config.SCIPION_BG_COLOR, bd=0)
         labelName.grid(row=2, column=0, sticky='nw', padx=5, pady=5)
         entryName = tk.Entry(content, bg='white', width=20, textvariable=self.projName, font=self.font)
         entryName.grid(row=2, column=1, sticky='nw', padx=5, pady=5)
 
         # Path to search for raw data and restore broken links.
-        labelSearchLocation = tk.Label(content, text="Raw files location (Optional)", bg='white', bd=0)
+        labelSearchLocation = tk.Label(content, text="Raw files location (Optional)", bg=pw.Config.SCIPION_BG_COLOR, bd=0)
         labelSearchLocation.grid(row=3, column=0, sticky='nw', padx=5, pady=5)
 
         self.entrySearchLocation = tk.Entry(content, bg='white', width=40,
@@ -432,7 +432,7 @@ class ProjectImportWindow(Window):
         btnFrame = tk.Frame(content)
         btnFrame.columnconfigure(0, weight=1)
         btnFrame.grid(row=4, column=0, sticky='sew', padx=5, pady=(0, 5), columnspan=2)
-        btnFrame.config(bg='white')
+        btnFrame.config(bg=pw.Config.SCIPION_BG_COLOR)
 
         # Create buttons
         btnSelect = HotButton(btnFrame, 'Import', Icon.BUTTON_SELECT, command=self._select)

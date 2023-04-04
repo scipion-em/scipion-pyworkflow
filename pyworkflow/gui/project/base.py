@@ -65,7 +65,7 @@ class ProjectBaseWindow(Window):
         self.header = self.createHeaderFrame(content)
         self.header.grid(row=0, column=0, sticky='new')
         
-        self.footer = tk.Frame(content, bg='white')
+        self.footer = tk.Frame(content, bg=pw.Config.SCIPION_BG_COLOR)
         self.footer.grid(row=1, column=0, sticky='news') 
         
         self.view, self.viewWidget = None, None
@@ -83,24 +83,24 @@ class ProjectBaseWindow(Window):
             - Project Name
             - View selection combobox
         """
-        header = tk.Frame(parent, bg='white')        
+        header = tk.Frame(parent, bg=pw.Config.SCIPION_BG_COLOR)
         header.columnconfigure(1, weight=1)
         header.columnconfigure(2, weight=1)
         # Create the SCIPION logo label
         logoImg = self.getImage(self.generalCfg.logo.get())
         logoLabel = tk.Label(header, image=logoImg, 
-                             borderwidth=0, anchor='nw', bg='white')
+                             borderwidth=0, anchor='nw', bg=pw.Config.SCIPION_BG_COLOR)
         logoLabel.grid(row=0, column=0, sticky='nw', padx=(5, 0), pady=5)
         version = "%s - %s (core)" % (os.environ.get('SCIPION_VERSION', ""), pw.LAST_VERSION)
 
         versionLabel = tk.Label(header, text=version,
-                                bg='white')
+                                bg=pw.Config.SCIPION_BG_COLOR)
         versionLabel.grid(row=0, column=1, sticky='sw', pady=20)
         
         # Create the Project Name label
         projName = getattr(self, 'projName', '')
         projLabel = tk.Label(header, text=projName, font=getBigFont(),
-                             borderwidth=0, anchor='nw', bg='white',
+                             borderwidth=0, anchor='nw', bg=pw.Config.SCIPION_BG_COLOR,
                              fg=Color.ALT_COLOR_DARK)
         projLabel.grid(row=0, column=2, sticky='sw', padx=(20, 5), pady=10)
         # Create gradient
@@ -113,17 +113,17 @@ class ProjectBaseWindow(Window):
         """Create the view selection frame (Protocols|Data) in the header.
         """
         # This function is called from createHeaderFrame() in ProjectWindow
-        viewFrame = tk.Frame(header, bg='white')
+        viewFrame = tk.Frame(header, bg=pw.Config.SCIPION_BG_COLOR)
         viewFrame.grid(row=0, column=2, sticky='se', padx=5, pady=10)
 
         def addLink(elementText):
             btn = tk.Label(viewFrame, text=elementText, cursor='hand2',
-                           fg=pw.Config.SCIPION_MAIN_COLOR, bg="white")
+                           fg=pw.Config.SCIPION_MAIN_COLOR, bg=pw.Config.SCIPION_BG_COLOR)
             btn.bind('<Button-1>', lambda e: self._viewComboSelected(elementText))
             return btn
         
         def addTube():        
-            return tk.Label(viewFrame, text="|", fg=pw.Config.SCIPION_MAIN_COLOR, bg="white", padx=5)
+            return tk.Label(viewFrame, text="|", fg=pw.Config.SCIPION_MAIN_COLOR, bg=pw.Config.SCIPION_BG_COLOR, padx=5)
 
         for i, elementText in enumerate(VIEW_LIST):
             btn = addLink(elementText)
