@@ -115,7 +115,7 @@ class ObjectBrowser(tk.Frame):
         self.label.grid(row=0, column=0, sticky='news')
 
     def _fillRightBottom(self, bottom):
-        self.text = TaggedText(bottom, width=40, height=15, bg='white',
+        self.text = TaggedText(bottom, width=40, height=15, bg=Config.SCIPION_BG_COLOR,
                                takefocus=0)
         self.text.grid(row=0, column=0, sticky='news')
 
@@ -462,7 +462,7 @@ class FileBrowser(ObjectBrowser):
                                                             sticky='nw', pady=3)
             tk.Entry(entryFrame,
                      textvariable=self.entryVar,
-                     bg='white',
+                     bg=Config.SCIPION_BG_COLOR,
                      width=65,
                      font=gui.getDefaultFont()).grid(row=0, column=1, sticky='nw', pady=3)
 

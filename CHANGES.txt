@@ -1,7 +1,9 @@
 V3.1.0
 ------
 users:
-  - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal wshould work(like in CSS)
+  - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal should work(like in CSS)
+  - New optional config variable: SCIPION_BG_COLOR. Any light tone color name or hexadecimal should work(like in CSS)
+  - Control + Plus (numpad) will increase the font of the logs. Control + subtract will restore it.
   - Toolbar and actions refactored: Most of them have shortcuts and appear in the toolbar without text, but have tooltips showing the shortcut
   - Plugins in devel mode are shown with a delta suffix after the package name.
   - Green lines in log are lighter, colored lines are back in the log.

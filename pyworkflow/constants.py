@@ -133,6 +133,7 @@ class Color:
     ALT_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
     ALT_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
     ALT_COLOR_DARK= '#6E6E6E'  # Very dark grey for project title, tubes, etc
+    BG_COLOR = 'white'
 
     STATUS_SAVED = '#D9F1FA',
     STATUS_LAUNCHED = '#D9F1FA',
