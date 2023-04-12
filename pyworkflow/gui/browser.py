@@ -129,9 +129,13 @@ class ObjectBrowser(tk.Frame):
             if img is None:
                 img = self.noImage
             self.label.config(image=img)
+
         # Update text preview
         self.text.setReadOnly(False)
         self.text.clear()
+
+        if self._lastSelected.isLink():
+            desc = "Is a link" if desc is None else desc + "\nIs a link."
         if desc is not None:
             self.text.addText(desc)
         self.text.setReadOnly(True)
