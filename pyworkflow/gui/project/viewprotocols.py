@@ -1954,6 +1954,8 @@ class ProtocolsView(tk.Frame):
             self.drawRunsGraph(reorganize=True)
         elif action == ACTION_REFRESH:
             self.refreshRuns(checkPids=True)
+        elif action == ACTION_PASTE:
+            self._pasteProtocolsFromClipboard()
 
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
@@ -1971,9 +1973,6 @@ class ProtocolsView(tk.Frame):
                         self._copyProtocols()
                     elif action == ACTION_COPY:
                         self._copyProtocolsToClipboard()
-                    elif action == ACTION_PASTE:
-                        self._pasteProtocolsFromClipboard()
-
                     elif action == ACTION_DELETE:
                         self._deleteProtocol()
                     elif action == ACTION_STEPS:
