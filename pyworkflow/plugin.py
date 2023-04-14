@@ -654,11 +654,7 @@ class Plugin:
         if self._name is None:
             self._name=  self.__class__.__module__
 
-            if self.inDevelMode():
-               self._name += " (ẟ)"
-
         return self._name
-
 
     def getPluginDir(self):
         return self.getPath()
