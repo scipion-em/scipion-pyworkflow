@@ -11,10 +11,11 @@ users:
   - Project list window: F5 on the filter box will refresh the list.
   - Project list window: Auto refresh on window activate when data is older than 60 seconds
   - New actions: Copy (Control+c) and Paste (Control +v) will allow to copy the selection to and from the clipboard.
-
+  - Protocol in devel mode is shown prefixing the protocol in the box and shown in log
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
-  - Short cut for devel mode is not Control+D since control+d is for duplicate (old copy)
+  - Shortcut for devel mode is now Control+D since Control+d is for duplicate (old copy)
+  - Protocol.getClassPlugin deprecated. Use instead getPlugin()
 
 V3.0.31
 -------

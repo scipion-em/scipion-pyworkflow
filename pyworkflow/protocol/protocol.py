@@ -1508,10 +1508,12 @@ class Protocol(Step):
             self.info('Hostname: %s' % self.getHostFullName())
             self.info('PID: %s' % self.getPid())
             self.info('pyworkflow: %s' % pw.__version__)
-            self.info('plugin: %s' % self.getClassPlugin().getName())
-            if hasattr(self.getClassPackage(), "__version__"):
-                self.info('plugin v: %s' % self.getClassPackage().__version__)
-            self.info('plugin binary v: %s' % self.getClassPlugin().getActiveVersion())
+            plugin = self.getPlugin()
+            self.info('plugin: %s' %  plugin.getName())
+            package = self.getClassPackage()
+            if hasattr(package, "__version__"):
+                self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
+            self.info('plugin binary v: %s' % plugin.getActiveVersion())
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
@@ -1749,8 +1751,12 @@ class Protocol(Step):
     @classmethod
     def getClassPlugin(cls):
 
-        return cls._plugin
+        logger.warning("Deprecated on 04-2023. Use Protocol.getPlugin instead.")
+        return cls.getPlugin()
 
+    @classmethod
+    def getPlugin(cls):
+        return cls._plugin
     @classmethod
     def getClassPackageName(cls):
         return cls.getClassPackage().__name__ if cls.getClassPackage() else "orphan"
@@ -1814,7 +1820,7 @@ class Protocol(Step):
         label = cls.__dict__.get('_label', cls.__name__)
         if prependPackageName:
             try:
-                label = "%s - %s" % (cls.getClassPlugin().getName(), label)
+                label = "%s - %s" % (cls.getPlugin().getName(), label)
             except Exception as e:
                 label = "%s -%s" % ("missing", label)
                 logger.error("Couldn't get the plugin name for %s" % label, exc_info=e)
@@ -1947,7 +1953,7 @@ class Protocol(Step):
 
     @classmethod
     def getUrl(cls):
-        return cls.getClassPlugin().getUrl(cls)
+        return cls.getPlugin().getUrl(cls)
 
     @classmethod
     def isInstalled(cls):
@@ -2191,8 +2197,8 @@ class Protocol(Step):
     def getHelpText(cls):
         """Get help text to show in the protocol help button"""
         helpText = cls.getDoc()
-        # NOt used since getClassPlugin is always None
-        # plugin = self.getClassPlugin()
+        # NOt used since getPlugin is always None
+        # plugin = self.getPlugin()
         # if plugin:
         #     pluginMetadata = plugin.metadata
         #     helpText += "\n\nPlugin info:\n"

@@ -1471,7 +1471,7 @@ class Project(object):
         for r in runs:
             n = g.createNode(r.strId())
             n.run = r
-            n.setLabel(r.getRunName())
+            n.setLabel('%s%s' % ('ẟ ' if r.getPlugin().inDevelMode() else '', r.getRunName()))
             outputDict[r.getObjId()] = n
             for _, attr in r.iterOutputAttributes():
                 # mark this output as produced by r

@@ -421,7 +421,7 @@ class ProtocolTreeConfig:
         # Group protocols by package name
         for k, v in allProtsSorted:
             if isAFinalProtocol(v, k):
-                packageName = v.getClassPlugin().getName()
+                packageName = v.getPlugin().getName()
 
                 # Get the package submenu
                 packageMenu = packages.get(packageName)
