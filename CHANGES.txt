@@ -11,6 +11,7 @@ users:
   - Project list window: F5 on the filter box will refresh the list.
   - Project list window: Auto refresh on window activate when data is older than 60 seconds
   - New actions: Copy (Control+c) and Paste (Control +v) will allow to copy the selection to and from the clipboard.
+  - File browser thumbnail: Writes if the file is a link
   - Protocol in devel mode is shown prefixing the protocol in the box and shown in log
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
