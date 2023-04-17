@@ -134,8 +134,6 @@ class ObjectBrowser(tk.Frame):
         self.text.setReadOnly(False)
         self.text.clear()
 
-        if self._lastSelected.isLink():
-            desc = "Is a link" if desc is None else desc + "\nIs a link."
         if desc is not None:
             self.text.addText(desc)
         self.text.setReadOnly(True)
@@ -286,7 +284,11 @@ class FileTreeProvider(TreeProvider):
             for fileHandler in fileHandlers:
                 preview = fileHandler.getFilePreview(obj)
                 if preview:
-                    return preview
+                    img, desc = preview
+                    if obj.isLink():
+                        desc = "Is a link" if desc is None else desc + "\nIs a link."
+                    return img, desc
+
         except Exception as e:
             msg = "Couldn't get preview for %s" % obj
             logger.error(msg, exc_info=e)
