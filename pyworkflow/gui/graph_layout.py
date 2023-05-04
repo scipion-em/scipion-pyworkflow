@@ -123,9 +123,10 @@ class LevelTreeLayout(GraphLayout):
     It will recursively organize childs and then
     fit two sibling trees. """
     
-    def __init__(self):
+    def __init__(self, partial=False):
         GraphLayout.__init__(self)
         self.maxLevel = 9999
+        self.partial = partial
 
     def draw(self, graph, **kwargs):
         """
@@ -152,6 +153,9 @@ class LevelTreeLayout(GraphLayout):
         # Clean temporary _layout attributes
         for node in graph.getNodes():
             del node._layout
+
+    def _isNewNode(self, node):
+        return node.x == 0 and node.y == 0
         
     def _setLayoutLevel(self, node, level, parent):
         """ Iterate over all nodes and set _layout dict.
@@ -166,7 +170,8 @@ class LevelTreeLayout(GraphLayout):
         if level > layout.get('level', 0):
             # Calculate the y-position depending on the level
             # and the delta-Y (DY)
-            node.y = level * self.getY()
+            if not self.partial or self._isNewNode(node):
+                node.y = level * self.getY()
             layout['level'] = level
             layout['parent'] = parent
             if hasattr(node, 'width'):
@@ -302,7 +307,9 @@ class LevelTreeLayout(GraphLayout):
             return 
         
         layout = node._layout
-        node.x = x + layout['offset']
+
+        if not self.partial or self._isNewNode(node):
+            node.x = x + layout['offset']
         
         childs = self.__getNodeChilds(node)
         

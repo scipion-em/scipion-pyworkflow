@@ -827,8 +827,7 @@ class ProtocolsView(tk.Frame):
         else:
             self.runsGraphCanvas.clear()
 
-            layout = pwgui.LevelTreeLayout() if len(
-                self.settings.getNodes()) == 0 else pwgui.BasicLayout()
+            layout = pwgui.LevelTreeLayout(partial=True)
 
             # Create empty nodeInfo for new runs
             for node in self.runsGraph.getNodes():
