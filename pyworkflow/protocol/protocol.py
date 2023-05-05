@@ -1449,6 +1449,17 @@ class Protocol(Step):
         else:
             pwutils.cleanPath(tmpFolder)
 
+        self._cleanExtraFiles()
+    def _cleanExtraFiles(self):
+        """ This method will be called when the protocol finishes correctly.
+        It is the responsibility of the protocols to implement this method to make extra cleanup
+        of its folders, like iterations folder and files that are not needed when finished
+        """
+
+        logger.info("Nothing to clean up")
+        logger.debug('FOR DEVELOPERS: implement Protocol._cleanExtraFiles this protocol could'
+                     ' free up some space upon finishing.')
+
     def _run(self):
         # Check that a proper Steps executor have been set
         if self._stepsExecutor is None:

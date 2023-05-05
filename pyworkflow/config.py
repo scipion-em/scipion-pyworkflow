@@ -101,6 +101,10 @@ class Config:
     SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
     "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"
 
+    # Actual SCIPION_HOME
+    SCIPION_HOME_DEFINED = _get(SCIPION_HOME_VAR, False)
+    "False if SCIPION_HOME is found in the environment"
+
     _root = Root(SCIPION_HOME)
     _join = _root.join
 
@@ -406,6 +410,15 @@ class Config:
             cls.__activeColor = rgb_to_hex(rgb_active)
 
         return cls.__activeColor
+
+    @classmethod
+    def isScipionRunning(cls):
+        """ Returns true if this execution is understood to be running Scipion.
+        In some case, documentation inspection by sphynx or when packaging a plugin using setup.py
+        this code could be reached but is not an actual execution. This is useful for cancelling some actions
+        like registering FileHandlers or other stuff not needed when just importing modules."""
+        return cls.SCIPION_HOME_DEFINED != False
+
 # Add bindings folder to sys.path
 sys.path.append(Config.getBindingsFolder())
 
