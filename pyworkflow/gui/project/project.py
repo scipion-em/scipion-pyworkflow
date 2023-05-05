@@ -234,7 +234,7 @@ class ProjectWindow(ProjectBaseWindow):
         
     def _loadWorkflow(self, obj):
         try:
-            self.getViewWidget().info('Importing the workflow...')
+            self.getViewWidget().info('Importing workflow %s' % obj.getPath())
             self.project.loadProtocols(obj.getPath())
             self.getViewWidget().updateRunsGraph(True)
             self.getViewWidget().drawRunsGraph(True)

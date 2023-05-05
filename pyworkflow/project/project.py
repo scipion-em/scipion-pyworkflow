@@ -25,6 +25,8 @@
 # *
 # **************************************************************************
 import logging
+
+ROOT_NODE_NAME = "PROJECT"
 logger = logging.getLogger(__name__)
 
 import datetime as dt
@@ -1466,7 +1468,7 @@ class Project(object):
 
         """
         outputDict = {}  # Store the output dict
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
 
         for r in runs:
             n = g.createNode(r.strId())
@@ -1511,7 +1513,7 @@ class Project(object):
                         _checkInputAttr(node, parent)
         rootNode = g.getRoot()
         rootNode.run = None
-        rootNode.label = "PROJECT"
+        rootNode.label = ROOT_NODE_NAME
 
         for n in g.getNodes():
             if n.isRoot() and n is not rootNode:
@@ -1522,7 +1524,7 @@ class Project(object):
         """ Retrieve objects produced as outputs and
         make a graph taking into account the SOURCE relation. """
         relations = self.mapper.getRelationsByName(relation)
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
         root = g.getRoot()
         root.pointer = None
         runs = self.getRuns(refresh=refresh)
