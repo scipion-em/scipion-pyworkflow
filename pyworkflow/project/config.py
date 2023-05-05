@@ -158,9 +158,9 @@ class ProjectSettings(pwobj.Object):
 
             nodesToDelete = []
             for node  in self.getNodes():
-                id = node.getId()
+                nodeId = node.getId()
 
-                if id != 0 and id in runsIds:
+                if nodeId != 0 and nodeId in runsIds:
                     nodesToDelete.append(node.getId())
 
             logger.info("Following graphical nodes %s unmatched. Deleting them" % nodesToDelete)
