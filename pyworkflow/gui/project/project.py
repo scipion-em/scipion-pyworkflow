@@ -237,7 +237,6 @@ class ProjectWindow(ProjectBaseWindow):
             self.getViewWidget().info('Importing workflow %s' % obj.getPath())
             self.project.loadProtocols(obj.getPath())
             self.getViewWidget().updateRunsGraph(True)
-            self.getViewWidget().drawRunsGraph(True)
             self.getViewWidget().cleanInfo()
         except Exception as ex:
             self.showError(str(ex), exception=ex)

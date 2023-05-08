@@ -812,11 +812,11 @@ class ProtocolsView(tk.Frame):
 
         self.updateRunsGraph()
 
-    def updateRunsGraph(self, refresh=False, reorganize=False, checkPids=False):
+    def updateRunsGraph(self, refresh=False, checkPids=False):
 
         self.runsGraph = self.project.getRunsGraph(refresh=refresh,
                                                    checkPids=checkPids)
-        self.drawRunsGraph(reorganize)
+        self.drawRunsGraph()
 
     def drawRunsGraph(self, reorganize=False):
 
@@ -827,7 +827,6 @@ class ProtocolsView(tk.Frame):
             self.runsGraphCanvas.reorganizeGraph(self.runsGraph, layout)
         else:
             self.runsGraphCanvas.clear()
-
             layout = pwgui.LevelTreeLayout(partial=True)
 
             # Create empty nodeInfo for new runs
@@ -2004,14 +2003,14 @@ class ProtocolsView(tk.Frame):
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(False)
                         self.setVisibleNodes(node, visible=False)
-                        self.updateRunsGraph(True, reorganize=False)
+                        self.updateRunsGraph(True)
                         self._updateActionToolbar()
                     elif action == ACTION_EXPAND:
                         node = self.runsGraph.getNode(str(prot.getObjId()))
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(True)
                         self.setVisibleNodes(node, visible=True)
-                        self.updateRunsGraph(True, reorganize=False)
+                        self.updateRunsGraph(True)
                         self._updateActionToolbar()
                     elif action == ACTION_LABELS:
                         self._selectLabels()
