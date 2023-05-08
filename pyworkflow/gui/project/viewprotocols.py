@@ -379,7 +379,6 @@ class ProtocolsView(tk.Frame):
         return len(self._selection) == 0
 
     def info(self, message):
-        logger.info(message)
         self.infoLabel.config(text=message)
         self.infoLabel.update_idletasks()
 
@@ -846,7 +845,7 @@ class ProtocolsView(tk.Frame):
             if projectSize < settingsNodeSize -1:
                 logger.info("Settings nodes list (%s) is bigger than current project nodes (%s). "
                             "Clean up needed?" % (settingsNodeSize, projectSize) )
-                self.settings.cleanUpNodes(self.runsGraph.getNodeNames())
+                self.settings.cleanUpNodes(self.runsGraph.getNodeNames(), toRemove=False)
 
     def createRunItem(self, canvas, node):
 

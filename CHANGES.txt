@@ -13,10 +13,10 @@ users:
   - New actions: Copy (Control+c) and Paste (Control +v) will allow to copy the selection to and from the clipboard.
   - File browser thumbnail: Writes if the file is a link
   - Protocol in devel mode is shown prefixing the protocol in the box and shown in log
-  - Info messages shown in the GUI are also kept in the scipion GUI log
   - Unused graphical gui nodes are cleaned up upon protocols deletion and graph painting (to clean up old projects)
   - Error in host.conf for clusters better described.
-  - Fixed a bug related to organizing the workflow when importing a tamplate(Import workflow template option)
+  - Fixed a bug related to organizing the workflow when importing a template(Import workflow template option)
+  - Terminal where Scipion is being launched only shows ERROR level info. Rest goes to scipion.log shown by the Scipion log menu.
   
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.

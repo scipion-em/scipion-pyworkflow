@@ -57,7 +57,7 @@ OBJECT_PARENT_ID = 'object_parent_id'
 
 class Object(object):
     """ All objects in our Domain should inherit from this class
-    that will contains all base properties"""
+    that will contain all base properties"""
 
     def __init__(self, value=None, **kwargs):
         object.__init__(self)
@@ -1069,7 +1069,7 @@ class CsvList(Scalar, list):
 class Set(Object):
     """ This class will be a container implementation for elements.
     It will use an extra sqlite file to store the elements.
-    All items will have an unique id that identifies each element in the set.
+    All items will have a unique id that identifies each element in the set.
     """
     ITEM_TYPE = None  # This property should be defined to know the item type
     
@@ -1171,8 +1171,8 @@ class Set(Object):
     def getFirstItem(self):
         """ Return the first item in the Set. """
         # This function is used in many contexts where the mapper can be
-        # left open and could be problematic locking other db
-        # So, we looking if the mapper was closed before, in which case
+        # left open and could be problematic locking the db for other processes
+        # So, we look if the mapper was closed before, in which case
         # we will close it after that
         closedMapper = self._mapper is None
         firstItem = self._getMapper().selectFirst()

@@ -146,11 +146,12 @@ class ProjectSettings(pwobj.Object):
     def getNodes(self):
         return self.nodeList
 
-    def cleanUpNodes(self, runsIds):
+    def cleanUpNodes(self, runsIds, toRemove=True):
         """ This will clean up all the nodes that do not have a matching run.
         This is because until now, the nodes here weren't removes when protocols were removed.
 
         :param runsIds: iterable with protocol's objId to be removed.
+        :param toRemove: Passed is are to be removed. Otherwise are the ones to keep
         """
 
         try:
@@ -158,10 +159,12 @@ class ProjectSettings(pwobj.Object):
 
             nodesToDelete = []
             for node  in self.getNodes():
-                nodeId = node.getId()
+                nodeId = str(node.getId())
+                # if it is not the root node
+                if nodeId != '0':
 
-                if nodeId != 0 and nodeId in runsIds:
-                    nodesToDelete.append(node.getId())
+                    if (nodeId in runsIds) == toRemove:
+                        nodesToDelete.append(node.getId())
 
             logger.info("Following graphical nodes %s unmatched. Deleting them" % nodesToDelete)
             for key in nodesToDelete:
