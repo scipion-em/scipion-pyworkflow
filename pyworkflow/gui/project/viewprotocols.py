@@ -811,11 +811,11 @@ class ProtocolsView(tk.Frame):
 
         self.updateRunsGraph()
 
-    def updateRunsGraph(self, refresh=False, reorganize=False, checkPids=False):
+    def updateRunsGraph(self, refresh=False, checkPids=False):
 
         self.runsGraph = self.project.getRunsGraph(refresh=refresh,
                                                    checkPids=checkPids)
-        self.drawRunsGraph(reorganize)
+        self.drawRunsGraph()
 
     def drawRunsGraph(self, reorganize=False):
 
@@ -826,9 +826,7 @@ class ProtocolsView(tk.Frame):
             self.runsGraphCanvas.reorganizeGraph(self.runsGraph, layout)
         else:
             self.runsGraphCanvas.clear()
-
-            layout = pwgui.LevelTreeLayout() if len(
-                self.settings.getNodes()) == 0 else pwgui.BasicLayout()
+            layout = pwgui.LevelTreeLayout(partial=True)
 
             # Create empty nodeInfo for new runs
             for node in self.runsGraph.getNodes():
@@ -841,6 +839,13 @@ class ProtocolsView(tk.Frame):
             self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
                                            drawNode=self.createRunItem,
                                            nodeList=self.settings.nodeList)
+
+            projectSize = len(self.runsGraph.getNodes())
+            settingsNodeSize = len(self.settings.getNodes())
+            if projectSize < settingsNodeSize -1:
+                logger.info("Settings nodes list (%s) is bigger than current project nodes (%s). "
+                            "Clean up needed?" % (settingsNodeSize, projectSize) )
+                self.settings.cleanUpNodes(self.runsGraph.getNodeNames(), toRemove=False)
 
     def createRunItem(self, canvas, node):
 
@@ -1609,6 +1614,7 @@ class ProtocolsView(tk.Frame):
                                  self.root):
             self.info('Deleting protocols...')
             self.project.deleteProtocol(*protocols)
+            self.settings.cleanUpNodes([prot.getObjId() for prot in protocols])
             self._selection.clear()
             self._updateSelection()
             self._scheduleRunsUpdate()
@@ -1996,14 +2002,14 @@ class ProtocolsView(tk.Frame):
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(False)
                         self.setVisibleNodes(node, visible=False)
-                        self.updateRunsGraph(True, reorganize=False)
+                        self.updateRunsGraph(True)
                         self._updateActionToolbar()
                     elif action == ACTION_EXPAND:
                         node = self.runsGraph.getNode(str(prot.getObjId()))
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(True)
                         self.setVisibleNodes(node, visible=True)
-                        self.updateRunsGraph(True, reorganize=False)
+                        self.updateRunsGraph(True)
                         self._updateActionToolbar()
                     elif action == ACTION_LABELS:
                         self._selectLabels()
