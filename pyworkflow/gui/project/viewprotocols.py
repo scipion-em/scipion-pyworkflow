@@ -1614,7 +1614,7 @@ class ProtocolsView(tk.Frame):
                                  self.root):
             self.info('Deleting protocols...')
             self.project.deleteProtocol(*protocols)
-            self.settings.cleanUpNodes([prot.getObjId() for prot in protocols])
+            self.settings.cleanUpNodes([str(prot.getObjId()) for prot in protocols])
             self._selection.clear()
             self._updateSelection()
             self._scheduleRunsUpdate()

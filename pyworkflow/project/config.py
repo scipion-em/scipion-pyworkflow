@@ -151,7 +151,7 @@ class ProjectSettings(pwobj.Object):
         This is because until now, the nodes here weren't removes when protocols were removed.
 
         :param runsIds: iterable with protocol's objId to be removed.
-        :param toRemove: Passed is are to be removed. Otherwise are the ones to keep
+        :param toRemove: Passed is are to be removed. Otherwise, are the ones to keep
         """
 
         try:
