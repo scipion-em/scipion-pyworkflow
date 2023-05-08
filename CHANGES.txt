@@ -15,11 +15,15 @@ users:
   - Protocol in devel mode is shown prefixing the protocol in the box and shown in log
   - Info messages shown in the GUI are also kept in the scipion GUI log
   - Unused graphical gui nodes are cleaned up upon protocols deletion and graph painting (to clean up old projects)
-
+  - Error in host.conf for clusters better described.
+  - Fixed a bug related to organizing the workflow when importing a tamplate(Import workflow template option)
+  
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
   - Shortcut for devel mode is now Control+D since Control+d is for duplicate (old copy)
   - Protocol.getClassPlugin deprecated. Use instead getPlugin()
+  - Protocol._cleanExtraFiles(): optional method to clean files other than tmp folder.
+  - Config.isScipionRunning(): To distinguish from just importing or running.
 
 V3.0.31
 -------
