@@ -250,7 +250,7 @@ def centerWindows(root, dim=None, refWindows=None):
     or in the middle of other windows(refWindows param)"""
     root.update_idletasks()
     if dim is None:
-        gw, gh, gx, gy = getGeometry(root)
+        gw, gh, _, _ = getGeometry(root)
     else:
         gw, gh = dim
     if refWindows:
