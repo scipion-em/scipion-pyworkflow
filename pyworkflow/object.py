@@ -1042,7 +1042,12 @@ class CsvList(Scalar, list):
             else:
                 raise Exception("CsvList.set: Invalid value type: ",
                                 type(value))
-            
+
+    def equalAttributes(self, other, ignore=[], verbose=False):
+        """Compare that all attributes are equal"""
+
+        return self == other
+
     def getObjValue(self):
         self._objValue = ','.join(map(str, self))
         return self._objValue
@@ -1101,7 +1106,11 @@ class Set(Object):
         if filename:
             self._mapperPath.set('%s, %s' % (filename, prefix))
             self.load()
-            
+
+    def copy(self, other, copyId=True, ignoreAttrs=['_mapperPath', '_size', '_streamState']):
+        """ Avoid copying the mapper path by default"""
+        super().copy(other, copyId, ignoreAttrs)
+
     def _getMapper(self):
         """ This method will open the connection to the items
         database on demand. That's why this method should 
