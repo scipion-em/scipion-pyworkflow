@@ -250,7 +250,7 @@ def centerWindows(root, dim=None, refWindows=None):
     or in the middle of other windows(refWindows param)"""
     root.update_idletasks()
     if dim is None:
-        gw, gh, gx, gy = getGeometry(root)
+        gw, gh, _, _ = getGeometry(root)
     else:
         gw, gh = dim
     if refWindows:
@@ -293,7 +293,7 @@ def defineStyle():
 
 class Window:
     """Class to manage a Tk windows.
-    It will encapsulates some basic creation and 
+    It will encapsulate some basic creation and
     setup functions. """
     # To allow plugins to add their own menus
     _pluginMenus = dict()
@@ -322,9 +322,10 @@ class Window:
             # he first window generated a tk.Toplevel. After that, all steps executed later will go through the else
             # statement, being that way each new tk.Toplevel() correctly referenced.
             tk.Tk().withdraw()  # Main window, invisible
-            self.root = tk.Toplevel()  # Toplevel of main window
+            self.root = tk.Toplevel(class_="Scipion Framework")  # Toplevel of main window
         else:
-            self.root = tk.Toplevel(masterWindow.root)
+            self.root = tk.Toplevel(masterWindow.root, class_="Scipion Framework")
+            self.root.group(masterWindow.root)
             self._images = masterWindow._images
 
         self.root.withdraw()

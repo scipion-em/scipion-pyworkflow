@@ -17,6 +17,8 @@ users:
   - Error in host.conf for clusters better described.
   - Fixed a bug related to organizing the workflow when importing a template(Import workflow template option)
   - Terminal where Scipion is being launched only shows ERROR level info. Rest goes to scipion.log shown by the Scipion log menu.
+  - Scipion windows of the same process are now grouped under the same icon. Window Tooltip says Scipion framework instead of Toplevel
+
   
  developers:
   - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
@@ -24,6 +26,8 @@ users:
   - Protocol.getClassPlugin deprecated. Use instead getPlugin()
   - Protocol._cleanExtraFiles(): optional method to clean files other than tmp folder.
   - Config.isScipionRunning(): To distinguish from just importing or running.
+  - Set implements copy() leaving mapper_path out.
+  - TaseCase: compareSetProperties() added to compare 2 set's properties.
 
 V3.0.31
 -------
