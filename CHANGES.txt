@@ -1,9 +1,71 @@
+V3.1.0
+------
+users:
+  - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal should work(like in CSS)
+  - New optional config variable: SCIPION_BG_COLOR. Any light tone color name or hexadecimal should work(like in CSS)
+  - Control + Plus (numpad) will increase the font of the logs. Control + subtract will restore it.
+  - Toolbar and actions refactored: Most of them have shortcuts and appear in the toolbar without text, but have tooltips showing the shortcut
+  - Plugins in devel mode are shown with a delta suffix after the package name.
+  - Green lines in log are lighter, colored lines are back in the log.
+  - Commands in the log are "announced" by "** Running command: **"
+  - Project list window: F5 on the filter box will refresh the list.
+  - Project list window: Auto refresh on window activate when data is older than 60 seconds
+  - New actions: Copy (Control+c) and Paste (Control +v) will allow to copy the selection to and from the clipboard.
+  - File browser thumbnail: Writes if the file is a link
+  - Protocol in devel mode is shown prefixing the protocol in the box and shown in log
+  - Unused graphical gui nodes are cleaned up upon protocols deletion and graph painting (to clean up old projects)
+  - Error in host.conf for clusters better described.
+  - Fixed a bug related to organizing the workflow when importing a template(Import workflow template option)
+  - Terminal where Scipion is being launched only shows ERROR level info. Rest goes to scipion.log shown by the Scipion log menu.
+  - Scipion windows of the same process are now grouped under the same icon. Window Tooltip says Scipion framework instead of Toplevel
+
+  
+ developers:
+  - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
+  - Shortcut for devel mode is now Control+D since Control+d is for duplicate (old copy)
+  - Protocol.getClassPlugin deprecated. Use instead getPlugin()
+  - Protocol._cleanExtraFiles(): optional method to clean files other than tmp folder.
+  - Config.isScipionRunning(): To distinguish from just importing or running.
+  - Set implements copy() leaving mapper_path out.
+  - TaseCase: compareSetProperties() added to compare 2 set's properties.
+
+V3.0.31
+-------
+  - Hotfix: Fixed updated protocol icon
+
+V3.0.30
+-------
+users:
+  - File browser: error while getting the preview thumbnail are reported as the preview string and logged.
+  - Wrong status when updating: When scheduling protocols, they were wrongly showed as failure temporarily.
+
+
+developers:
+  - Using logger in executor.py
+  - Fix: --overwrite problem. CONDA_ACTIVATION_CMD was disappearing form the config
+  - Fix: plugin manager error. wait.png renamed to wait.gif
+  - Improvement: Tolerate protocol loading when attribute type is changed by developers.
+  - CONDA_ACTIVATION_CMD is now a Config variable.
+  - Flag to indicate if steps list has new steps. Useful for new streaming approach.
+  - Base streaming protocol: ProtStreamingBase.
+
+V3.0.29
+-------
+users:
+  - Fix: with some host.conf, where current working dir is not "transferred" to the node, execution failed when
+    creating the logs cause they where relative. Now they (log paths) are passed to pw_protocol_run as absolute paths
 
 V3.0.28
 -------
 users:
   - Fix: rare error making subsets of self referencing output.
-
+  - Schedule process: Logging starts from the very beginning. Better feedback when there is an error.
+  - Message is shown in project's info log when discovering viewers for the firs time.
+  - Fix: Expert level pointers not clearer anymore after copying or deacivating expert level.
+  - Protocol list output improved --> scipion3 protocols --with-doc
+  - Scheduling: more informative log lines.
+  - Exporting a workflow does not show the final confirmation dialog (just a log line)
+  - Font size responsive in file browser text box.
 developers:
   - Fix: rare error when loading pointers with extended from the database
   - More modules using logging: gui/project.py, mapper/sqlite.py
@@ -11,6 +73,13 @@ developers:
   - Pyworkflow Domain now is operational. Still ED plugins needs adaptation.
   - String class offers getListFromRange and getListFromValues for convenience when param any ot the Ranges
   - getListFromValues, returns str list as before, but optionally you can pass a caster (int, float,..)
+  - GE validator: tolerates None values.
+  - Form.addBoolean() helper added to facilitate Boolean param definitions. TODO: Do it with the rest?
+  - dependencies updated
+  - icons changed to png 32, so transparency is understood by pillow latest version
+  - unused icons removed
+  - icon names all centralized in Icon class
+  - getImage: caches the images, rename gif to png.
 
 V3.0.27
 -------

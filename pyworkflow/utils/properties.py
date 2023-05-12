@@ -28,7 +28,8 @@
 """
 This module defines the text used in the application.
 """
-
+# NOTE: DO NOT REMOVE UNTIL plugin manager uses Config.SCIPION_MAIN_COLOR and is released
+from pyworkflow.constants import Color
 
 class Message:
     # Example Usage: 
@@ -68,25 +69,20 @@ class Message:
     LABEL_NEW_ACTION = 'New     '
     LABEL_EDIT = 'Edit'
     LABEL_RENAME = 'Rename '
-    LABEL_EDIT_ACTION = 'Edit     '
     LABEL_COPY = 'Copy'
-    LABEL_COPY_ACTION = 'Copy   '
+    LABEL_PASTE = 'Paste'
+    LABEL_DUPLICATE = 'Duplicate'
     LABEL_DELETE = 'Delete'
-    LABEL_DELETE_ACTION = 'Delete    '
     LABEL_STEPS = 'Steps'
     LABEL_BROWSE = 'Browse'
-    LABEL_BROWSE_ACTION = 'Browse '
     LABEL_DB = 'Db'
     LABEL_STOP = 'Stop'
-    LABEL_STOP_ACTION = 'Stop execution'
     LABEL_ANALYZE = 'Analyze Results'
     LABEL_TREE = 'Tree'
     LABEL_SMALLTREE = 'Small Tree'
-    LABEL_LIST = 'List'
     LABEL_REFRESH = 'Refresh'
     LABEL_DEFAULT = 'Default'
     LABEL_CONTINUE = 'Continue'
-    LABEL_CONTINUE_ACTION = 'Approve continue'
     LABEL_EXPORT = 'Export'
     LABEL_EXPORT_UPLOAD = 'Export & upload'
     LABEL_RESTART_WORKFLOW = 'Restart workflow'
@@ -410,101 +406,110 @@ class PluginInformation:
 
 # To get font awesome icons into png use: http://fa2png.io/
 class Icon:
-    # Project Content Template
-    RUNS_TREE = 'fa-sitemap.gif'
-    RUNS_LIST = 'fa-bars.gif'
-    ACTION_NEW = 'fa-plus-circle.gif'
-    ACTION_EDIT = 'fa-pencil.gif'
-    ACTION_SELECT_FROM = 'fa-arrow-down.gif'
-    ACTION_SELECT_TO = 'fa-arrow-up.gif'
-    ACTION_COPY = 'fa-files-o.gif'
-    ACTION_DELETE = 'fa-trash-o.gif'
-    ACTION_REFRESH = 'fa-refresh.gif'
-    ACTION_RENAME = 'rename.gif'
-    # TODO: change action_steps icon - fa-codefork?
-    ACTION_STEPS = 'fa-list-ul.gif'
-    ACTION_BROWSE = 'fa-folder-open.gif'
-    ACTION_DB = 'fa-database.gif'
+    # Protocols status
+    PROT_DISABLED = 'prot_disabled.png'
+    BETA = 'beta.png'
+    NEW = 'new.png'
+    PRODUCTION = 'production.png'
+    UPDATED = 'updated.png'
+    GROUP = 'class_obj.png'
+    DEBUG = 'debug.png'
+    DOWNLOAD = 'fa-download.png'
+    FILE_BW = 'fa-file-o.png'
+    FIND = 'binoculares.png'
+    SELECT_ALL = 'workflow.png'
+    ERROR = 'fa-times-circle_alert.png'
+    INFO = 'fa-info-circle_alert.png'
+    ALERT = 'fa-exclamation-triangle_alert.png'
+    JAVA_FILE = 'file_java.png'
+    PYTHON_FILE = 'file_python.png'
+    # Project window icons
+    RUNS_TREE = 'fa-sitemap.png'
+    ACTION_NEW = 'fa-plus-circle.png'
+    ACTION_EDIT = 'fa-pencil.png'
+    ACTION_SELECT_FROM = 'fa-arrow-down.png'
+    ACTION_SELECT_TO = 'fa-arrow-up.png'
+    ACTION_COPY = 'clipboard-regular.png'
+    ACTION_PASTE = 'paste-solid.png'
+    ACTION_DUPLICATE = 'fa-files-o.png'
+    ACTION_DELETE = 'fa-trash-o.png'
+    ACTION_REFRESH = 'fa-refresh.png'
+    ACTION_RENAME = 'rename.png'
+    ACTION_STEPS = 'fa-list-ul.png'
+    ACTION_BROWSE = 'fa-folder-open.png'
+    ACTION_DB = 'fa-database.png'
     ACTION_TREE = None
-    ACTION_LIST = 'fa-bars.gif'
-    ACTION_STOP = 'fa-stop.gif'
-    ACTION_CONTINUE = 'fa-play-circle-o.gif'
-    ACTION_STOP_WORKFLOW = 'fa-stop-workflow.gif'
-    ACTION_RESULTS = 'fa-eye.gif'
-    ACTION_CLOSE = 'fa-times.gif'
-    ACTION_SAVE = 'fa-save.gif'
-    ACTION_VISUALIZE = 'fa-eye.gif'
-    ACTION_WIZ = 'fa-magic.gif'
-    ACTION_HELP = 'fa-question-circle.gif'
-    ACTION_REFERENCES = 'fa-external-link.gif'
-    ACTION_EXPORT = 'fa-external-link.gif'
-    ACTION_EXPORT_UPLOAD = 'fa-upload.gif'
-
-    ACTION_SEARCH = 'fa-search.gif'
-    ACTION_EXECUTE = 'fa-cogs.gif'
-    ACTION_IN = 'fa-sign-in.gif'
-    ACTION_OUT = 'fa-sign-out.gif'
-    ACTION_FIND_NEXT = 'fa-next.gif'
-    ACTION_FIND_PREVIOUS = 'fa-previous.gif'
+    ACTION_STOP = 'fa-stop.png'
+    ACTION_CONTINUE = 'fa-play-circle-o.png'
+    ACTION_STOP_WORKFLOW = 'fa-stop-workflow.png'
+    ACTION_RESULTS = 'fa-eye.png'
+    ACTION_CLOSE = 'fa-times.png'
+    ACTION_SAVE = 'fa-save.png'
+    ACTION_VISUALIZE = 'fa-eye.png'
+    ACTION_WIZ = 'fa-magic.png'
+    ACTION_HELP = 'fa-question-circle.png'
+    ACTION_REFERENCES = 'fa-external-link.png'
+    ACTION_EXPORT = 'fa-external-link.png'
+    ACTION_EXPORT_UPLOAD = 'fa-upload.png'
+    ACTION_SEARCH = 'fa-search.png'
+    ACTION_EXECUTE = 'fa-cogs.png'
+    ACTION_IN = 'fa-sign-in.png'
+    ACTION_OUT = 'fa-sign-out.png'
+    ACTION_FIND_NEXT = 'fa-next.png'
+    ACTION_FIND_PREVIOUS = 'fa-previous.png'
+    ACTION_COLLAPSE = 'fa-minus-square.png'
+    ACTION_EXPAND ='fa-plus-square.png'
     # Host template
-    BUTTON_SELECT = 'fa-check.gif'
-    BUTTON_CLOSE = 'fa-times.gif'
-    BUTTON_CANCEL = 'fa-ban.gif'
+    BUTTON_SELECT = 'fa-check.png'
+    BUTTON_CLOSE = 'fa-times.png'
+    BUTTON_CANCEL = 'fa-ban.png'
     BUTTON_SAVE = ACTION_SAVE
-    BUTTON_PC = 'fa-laptop.gif'
-    
-    ARROW_UP = 'fa-arrow-up.gif'
-    ARROW_LEFT = 'fa-arrow-left.gif'
-    BRUSH = 'fa-paint-brush.gif'
-    TAGS = 'fa-tags.gif'
-    HOME = 'fa-home.gif'
-    LIGHTBULB = 'fa-lightbulb-o.gif'
-    PLUS_CIRCLE = 'fa-plus-circle.gif'
-    LINK = 'fa-iconmoon-link.gif'
-    ROOT = 'root.gif'
-    ROCKET = 'fa-rocket.gif'
 
-    SCIPION_ICON = 'scipion_icon.gif'
-    SCIPION_ICON_PROJ = SCIPION_ICON  # 'scipion_icon_proj.gif'
-    SCIPION_ICON_PROJS = SCIPION_ICON  # 'scipion_icon_projs.gif'
-    SCIPION_ICON_PROT = SCIPION_ICON  # 'scipion_icon_prot.gif'
+    ARROW_UP = 'fa-arrow-up.png'
+    TAGS = 'fa-tags.png'
+    HOME = 'fa-home.png'
+    LIGHTBULB = 'fa-lightbulb-o.png'
+    PLUS_CIRCLE = 'fa-plus-circle.png'
+    ROCKET = 'fa-rocket.png'
+    NO_IMAGE_128 = 'no-image128.png'
+    FOLDER = 'file_folder.png'
+    FOLDER_LINK = 'file_folder_link.png'
+    FILE = 'file_generic.png'
+    FILE_LINK = 'file_generic_link.png'
+    FOLDER_OPEN = 'fa-folder-open.png'
+    DB = 'file_sqlite.png'
+    TXT_FILE = 'file_text.png'
+    POWER_OFF = 'power-off-solid.png'
+    BROOM = 'broom-solid.png'
+    BACKWARD = 'backward-solid.png'
+    CODE_BRANCH = 'code-branch-solid.png'
+
+    SCIPION_ICON = 'scipion_icon.png'
+    SCIPION_ICON_PROJ = SCIPION_ICON  # 'scipion_icon_proj.png'
+    SCIPION_ICON_PROJS = SCIPION_ICON  # 'scipion_icon_projs.png'
+    SCIPION_ICON_PROT = SCIPION_ICON  # 'scipion_icon_prot.png'
 
     # PLUGIN MANAGER ICONS
-    CHECKED = 'fa-checked.gif'
-    UNCHECKED = 'fa-unchecked.gif'
-    INSTALL = 'fa-install.gif'
-    UNINSTALL = 'fa-uninstall.gif'
-    TO_INSTALL = 'fa-to_install.gif'
-    INSTALLED = 'fa-installed.gif'
-    PROCESSING = 'fa-processing.gif'
-    FAILURE = 'fa-failure.gif'
-    DELETE_OPERATION = 'fa-delete-operation.gif'
-    TO_UPDATE = 'fa-update.gif'
+    CHECKED = 'fa-checked.png'
+    UNCHECKED = 'fa-unchecked.png'
+    INSTALL = 'fa-install.png'
+    UNINSTALL = 'fa-uninstall.png'
+    TO_INSTALL = 'fa-to_install.png'
+    INSTALLED = 'fa-installed.png'
+    PROCESSING = 'fa-processing.png'
+    FAILURE = 'fa-failure.png'
+    DELETE_OPERATION = 'fa-delete-operation.png'
+    TO_UPDATE = 'fa-update.png'
     WAITING = 'wait.gif'
-    ACTION_UNDO = 'fa-undo.gif'
+    ACTION_UNDO = 'fa-undo.png'
 
-    PLUGIN_AUTHORS = 'users.gif'
-    PLUGIN_DESCRIPTION = 'file_stack.gif'
-    PLUGIN_RELEASE_DATE = 'fa-upload.gif'
-    PLUGIN_VERSION = 'file_vol.gif'
-    PLUGIN_PACKAGE = 'file_folder.gif'
+    PLUGIN_AUTHORS = 'users.png'
+    PLUGIN_DESCRIPTION = 'file_stack.png'
+    PLUGIN_RELEASE_DATE = 'fa-upload.png'
+    PLUGIN_VERSION = 'file_vol.png'
+    PLUGIN_PACKAGE = 'file_folder.png'
 
 
-class Color:
-    RED_COLOR = 'Firebrick'  # Red color for background label  = #B22222
-    LIGHT_RED_COLOR = '#F3CBCB'  # Very light red for row selection
-    LIGHT_BLUE_COLOR = '#EAEBFF'  # Very light blue for even rows
-    LIGHT_GREY_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
-    LIGHT_GREY_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
-    DARK_GREY_COLOR = '#6E6E6E'  # Very dark grey for project title, tubes, etc
-    
-    STATUS_SAVED = '#D9F1FA', 
-    STATUS_LAUNCHED = '#D9F1FA', 
-    STATUS_RUNNING = '#FCCE62', 
-    STATUS_FINISHED = '#D2F5CB', 
-    STATUS_FAILED = '#F5CCCB', 
-    STATUS_INTERACTIVE = '#F3F5CB',
-    STATUS_ABORTED = '#F5CCCB',
 
 
 class colorText:

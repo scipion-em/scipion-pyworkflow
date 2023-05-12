@@ -1,5 +1,6 @@
 
 import logging
+
 logger = logging.getLogger(__file__)
 import ast
 import importlib
@@ -100,8 +101,18 @@ class Config:
     SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
     "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"
 
+    # Actual SCIPION_HOME
+    SCIPION_HOME_DEFINED = _get(SCIPION_HOME_VAR, False)
+    "False if SCIPION_HOME is found in the environment"
+
     _root = Root(SCIPION_HOME)
     _join = _root.join
+
+    # Internal cached variables, use __ so they are not returned in getVars
+    __activeColor = None
+
+    CONDA_ACTIVATION_CMD = _get(CONDA_ACTIVATION_CMD_VAR,'')
+    "Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\""
 
     # SCIPION PATHS
     SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
@@ -190,6 +201,12 @@ class Config:
     SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', SCIPION_DEFAULT_FONT_SIZE))
     "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10."
 
+    SCIPION_MAIN_COLOR = _get('SCIPION_MAIN_COLOR', Color.MAIN_COLOR)
+    "Main color of the GUI. Background will be white, so for better contrast choose a dark color. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
+    SCIPION_BG_COLOR = _get('SCIPION_BG_COLOR', Color.BG_COLOR)
+    "Main background color of the GUI. Default is white, chose a light one. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
+
+
     WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
     "Color to use in some wizards."
 
@@ -232,8 +249,7 @@ class Config:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:
         VIEWERS = {}
-        print("ERROR loading preferred viewers, VIEWERS variable will be ignored")
-        print(e)
+        logger.error("ERROR loading preferred viewers, VIEWERS variable will be ignored", exc_info=e)
 
     SCIPION_DOMAIN = _get(SCIPION_DOMAIN, None)
     SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript())
@@ -286,7 +302,7 @@ class Config:
 
     @classmethod
     def printVars(cls):
-        """ Print the variables dict, mostly for debugging. """
+        """ Print the variables' dict, mostly for debugging. """
         from .utils import prettyDict
         prettyDict(cls.getVars())
 
@@ -379,6 +395,29 @@ class Config:
         """ Returns true if colors are allowed. Based on NO_COLOR variable. Undefined or '' colors are enabled"""
         return cls.NO_COLOR == ''
 
+
+    @classmethod
+    def getActiveColor(cls):
+        """ Returns a color lighter than the SCIPION_MAIN_COLOR"""
+
+        if cls.__activeColor is None:
+            import matplotlib.colors
+            from pyworkflow.utils import lighter, rgb_to_hex
+
+            rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
+            rgb_main = (rgb_main[0] * 255, rgb_main[1] * 255, rgb_main[2] * 255)
+            rgb_active = lighter(rgb_main, 0.3)
+            cls.__activeColor = rgb_to_hex(rgb_active)
+
+        return cls.__activeColor
+
+    @classmethod
+    def isScipionRunning(cls):
+        """ Returns true if this execution is understood to be running Scipion.
+        In some case, documentation inspection by sphynx or when packaging a plugin using setup.py
+        this code could be reached but is not an actual execution. This is useful for cancelling some actions
+        like registering FileHandlers or other stuff not needed when just importing modules."""
+        return cls.SCIPION_HOME_DEFINED != False
 
 # Add bindings folder to sys.path
 sys.path.append(Config.getBindingsFolder())

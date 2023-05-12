@@ -41,11 +41,19 @@ from pyworkflow.viewer import DESKTOP_TKINTER
 class RunIOTreeProvider(pwgui.tree.TreeProvider):
     """Create the tree elements from a Protocol Run input/output children"""
 
-    def __init__(self, parent, protocol, mapper):
-        # TreeProvider.__init__(self)
+    def __init__(self, parent, protocol, mapper, loggerCallback):
+        """
+
+        :param parent:
+        :param protocol:
+        :param mapper:
+        :param loggerCallback: method to call to log events in the gui.
+        """
+
         self.parent = parent
         self.protocol = protocol
         self.mapper = mapper
+        self._loggerCallback = loggerCallback
 
     @staticmethod
     def getColumns():
@@ -123,13 +131,20 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             isPointer = False
         actions = []
 
+        # If viewers not loaded yet (firstime)
+        domain = Config.getDomain()
+
+        if not domain.viewersLoaded():
+            self._loggerCallback("Discovering viewers for the first time across all the plugins.")
+
+
         viewers = Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
 
         def viewerCallback(viewer):
             return lambda: self._visualizeObject(viewer, obj)
 
         for v in viewers:
-            actions.append(('Open with %s' % v.__name__,
+            actions.append(('Open with %s' % v.__name__ if v._name is None else v._name,
                             viewerCallback(v),
                             Icon.ACTION_VISUALIZE))
         # EDIT
@@ -141,7 +156,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         # since we can end up with several outputs and
         # we may want to clean up
         if self.protocol.allowsDelete(obj) and not isPointer:
-            actions.append((Message.LABEL_DELETE_ACTION,
+            actions.append((Message.LABEL_DELETE,
                             lambda: self._deleteObject(obj),
                             Icon.ACTION_DELETE))
         return actions
@@ -259,10 +274,11 @@ class ProtocolTreeConfig:
     TAG_PROTOCOL_GROUP = 'protocol_group'
     TAG_PROTOCOL_BETA = 'protocol_beta'
     TAG_PROTOCOL_NEW = 'protocol_new'
+    TAG_PROTOCOL_UPDATED = 'protocol_updated'
     PLUGIN_CONFIG_PROTOCOLS = 'protocols.conf'
 
     @classmethod
-    def getProtocolTag(cls, isInstalled, isBeta=False, isNew=False):
+    def getProtocolTag(cls, isInstalled, isBeta=False, isNew=False, isUpdated=False):
         """ Return the proper tag depending if the protocol is installed or not.
         """
         if isInstalled:
@@ -270,6 +286,8 @@ class ProtocolTreeConfig:
                 return cls.TAG_PROTOCOL_BETA
             elif isNew:
                 return cls.TAG_PROTOCOL_NEW
+            elif isUpdated:
+                return cls.TAG_PROTOCOL_UPDATED
             return cls.TAG_PROTOCOL
         else:
             return cls.TAG_PROTOCOL_DISABLED
@@ -378,12 +396,14 @@ class ProtocolTreeConfig:
         # check if it is disabled
         protClassName = item["value"]
         protClass = Config.getDomain().getProtocols().get(protClassName)
-        icon = 'python_file.gif'
+        icon = Icon.PRODUCTION
         if protClass is not None:
             if protClass.isBeta():
-                icon = "beta.gif"
+                icon = Icon.BETA
             elif protClass.isNew():
-                icon = "new.gif"
+                icon = Icon.NEW
+            elif protClass.isUpdated():
+                icon = Icon.UPDATED
         item['icon'] = icon
         return False if protClass is None else not protClass.isDisabled()
 
@@ -392,16 +412,17 @@ class ProtocolTreeConfig:
         # Add all protocols
         allProts = domain.getProtocols()
 
-        # Sort the dictionary
-        allProtsSorted = pwobj.OrderedDict(sorted(allProts.items(),
-                                            key=lambda e: e[1].getClassLabel()))
+        # Sort the list
+        allProtsSorted = sorted(allProts.items(), key=lambda e: e[1].getClassLabel())
+
         allProtMenu = ProtocolConfig(cls.ALL_PROTOCOLS)
         packages = {}
 
         # Group protocols by package name
-        for k, v in allProtsSorted.items():
+        for k, v in allProtsSorted:
             if isAFinalProtocol(v, k):
-                packageName = v.getClassPackageName()
+                packageName = v.getPlugin().getName()
+
                 # Get the package submenu
                 packageMenu = packages.get(packageName)
 
@@ -416,7 +437,7 @@ class ProtocolTreeConfig:
                     packages[packageName] = packageMenu
 
                 # Add the protocol
-                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew())
+                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew(), v.isUpdated())
 
                 protLine = {"tag": tag, "value": k,
                             "text": v.getClassLabel(prependPackageName=False)}
@@ -531,7 +552,7 @@ class ProtocolConfig(MenuConfig):
         if 'icon' not in args:
             tag = args.get('tag', None)
             if tag == 'protocol_base':
-                args['icon'] = 'class_obj.gif'
+                args['icon'] = Icon.GROUP
 
         args['shortCut'] = shortCut
         return MenuConfig.addSubMenu(self, text, value, **args)

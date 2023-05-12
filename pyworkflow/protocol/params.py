@@ -233,7 +233,11 @@ class Form(object):
     def addParam(self, *args, **kwargs):
         """Add a new param to last section"""
         return self.lastSection.addParam(*args, **kwargs)
-    
+
+    # Adhoc method for specific params
+    def addBooleanParam(self, name, label, help, default=True, **kwargs):
+        return self.addParam(name, BooleanParam, label=label, help=help, default=default, **kwargs)
+
     def addHidden(self, *args, **kwargs):
         return self.lastSection.addHidden(*args, **kwargs)
     
@@ -345,13 +349,13 @@ class Form(object):
             self.addParam('numberOfThreads', IntParam, default=threads,
                           label='Threads',
                           help='This option provides shared-memory parallelization on multi-core machines.'
-                                'It does not require any additional software, other than <Xmipp>')
+                                'It does not require any additional software.')
         if mpi > 0:
             self.addParam('numberOfMpi', IntParam, default=mpi,
                           label='MPI processes',
                           help='This option provides the number of independent processes spawned'
                                 'in parallel by <mpirun> command in a cluster, usually through'
-                                'a queue system. This will require that you have compile <Xmipp>'
+                                'a queue system. This will require that you have compile this software '
                                 'with <mpi> support.')
         if jobsize > 0:
             self.addParam('mpiJobSize', IntParam, default=jobsize,
@@ -681,7 +685,7 @@ class GT(Conditional):
 class GE(Conditional):
     def __init__(self, thresold, error='Value should be greater or equal than the threshold'):
         Conditional.__init__(self, error)
-        self._condition = lambda value: value >= thresold               
+        self._condition = lambda value: value is not None and value >= thresold
 
 
 class Range(Conditional):
@@ -698,6 +702,7 @@ class NumericListValidator(Conditional):
     def _condition(self, value):
         try:
             parts = re.split(r"[x\s]", value)
+            parts = list(filter(None, parts))
             for p in parts:
                 float(p)
             return True
@@ -714,6 +719,7 @@ class NumericRangeValidator(Conditional):
     def _condition(self, value):
         try:
             parts = re.split(r"[-,\s]", value)
+            parts = list(filter(None, parts))
             for p in parts:
                 float(p)
             return True

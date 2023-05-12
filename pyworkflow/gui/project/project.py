@@ -80,45 +80,43 @@ class ProjectWindow(ProjectBaseWindow):
 
         projMenu = menu.addSubMenu('Project')
         projMenu.addSubMenu('Browse files', 'browse',
-                            icon='fa-folder-open.gif')
+                            icon=Icon.FOLDER_OPEN)
         projMenu.addSubMenu('Remove temporary files', 'delete',
-                            icon='fa-trash-o.gif')
+                            icon=Icon.ACTION_DELETE)
         projMenu.addSubMenu('Manage project labels', 'labels',
                             icon=Icon.TAGS)
         projMenu.addSubMenu('Toggle color mode', 'color_mode',
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
-                            shortCut="Ctrl+a", icon='workflow.gif')
-        projMenu.addSubMenu('Find protocol to add', 'find protocol',
-                            shortCut="Ctrl+f", icon='binoculares.gif')
-        projMenu.addSubMenu('Scipion log', 'scipion log',
-                            icon='fa-file-o.gif')
+                            shortCut="Ctrl+a", icon=Icon.SELECT_ALL)
+        projMenu.addSubMenu('Add a protocol', 'find protocol',
+                            shortCut="Ctrl+f", icon=Icon.FIND)
         projMenu.addSubMenu('Locate a protocol', 'locate protocol',
                             shortCut="Ctrl+l")
-        projMenu.addSubMenu('Add a protocol', 'find protocol',
-                            shortCut="Ctrl+f")
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
-                            icon='fa-download.gif')
+                            icon=Icon.DOWNLOAD)
         projMenu.addSubMenu('Search workflow', 'search_workflow',
-                            icon='fa-search.gif')
+                            icon=Icon.ACTION_SEARCH)
         if pw.Config.debugOn():
             projMenu.addSubMenu('Export tree graph', 'export_tree')
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Debug Mode', 'debug mode',
-                            shortCut="Ctrl+d", icon='debug.gif')
+                            shortCut="Ctrl+D", icon=Icon.DEBUG)
         projMenu.addSubMenu('', '')  # add separator
-        projMenu.addSubMenu('Notes', 'notes', icon='fa-pencil.gif')
+        projMenu.addSubMenu('Notes', 'notes', icon=Icon.ACTION_EDIT)
+        projMenu.addSubMenu('Scipion log', 'scipion log',
+                            icon=Icon.FILE_BW)
         projMenu.addSubMenu('', '')  # add separator
-        projMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
+        projMenu.addSubMenu('Exit', 'exit', icon=Icon.ACTION_OUT)
 
         helpMenu = menu.addSubMenu('Help')
         helpMenu.addSubMenu('Online help', 'online_help',
-                            icon='fa-external-link.gif')
+                            icon=Icon.ACTION_EXPORT)
         helpMenu.addSubMenu('About', 'about',
-                            icon='fa-question-circle.gif')
+                            icon=Icon.ACTION_HELP)
         helpMenu.addSubMenu('Contact support', 'contact_us',
-                            icon='fa-question-circle.gif')
+                            icon=Icon.ACTION_HELP)
 
         self.menuCfg = menu
 
@@ -236,9 +234,9 @@ class ProjectWindow(ProjectBaseWindow):
         
     def _loadWorkflow(self, obj):
         try:
-            self.getViewWidget().info('Importing the workflow...')
+            self.getViewWidget().info('Importing workflow %s' % obj.getPath())
             self.project.loadProtocols(obj.getPath())
-            self.getViewWidget().updateRunsGraph(True, reorganize=False)
+            self.getViewWidget().updateRunsGraph(True)
             self.getViewWidget().cleanInfo()
         except Exception as ex:
             self.showError(str(ex), exception=ex)
@@ -375,20 +373,21 @@ class ProjectManagerWindow(ProjectBaseWindow):
         menu = MenuConfig()
 
         fileMenu = menu.addSubMenu('File')
-        fileMenu.addSubMenu('Browse files', 'browse', icon='fa-folder-open.gif')
-        fileMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
+        fileMenu.addSubMenu('Browse files', 'browse', icon=Icon.FOLDER_OPEN)
+        fileMenu.addSubMenu('Exit', 'exit', icon=Icon.ACTION_OUT)
 
         confMenu = menu.addSubMenu('Configuration')
         if os.path.exists(pw.Config.SCIPION_CONFIG):
             confMenu.addSubMenu('General', 'general')
         confMenu.addSubMenu('Hosts', 'hosts')
-        confMenu.addSubMenu('Protocols', 'protocols')
+        if os.path.exists(pw.Config.SCIPION_PROTOCOLS):
+            confMenu.addSubMenu('Protocols', 'protocols')
         if os.path.exists(pw.Config.SCIPION_LOCAL_CONFIG):
             confMenu.addSubMenu('User', 'user')
 
         helpMenu = menu.addSubMenu('Help')
-        helpMenu.addSubMenu('Online help', 'online_help', icon='fa-external-link.gif')
-        helpMenu.addSubMenu('About', 'about', icon='fa-question-circle.gif')
+        helpMenu.addSubMenu('Online help', 'online_help', icon=Icon.ACTION_EXPORT)
+        helpMenu.addSubMenu('About', 'about', icon=Icon.ACTION_HELP)
 
         self.menuCfg = menu
         self.generalCfg = settings.getConfig()
@@ -438,12 +437,6 @@ class ProjectManagerWindow(ProjectBaseWindow):
     @staticmethod
     def onUser():
         ProjectManagerWindow._openConfigFile(pw.Config.SCIPION_LOCAL_CONFIG)
-
-    # Moved to scipion-app
-    # def onPlugins(self):
-    #     # Config -> Plugins
-    #     PluginManager("Plugin Manager", self, pw.Config.SCIPION_USER_DATA,
-    #                   selectButton=None).show()
 
 
 class ProjectTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):

@@ -28,11 +28,12 @@ import queue
 from functools import partial
 from tkinter.ttk import Style
 
-from pyworkflow.object import Object
 import pyworkflow as pw
-from pyworkflow.utils import Message, Color, Icon
-
+from pyworkflow.object import Object
+from pyworkflow.utils import Message, Icon
+from PIL import Image, ImageTk
 from .widgets import Button
+import numpy as np
 
 # --------------- GUI CONFIGURATION parameters -----------------------
 # TODO: read font size and name from config file
@@ -44,35 +45,35 @@ cfgFontName = pw.Config.SCIPION_FONT_NAME
 cfgFontSize = pw.Config.SCIPION_FONT_SIZE
 cfgFontBigSize = cfgFontSize + 8
 # TextColor
-cfgCitationTextColor = "dark olive green"
-cfgLabelTextColor = "black"
-cfgSectionTextColor = "blue4"
+# cfgCitationTextColor = "dark olive green"
+# cfgLabelTextColor = "black"
+# cfgSectionTextColor = "blue4"
 # Background Color
-cfgBgColor = "light grey"
-cfgLabelBgColor = "white"
-cfgHighlightBgColor = cfgBgColor
-cfgButtonFgColor = "white"
-cfgButtonActiveFgColor = "white"
-cfgButtonBgColor = Color.RED_COLOR
-cfgButtonActiveBgColor = "#A60C0C"
+# cfgBgColor = "light grey"
+# cfgLabelBgColor = "white"
+# cfgHighlightBgColor = cfgBgColor
+cfgButtonFgColor = pw.Config.SCIPION_BG_COLOR
+cfgButtonActiveFgColor = pw.Config.SCIPION_BG_COLOR
+cfgButtonBgColor = pw.Config.SCIPION_MAIN_COLOR
+cfgButtonActiveBgColor = pw.Config.getActiveColor()
 cfgEntryBgColor = "lemon chiffon"
-cfgExpertLabelBgColor = "light salmon"
-cfgSectionBgColor = cfgButtonBgColor
+# cfgExpertLabelBgColor = "light salmon"
+# cfgSectionBgColor = cfgButtonBgColor
 # Color
-cfgListSelectColor = "DeepSkyBlue4"
-cfgBooleanSelectColor = "white"
-cfgButtonSelectColor = "DeepSkyBlue2"
+# cfgListSelectColor = "DeepSkyBlue4"
+# cfgBooleanSelectColor = "white"
+# cfgButtonSelectColor = "DeepSkyBlue2"
 # Dimensions limits
-cfgMaxHeight = 650
+# cfgMaxHeight = 650
 cfgMaxWidth = 800
-cfgMaxFontSize = 14
-cfgMinFontSize = 6
+# cfgMaxFontSize = 14
+# cfgMinFontSize = 6
 cfgWrapLenght = cfgMaxWidth - 50
 
 # Style of treeviews where row height is variable based on the font size
 LIST_TREEVIEW = 'List.Treeview'
 
-
+image_cache = dict()
 
 class Config(Object):
     pass
@@ -179,18 +180,34 @@ def changeFontSize(font, event, minSize=-999, maxSize=999):
 def getImage(imageName, imgDict=None, tkImage=True, percent=100,
              maxheight=None):
     """ Search for the image in the RESOURCES path list. """
+
+    global image_cache
+
     if imageName is None:
         return None
-    if imgDict is not None and imageName in imgDict:
-        return imgDict[imageName]
+
+    # Rename .gif by .png. In Linux with pillow 9.2.0 gif transparency is broken so
+    # we need to go for png. But in the past, in Macs png didn't work and made us go from png to gif
+    # We are now providing the 2 formats, prioritising pngs. If png work in MAC and windows then gif
+    # could be deleted. Otherwise, we may need to do this replacement based on the OS.
+    # NOTE: "convert  my-image.gif PNG32:my-image.png" has converted gifs to pngs RGBA (32 bits) it seems pillow
+    # needs RGBA format to deal with transparencies.
+
+    if not os.path.isabs(imageName) and imageName not in [Icon.WAITING]:
+        imageName = imageName.replace(".gif", ".png")
+
+    if imageName in image_cache:
+        return image_cache[imageName]
+
     if not os.path.isabs(imageName):
         imagePath = pw.findResource(imageName)
     else:
         imagePath = imageName
     image = None
     if imagePath:
-        from PIL import Image
         image = Image.open(imagePath)
+        # For a future dark mode we might need to invert the image but it requires some extra work to make it look nice:
+        # image = invertImage(image)
         w, h = image.size
         newSize = None
         if percent != 100:  # Display image with other dimensions
@@ -201,13 +218,24 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         if newSize:
             image.thumbnail(newSize, Image.ANTIALIAS)
         if tkImage:
-            from PIL import ImageTk
             image = ImageTk.PhotoImage(image)
-        if imgDict is not None:
-            imgDict[imageName] = image
+
+        image_cache[imageName] = image
     return image
 
+def invertImage(img):
+    # Creating a numpy array out of the image object
+    img_arry = np.array(img)
 
+    # Maximum intensity value of the color mode
+    I_max = 255
+
+    # Subtracting 255 (max value possible in a given image
+    # channel) from each pixel values and storing the result
+    img_arry = I_max - img_arry
+
+    # Creating an image object from the resultant numpy array
+    return Image.fromarray(img_arry)
 # ---------------- Windows geometry utilities -----------------------
 def getGeometry(win):
     """ Return the geometry information of the windows
@@ -222,7 +250,7 @@ def centerWindows(root, dim=None, refWindows=None):
     or in the middle of other windows(refWindows param)"""
     root.update_idletasks()
     if dim is None:
-        gw, gh, gx, gy = getGeometry(root)
+        gw, gh, _, _ = getGeometry(root)
     else:
         gw, gh = dim
     if refWindows:
@@ -257,13 +285,15 @@ def defineStyle():
     defaultFont = getDefaultFont()
     rowheight = defaultFont.metrics()['linespace']
 
-    style.configure(LIST_TREEVIEW, rowheight=rowheight)
+    style.configure(LIST_TREEVIEW, rowheight=rowheight,
+                    background=pw.Config.SCIPION_BG_COLOR,
+                    fieldbackground=pw.Config.SCIPION_BG_COLOR)
     style.configure(LIST_TREEVIEW+".Heading", font=(defaultFont["family"],defaultFont["size"]))
 
 
 class Window:
     """Class to manage a Tk windows.
-    It will encapsulates some basic creation and 
+    It will encapsulate some basic creation and
     setup functions. """
     # To allow plugins to add their own menus
     _pluginMenus = dict()
@@ -292,9 +322,10 @@ class Window:
             # he first window generated a tk.Toplevel. After that, all steps executed later will go through the else
             # statement, being that way each new tk.Toplevel() correctly referenced.
             tk.Tk().withdraw()  # Main window, invisible
-            self.root = tk.Toplevel()  # Toplevel of main window
+            self.root = tk.Toplevel(class_="Scipion Framework")  # Toplevel of main window
         else:
-            self.root = tk.Toplevel(masterWindow.root)
+            self.root = tk.Toplevel(masterWindow.root, class_="Scipion Framework")
+            self.root.group(masterWindow.root)
             self._images = masterWindow._images
 
         self.root.withdraw()

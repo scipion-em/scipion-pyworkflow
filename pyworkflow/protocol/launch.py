@@ -86,9 +86,11 @@ def schedule(protocol, initialSleepTime=0, wait=False):
     run yet. Right now it only make sense to schedule jobs locally.
     """
     cmd = '%s %s' % (pw.PYTHON, pw.getScheduleScript())
-    cmd += ' "%s" "%s" %s --initial_sleep %s' % (protocol.getProject().path,
+    cmd += ' "%s" "%s" %s "%s" --initial_sleep %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
-                              protocol.strId(), initialSleepTime)
+                              protocol.strId(),
+                              protocol.getScheduleLog(),
+                              initialSleepTime)
     jobId = _run(cmd, wait)
     protocol.setJobId(jobId)
 
@@ -135,8 +137,13 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
         project_path=protocol.getProject().path,
         db_path=protocol.getDbPath(),
         prot_id=protocol.strId(),
-        stdout_log=protocol.getStdoutLog(),
-        stderr_log=protocol.getStderrLog()
+        # We make them absolute in case working dir is not passed to the node when running through a queue.
+        # The reason is that since 3.0.27, the first thing that is affected by the current working dir is the
+        # creation of the logs. Before event than loading the project, which was and is setting the working dir to
+        # the project path. IMPORTANT: This assumes the paths before the queue and after the queue (nodes) are the same
+        # Which I think is safe since we are passing here "project_path" that is absolute.
+        stdout_log=os.path.abspath(protocol.getStdoutLog()),
+        stderr_log=os.path.abspath(protocol.getStderrLog())
     )
 
     #command = ('%s %s "%s" "%s" %s "%s" "%s"'
@@ -146,6 +153,10 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
 
     hostConfig = protocol.getHostConfig()
     useQueue = protocol.useQueue()
+
+    # Empty PID: 0
+    protocol.setPid(0)
+
     # Check if need to submit to queue    
     if useQueue and (protocol.getSubmitDict()["QUEUE_FOR_JOBS"] == "N"):
         submitDict = dict(hostConfig.getQueuesDefault())
@@ -229,7 +240,7 @@ def analyzeFormattingTypeError(string, dictionary):
      it splits te string by \n and test the formatting per line. Raises an exception if any line fails
      with all problems found"""
 
-    # Do the replace line by line
+    # Do the replacement line by line
     lines = string.split("\n")
 
     problematicLines = []
@@ -242,8 +253,9 @@ def analyzeFormattingTypeError(string, dictionary):
             problematicLines.append(line + " --> " + str(e))
 
     if problematicLines:
-        return PyworkflowException('Following lines in %s seems to be problematic. '
-                                   'Please review its format or content.\n%s' % (pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
+        return PyworkflowException('Following lines in %s seems to be problematic.\n'
+                                   'Values known in this context are: \n%s'
+                                   'Please review its format or content.\n%s' % (dictionary, pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
                                    url=pw.DOCSITEURLS.HOST_CONFIG)
 
 def _submit(hostConfig, submitDict, cwd=None, env=None):

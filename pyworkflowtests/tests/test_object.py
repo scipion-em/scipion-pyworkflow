@@ -35,6 +35,8 @@ from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
 
+IMAGES_STK = "images.stk"
+
 NUMERIC_ATRIBUTE_NAME = "1"
 
 NUMERIC_ATTRIBUTE_VALUE = "numeric_attribute"
@@ -54,7 +56,7 @@ class TestObject(pwtests.BaseTest):
     def test_ObjectsDict(self):
         # Validate that the object dict is populated correctly
         basicObjNames = [
-            'Object', 'Scalar', 'Integer', 'Float', 'String', 'Pointer',
+            'Scalar', 'Integer', 'Float', 'String', 'Pointer', 'Boolean',
             'OrderedObject', 'List', 'CsvList', 'PointerList', 'Set'
         ]
         self.assertTrue(all(name in pwobj.OBJECTS_DICT
@@ -160,7 +162,7 @@ class TestObject(pwtests.BaseTest):
         c.Name = pwobj.String('Paquito')
 
         self.assertEqual(p.get(), 'Paquito')
-        stackFn = "images.stk"
+        stackFn = IMAGES_STK
         mrcsFn = "images.mrcs"
         fn = self.getOutputPath('test_images.sqlite')
         imgSet = MockSetOfImages(filename=fn)
@@ -251,11 +253,8 @@ class TestObject(pwtests.BaseTest):
         ptr5 = pwobj.Pointer(value=o2, extended=NUMERIC_ATRIBUTE_NAME)
         self.assertEqual(NUMERIC_ATTRIBUTE_VALUE, ptr5.get())
 
-
-
-
     def test_Sets(self):
-        stackFn = "images.stk"
+        stackFn = IMAGES_STK
         fn = self.getOutputPath('test_images2.sqlite')
 
         imgSet = MockSetOfImages(filename=fn)
@@ -346,6 +345,10 @@ class TestObject(pwtests.BaseTest):
         lastResort.setLevel(DEBUG)
         imgSetVerbose = MockSetOfImages(filename=fn)
         imgSetVerbose.loadAllProperties()
+
+        # Compare sets are "equal"
+        self.compareSetProperties(imgSet, imgSetVerbose, ignore=[])
+
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values

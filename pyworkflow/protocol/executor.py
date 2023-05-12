@@ -30,10 +30,10 @@ There is one based on threads to execute steps in parallel
 using different threads and the last one with MPI processes.
 """
 
-
+import logging
+logger = logging.getLogger(__name__)
 import time
 import datetime
-import traceback
 import threading
 import os
 import re
@@ -101,7 +101,7 @@ class StepExecutor:
         lastCheck = datetime.datetime.now()
 
         while True:
-            # Get an step to run, if there is one
+            # Get a step to run, if there is any
             runnableSteps = self._getRunnable(steps)
 
             if runnableSteps:
@@ -148,7 +148,7 @@ class StepThread(threading.Thread):
             self.step._run()  # not self.step.run() , to avoid race conditions
         except Exception as e:
             error = str(e)
-            traceback.print_exc()
+            logger.error("Couldn't run the code in a thread." , exc_info=e)
         finally:
             with self.lock:
                 if error is None:
@@ -204,6 +204,7 @@ class ThreadStepExecutor(StepExecutor):
         :param stepsCheckSecs: seconds between stepsCheckCallback calls
 
         """
+
         delta = datetime.timedelta(seconds=stepsCheckSecs)
         lastCheck = datetime.datetime.now()
 
@@ -299,7 +300,7 @@ class QueueStepExecutor(ThreadStepExecutor):
         jobid = _submit(self.hostConfig, submitDict, cwd, env)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
-            print("jobId is none therefore we set it to fail")
+            logger.info("jobId is none therefore we set it to fail")
             raise Exception("Failed to submit to queue.")
 
         status = cts.STATUS_RUNNING
@@ -319,7 +320,7 @@ class QueueStepExecutor(ThreadStepExecutor):
         command = hostConfig.getCheckCommand() % {"JOB_ID": jobid}
         p = Popen(command, shell=True, stdout=PIPE, preexec_fn=os.setsid)
 
-        out = p.communicate()[0]
+        out = p.communicate()[0].decode(errors='backslashreplace')
 
         jobDoneRegex = hostConfig.getJobDoneRegex()
 

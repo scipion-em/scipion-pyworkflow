@@ -428,14 +428,22 @@ class SqliteMapper(Mapper):
 
         # If an object was created
         if obj is not None:
-            # Fill object attributes with row values
-            self.fillObjectWithRow(obj, row)
+            try:
+                # Fill object attributes with row values
+                self.fillObjectWithRow(obj, row)
 
-            # Add it to the obj cache, we might need it latter to assign
-            # attributes
-            self.objDict[obj._objId] = obj
+                # Add it to the obj cache, we might need it later to assign
+                # attributes
+                self.objDict[obj._objId] = obj
 
-            return obj
+                return obj
+
+            except Exception as e:
+                # Tolerate errors when loading attributes.
+                # This could happen then a protocol has change a param to a new type not compatible
+                # with previous values. Warn properly about it.
+                logger.warning("Can't load the row (%s, %s, %s) form the database to memory. This could cause future error." %
+                             (identifier, row[NAME], row[PARENT_ID]))
 
     def _getObjectFromDictionary(self, objId):
         return self.objDict[objId]

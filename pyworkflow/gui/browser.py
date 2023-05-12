@@ -110,12 +110,12 @@ class ObjectBrowser(tk.Frame):
         self._fillRightBottom(bottom)
 
     def _fillRightTop(self, top):
-        self.noImage = self.getImage('no-image128.gif')
+        self.noImage = self.getImage(pwutils.Icon.NO_IMAGE_128)
         self.label = tk.Label(top, image=self.noImage)
         self.label.grid(row=0, column=0, sticky='news')
 
     def _fillRightBottom(self, bottom):
-        self.text = TaggedText(bottom, width=40, height=15, bg='white',
+        self.text = TaggedText(bottom, width=40, height=15, bg=Config.SCIPION_BG_COLOR,
                                takefocus=0)
         self.text.grid(row=0, column=0, sticky='news')
 
@@ -129,9 +129,11 @@ class ObjectBrowser(tk.Frame):
             if img is None:
                 img = self.noImage
             self.label.config(image=img)
+
         # Update text preview
         self.text.setReadOnly(False)
         self.text.clear()
+
         if desc is not None:
             self.text.addText(desc)
         self.text.setReadOnly(True)
@@ -194,16 +196,16 @@ class FileHandler(object):
     def getFileIcon(self, objFile):
         """ Return the icon name for a given file. """
         if objFile.isDir():
-            icon = 'file_folder.gif' if not objFile.isLink() else 'file_folder_link.gif'
+            icon = pwutils.Icon.FOLDER if not objFile.isLink() else pwutils.Icon.FOLDER_LINK
         else:
-            icon = 'file_generic.gif' if not objFile.isLink() else 'file_generic_link.gif'
+            icon = pwutils.Icon.FILE if not objFile.isLink() else pwutils.Icon.FILE_LINK
 
         return icon
 
     def getFilePreview(self, objFile):
         """ Return the preview image and description for the specific object."""
         if objFile.isDir():
-            return 'fa-folder-open.gif', None
+            return pwutils.Icon.FOLDER_OPEN, None
         return None, None
 
     def getFileActions(self, objFile):
@@ -225,7 +227,7 @@ class TextFileHandler(FileHandler):
 
 class SqlFileHandler(FileHandler):
     def getFileIcon(self, objFile):
-        return 'file_sqlite.gif'
+        return pwutils.Icon.DB
 
 
 class FileTreeProvider(TreeProvider):
@@ -274,13 +276,23 @@ class FileTreeProvider(TreeProvider):
         return info
 
     def getObjectPreview(self, obj):
-        # Look for any preview available
-        fileHandlers = self.getFileHandlers(obj)
 
-        for fileHandler in fileHandlers:
-            preview = fileHandler.getFilePreview(obj)
-            if preview:
-                return preview
+        try:
+            # Look for any preview available
+            fileHandlers = self.getFileHandlers(obj)
+
+            for fileHandler in fileHandlers:
+                preview = fileHandler.getFilePreview(obj)
+                if preview:
+                    img, desc = preview
+                    if obj.isLink():
+                        desc = "Is a link" if desc is None else desc + "\nIs a link."
+                    return img, desc
+
+        except Exception as e:
+            msg = "Couldn't get preview for %s" % obj
+            logger.error(msg, exc_info=e)
+            return None, msg + " See scipion GUI log window for more details."
 
     def getObjectActions(self, obj):
         fileHandlers = self.getFileHandlers(obj)
@@ -456,8 +468,9 @@ class FileBrowser(ObjectBrowser):
                                                             sticky='nw', pady=3)
             tk.Entry(entryFrame,
                      textvariable=self.entryVar,
-                     bg='white',
-                     width=65).grid(row=0, column=1, sticky='nw', pady=3)
+                     bg=Config.SCIPION_BG_COLOR,
+                     width=65,
+                     font=gui.getDefaultFont()).grid(row=0, column=1, sticky='nw', pady=3)
 
         frame.rowconfigure(treeRow, weight=1)
 
@@ -699,11 +712,11 @@ class FileBrowserWindow(BrowserWindow):
     def registerHandlers(self):
         register = FileTreeProvider.registerFileHandler  # shortcut
 
-        register(TextFileHandler('file_text.gif'),
+        register(TextFileHandler(pwutils.Icon.TXT_FILE),
                  '.txt', '.log', '.out', '.err', '.stdout', '.stderr', '.emx',
                  '.json', '.xml', '.pam')
-        register(TextFileHandler('file_python.gif'), '.py')
-        register(TextFileHandler('file_java.gif'), '.java')
+        register(TextFileHandler(pwutils.Icon.PYTHON_FILE), '.py')
+        register(TextFileHandler(pwutils.Icon.JAVA_FILE), '.java')
         register(SqlFileHandler(), '.sqlite', '.db')
         # register(MdFileHandler(), '.xmd', '.star', '.pos', '.ctfparam', '.doc')
         # register(ParticleFileHandler(),

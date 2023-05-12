@@ -30,7 +30,6 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from pyworkflow.object import Scalar
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.utils import prettyDelta
 from . import gui
@@ -499,8 +498,9 @@ class ObjectTreeProvider(TreeProvider):
         info = {'key': obj.getObjId(),
                 'parent': self._parentDict.get(obj.getObjId(), None),
                 'text': t, 'values': (obj.strId(), cls)}
-        if issubclass(obj.__class__, Scalar):
-            info['image'] = 'step.gif'
+        # This image step.gif is missing, I guess we are not showing Scalars
+        # if issubclass(obj.__class__, Scalar):
+        #     info['image'] = 'step.gif'
 
         return info
 

@@ -350,10 +350,15 @@ class Protocol(Step):
     """
     _possibleOutputs = None
 
+    # Cache package and plugin
+    _package = None
+    _plugin = None
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._size = None
         self._steps = []  # List of steps that will be executed
+        self._newSteps = False  # Boolean to annotate when there are new steps added to the above list. And need persistence.
         # All generated filePaths should be inside workingDir
         self.workingDir = String(kwargs.get('workingDir', '.'))
         self.mapper = kwargs.get('mapper', None)
@@ -540,12 +545,14 @@ class Protocol(Step):
     def isNew(cls):
         if cls._devStatus == pw.NEW:
             return True
-        elif cls._devStatus == pw.PROD:
-            return cls._lastUpdateVersion not in pw.OLD_VERSIONS
 
     @classmethod
     def isBeta(cls):
         return cls._devStatus == pw.BETA
+
+    @classmethod
+    def isUpdated(cls):
+        return cls._devStatus == pw.UPDATED
 
     def getDefinition(self):
         """ Access the protocol definition. """
@@ -734,8 +741,12 @@ class Protocol(Step):
                             logger.debug("Pointer found in output: %s.%s (%s)" % (output, k, attr))
                             prot = attr.getObjValue()
                             if prot is not None:
-                                protocolIds.append(prot.getObjId())
-
+                                if isinstance(prot, Protocol):
+                                    protocolIds.append(prot.getObjId())
+                                else:
+                                    logger.warning(f"We have found that {output}.{key} points to {attr} "
+                                                   f"and is a direct pointer. Direct pointers are less reliable "
+                                                   f"in streaming scenarios. Developers should avoid them.")
             protocolIds.append(protocol.getObjId())
 
         return protocolIds
@@ -989,6 +1000,7 @@ class Protocol(Step):
             step.addPrerequisites(*prerequisites)
 
         self._steps.append(step)
+        self._newSteps = True
         # Setup and return step index
         step.setIndex(len(self._steps))
 
@@ -1437,6 +1449,17 @@ class Protocol(Step):
         else:
             pwutils.cleanPath(tmpFolder)
 
+        self._cleanExtraFiles()
+    def _cleanExtraFiles(self):
+        """ This method will be called when the protocol finishes correctly.
+        It is the responsibility of the protocols to implement this method to make extra cleanup
+        of its folders, like iterations folder and files that are not needed when finished
+        """
+
+        logger.info("Nothing to clean up")
+        logger.debug('FOR DEVELOPERS: implement Protocol._cleanExtraFiles this protocol could'
+                     ' free up some space upon finishing.')
+
     def _run(self):
         # Check that a proper Steps executor have been set
         if self._stepsExecutor is None:
@@ -1496,9 +1519,12 @@ class Protocol(Step):
             self.info('Hostname: %s' % self.getHostFullName())
             self.info('PID: %s' % self.getPid())
             self.info('pyworkflow: %s' % pw.__version__)
-            self.info('plugin: %s' % self.getClassPackageName())
-            if hasattr(self.getClassPackage(), "__version__"):
-                self.info('plugin v: %s' % self.getClassPackage().__version__)
+            plugin = self.getPlugin()
+            self.info('plugin: %s' %  plugin.getName())
+            package = self.getClassPackage()
+            if hasattr(package, "__version__"):
+                self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
+            self.info('plugin binary v: %s' % plugin.getActiveVersion())
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
@@ -1731,17 +1757,17 @@ class Protocol(Step):
         this method the protocol classes are registered with it Plugin
         and Domain info.
         """
-        # import pyworkflow.em as em
-        # em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
-        # TODO: Check if we need to return scipion by default anymore
-        # Now the basic EM protocols are defined by scipion-em (pwem)
-        return getattr(cls, '_package', None)
+        return cls._package
 
     @classmethod
     def getClassPlugin(cls):
-        package = cls.getClassPackage()
-        return getattr(package, 'Plugin', None)
 
+        logger.warning("Deprecated on 04-2023. Use Protocol.getPlugin instead.")
+        return cls.getPlugin()
+
+    @classmethod
+    def getPlugin(cls):
+        return cls._plugin
     @classmethod
     def getClassPackageName(cls):
         return cls.getClassPackage().__name__ if cls.getClassPackage() else "orphan"
@@ -1804,7 +1830,11 @@ class Protocol(Step):
         """ Return a more readable string representing the protocol class """
         label = cls.__dict__.get('_label', cls.__name__)
         if prependPackageName:
-            label = "%s - %s" % (cls.getClassPackageName(), label)
+            try:
+                label = "%s - %s" % (cls.getPlugin().getName(), label)
+            except Exception as e:
+                label = "%s -%s" % ("missing", label)
+                logger.error("Couldn't get the plugin name for %s" % label, exc_info=e)
         return label
 
     @classmethod
@@ -1885,6 +1915,7 @@ class Protocol(Step):
         self._storeSteps()
         self._numberOfSteps.set(len(self._steps))
         self._store(self._numberOfSteps)
+        self._newSteps = False
 
     def getStatusMessage(self):
         """ Return the status string and if running the steps done.
@@ -1933,7 +1964,7 @@ class Protocol(Step):
 
     @classmethod
     def getUrl(cls):
-        return cls.getClassPlugin().getUrl(cls)
+        return cls.getPlugin().getUrl(cls)
 
     @classmethod
     def isInstalled(cls):
@@ -2101,15 +2132,18 @@ class Protocol(Step):
         try:
 
             journal = cite.get("journal", cite.get("booktitle", ""))
-            doi = cite.get("doi", "")
+            doi = cite.get("doi", "").strip()
+            url = cite.get("url", "").strip()
             # Get the first author surname
             if useKeyLabel:
                 label = cite['ID']
             else:
                 label = cite['author'].split(' and ')[0].split(',')[0].strip()
                 label += ' et al., %s, %s' % (journal, cite['year'])
-            if len(doi.strip()) > 0:
-                text = '[[%s][%s]] ' % (doi.strip(), label)
+            if len(doi) > 0:
+                text = '[[%s][%s]] ' % (doi, label)
+            elif len(url) > 0:
+                text = '[[%s][%s]] ' % (url, label)
             else:
                 text = label.strip()
             return text
@@ -2160,11 +2194,11 @@ class Protocol(Step):
         """ Return a citation message to provide some information to users. """
         citations = list(self.getCitations().values())
         if citations:
-            citations.insert(0, '*References:* ')
+            citations.insert(0, '*Protocol references:* ')
 
         packageCitations = self.getPackageCitations().values()
         if packageCitations:
-            citations.append('*Package References:*')
+            citations.append('*Package references:*')
             citations += packageCitations
         if not citations:
             return ['No references provided']
@@ -2174,8 +2208,8 @@ class Protocol(Step):
     def getHelpText(cls):
         """Get help text to show in the protocol help button"""
         helpText = cls.getDoc()
-        # NOt used since getClassPlugin is always None
-        # plugin = self.getClassPlugin()
+        # NOt used since getPlugin is always None
+        # plugin = self.getPlugin()
         # if plugin:
         #     pluginMetadata = plugin.metadata
         #     helpText += "\n\nPlugin info:\n"
@@ -2453,3 +2487,47 @@ def isProtocolUpToDate(protocol):
 
 class ProtImportBase(Protocol):
     """ Base Import protocol"""
+
+class ProtStreamingBase(Protocol):
+    """ Base protocol to implement streaming protocols.
+    stepsGeneratorStep should be implemented (see its description) and output
+    should be created at the end of the processing Steps created by the stepsGeneratorStep.
+    To avoid concurrency error, when creating the output, do it in a with self._lock: block.
+    Minimum number of threads is 3 and should run in parallel mode.
+    """
+
+    def __init__(self, **kwargs):
+
+        super().__init__()
+        self.stepsExecutionMode = STEPS_PARALLEL
+    def _insertAllSteps(self):
+        # Insert the step that generates the steps
+        self._insertFunctionStep(self.stepsGeneratorStep)
+
+    def _stepsCheck(self):
+
+        # Just store steps created in checkNewInputStep
+        if self._newSteps:
+            self.updateSteps()
+
+    def stepsGeneratorStep(self):
+        """
+        This step should be implemented by any streaming protocol.
+        It should check its input and when ready conditions are met
+        call the self._insertFunctionStep method.
+
+        :return: None
+        """
+        pass
+
+    def _validateThreads(self, messages:list):
+
+        if self.numberOfThreads.get() < 3:
+            messages.append("At least 3 threads are needed for running this protocol. 1 for the core process, "
+                            "1 for the 'step-generator step' and one more for the actual processing" )
+    def _validate(self):
+        """ If you want to implement a validate method do it but call _validateThreads or validate threads value."""
+        errors = []
+        self._validateThreads(errors)
+
+        return errors
