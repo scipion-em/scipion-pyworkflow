@@ -40,7 +40,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: python -m pyworkflow.project.scripts.load /path/to/project
+    Usage: scipion python -m pyworkflow.project.scripts.load /path/to/project
         This script allows to quickly load a project folder without
         importing that in the general user data folder
     """ % error)

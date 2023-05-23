@@ -35,8 +35,8 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python scripts/clean_projects.py [SCIPION_USER_DATA] [--delete]
-        Clean projects that has expired (now - creation time > life time)
+    Usage: scipion python -m pyworkflow.project.scripts.clean_projects [SCIPION_USER_DATA] [--delete]
+        Clean projects that have expired (now - creation time > life time)
         Optional to pass SCIPION_USER_DATA folder from which to read 'projects'.
         If --delete is not passed, only a message with the projects to be deleted
         will be shown. If used --delete, the projects will be deleted from filesystem.
