@@ -97,6 +97,14 @@ class Dialog(tk.Toplevel):
         bodyFrame.grid(row=0, column=0, sticky='news',
                        padx=5, pady=5)
 
+        # Frame for the info/message label
+        infoFrame = tk.Frame(self)
+        infoFrame.grid(row=1, column=0, sticky='sew',
+                      padx=5, pady=(0, 5))
+        self.floatingMessage = tk.Label(infoFrame, text="", fg=Config.SCIPION_MAIN_COLOR)
+        self.floatingMessage.grid(row=0, column=0, sticky='news')
+
+        # Create buttons
         self.icons = kwargs.get('icons',
                                 {RESULT_YES: Icon.BUTTON_SELECT,
                                  RESULT_NO: Icon.BUTTON_CLOSE,
@@ -106,10 +114,11 @@ class Dialog(tk.Toplevel):
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
         self.defaultButton = kwargs.get('default', 'OK')
+
+        # Frame fot buttons
         btnFrame = tk.Frame(self)
-        # Create buttons 
         self.buttonbox(btnFrame)
-        btnFrame.grid(row=1, column=0, sticky='sew',
+        btnFrame.grid(row=2, column=0, sticky='sew',
                       padx=5, pady=(0, 5))
 
         gui.configureWeigths(self)
@@ -238,6 +247,10 @@ class Dialog(tk.Toplevel):
 
     def resultCancel(self):
         return self.result == RESULT_CANCEL
+
+    def info(self, message):
+        """ Shows a info message for long running processes to inform the user GUI is not frozen"""
+        self.floatingMessage.config(text=message)
 
 
 def fillMessageText(text, message):
@@ -748,12 +761,20 @@ class FlashMessage:
 
 
 class FloatingMessage:
-    def __init__(self, master, msg, xPos=750, yPos=80, textWidth=280,
-                 font='Helvetica', size=12, bd=1, bg='#6E6E6E', fg='white'):
+    def __init__(self, master, msg, xPos=None, yPos=None, textWidth=280,
+                 font='Helvetica', size=12, bd=1, bg=Config.SCIPION_MAIN_COLOR, fg='white'):
+
+        if xPos is None:
+            xPos = (master.winfo_width()-textWidth)/2
+            yPos = master.winfo_height()/2
+
         self.floatingMessage = tk.Label(master, text="   %s   " % msg,
                                         bd=bd, bg=bg, fg=fg)
         self.floatingMessage.place(x=xPos, y=yPos, width=textWidth)
         self.floatingMessage.config(font=(font, size))
+
+    def setMessage(self, msg):
+        self.floatingMessage.config(text=msg)
 
     def show(self):
         self.floatingMessage.update_idletasks()
