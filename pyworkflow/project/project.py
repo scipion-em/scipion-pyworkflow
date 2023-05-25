@@ -1679,7 +1679,6 @@ class Project(object):
             if isinstance(prot, ProtImportBase) or prot.getClassName() == "ProtImportMovies":
                 logger.info("Import detected")
                 for _, attr in prot.iterOutputAttributes():
-                    fn = attr.getFiles()
                     for f in attr.getFiles():
                         if ':' in f:
                             f = f.split(':')[0]
@@ -1690,15 +1689,18 @@ class Project(object):
                                 logger.info("Found broken links in run: %s" %
                                       pwutils.magenta(prot.getRunName()))
                             logger.info("  Missing: %s" % pwutils.magenta(f))
+
                             if os.path.islink(f):
-                                logger.info("    -> %s" % pwutils.red(os.path.realpath(f)))
-                            newFile = pwutils.findFile(os.path.basename(f),
+                                sourceFile = os.path.realpath(f)
+                                logger.info("    -> %s" % pwutils.red(sourceFile))
+
+                                newFile = pwutils.findFile(os.path.basename(sourceFile),
                                                        searchDir,
                                                        recursive=True)
-                            if newFile:
-                                logger.info("  Found file %s, creating link... %s" % (newFile,
-                                    pwutils.green("   %s -> %s" % (f, newFile))))
-                                pwutils.createAbsLink(newFile, f)
+                                if newFile:
+                                    logger.info("  Found file %s, creating link... %s" % (newFile,
+                                        pwutils.green("   %s -> %s" % (f, newFile))))
+                                    pwutils.createAbsLink(newFile, f)
 
     @staticmethod
     def cleanProjectName(projectName):

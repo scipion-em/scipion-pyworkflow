@@ -2,6 +2,8 @@
 
 import sys
 import os
+import logging
+logging.basicConfig(level="INFO")
 
 from pyworkflow.project import Manager
 import pyworkflow.utils as pwutils

@@ -1,3 +1,7 @@
+V3.0.32
+-------
+  - Hotfix: fix links more versatile.
+
 V3.0.31
 -------
   - Hotfix: Fixed updated protocol icon
