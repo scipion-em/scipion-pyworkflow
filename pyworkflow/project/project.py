@@ -25,6 +25,8 @@
 # *
 # **************************************************************************
 import logging
+
+ROOT_NODE_NAME = "PROJECT"
 logger = logging.getLogger(__name__)
 
 import datetime as dt
@@ -819,38 +821,53 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _getWorkflowFromProtocol(self, protocol, fixProtParam=True):
+    def _getSubworkflow(self, protocol, fixProtParam=True, letItPass=None):
         """
         This function get the workflow from "protocol" and determine the
         protocol level into the graph. Also, checks if there are active
         protocols excluding interactive protocols.
+
+        :param protocol from where to start the subworkflow (included)
+        :param letItPass: a callback receiving the protocol and returning false if protocol should not pass
         """
-        activeProtList = []
-        configuredProtList = {}
+        affectedProtocols = {}
+        affectedProtocolsActive = []
         auxProtList = []
         # store the protocol and your level into the workflow
-        configuredProtList[protocol.getObjId()] = [protocol, 0]
-        auxProtList.append(protocol.getObjId())
+        affectedProtocols[protocol.getObjId()] = [protocol, 0]
+        auxProtList.append([protocol.getObjId(), 0])
         runGraph = self.getRunsGraph()
 
         while auxProtList:
-            protocol = runGraph.getNode(str(auxProtList.pop(0))).run
-            level = configuredProtList[protocol.getObjId()][1] + 1
+            protId, level = auxProtList.pop(0)
+            protocol = runGraph.getNode(str(protId)).run
+
+            # Increase the level for the children
+            level = level + 1
+
             if fixProtParam:
                 self._fixProtParamsConfiguration(protocol)
-            if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                activeProtList.append(protocol)
+
+            passesFilter = True if letItPass is None else letItPass(protocol)
+
+            if passesFilter and protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
+                affectedProtocolsActive.append(protocol)
+
             node = runGraph.getNode(protocol.strId())
             dependencies = [node.run for node in node.getChilds()]
             for dep in dependencies:
                 if not dep.getObjId() in auxProtList:
-                    auxProtList.append(dep.getObjId())
-                if not dep.getObjId() in configuredProtList.keys():
-                    configuredProtList[dep.getObjId()] = [dep, level]
-                elif level > configuredProtList[dep.getObjId()][1]:
-                    configuredProtList[dep.getObjId()][1] = level
+                    auxProtList.append([dep.getObjId(), level])
 
-        return configuredProtList, activeProtList
+                if letItPass is not None and not letItPass(dep):
+                    continue
+
+                if not dep.getObjId() in affectedProtocols.keys():
+                    affectedProtocols[dep.getObjId()] = [dep, level]
+                elif level > affectedProtocols[dep.getObjId()][1]:
+                    affectedProtocols[dep.getObjId()][1] = level
+
+        return affectedProtocols, affectedProtocolsActive
 
     def deleteProtocol(self, *protocols):
         self._checkModificationAllowed(protocols, 'Cannot DELETE protocols')
@@ -1136,14 +1153,22 @@ class Project(object):
         """ Load protocols generated in the same format as self.exportProtocols.
 
         :param filename: the path of the file where to read the workflow.
-        :param jsonStr: Not used.
+        :param jsonStr:
 
         Note: either filename or jsonStr should be not None.
 
         """
-        f = open(filename)
-        importDir = os.path.dirname(filename)
-        protocolsList = json.load(f)
+        importDir = None
+        if filename:
+            with open(filename) as f:
+                importDir = os.path.dirname(filename)
+                protocolsList = json.load(f)
+
+        elif jsonStr:
+            protocolsList = json.loads(jsonStr)
+        else:
+            logger.error("Invalid call to  loadProcols. Either filename or jsonStr has to be passed.")
+            return
 
         emProtocols = self._domain.getProtocols()
         newDict = OrderedDict()
@@ -1161,7 +1186,7 @@ class Project(object):
                 prot = self.newProtocol(protClass,
                                         objLabel=protLabel,
                                         objComment=protDict.get('object.comment', None))
-                protocolsList[i] = prot.processImportDict(protDict, importDir)
+                protocolsList[i] = prot.processImportDict(protDict, importDir) if importDir else protDict
 
                 prot._useQueue.set(protDict.get('_useQueue', False))
                 prot._queueParams.set(protDict.get('_queueParams', None))
@@ -1230,7 +1255,6 @@ class Project(object):
 
                 self.mapper.store(prot)
 
-        f.close()
         self.mapper.commit()
 
         return newDict
@@ -1444,12 +1468,19 @@ class Project(object):
 
         """
         outputDict = {}  # Store the output dict
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
 
         for r in runs:
             n = g.createNode(r.strId())
             n.run = r
-            n.setLabel(r.getRunName())
+
+            # Legacy protocols do not have a plugin!!
+            develTxt =''
+            plugin=r.getPlugin()
+            if plugin and plugin.inDevelMode():
+                develTxt='ẟ '
+
+            n.setLabel('%s%s' % (develTxt , r.getRunName()))
             outputDict[r.getObjId()] = n
             for _, attr in r.iterOutputAttributes():
                 # mark this output as produced by r
@@ -1482,7 +1513,7 @@ class Project(object):
                         _checkInputAttr(node, parent)
         rootNode = g.getRoot()
         rootNode.run = None
-        rootNode.label = "PROJECT"
+        rootNode.label = ROOT_NODE_NAME
 
         for n in g.getNodes():
             if n.isRoot() and n is not rootNode:
@@ -1493,7 +1524,7 @@ class Project(object):
         """ Retrieve objects produced as outputs and
         make a graph taking into account the SOURCE relation. """
         relations = self.mapper.getRelationsByName(relation)
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
         root = g.getRoot()
         root.pointer = None
         runs = self.getRuns(refresh=refresh)

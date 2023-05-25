@@ -24,12 +24,10 @@
 # *
 # **************************************************************************
 
-
-import os
+import logging
+logger = logging.getLogger(__name__)
 import json
 import datetime as dt
-from collections import OrderedDict
-from configparser import ConfigParser
 
 import pyworkflow.object as pwobj
 from pyworkflow.mapper import SqliteMapper
@@ -148,11 +146,42 @@ class ProjectSettings(pwobj.Object):
     def getNodes(self):
         return self.nodeList
 
+    def cleanUpNodes(self, runsIds, toRemove=True):
+        """ This will clean up all the nodes that do not have a matching run.
+        This is because until now, the nodes here weren't removes when protocols were removed.
+
+        :param runsIds: iterable with protocol's objId to be removed.
+        :param toRemove: Passed is are to be removed. Otherwise, are the ones to keep
+        """
+
+        try:
+            logger.info("Cleaning up unused graphical nodes.")
+
+            nodesToDelete = []
+            for node  in self.getNodes():
+                nodeId = str(node.getId())
+                # if it is not the root node
+                if nodeId != '0':
+
+                    if (nodeId in runsIds) == toRemove:
+                        nodesToDelete.append(node.getId())
+
+            logger.info("Following graphical nodes %s unmatched. Deleting them" % nodesToDelete)
+            for key in nodesToDelete:
+                self.getNodes().removeNode(key)
+                
+        except Exception as e:
+            logger.error("Couldn't clean up graphical nodes.", exc_info=e)
+
     def getNodeById(self, nodeId):
         return self.nodeList.getNode(nodeId)
 
     def addNode(self, nodeId, **kwargs):
         return self.nodeList.addNode(nodeId, **kwargs)
+
+    def removeNode(self, nodeId):
+        """ Removes a graphical node based on its id"""
+        self.nodeList.removeNode(nodeId)
 
     def getLabels(self):
         return self.labelsList
@@ -327,6 +356,12 @@ class NodeConfigList(pwobj.List):
         self._nodesDict[node.getId()] = node
         self.append(node)
         return node
+
+    def removeNode(self, nodeId):
+        """ Removes a node with the id = nodeId"""
+        nodeToRemove = self._nodesDict[nodeId]
+        self._nodesDict.pop(nodeId)
+        self.remove(nodeToRemove)
 
     def updateDict(self):
         self._nodesDict.clear()

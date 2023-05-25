@@ -28,7 +28,8 @@
 """
 This module defines the text used in the application.
 """
-
+# NOTE: DO NOT REMOVE UNTIL plugin manager uses Config.SCIPION_MAIN_COLOR and is released
+from pyworkflow.constants import Color
 
 class Message:
     # Example Usage: 
@@ -68,24 +69,20 @@ class Message:
     LABEL_NEW_ACTION = 'New     '
     LABEL_EDIT = 'Edit'
     LABEL_RENAME = 'Rename '
-    LABEL_EDIT_ACTION = 'Edit     '
     LABEL_COPY = 'Copy'
-    LABEL_COPY_ACTION = 'Copy   '
+    LABEL_PASTE = 'Paste'
+    LABEL_DUPLICATE = 'Duplicate'
     LABEL_DELETE = 'Delete'
-    LABEL_DELETE_ACTION = 'Delete    '
     LABEL_STEPS = 'Steps'
     LABEL_BROWSE = 'Browse'
-    LABEL_BROWSE_ACTION = 'Browse '
     LABEL_DB = 'Db'
     LABEL_STOP = 'Stop'
-    LABEL_STOP_ACTION = 'Stop execution'
     LABEL_ANALYZE = 'Analyze Results'
     LABEL_TREE = 'Tree'
     LABEL_SMALLTREE = 'Small Tree'
     LABEL_REFRESH = 'Refresh'
     LABEL_DEFAULT = 'Default'
     LABEL_CONTINUE = 'Continue'
-    LABEL_CONTINUE_ACTION = 'Approve continue'
     LABEL_EXPORT = 'Export'
     LABEL_EXPORT_UPLOAD = 'Export & upload'
     LABEL_RESTART_WORKFLOW = 'Restart workflow'
@@ -432,11 +429,12 @@ class Icon:
     ACTION_EDIT = 'fa-pencil.png'
     ACTION_SELECT_FROM = 'fa-arrow-down.png'
     ACTION_SELECT_TO = 'fa-arrow-up.png'
-    ACTION_COPY = 'fa-files-o.png'
+    ACTION_COPY = 'clipboard-regular.png'
+    ACTION_PASTE = 'paste-solid.png'
+    ACTION_DUPLICATE = 'fa-files-o.png'
     ACTION_DELETE = 'fa-trash-o.png'
     ACTION_REFRESH = 'fa-refresh.png'
     ACTION_RENAME = 'rename.png'
-    # TODO: change action_steps icon - fa-codefork?
     ACTION_STEPS = 'fa-list-ul.png'
     ACTION_BROWSE = 'fa-folder-open.png'
     ACTION_DB = 'fa-database.png'
@@ -481,6 +479,10 @@ class Icon:
     FOLDER_OPEN = 'fa-folder-open.png'
     DB = 'file_sqlite.png'
     TXT_FILE = 'file_text.png'
+    POWER_OFF = 'power-off-solid.png'
+    BROOM = 'broom-solid.png'
+    BACKWARD = 'backward-solid.png'
+    CODE_BRANCH = 'code-branch-solid.png'
 
     SCIPION_ICON = 'scipion_icon.png'
     SCIPION_ICON_PROJ = SCIPION_ICON  # 'scipion_icon_proj.png'
@@ -508,21 +510,6 @@ class Icon:
     PLUGIN_PACKAGE = 'file_folder.png'
 
 
-class Color:
-    RED_COLOR = 'Firebrick'  # Red color for background label  = #B22222
-    LIGHT_RED_COLOR = '#F3CBCB'  # Very light red for row selection
-    LIGHT_BLUE_COLOR = '#EAEBFF'  # Very light blue for even rows
-    LIGHT_GREY_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
-    LIGHT_GREY_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
-    DARK_GREY_COLOR = '#6E6E6E'  # Very dark grey for project title, tubes, etc
-    
-    STATUS_SAVED = '#D9F1FA', 
-    STATUS_LAUNCHED = '#D9F1FA', 
-    STATUS_RUNNING = '#FCCE62', 
-    STATUS_FINISHED = '#D2F5CB', 
-    STATUS_FAILED = '#F5CCCB', 
-    STATUS_INTERACTIVE = '#F3F5CB',
-    STATUS_ABORTED = '#F5CCCB',
 
 
 class colorText:

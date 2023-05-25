@@ -48,9 +48,10 @@ def runJob(log, programname, params,
                               env, gpuList=gpuList)
     
     if log is None:
-        logger.info("** Running command: %s" % greenStr(command))
-    else:
-        log.info(greenStr(command))
+        log = logger
+
+    log.info("** Running command: **")
+    log.info(greenStr(command))
 
     return runCommand(command, env, cwd)
         

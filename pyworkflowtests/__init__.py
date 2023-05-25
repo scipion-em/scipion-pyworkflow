@@ -29,6 +29,7 @@ Mock Domain definition that will be used by basic tests.
 from pyworkflow.protocol import Protocol
 from pyworkflow.wizard import Wizard
 from pyworkflow.viewer import Viewer
+from pyworkflow.utils import getSubclasses
 from pyworkflow.plugin import Domain as pwDomain, Plugin as pwPlugin
 
 from .objects import MockObject
@@ -40,7 +41,7 @@ class TestDomain(pwDomain):
     _protocolClass = Protocol
     _viewerClass = Viewer
     _wizardClass = Wizard
-    _baseClasses = globals()
+    _baseClasses = getSubclasses(MockObject, globals())
 
 
 Domain = TestDomain
