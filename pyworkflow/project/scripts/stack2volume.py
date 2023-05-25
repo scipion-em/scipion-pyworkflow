@@ -12,10 +12,10 @@ def usage(error):
     print("""
     ERROR: %s
     
-    stack2Volume will swap the dimension in the header of stack to make them 
-    volumes. Something like 10 x 1 x 10 x 10 will be change to 1 x 10 x 10 x 10
-    Usage: stack2volume.py PATH
-        PATH: path to look for stack files    
+    Usage: scipion python -m pyworkflow.project.scripts.stack2volume PATH
+        PATH: path to look for stack files
+    The script will swap the dimensions in the header of a stack to make them 
+    volumes. Something like 10 x 1 x 10 x 10 will be changed to 1 x 10 x 10 x 10
     """ % error)
     sys.exit(1)    
 
