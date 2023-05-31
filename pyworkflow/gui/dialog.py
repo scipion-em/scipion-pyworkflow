@@ -115,7 +115,7 @@ class Dialog(tk.Toplevel):
                                               ('Cancel', RESULT_CANCEL)])
         self.defaultButton = kwargs.get('default', 'OK')
 
-        # Frame fot buttons
+        # Frame for buttons
         btnFrame = tk.Frame(self)
         self.buttonbox(btnFrame)
         btnFrame.grid(row=2, column=0, sticky='sew',
