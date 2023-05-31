@@ -493,7 +493,9 @@ class Protocol(Step):
                 outputSet.write()  # Write to commit changes
                 outputAttr = getattr(self, outputName)
                 # Copy the properties to the object contained in the protocol
-                outputAttr.copy(outputSet, copyId=False)
+                # Default Set.copy ignores some attributes like size or mapperPath.
+                # In this case we want all to be copied
+                outputAttr.copy(outputSet, copyId=False, ignoreAttrs=[])
                 # Persist changes
                 self._store(outputAttr)
             else:

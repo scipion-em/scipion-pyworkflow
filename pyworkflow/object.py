@@ -1108,7 +1108,18 @@ class Set(Object):
             self.load()
 
     def copy(self, other, copyId=True, ignoreAttrs=['_mapperPath', '_size', '_streamState']):
-        """ Avoid copying the mapper path by default"""
+        """ Copies the attributes of the set
+
+        :param other: Set to copy attributes from
+        :param copyId: True. Copies the objId.
+        :param ignoreAttrs: Attributes list to ignore while copying. _mapperPath, _size and _streamState
+        are ignored by default.
+        
+        """
+        
+        # Note: By default this behaves properly for cloning non identical objects. 
+        # This is to clone a set from another new set that is based on "other".
+        # For exact clone, we need to pass empty ignoreAttrs. This case happens in Protocol.__tryUpdateOutputSet
         super().copy(other, copyId, ignoreAttrs)
 
     def _getMapper(self):
