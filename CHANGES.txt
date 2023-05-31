@@ -29,6 +29,9 @@ users:
   - Set implements copy() leaving mapper_path out.
   - TaseCase: compareSetProperties() added to compare 2 set's properties.
 
+V3.0.32
+-------
+  - Hotfix: fix links more versatile.
 V3.0.31
 -------
   - Hotfix: Fixed updated protocol icon
