@@ -27,8 +27,7 @@ import threading
 
 from pyworkflow import Config
 from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, \
-    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL, \
-    askSingleAllCancel
+    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL
 from pyworkflow.gui.project.constants import *
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
