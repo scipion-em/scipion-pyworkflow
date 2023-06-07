@@ -512,7 +512,7 @@ class Project(object):
         :param initialProtocol: selected protocol
         """
         errorProtList = []
-        for protocol in activeProtList:
+        for protocol in activeProtList.values():
             try:
                 self.stopProtocol(protocol)
             except Exception:
@@ -821,7 +821,7 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _getSubworkflow(self, protocol, fixProtParam=True, letItPass=None):
+    def _getSubworkflow(self, protocol, fixProtParam=True, getStopped=True):
         """
         This function get the workflow from "protocol" and determine the
         protocol level into the graph. Also, checks if there are active
@@ -831,7 +831,7 @@ class Project(object):
         :param letItPass: a callback receiving the protocol and returning false if protocol should not pass
         """
         affectedProtocols = {}
-        affectedProtocolsActive = []
+        affectedProtocolsActive = {}
         auxProtList = []
         # store the protocol and your level into the workflow
         affectedProtocols[protocol.getObjId()] = [protocol, 0]
@@ -848,19 +848,17 @@ class Project(object):
             if fixProtParam:
                 self._fixProtParamsConfiguration(protocol)
 
-            passesFilter = True if letItPass is None else letItPass(protocol)
-
-            if passesFilter and protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                affectedProtocolsActive.append(protocol)
+            if not getStopped and protocol.isActive():
+                affectedProtocolsActive[protocol.getObjId()] = protocol
+            elif not protocol.getObjId() in affectedProtocolsActive.keys() and getStopped and \
+                    not protocol.isSaved() and protocol.getStatus() != STATUS_INTERACTIVE:
+                affectedProtocolsActive[protocol.getObjId()] = protocol
 
             node = runGraph.getNode(protocol.strId())
             dependencies = [node.run for node in node.getChilds()]
             for dep in dependencies:
                 if not dep.getObjId() in auxProtList:
                     auxProtList.append([dep.getObjId(), level])
-
-                if letItPass is not None and not letItPass(dep):
-                    continue
 
                 if not dep.getObjId() in affectedProtocols.keys():
                     affectedProtocols[dep.getObjId()] = [dep, level]

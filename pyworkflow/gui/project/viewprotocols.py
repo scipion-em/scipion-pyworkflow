@@ -26,7 +26,9 @@ import logging
 import threading
 
 from pyworkflow import Config
-from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut, ToolTip
+from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, \
+    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL, \
+    askSingleAllCancel
 from pyworkflow.gui.project.constants import *
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
@@ -1637,6 +1639,7 @@ class ProtocolsView(tk.Frame):
         except Exception as e:
             self.info("Paste failed, maybe clipboard content is not valid content? See GUI log for details.")
             logger.error("Clipboard content couldn't be pasted." , exc_info=e)
+
     def _copyProtocolsToClipboard(self, e=None):
 
         protocols = self._getSelectedProtocols()
@@ -1667,7 +1670,8 @@ class ProtocolsView(tk.Frame):
 
         # TODO: use filterCallback param and we may not need to return 2 elements
         workflowProtocolList, activeProtList = self.project._getSubworkflow(protocols[0],
-                                                                            False)
+                                                                            fixProtParam=False,
+                                                                            getStopped=False)
         if activeProtList:
             errorProtList = []
             if pwgui.dialog.askYesNo(Message.TITLE_STOP_WORKFLOW_FORM,
@@ -1711,34 +1715,8 @@ class ProtocolsView(tk.Frame):
         modes depending on the 'action' value (RESTART, CONTINUE)
         """
         protocols = self._getSelectedProtocols()
-        errorList = []
-        defaultMode = pwprot.MODE_RESUME
-        workflowProtocolList, activeProtList = self.project._getSubworkflow(protocols[0])
-
-        # Check if exists active protocols
-        if activeProtList:
-            msg = '\n'
-            for activeProt in activeProtList:
-                msg += str(activeProt.getObjLabel()) + '\n'
-            pwgui.dialog.MessageDialog(
-                self, Message.TITLE_LAUNCHED_WORKFLOW_FAILED_FORM,
-                Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" +
-                Message.TITLE_ACTIVE_PROTOCOLS + "\n" + msg,
-                Icon.ERROR)
-
-        elif action == ACTION_RESTART_WORKFLOW:
-            if pwgui.dialog.askYesNo(Message.TITLE_RESTART_WORKFLOW_FORM,
-                                     Message.TITLE_RESTART_WORKFLOW, self.root):
-                defaultMode = pwprot.MODE_RESTART
-                self.info('Restarting...')
-                errorList = self.project.launchWorkflow(workflowProtocolList,
-                                                        defaultMode)
-                self.cleanInfo()
-        elif action == ACTION_CONTINUE_WORKFLOW:
-            self.info('Continuing...')
-            errorList = self.project.launchWorkflow(workflowProtocolList,
-                                                    defaultMode)
-            self.cleanInfo()
+        mode = pwprot.MODE_RESTART if action == ACTION_RESTART_WORKFLOW else pwprot.MODE_RESUME
+        errorList, _ = self._launchSubWorkflow(protocols[0], mode,  self.root)
 
         if errorList:
             msg = ''
@@ -1749,6 +1727,73 @@ class ProtocolsView(tk.Frame):
                 Message.TITLE_LAUNCHED_WORKFLOW_FAILED + "\n" + msg,
                 Icon.ERROR)
         self.refreshRuns()
+
+    @staticmethod
+    def _launchSubWorkflow(protocol, mode, root, askSingleAll=False):
+        """
+        Method to launch a subworkflow
+        mode: mode value (RESTART, CONTINUE)
+        askSingleAll: specify if this method was launched from the form or from the menu
+        """
+        project = protocol.getProject()
+        workflowProtocolList, activeProtList = project._getSubworkflow(protocol)
+
+        # Check if exists active protocols
+        activeProtocols = ""
+        if activeProtList:
+            for protId, activeProt in activeProtList.items():
+                activeProtocols += ("\n* " + activeProt.getRunName())
+
+        # by default, we assume RESTART workflow option
+        title = Message.TITLE_RESTART_WORKFLOW_FORM
+        message = Message.MESSAGE_RESTART_WORKFLOW_WITH_RESULTS % ('%s\n' % activeProtocols) if len(activeProtList) else Message.MESSAGE_RESTART_WORKFLOW
+
+        if mode == pwprot.MODE_RESUME:
+             message = Message.MESSAGE_CONTINUE_WORKFLOW_WITH_RESULTS % ('%s\n' % activeProtocols) if len(activeProtList) else Message.MESSAGE_CONTINUE_WORKFLOW
+             title = Message.TITLE_CONTINUE_WORKFLOW_FORM
+
+        if not askSingleAll:
+            if pwgui.dialog.askYesNo(title,  message, root):
+                project.launchWorkflow(workflowProtocolList, mode)
+                return [], RESULT_RUN_ALL
+            return [], RESULT_CANCEL
+        else:  # launching from a form
+            if len(workflowProtocolList) > 1:
+                title = Message.TITLE_RESTART_FORM if mode == pwprot.MODE_RESTART else Message.TITLE_CONTINUE_FORM
+                message += Message.MESSAGE_ASK_SINGLE_ALL
+                result = pwgui.dialog.askSingleAllCancel(title, message,
+                                                         root)
+                if result == RESULT_RUN_ALL:
+                    if mode == pwprot.MODE_RESTART:
+                        project._restartWorkflow(workflowProtocolList)
+                    else:
+                        project._continueWorkflow(workflowProtocolList)
+
+                    return [], RESULT_RUN_ALL
+
+                elif result == RESULT_RUN_SINGLE:
+                    if not protocol.isSaved():
+                        errorList = project.resetWorkFlow(workflowProtocolList)
+                        return errorList, RESULT_RUN_SINGLE
+                    else:
+                        return [], RESULT_RUN_SINGLE
+
+                elif result == RESULT_CANCEL:
+                    return [], RESULT_CANCEL
+
+            else:  # is a single protocol
+                if not protocol.isSaved():
+                    title = Message.TITLE_RESTART_FORM
+                    message = Message.MESSAGE_RESTART_FORM % ('%s\n' % protocol.getRunName())
+                    if mode == pwprot.MODE_RESUME:
+                        title = Message.TITLE_CONTINUE_FORM
+                        message = Message.MESSAGE_CONTINUE_FORM % ('%s\n' % protocol.getRunName())
+
+                    result = pwgui.dialog.askYesNo(title,  message,  root)
+                    resultRun = RESULT_RUN_SINGLE if result else RESULT_CANCEL
+                    return [], resultRun
+
+                return [], RESULT_RUN_SINGLE
 
     def _selectLabels(self):
         selectedNodes = self._getSelectedNodes()

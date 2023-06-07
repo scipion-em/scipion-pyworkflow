@@ -274,6 +274,7 @@ Size ("Sampling Rate") (Ts) using the Scanner Pixel Size (Tm), Ts = Tm / M."""
     LABEL_SAVED_FORM = 'The protocol was saved successfully.'
     TITLE_DELETE_FORM = 'Confirm DELETE'
     TITLE_RESTART_FORM = 'Confirm RESTART'
+    TITLE_CONTINUE_FORM = 'Confirm CONTINUE'
     LABEL_DELETE_FORM = """
 You are going to *DELETE* the run(s): 
   - %s
@@ -281,21 +282,40 @@ You are going to *DELETE* the run(s):
 
 Do you really want to continue?'
 """
-    LABEL_RESTART_FORM = """
+    MESSAGE_RESTART_FORM = """
 You are going to *RESTART* the run: 
   %s
 
-Do you really want to restart it?'
+Do you really want to restart it?
 """
-    LABEL_RESTART_FORM_MANY = """
-Following data will be *REMOVED* : 
-  %s
+    MESSAGE_CONTINUE_FORM = """
+    You are going to *CONTINUE* the run: 
+      %s
 
-What do you want to restart?
+    Do you really want to continue it?
+    """
 
-  *Single* : Just this protocol, rest will be reset.
-  *All*: All above listed protocols will be restarted.
-"""
+    MESSAGE_RESTART_WORKFLOW_WITH_RESULTS = """
+    All previous results of the following protocols will be deleted:
+        %s
+
+        Do you really want to *RESTART* the workflow?'
+    """
+
+    MESSAGE_CONTINUE_WORKFLOW_WITH_RESULTS = """
+        All previous results of the following protocols will be affected: 
+        %s
+
+        Do you really want to *CONTINUE* the workflow?
+        """
+
+    MESSAGE_ASK_SINGLE_ALL = """
+        What do you want to do?
+
+        *Single* : Just this protocol.
+        *All*: All above listed protocols will be launched.
+    """
+
 
     TITLE_STOP_FORM = 'Confirm STOP'
     LABEL_STOP_FORM = 'Do you really want to *STOP* this run?'
@@ -305,10 +325,12 @@ What do you want to restart?
     TITLE_SAVE_OUTPUT = 'Save protocol output'
     LABEL_SAVE_OUTPUT = 'Do you wish to save protocol output?'
 
-    TITLE_RESTART_WORKFLOW_FORM = 'Confirm RESTART'
+    TITLE_RESTART_WORKFLOW_FORM = 'Confirm RESTART workflow'
+    TITLE_CONTINUE_WORKFLOW_FORM = 'Confirm CONTINUE workflow'
     TITLE_STOP_WORKFLOW_FORM = 'Confirm STOP'
     TITLE_RESET_WORKFLOW_FORM = 'Confirm RESET'
-    TITLE_RESTART_WORKFLOW = 'Do you really want to *RESTART* this Workflow? All previous results will be deleted'
+    MESSAGE_RESTART_WORKFLOW = 'Do you really want to *RESTART* this workflow?'
+    MESSAGE_CONTINUE_WORKFLOW = 'Do you really want to *CONTINUE* this workflow?'
     TITLE_STOP_WORKFLOW = 'Do you really want to *STOP* this Workflow?'
     TITLE_RESET_WORKFLOW = 'Do you really want to *RESET* this Workflow?'
     TITLE_LAUNCHED_WORKFLOW_FAILED_FORM = 'Error while launching the workflow'

@@ -18,6 +18,7 @@ users:
   - Fixed a bug related to organizing the workflow when importing a template(Import workflow template option)
   - Terminal where Scipion is being launched only shows ERROR level info. Rest goes to scipion.log shown by the Scipion log menu.
   - Scipion windows of the same process are now grouped under the same icon. Window Tooltip says Scipion framework instead of Toplevel
+  - Refactoring Restart & Continue workflow option. Allowing to continue and restart a workflow from a protocol
 
   
  developers:
