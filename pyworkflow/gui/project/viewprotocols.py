@@ -1771,11 +1771,8 @@ class ProtocolsView(tk.Frame):
                     return [], RESULT_RUN_ALL
 
                 elif result == RESULT_RUN_SINGLE:
-                    if not protocol.isSaved():
-                        errorList = project.resetWorkFlow(workflowProtocolList)
-                        return errorList, RESULT_RUN_SINGLE
-                    else:
-                        return [], RESULT_RUN_SINGLE
+                    errorList = project.resetWorkFlow(workflowProtocolList)
+                    return errorList, RESULT_RUN_SINGLE
 
                 elif result == RESULT_CANCEL:
                     return [], RESULT_CANCEL

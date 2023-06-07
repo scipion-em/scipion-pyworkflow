@@ -414,6 +414,8 @@ class Project(object):
         if continuedProtList is not None:
             for protocol, level in continuedProtList.values():
                 if not protocol.isInteractive():
+                    if protocol.isScheduled():
+                        continue
                     if protocol.worksInStreaming():
                         attrSet = [attr for name, attr in
                                    protocol.iterOutputAttributes(pwprot.Set)]
@@ -439,6 +441,8 @@ class Project(object):
                         if level != 0:
                             # we make sure that at least one protocol in streaming
                             # has been launched
+                            if protocol.isActive():
+                                self.stopProtocol(protocol)
                             self._restartWorkflow({protocol.getObjId(): (protocol, level)},
                                                   errorsList)
 
@@ -463,6 +467,10 @@ class Project(object):
             for protocol, level in restartedProtList.values():
                 if not protocol.isInteractive():
                     try:
+                        if protocol.isScheduled():
+                            continue
+                        elif protocol.isActive():
+                            self.stopProtocol(protocol)
                         protocol.runMode.set(MODE_RESTART)
                         self.scheduleProtocol(protocol,
                                               initialSleepTime=level*INITIAL_SLEEP_TIME)
