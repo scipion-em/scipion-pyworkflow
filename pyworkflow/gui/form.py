@@ -44,7 +44,7 @@ from pyworkflow.mapper import Mapper
 from pyworkflow.viewer import DESKTOP_TKINTER
 from pyworkflow.protocol.constants import MODE_RESTART, MODE_RESUME
 
-from . import gui
+from . import gui, RESULT_RUN_SINGLE
 from pyworkflow.gui.project.utils import getStatusColorFromRun
 from .gui import configureWeigths, Window
 from .browser import FileBrowserWindow
@@ -2264,13 +2264,16 @@ class FormWindow(Window):
                                  "        This value can be changed in Scipion/config/hosts.conf" % (cores, mandatory))
                 return
 
+        errors = []
+        resultAction = RESULT_RUN_SINGLE
         mode = MODE_RESTART if self.protocol.getRunMode() == MODE_RESTART else MODE_RESUME
 
-        from pyworkflow.gui.project.viewprotocols import ProtocolsView
-        errors, resultAction = ProtocolsView._launchSubWorkflow(self.protocol,
-                                                                mode, self.root,
-                                                                askSingleAll=True)
-
+        # we only take into account the protocols that are already part of the workflow
+        if not self.protocol.isNew():
+            from pyworkflow.gui.project.viewprotocols import ProtocolsView
+            errors, resultAction = ProtocolsView._launchSubWorkflow(self.protocol,
+                                                                    mode, self.root,
+                                                                    askSingleAll=True)
         if resultAction == RESULT_CANCEL:
             return
         elif resultAction == RESULT_RUN_ALL:

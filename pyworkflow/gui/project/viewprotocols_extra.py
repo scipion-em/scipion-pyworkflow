@@ -400,7 +400,7 @@ class ProtocolTreeConfig:
         if protClass is not None:
             if protClass.isBeta():
                 icon = Icon.BETA
-            elif protClass.isNew():
+            elif protClass.isNewDev():
                 icon = Icon.NEW
             elif protClass.isUpdated():
                 icon = Icon.UPDATED
@@ -437,7 +437,7 @@ class ProtocolTreeConfig:
                     packages[packageName] = packageMenu
 
                 # Add the protocol
-                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew(), v.isUpdated())
+                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNewDev(), v.isUpdated())
 
                 protLine = {"tag": tag, "value": k,
                             "text": v.getClassLabel(prependPackageName=False)}

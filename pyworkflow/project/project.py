@@ -834,9 +834,9 @@ class Project(object):
         This function get the workflow from "protocol" and determine the
         protocol level into the graph. Also, checks if there are active
         protocols excluding interactive protocols.
-
         :param protocol from where to start the subworkflow (included)
-        :param letItPass: a callback receiving the protocol and returning false if protocol should not pass
+        :param fixProtParam fix the old parameters configuration in the protocols
+        :param getStopped takes into account protocols that aren't stopped
         """
         affectedProtocols = {}
         affectedProtocolsActive = {}

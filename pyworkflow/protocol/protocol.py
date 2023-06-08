@@ -161,6 +161,9 @@ class Step(Object):
     def setStatus(self, value):
         return self.status.set(value)
 
+    def isNew(self):
+        return self.getStatus() == STATUS_NEW
+
     def setInteractive(self, value):
         return self.interactive.set(value)
 
@@ -544,7 +547,7 @@ class Protocol(Step):
         return hasattr(cls, '_definition')
 
     @classmethod
-    def isNew(cls):
+    def isNewDev(cls):
         if cls._devStatus == pw.NEW:
             return True
 
