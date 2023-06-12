@@ -28,6 +28,7 @@ users:
   - Config.isScipionRunning(): To distinguish from just importing or running.
   - Set implements copy() leaving mapper_path out.
   - TaseCase: compareSetProperties() added to compare 2 set's properties.
+  - Add debugging messages to check the job status and add renameGpuIds method in the StepQueueExecutor
 
 V3.0.32
 -------
