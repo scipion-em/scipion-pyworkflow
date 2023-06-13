@@ -42,16 +42,15 @@ import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 from pyworkflow.mapper import Mapper
 from pyworkflow.viewer import DESKTOP_TKINTER
-from pyworkflow.protocol.constants import MODE_RESTART
+from pyworkflow.protocol.constants import MODE_RESTART, MODE_RESUME
 
-from . import gui
+from . import gui, RESULT_RUN_SINGLE
 from pyworkflow.gui.project.utils import getStatusColorFromRun
 from .gui import configureWeigths, Window
 from .browser import FileBrowserWindow
 from .widgets import Button, HotButton, IconButton
 from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
-                     ListDialog, askYesNo, Dialog, RESULT_CANCEL,
-                     askSingleAllCancel, RESULT_RUN_ALL, RESULT_RUN_SINGLE)
+                     ListDialog, Dialog, RESULT_CANCEL,  RESULT_RUN_ALL)
 from .canvas import Canvas
 from .tree import TreeProvider, BoundTree
 from .text import Text
@@ -2250,7 +2249,6 @@ class FormWindow(Window):
             return self._editQueueParams()
 
     def execute(self, e=None):
-
         if self.protocol.useQueue():
             if not self._getQueueReady():
                 return
@@ -2265,38 +2263,24 @@ class FormWindow(Window):
                                  "*Note*: Your system is configured with MANDATORY = %d.\n"
                                  "        This value can be changed in Scipion/config/hosts.conf" % (cores, mandatory))
                 return
-        if self.protocol.getRunMode() == MODE_RESTART:
-            protocolList = ""
-            if self.protocol.getObjId():
-                project = self.protocol.getProject()
 
-                def notSaved(aProt):
-                    return not aProt.isSaved()
-                workflowProtocolList, activeProtList = project._getSubworkflow(self.protocol, letItPass=notSaved)
+        errors = []
+        resultAction = RESULT_RUN_SINGLE
+        mode = MODE_RESTART if self.protocol.getRunMode() == MODE_RESTART else MODE_RESUME
 
-                for prot, level in workflowProtocolList.values():
-                    protocolList += ("\n* " + prot.getRunName())
-                if len(workflowProtocolList) > 1:
-                    result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
-                                                pwutils.Message.LABEL_RESTART_FORM_MANY % ('%s\n' % protocolList),
-                                                self.root)
-                    if result == RESULT_RUN_ALL:
-                        self.protocol._store()
-                        project._storeProtocol(self.protocol)
-                        project._restartWorkflow(workflowProtocolList)
-                        self.close()
-                        return
-                    elif result == RESULT_RUN_SINGLE and not self.protocol.isSaved():
-                        project.resetWorkFlow(workflowProtocolList)
-                    elif result == RESULT_CANCEL:
-                        return
-                elif not askYesNo(pwutils.Message.TITLE_RESTART_FORM,
-                                  pwutils.Message.LABEL_RESTART_FORM % (
-                                          '*%s*' % self.protocol.getRunName()),
-                                  self.root):
-                    return
+        # we only take into account the protocols that are already part of the workflow
+        if not self.protocol.isNew():
+            from pyworkflow.gui.project.viewprotocols import ProtocolsView
+            errors, resultAction = ProtocolsView._launchSubWorkflow(self.protocol,
+                                                                    mode, self.root,
+                                                                    askSingleAll=True)
+        if resultAction == RESULT_CANCEL:
+            return
+        elif resultAction == RESULT_RUN_ALL:
+            self._close()
+            return
 
-        errors = self.protocol.validate()
+        errors += self.protocol.validate()
 
         if errors:
             self.showInfo(errors)
