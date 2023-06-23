@@ -240,7 +240,7 @@ def analyzeFormattingTypeError(string, dictionary):
      it splits te string by \n and test the formatting per line. Raises an exception if any line fails
      with all problems found"""
 
-    # Do the replace line by line
+    # Do the replacement line by line
     lines = string.split("\n")
 
     problematicLines = []
@@ -253,8 +253,9 @@ def analyzeFormattingTypeError(string, dictionary):
             problematicLines.append(line + " --> " + str(e))
 
     if problematicLines:
-        return PyworkflowException('Following lines in %s seems to be problematic. '
-                                   'Please review its format or content.\n%s' % (pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
+        return PyworkflowException('Following lines in %s seems to be problematic.\n'
+                                   'Values known in this context are: \n%s'
+                                   'Please review its format or content.\n%s' % (dictionary, pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
                                    url=pw.DOCSITEURLS.HOST_CONFIG)
 
 def _submit(hostConfig, submitDict, cwd=None, env=None):

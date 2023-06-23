@@ -1,0 +1,48 @@
+# You need to edit FOLDER_WITH_VERSION with the folder that has the __version__ value. 
+name: Test conda-based installation with different python
+
+on:
+  push:
+    branches: [ "devel" ]
+
+env:
+  FOLDER_WITH_VERSION: pyworkflow
+  
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        # Do not ignore bash profile files, required for conda activation
+        shell: bash -el {0}
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up MPI
+      uses: mpi4py/setup-mpi@v1
+      with:
+        mpi: openmpi
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
+    - name: Create a conda env called test with a specific python version
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: "latest"
+        activate-environment: test
+        python-version: ${{ matrix.python-version }}
+        auto-activate-base: false
+    - name: Install scipion core plugins inside test env
+      run: |
+        export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+        pip install .
+        export PACKAGE_VERSION=$(python -c "import $FOLDER_WITH_VERSION; print('v'+$FOLDER_WITH_VERSION.__version__);")
+        echo Built $FOLDER_WITH_VERSION version $PACKAGE_VERSION
+        pip install git+https://github.com/scipion-em/scipion-em@devel#egg=scipion-em
+        pip install git+https://github.com/scipion-em/scipion-app@devel#egg=scipion-app

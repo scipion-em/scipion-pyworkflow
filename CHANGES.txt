@@ -1,7 +1,39 @@
+V3.1.0
+------
+users:
+  - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal should work(like in CSS)
+  - New optional config variable: SCIPION_BG_COLOR. Any light tone color name or hexadecimal should work(like in CSS)
+  - Control + Plus (numpad) will increase the font of the logs. Control + subtract will restore it.
+  - Toolbar and actions refactored: Most of them have shortcuts and appear in the toolbar without text, but have tooltips showing the shortcut
+  - Plugins in devel mode are shown with a delta suffix after the package name.
+  - Green lines in log are lighter, colored lines are back in the log.
+  - Commands in the log are "announced" by "** Running command: **"
+  - Project list window: F5 on the filter box will refresh the list.
+  - Project list window: Auto refresh on window activate when data is older than 60 seconds
+  - New actions: Copy (Control+c) and Paste (Control +v) will allow to copy the selection to and from the clipboard.
+  - File browser thumbnail: Writes if the file is a link
+  - Protocol in devel mode is shown prefixing the protocol in the box and shown in log
+  - Unused graphical gui nodes are cleaned up upon protocols deletion and graph painting (to clean up old projects)
+  - Error in host.conf for clusters better described.
+  - Fixed a bug related to organizing the workflow when importing a template(Import workflow template option)
+  - Terminal where Scipion is being launched only shows ERROR level info. Rest goes to scipion.log shown by the Scipion log menu.
+  - Scipion windows of the same process are now grouped under the same icon. Window Tooltip says Scipion framework instead of Toplevel
+  - Refactoring Restart & Continue workflow option. Allowing to continue and restart a workflow from a protocol
+
+  
+ developers:
+  - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
+  - Shortcut for devel mode is now Control+D since Control+d is for duplicate (old copy)
+  - Protocol.getClassPlugin deprecated. Use instead getPlugin()
+  - Protocol._cleanExtraFiles(): optional method to clean files other than tmp folder.
+  - Config.isScipionRunning(): To distinguish from just importing or running.
+  - Set implements copy() leaving mapper_path out.
+  - TaseCase: compareSetProperties() added to compare 2 set's properties.
+  - Add debugging messages to check the job status and add renameGpuIds method in the StepQueueExecutor
+
 V3.0.32
 -------
   - Hotfix: fix links more versatile.
-
 V3.0.31
 -------
   - Hotfix: Fixed updated protocol icon

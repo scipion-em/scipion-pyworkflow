@@ -284,6 +284,17 @@ class QueueStepExecutor(ThreadStepExecutor):
         else:
             self.runJobs = StepExecutor.runSteps
 
+        self.renameGpuIds()
+
+    def renameGpuIds(self):
+        """ Reorganize the gpus ids starting from 0 since the queue engine is the one assigning them.
+        https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#env-vars """
+        for threadId, gpuList in self.gpuDict.items():
+            for i in range(len(gpuList)):
+                self.gpuDict[threadId][i] = i
+
+        logger.debug("Updated gpus ids rebase starting from 0: %s per thread" %self.gpuDict)
+
     def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
@@ -316,23 +327,26 @@ class QueueStepExecutor(ThreadStepExecutor):
         return status
 
     def _checkJobStatus(self, hostConfig, jobid):
-
         command = hostConfig.getCheckCommand() % {"JOB_ID": jobid}
+        logger.debug("checking job status for %s: %s" %(jobid, command))
         p = Popen(command, shell=True, stdout=PIPE, preexec_fn=os.setsid)
 
-        out = p.communicate()[0]
+        out = p.communicate()[0].decode(errors='backslashreplace')
 
         jobDoneRegex = hostConfig.getJobDoneRegex()
-
+        logger.debug("Queue engine replied %s, variable JOB_DONE_REGEX has %s" %(out, jobDoneRegex))
         # If nothing is returned we assume job is no longer in queue and thus finished
         if out == "":
+            logger.warning("Empty response from queue system to job (%s)" %jobid)
             return cts.STATUS_FINISHED
         # If some string is returned we use the JOB_DONE_REGEX variable (if present) to infer the status
         elif jobDoneRegex is not None:
             s = re.search(jobDoneRegex, out)
             if s:
+                logger.debug("Job (%s) finished" %jobid)
                 return cts.STATUS_FINISHED
             else:
+                logger.debug("Job (%s) still running" %jobid)
                 return cts.STATUS_RUNNING
         # If JOB_DONE_REGEX is not defined and queue has returned something we assume that job is still running
         else:

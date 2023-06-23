@@ -144,7 +144,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             return lambda: self._visualizeObject(viewer, obj)
 
         for v in viewers:
-            actions.append(('Open with %s' % v.__name__,
+            actions.append(('Open with %s' % v.__name__ if v._name is None else v._name,
                             viewerCallback(v),
                             Icon.ACTION_VISUALIZE))
         # EDIT
@@ -156,7 +156,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         # since we can end up with several outputs and
         # we may want to clean up
         if self.protocol.allowsDelete(obj) and not isPointer:
-            actions.append((Message.LABEL_DELETE_ACTION,
+            actions.append((Message.LABEL_DELETE,
                             lambda: self._deleteObject(obj),
                             Icon.ACTION_DELETE))
         return actions
@@ -400,7 +400,7 @@ class ProtocolTreeConfig:
         if protClass is not None:
             if protClass.isBeta():
                 icon = Icon.BETA
-            elif protClass.isNew():
+            elif protClass.isNewDev():
                 icon = Icon.NEW
             elif protClass.isUpdated():
                 icon = Icon.UPDATED
@@ -412,16 +412,17 @@ class ProtocolTreeConfig:
         # Add all protocols
         allProts = domain.getProtocols()
 
-        # Sort the dictionary
-        allProtsSorted = pwobj.OrderedDict(sorted(allProts.items(),
-                                            key=lambda e: e[1].getClassLabel()))
+        # Sort the list
+        allProtsSorted = sorted(allProts.items(), key=lambda e: e[1].getClassLabel())
+
         allProtMenu = ProtocolConfig(cls.ALL_PROTOCOLS)
         packages = {}
 
         # Group protocols by package name
-        for k, v in allProtsSorted.items():
+        for k, v in allProtsSorted:
             if isAFinalProtocol(v, k):
-                packageName = v.getClassPackageName()
+                packageName = v.getPlugin().getName()
+
                 # Get the package submenu
                 packageMenu = packages.get(packageName)
 
@@ -436,7 +437,7 @@ class ProtocolTreeConfig:
                     packages[packageName] = packageMenu
 
                 # Add the protocol
-                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNew(), v.isUpdated())
+                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNewDev(), v.isUpdated())
 
                 protLine = {"tag": tag, "value": k,
                             "text": v.getClassLabel(prependPackageName=False)}

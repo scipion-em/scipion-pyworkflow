@@ -161,6 +161,9 @@ class Step(Object):
     def setStatus(self, value):
         return self.status.set(value)
 
+    def isNew(self):
+        return self.getStatus() == STATUS_NEW
+
     def setInteractive(self, value):
         return self.interactive.set(value)
 
@@ -350,6 +353,10 @@ class Protocol(Step):
     """
     _possibleOutputs = None
 
+    # Cache package and plugin
+    _package = None
+    _plugin = None
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._size = None
@@ -489,7 +496,9 @@ class Protocol(Step):
                 outputSet.write()  # Write to commit changes
                 outputAttr = getattr(self, outputName)
                 # Copy the properties to the object contained in the protocol
-                outputAttr.copy(outputSet, copyId=False)
+                # Default Set.copy ignores some attributes like size or mapperPath.
+                # In this case we want all to be copied
+                outputAttr.copy(outputSet, copyId=False, ignoreAttrs=[])
                 # Persist changes
                 self._store(outputAttr)
             else:
@@ -538,7 +547,7 @@ class Protocol(Step):
         return hasattr(cls, '_definition')
 
     @classmethod
-    def isNew(cls):
+    def isNewDev(cls):
         if cls._devStatus == pw.NEW:
             return True
 
@@ -1445,6 +1454,17 @@ class Protocol(Step):
         else:
             pwutils.cleanPath(tmpFolder)
 
+        self._cleanExtraFiles()
+    def _cleanExtraFiles(self):
+        """ This method will be called when the protocol finishes correctly.
+        It is the responsibility of the protocols to implement this method to make extra cleanup
+        of its folders, like iterations folder and files that are not needed when finished
+        """
+
+        logger.info("Nothing to clean up")
+        logger.debug('FOR DEVELOPERS: implement Protocol._cleanExtraFiles this protocol could'
+                     ' free up some space upon finishing.')
+
     def _run(self):
         # Check that a proper Steps executor have been set
         if self._stepsExecutor is None:
@@ -1504,10 +1524,12 @@ class Protocol(Step):
             self.info('Hostname: %s' % self.getHostFullName())
             self.info('PID: %s' % self.getPid())
             self.info('pyworkflow: %s' % pw.__version__)
-            self.info('plugin: %s' % self.getClassPackageName())
-            if hasattr(self.getClassPackage(), "__version__"):
-                self.info('plugin v: %s' % self.getClassPackage().__version__)
-            self.info('plugin binary v: %s' % self.getClassPackage().Plugin.getActiveVersion())
+            plugin = self.getPlugin()
+            self.info('plugin: %s' %  plugin.getName())
+            package = self.getClassPackage()
+            if hasattr(package, "__version__"):
+                self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
+            self.info('plugin binary v: %s' % plugin.getActiveVersion())
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
@@ -1740,17 +1762,17 @@ class Protocol(Step):
         this method the protocol classes are registered with it Plugin
         and Domain info.
         """
-        # import pyworkflow.em as em
-        # em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
-        # TODO: Check if we need to return scipion by default anymore
-        # Now the basic EM protocols are defined by scipion-em (pwem)
-        return getattr(cls, '_package', None)
+        return cls._package
 
     @classmethod
     def getClassPlugin(cls):
-        package = cls.getClassPackage()
-        return getattr(package, 'Plugin', None)
 
+        logger.warning("Deprecated on 04-2023. Use Protocol.getPlugin instead.")
+        return cls.getPlugin()
+
+    @classmethod
+    def getPlugin(cls):
+        return cls._plugin
     @classmethod
     def getClassPackageName(cls):
         return cls.getClassPackage().__name__ if cls.getClassPackage() else "orphan"
@@ -1813,7 +1835,11 @@ class Protocol(Step):
         """ Return a more readable string representing the protocol class """
         label = cls.__dict__.get('_label', cls.__name__)
         if prependPackageName:
-            label = "%s - %s" % (cls.getClassPackageName(), label)
+            try:
+                label = "%s - %s" % (cls.getPlugin().getName(), label)
+            except Exception as e:
+                label = "%s -%s" % ("missing", label)
+                logger.error("Couldn't get the plugin name for %s" % label, exc_info=e)
         return label
 
     @classmethod
@@ -1943,7 +1969,7 @@ class Protocol(Step):
 
     @classmethod
     def getUrl(cls):
-        return cls.getClassPlugin().getUrl(cls)
+        return cls.getPlugin().getUrl(cls)
 
     @classmethod
     def isInstalled(cls):
@@ -2187,8 +2213,8 @@ class Protocol(Step):
     def getHelpText(cls):
         """Get help text to show in the protocol help button"""
         helpText = cls.getDoc()
-        # NOt used since getClassPlugin is always None
-        # plugin = self.getClassPlugin()
+        # NOt used since getPlugin is always None
+        # plugin = self.getPlugin()
         # if plugin:
         #     pluginMetadata = plugin.metadata
         #     helpText += "\n\nPlugin info:\n"

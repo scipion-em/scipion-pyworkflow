@@ -27,6 +27,8 @@ Definition of Mock objects to be used within the tests in the Mock Domain
 """
 
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 import pyworkflow.object as pwobj
 from pyworkflow.utils import cleanPath
@@ -614,7 +616,7 @@ class MockSetOfImages(MockSet):
         sampling = self.getSamplingRate()
 
         if not sampling:
-            print("FATAL ERROR: Object %s has no sampling rate!!!"
+            logger.info("FATAL ERROR: Object %s has no sampling rate!!!"
                   % self.getName())
             sampling = -999.0
 

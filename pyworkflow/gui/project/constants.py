@@ -30,8 +30,7 @@ from pyworkflow.protocol import (STATUS_SAVED, STATUS_LAUNCHED, STATUS_RUNNING,
                                  STATUS_INTERACTIVE, STATUS_ABORTED,
                                  STATUS_SCHEDULED)
 
-from pyworkflow.utils.properties import Message, Icon
-
+from pyworkflow.utils.properties import Message, Icon, KEYSYM
 
 STATUS_COLORS = {
                STATUS_SAVED: '#D9F1FA',
@@ -53,6 +52,8 @@ ACTION_RENAME = Message.LABEL_RENAME
 ACTION_SELECT_FROM = Message.LABEL_SELECT_FROM
 ACTION_SELECT_TO = Message.LABEL_SELECT_TO
 ACTION_COPY = Message.LABEL_COPY
+ACTION_PASTE = Message.LABEL_PASTE
+ACTION_DUPLICATE = Message.LABEL_DUPLICATE
 ACTION_DELETE = Message.LABEL_DELETE
 ACTION_REFRESH = Message.LABEL_REFRESH
 ACTION_STEPS = Message.LABEL_STEPS
@@ -79,11 +80,13 @@ ActionIcons = {
     ACTION_EDIT: Icon.ACTION_EDIT,
     ACTION_SELECT_FROM: Icon.ACTION_SELECT_FROM,
     ACTION_SELECT_TO: Icon.ACTION_SELECT_TO,
+    ACTION_DUPLICATE: Icon.ACTION_DUPLICATE,
     ACTION_COPY: Icon.ACTION_COPY,
+    ACTION_PASTE:Icon.ACTION_PASTE,
     ACTION_DELETE: Icon.ACTION_DELETE,
     ACTION_REFRESH: Icon.ACTION_REFRESH,
     ACTION_RENAME: Icon.ACTION_RENAME,
-    ACTION_STEPS: Icon.ACTION_STEPS,
+    ACTION_STEPS: Icon.CODE_BRANCH,
     ACTION_BROWSE: Icon.ACTION_BROWSE,
     ACTION_DB: Icon.ACTION_DB,
     ACTION_TREE: None,  # should be set
@@ -95,9 +98,40 @@ ActionIcons = {
     ACTION_COLLAPSE: Icon.ACTION_COLLAPSE,
     ACTION_EXPAND: Icon.ACTION_EXPAND,
     ACTION_LABELS: Icon.TAGS,
-    ACTION_RESTART_WORKFLOW: Icon.ACTION_EXECUTE,
+    ACTION_RESTART_WORKFLOW: Icon.BACKWARD,
     ACTION_CONTINUE_WORKFLOW: Icon.ACTION_CONTINUE,
     ACTION_STOP_WORKFLOW: Icon.ACTION_STOP_WORKFLOW,
-    ACTION_RESET_WORKFLOW: Icon.ACTION_REFRESH,
-    ACTION_SEARCH: Icon.ACTION_SEARCH
+    ACTION_RESET_WORKFLOW: Icon.BROOM,
+    ACTION_SEARCH: Icon.ACTION_SEARCH,
+}
+
+# TODO: Centralize this and the 2 above collections
+ActionShortCuts = {
+    # F keys
+    ACTION_RENAME: "<F2>",
+    ACTION_REFRESH: "<F5>",
+    # Letter keys, uppercase first, sorted
+    ACTION_COLLAPSE: "-",
+    ACTION_EXPAND: "+",
+    ACTION_RESULTS: "a",
+    ACTION_BROWSE: "b",
+    ACTION_CONTINUE_WORKFLOW:"c",
+    ACTION_DB: "d",
+    ACTION_EDIT: "e",
+    ACTION_SELECT_FROM: "f",
+    ACTION_LABELS: "l",
+    ACTION_TREE: "o",
+    ACTION_RESTART_WORKFLOW: "R",
+    ACTION_RESET_WORKFLOW:"r",
+    ACTION_STEPS: "S",
+    ACTION_STOP: "s",
+    ACTION_SELECT_TO: "t",
+    # Control +, sorted
+    ACTION_COPY: "<Control-c>",
+    ACTION_DUPLICATE: "<Control-d>",
+    ACTION_PASTE: "<Control-v>",
+    ACTION_STOP_WORKFLOW: "<Control-s>",
+    ACTION_DELETE: "<Delete>",
+
+
 }

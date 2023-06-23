@@ -89,14 +89,10 @@ class ProjectWindow(ProjectBaseWindow):
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
                             shortCut="Ctrl+a", icon=Icon.SELECT_ALL)
-        projMenu.addSubMenu('Find protocol to add', 'find protocol',
+        projMenu.addSubMenu('Add a protocol', 'find protocol',
                             shortCut="Ctrl+f", icon=Icon.FIND)
-        projMenu.addSubMenu('Scipion log', 'scipion log',
-                            icon=Icon.FILE_BW)
         projMenu.addSubMenu('Locate a protocol', 'locate protocol',
                             shortCut="Ctrl+l")
-        projMenu.addSubMenu('Add a protocol', 'find protocol',
-                            shortCut="Ctrl+f")
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
                             icon=Icon.DOWNLOAD)
@@ -106,9 +102,11 @@ class ProjectWindow(ProjectBaseWindow):
             projMenu.addSubMenu('Export tree graph', 'export_tree')
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Debug Mode', 'debug mode',
-                            shortCut="Ctrl+d", icon=Icon.DEBUG)
+                            shortCut="Ctrl+D", icon=Icon.DEBUG)
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Notes', 'notes', icon=Icon.ACTION_EDIT)
+        projMenu.addSubMenu('Scipion log', 'scipion log',
+                            icon=Icon.FILE_BW)
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Exit', 'exit', icon=Icon.ACTION_OUT)
 
@@ -236,9 +234,9 @@ class ProjectWindow(ProjectBaseWindow):
         
     def _loadWorkflow(self, obj):
         try:
-            self.getViewWidget().info('Importing the workflow...')
+            self.getViewWidget().info('Importing workflow %s' % obj.getPath())
             self.project.loadProtocols(obj.getPath())
-            self.getViewWidget().updateRunsGraph(True, reorganize=False)
+            self.getViewWidget().updateRunsGraph(True)
             self.getViewWidget().cleanInfo()
         except Exception as ex:
             self.showError(str(ex), exception=ex)

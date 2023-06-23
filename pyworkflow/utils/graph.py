@@ -153,6 +153,10 @@ class Graph(object):
     def getNode(self, nodeName):
         return self._nodesDict.get(nodeName, None)
 
+    def getNodeNames(self):
+        """ Returns all the keys in the node dictionary"""
+        return self._nodesDict.keys()
+
     def getNodes(self):
         return self._nodes
 

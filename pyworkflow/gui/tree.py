@@ -30,7 +30,6 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from pyworkflow.object import Scalar
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.utils import prettyDelta
 from . import gui

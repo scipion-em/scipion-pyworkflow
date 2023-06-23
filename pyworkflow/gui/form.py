@@ -42,16 +42,15 @@ import pyworkflow.object as pwobj
 import pyworkflow.protocol as pwprot
 from pyworkflow.mapper import Mapper
 from pyworkflow.viewer import DESKTOP_TKINTER
-from pyworkflow.protocol.constants import MODE_RESTART
+from pyworkflow.protocol.constants import MODE_RESTART, MODE_RESUME
 
-from . import gui
+from . import gui, RESULT_RUN_SINGLE
 from pyworkflow.gui.project.utils import getStatusColorFromRun
 from .gui import configureWeigths, Window
 from .browser import FileBrowserWindow
 from .widgets import Button, HotButton, IconButton
 from .dialog import (showInfo, showError, showWarning, EditObjectDialog,
-                     ListDialog, askYesNo, Dialog, RESULT_CANCEL,
-                     askSingleAllCancel, RESULT_RUN_ALL, RESULT_RUN_SINGLE)
+                     ListDialog, Dialog, RESULT_CANCEL,  RESULT_RUN_ALL)
 from .canvas import Canvas
 from .tree import TreeProvider, BoundTree
 from .text import Text
@@ -900,13 +899,13 @@ class SectionFrame(tk.Frame):
         self.canvasFrame = tk.Frame(self, name="sectioncontentframe")
         configureWeigths(self.canvasFrame)
         self.canvas = Canvas(self.canvasFrame, width=625, height=self.height,
-                             bg="white", highlightthickness=0, name="sectioncanvas")
+                             bg=pw.Config.SCIPION_BG_COLOR, highlightthickness=0, name="sectioncanvas")
         self.canvas.grid(row=0, column=0, sticky='news')
         self.canvasFrame.grid(row=1, column=0, sticky='news')
 
         configureWeigths(self.canvas)
 
-        self.contentFrame = tk.Frame(self.canvas, bg='white', bd=0,
+        self.contentFrame = tk.Frame(self.canvas, bg=pw.Config.SCIPION_BG_COLOR, bd=0,
                                      name="sectioncanvasframe")
         self.contentFrame.grid(row=1, column=0, sticky='news')
         self.contentId = self.canvas.create_window(0, 0, anchor=tk.NW,
@@ -1058,7 +1057,7 @@ class ParamWidget:
                 self._labelFont = self.window.fontBold
             self.parent.columnconfigure(0, minsize=250)
             self.parent.columnconfigure(1, minsize=250)
-            self.btnFrame = tk.Frame(self.parent, bg='white')
+            self.btnFrame = tk.Frame(self.parent, bg=pw.Config.SCIPION_BG_COLOR)
         else:
             self.btnFrame = None
             self._labelSticky = 'ne'
@@ -1071,7 +1070,7 @@ class ParamWidget:
         return self.param.label.get()
 
     def _createLabel(self):
-        bgColor = 'white'
+        bgColor = pw.Config.SCIPION_BG_COLOR
 
         if self.param.isExpert():
             bgColor = 'lightgrey'
@@ -1080,7 +1079,7 @@ class ParamWidget:
                               bg=bgColor, font=self._labelFont, wraplength=500)
 
     def _createContent(self):
-        self.content = tk.Frame(self.parent, bg='white')
+        self.content = tk.Frame(self.parent, bg=pw.Config.SCIPION_BG_COLOR)
         gui.configureWeigths(self.content)
         # self.var should be set after this
         self._createContentWidgets(self.param, self.content)
@@ -1130,22 +1129,29 @@ class ParamWidget:
         return False
 
     @staticmethod
-    def createBoolWidget(parent, **args):
+    def createBoolWidget(parent, display=pwprot.BooleanParam.DISPLAY_YES_NO, **args):
         """ Return a BoolVar associated with a yes/no selection.
         **args: extra arguments passed to tk.Radiobutton and tk.Frame
             constructors.
+
+            :param checkbox: will use a Checkbutton instead.
         """
         var = BoolVar()
         frameArgs = dict(args)
         if 'font' in frameArgs:
             del frameArgs['font']
         frame = tk.Frame(parent, **frameArgs)
-        rb1 = tk.Radiobutton(frame, text='Yes', variable=var.tkVar,
-                             highlightthickness=0, value=1, **args)
-        rb1.grid(row=0, column=0, padx=2, sticky='w')
-        rb2 = tk.Radiobutton(frame, text='No', variable=var.tkVar,
-                             highlightthickness=0, value=0, **args)
-        rb2.grid(row=0, column=1, padx=2, sticky='w')
+
+        if display == pwprot.BooleanParam.DISPLAY_CHECKBOX:
+            chk = tk.Checkbutton(frame, variable=var.tkVar, **args)
+            chk.grid(row=0, column=0, padx=2, sticky="w")
+        else:
+            rb1 = tk.Radiobutton(frame, text='Yes', variable=var.tkVar,
+                                 highlightthickness=0, value=1, **args)
+            rb1.grid(row=0, column=0, padx=2, sticky='w')
+            rb2 = tk.Radiobutton(frame, text='No', variable=var.tkVar,
+                                 highlightthickness=0, value=0, **args)
+            rb2.grid(row=0, column=1, padx=2, sticky='w')
 
         return var, frame
 
@@ -1164,7 +1170,8 @@ class ParamWidget:
             var = 0
 
         elif t is pwprot.BooleanParam:
-            var, frame = ParamWidget.createBoolWidget(content, bg='white',
+            var, frame = ParamWidget.createBoolWidget(content, display=param.display,
+                                                      bg=pw.Config.SCIPION_BG_COLOR,
                                                       font=self.window.font)
             frame.grid(row=0, column=0, sticky='w')
 
@@ -1179,15 +1186,15 @@ class ParamWidget:
                 for i, opt in enumerate(param.choices):
                     rb = tk.Radiobutton(content, text=opt, variable=var.tkVar,
                                         value=opt, font=self.window.font,
-                                        bg='white', highlightthickness=0)
+                                        bg=pw.Config.SCIPION_BG_COLOR, highlightthickness=0)
                     rb.grid(row=i, column=0, sticky='w')
             elif param.display == pwprot.EnumParam.DISPLAY_HLIST:
-                rbFrame = tk.Frame(content, bg='white')
+                rbFrame = tk.Frame(content, bg=pw.Config.SCIPION_BG_COLOR)
                 rbFrame.grid(row=0, column=0, sticky='w')
                 for i, opt in enumerate(param.choices):
                     rb = tk.Radiobutton(rbFrame, text=opt, variable=var.tkVar,
                                         value=opt, font=self.window.font,
-                                        bg='white')
+                                        bg=pw.Config.SCIPION_BG_COLOR)
                     rb.grid(row=0, column=i, sticky='w', padx=(0, 5))
             else:
                 raise Exception("Invalid display value '%s' for EnumParam"
@@ -1585,7 +1592,7 @@ class GroupWidget(ParamWidget):
 
     def _createContent(self):
         self.content = tk.LabelFrame(self.parent, text=self.param.getLabel(),
-                                     bg='white')
+                                     bg=pw.Config.SCIPION_BG_COLOR)
         gui.configureWeigths(self.content, column=1)
 
     def show(self):
@@ -1644,9 +1651,9 @@ class FormWindow(Window):
         self.protocol = protocol
         # This control when to close or not after execute
         self.visualizeMode = kwargs.get('visualizeMode', False)
-        self.headerBgColor = pwutils.Color.RED_COLOR
+        self.headerBgColor = pw.Config.SCIPION_MAIN_COLOR
         if self.visualizeMode:
-            self.headerBgColor = pwutils.Color.DARK_GREY_COLOR
+            self.headerBgColor = pwutils.Color.ALT_COLOR_DARK
         # Allow to open child protocols form (for workflows)
         self.childMode = kwargs.get('childMode', False)
         self.updateProtocolCallback = kwargs.get('updateProtocolCallback', None)
@@ -1777,7 +1784,7 @@ class FormWindow(Window):
                                     sticky='e', row=r, pady=0)
 
             if allowThreads or allowMpi:
-                procFrame = tk.Frame(runFrame, bg='white')
+                procFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
                 r2 = 0
                 c2 = 0
                 sticky = 'e'
@@ -1796,11 +1803,11 @@ class FormWindow(Window):
                             prot.numberOfMpi.set(1)
 
                         self.procTypeVar.trace('w', self._setThreadsOrMpi)
-                        procCombo = tk.Frame(procFrame, bg='white')
+                        procCombo = tk.Frame(procFrame, bg=pw.Config.SCIPION_BG_COLOR)
                         for i, opt in enumerate([THREADS, MPI]):
                             rb = tk.Radiobutton(procCombo, text=opt,
                                                 variable=self.procTypeVar,
-                                                value=opt, bg='white',
+                                                value=opt, bg=pw.Config.SCIPION_BG_COLOR,
                                                 highlightthickness=0)
                             rb.grid(row=0, column=i, sticky='w', padx=(0, 5))
 
@@ -1851,7 +1858,7 @@ class FormWindow(Window):
             if allowGpu:
                 self._createHeaderLabel(runFrame, "GPU IDs", bold=True,
                                         sticky='e', row=r, column=0, pady=0)
-                gpuFrame = tk.Frame(runFrame, bg='white')
+                gpuFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
                 gpuFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
 
                 self.useGpuVar = tk.IntVar()
@@ -1862,7 +1869,7 @@ class FormWindow(Window):
                     for i, opt in enumerate(['Yes', 'No']):
                         rb = tk.Radiobutton(gpuFrame, text=opt,
                                             variable=self.useGpuVar,
-                                            value=1 - i, bg='white',
+                                            value=1 - i, bg=pw.Config.SCIPION_BG_COLOR,
                                             highlightthickness=0)
                         rb.grid(row=0, column=i, sticky='w', padx=(0, 5), pady=5)
 
@@ -1899,7 +1906,7 @@ class FormWindow(Window):
                                   headerBgColor=self.headerBgColor,
                                   name="runsection")
 
-        runFrame = tk.Frame(runSection.contentFrame, bg='white', name="runframe")
+        runFrame = tk.Frame(runSection.contentFrame, bg=pw.Config.SCIPION_BG_COLOR, name="runframe")
         runFrame.grid(row=0, column=0, sticky='new')
 
         r = 0  # Run name
@@ -1928,7 +1935,7 @@ class FormWindow(Window):
 
         r = 1  # Execution
 
-        modeFrame = tk.Frame(runFrame, bg='white')
+        modeFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
 
         if not self.disableRunMode:
             self._createHeaderLabel(runFrame, pwutils.Message.LABEL_EXECUTION,
@@ -1939,7 +1946,7 @@ class FormWindow(Window):
                                                pwprot.MODE_CHOICES,
                                                self.protocol.runMode.get(),
                                                self._onRunModeChanged,
-                                               bg='white', font=self.font)
+                                               bg=pw.Config.SCIPION_BG_COLOR, font=self.font)
             runMode.grid(row=0, column=0, sticky='e', padx=(0, 5), pady=5)
             btnHelp = IconButton(modeFrame, pwutils.Message.TITLE_COMMENT, pwutils.Icon.ACTION_HELP,
                                  highlightthickness=0,
@@ -1969,7 +1976,7 @@ class FormWindow(Window):
                                 sticky='e',
                                 column=c)
 
-        var, frame = ParamWidget.createBoolWidget(runFrame, bg='white',
+        var, frame = ParamWidget.createBoolWidget(runFrame, bg=pw.Config.SCIPION_BG_COLOR,
                                                   font=self.font)
         btn = IconButton(frame, pwutils.Message.LABEL_BUTTON_WIZ, pwutils.Icon.ACTION_EDIT,
                          highlightthickness=0, command=self._editQueueParams, tooltip="Edit queue parameters")
@@ -2200,7 +2207,7 @@ class FormWindow(Window):
         font = self.font
         if bold:
             font = self.fontBold
-        label = tk.Label(parent, text=text, font=font, bg='white')
+        label = tk.Label(parent, text=text, font=font, bg=pw.Config.SCIPION_BG_COLOR)
         if gridArgs:
             gridDefaults = {'row': 0, 'column': 0, 'padx': 5, 'pady': 5}
             gridDefaults.update(gridArgs)
@@ -2242,7 +2249,6 @@ class FormWindow(Window):
             return self._editQueueParams()
 
     def execute(self, e=None):
-
         if self.protocol.useQueue():
             if not self._getQueueReady():
                 return
@@ -2257,34 +2263,24 @@ class FormWindow(Window):
                                  "*Note*: Your system is configured with MANDATORY = %d.\n"
                                  "        This value can be changed in Scipion/config/hosts.conf" % (cores, mandatory))
                 return
-        if self.protocol.getRunMode() == MODE_RESTART:
-            protocolList = ""
-            if self.protocol.getObjId():
-                project = self.protocol.getProject()
-                workflowProtocolList, activeProtList = project._getWorkflowFromProtocol(self.protocol)
-                for prot, level in workflowProtocolList.values():
-                    protocolList += ("\n* " + prot.getRunName())
-                if len(workflowProtocolList) > 1:
-                    result = askSingleAllCancel(pwutils.Message.TITLE_RESTART_FORM,
-                                                pwutils.Message.LABEL_RESTART_FORM_MANY % ('%s\n' % protocolList),
-                                                self.root)
-                    if result == RESULT_RUN_ALL:
-                        self.protocol._store()
-                        project._storeProtocol(self.protocol)
-                        project._restartWorkflow(workflowProtocolList)
-                        self.close()
-                        return
-                    elif result == RESULT_RUN_SINGLE and not self.protocol.isSaved():
-                        project.resetWorkFlow(workflowProtocolList)
-                    elif result == RESULT_CANCEL:
-                        return
-                elif not askYesNo(pwutils.Message.TITLE_RESTART_FORM,
-                                  pwutils.Message.LABEL_RESTART_FORM % (
-                                          '*%s*' % self.protocol.getRunName()),
-                                  self.root):
-                    return
 
-        errors = self.protocol.validate()
+        errors = []
+        resultAction = RESULT_RUN_SINGLE
+        mode = MODE_RESTART if self.protocol.getRunMode() == MODE_RESTART else MODE_RESUME
+
+        # we only take into account the protocols that are already part of the workflow
+        if not self.protocol.isNew():
+            from pyworkflow.gui.project.viewprotocols import ProtocolsView
+            errors, resultAction = ProtocolsView._launchSubWorkflow(self.protocol,
+                                                                    mode, self.root,
+                                                                    askSingleAll=True)
+        if resultAction == RESULT_CANCEL:
+            return
+        elif resultAction == RESULT_RUN_ALL:
+            self._close()
+            return
+
+        errors += self.protocol.validate()
 
         if errors:
             self.showInfo(errors)
@@ -2643,12 +2639,12 @@ class QueueDialog(Dialog):
         Dialog.__init__(self, window.root, "Queue parameters")
 
     def body(self, bodyFrame):
-        bodyFrame.config(bg='white')
-        self.content = tk.Frame(bodyFrame, bg='white')
+        bodyFrame.config(bg=pw.Config.SCIPION_BG_COLOR)
+        self.content = tk.Frame(bodyFrame, bg=pw.Config.SCIPION_BG_COLOR)
         self.content.grid(row=0, column=0, padx=20, pady=20)
 
         label = tk.Label(self.content, text='Submit to queue',
-                         font=self.window.fontBold, bg='white')
+                         font=self.window.fontBold, bg=pw.Config.SCIPION_BG_COLOR)
         label.grid(row=0, column=0, sticky='ne', padx=5, pady=5)
         self.queueVar = tk.StringVar()
         self.queueVar.trace('w', self._onQueueChanged)
@@ -2689,7 +2685,7 @@ class QueueDialog(Dialog):
             else:
                 raise Exception('Incorrect number of params for %s, expected 3 or 4' % p[0])
 
-            label = tk.Label(self.content, text=label, bg='white')
+            label = tk.Label(self.content, text=label, bg=pw.Config.SCIPION_BG_COLOR)
             label.grid(row=r, column=0, sticky='ne', padx=5, pady=(0, 5))
             var = tk.StringVar()
             # Set the value coming in the protocol 

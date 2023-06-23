@@ -27,6 +27,8 @@
 """
 This modules contains constants related to Pyworkflow
 """
+from enum import Enum
+
 # This variable is useful to determinate the plugins compatibility with the
 # current Scipion core release.
 # This version does not need to change with future scipion releases
@@ -40,7 +42,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.0.32'
+VERSION_3_0 = '3.1.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -122,7 +124,52 @@ PROTOCOL_UPDATED = 3
 PROJECT_DBNAME = 'project.sqlite'
 PROJECT_SETTINGS = 'settings.sqlite'
 
+# GUI colors
+class Color:
+    RED_COLOR = 'Firebrick'  # REMOVE when not used. Red color for background label  = #B22222
 
+    # Color agnostic constants
+    MAIN_COLOR = RED_COLOR
+    ALT_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
+    ALT_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
+    ALT_COLOR_DARK= '#6E6E6E'  # Very dark grey for project title, tubes, etc
+    BG_COLOR = 'white'
+
+    STATUS_SAVED = '#D9F1FA',
+    STATUS_LAUNCHED = '#D9F1FA',
+    STATUS_RUNNING = '#FCCE62',
+    STATUS_FINISHED = '#D2F5CB',
+    STATUS_FAILED = '#F5CCCB',
+    STATUS_INTERACTIVE = '#F3F5CB',
+    STATUS_ABORTED = '#F5CCCB',
+
+
+
+# Terminal ASCII colors and tkinter map
+# Enum with ascii code colors based on -->https://stackoverflow.com/questions/4842424/list-of-ansi-color-escape-sequences
+class StrColors(Enum):
+    gray = '30'
+    red = '31'
+    green = '32'
+    yellow = '33'
+    blue = '34'
+    magenta = '35'
+    cyan = '36'
+    white = '37'
+    lightgreen = '92'
+
+# Console (and XMIPP) escaped colors, and the related tags that we create
+# with Text.tag_config(). This dict is used in OutputText:addLine()
+ASCII_COLOR_2_TKINTER =\
+    {StrColors.gray.value: 'gray',
+     StrColors.red.value: 'red',
+     StrColors.green.value: 'yellowgreen',
+     StrColors.lightgreen.value: 'yellowgreen',
+     StrColors.yellow.value: 'yellow',
+     StrColors.blue.value: 'blue',
+     StrColors.magenta.value: 'magenta',
+     StrColors.cyan.value: 'cyan',
+     StrColors.white.value: 'white'}
 
 class DOCSITEURLS:
     """Documentation site URL useful when exceptions happens and you want to point to some pages"""

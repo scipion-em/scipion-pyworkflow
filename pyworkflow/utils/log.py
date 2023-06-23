@@ -147,7 +147,7 @@ class LoggingConfigurator:
 
         if console:
             config["handlers"][CONSOLE_HANDLER] = {
-                        'level': Config.SCIPION_LOG_LEVEL,
+                        'level': 'ERROR', #Config.SCIPION_LOG_LEVEL,
                         'class': 'logging.StreamHandler',
                         'formatter': 'standard',
                         }

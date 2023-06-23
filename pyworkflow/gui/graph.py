@@ -130,8 +130,6 @@ class LevelTree(object):
             raise Exception("method setCanvas should be called before using _defaultCreateNode")
         nodeText = node.getLabel()
         textColor = 'black'
-        if nodeText.startswith('Project'):
-            textColor = 'white'
 
         return canvas.createTextbox(nodeText, 100, y, bgColor='light blue', textColor=textColor, margin=0)
 
