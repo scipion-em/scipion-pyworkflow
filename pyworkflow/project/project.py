@@ -101,7 +101,7 @@ class Project(object):
         self.address = ''
         self.port = pwutils.getFreePort()
         self.mapper = None
-        self.settings = None
+        self.settings:config.ProjectSettings = None
         # Host configuration
         self._hosts = None
         #  Creation time should be stored in project.sqlite when the project

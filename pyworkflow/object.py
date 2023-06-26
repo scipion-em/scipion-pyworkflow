@@ -141,8 +141,8 @@ class Object(object):
             if obj is None:
                 if ignoreMissing:
                     return
-                raise Exception("Object.setAttributeValue: obj is None! attrName: "
-                                "%s, part: %s" % (attrName, partName))
+                raise Exception("Object.setAttributeValue: %s has no attribute %s."
+                                % (self.__class__.__name__, attrName))
         obj.set(value)
         
     def getAttributes(self):
@@ -1344,8 +1344,13 @@ class Set(Object):
         """ Get the value of a property and
         set its value as an object attribute.
         """
-        self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue))
-        
+        try:
+            self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue))
+        except Exception as e:
+            # There could be an exception with "extra" set properties. We tolerate it but warn the developers
+            # This happens in streaming scenarios where properties are only coming from the set sqlite.
+            logger.warning("DEVELOPERS: %s property could not be loaded from the disk. "
+                           "Is the property an extended property?. It is lost from now on." % propertyName)
     def loadAllProperties(self):
         """ Retrieve all properties stored by the mapper. """
         for key in self._getMapper().getPropertyKeys():

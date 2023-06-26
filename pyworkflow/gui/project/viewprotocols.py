@@ -144,16 +144,16 @@ class ProtocolsView(tk.Frame):
 
     _protocolViews = None
 
-    def __init__(self, parent, windows, **args):
+    def __init__(self, parent, window, **args):
         tk.Frame.__init__(self, parent, **args)
         # Load global configuration
-        self.windows = windows
-        self.project = windows.project
+        self.window = window
+        self.project = window.project
         self.domain = self.project.getDomain()
-        self.root = windows.root
-        self.getImage = windows.getImage
+        self.root = window.root
+        self.getImage = window.getImage
         self.protCfg = self.getCurrentProtocolView()
-        self.settings = windows.getSettings()
+        self.settings = window.getSettings()
         self.runsView = self.settings.getRunsView()
         self._loadSelection()
         self._items = {}
@@ -277,14 +277,14 @@ class ProtocolsView(tk.Frame):
 
         rowheight = pwgui.getDefaultFont().metrics()['linespace']
         self.style.configure("NoBorder.Treeview", background=Config.SCIPION_BG_COLOR,
-                             borderwidth=0, font=self.windows.font,
+                             borderwidth=0, font=self.window.font,
                              rowheight=rowheight, fieldbackground=Config.SCIPION_BG_COLOR)
         self.infoTree = pwgui.browser.BoundTree(dframe, provider, height=6,
                                                 show='tree',
                                                 style="NoBorder.Treeview")
         self.infoTree.grid(row=0, column=0, sticky='news')
         label = tk.Label(dframe, text='SUMMARY', bg=Config.SCIPION_BG_COLOR,
-                         font=self.windows.fontBold)
+                         font=self.window.fontBold)
         label.grid(row=1, column=0, sticky='nw', padx=(15, 0))
 
         hView = {'sci-open': self._viewObject,
@@ -292,7 +292,7 @@ class ProtocolsView(tk.Frame):
 
         self.summaryText = pwgui.text.TaggedText(dframe, width=40, height=5,
                                                  bg=Config.SCIPION_BG_COLOR, bd=0,
-                                                 font=self.windows.font,
+                                                 font=self.window.font,
                                                  handlers=hView)
         self.summaryText.grid(row=2, column=0, sticky='news', padx=(30, 0))
 
@@ -317,9 +317,9 @@ class ProtocolsView(tk.Frame):
         ologframe = tk.Frame(tab)
         pwgui.configureWeigths(ologframe)
         self.outputViewer = pwgui.text.TextFileViewer(ologframe, allowOpen=True,
-                                                      font=self.windows.font)
+                                                      font=self.window.font)
         self.outputViewer.grid(row=0, column=0, sticky='news')
-        self.outputViewer.windows = self.windows
+        self.outputViewer.windows = self.window
 
         self._updateSelection()
 
@@ -359,7 +359,7 @@ class ProtocolsView(tk.Frame):
         viewerClasses = self.domain.findViewers(obj.getClassName(), DESKTOP_TKINTER)
         if not viewerClasses:
             return  # TODO: protest nicely
-        viewer = viewerClasses[0](project=proj, parent=self.windows)
+        viewer = viewerClasses[0](project=proj, parent=self.window)
         viewer.visualize(obj)
 
     def _loadSelection(self):
@@ -467,12 +467,12 @@ class ProtocolsView(tk.Frame):
     # noinspection PyUnusedLocal
     def _findProtocol(self, e=None):
         """ Find a desired protocol by typing some keyword. """
-        window = SearchProtocolWindow(self.windows)
+        window = SearchProtocolWindow(self.window)
         window.show()
 
     def _locateProtocol(self, e=None):
 
-        window = SearchRunWindow(self.windows, self.runsGraph, onDoubleClick=self._onRunClick)
+        window = SearchRunWindow(self.window, self.runsGraph, onDoubleClick=self._onRunClick)
         window.show()
         # self._moveCanvas(0,1)
 
@@ -498,7 +498,7 @@ class ProtocolsView(tk.Frame):
         self.runsGraphCanvas.moveTo(X, Y)
 
     def _scipionLog(self, e=None):
-        windows = ScipionLogWindow(self.windows)
+        windows = ScipionLogWindow(self.window)
         windows.show()
 
     def createActionToolbar(self):
@@ -622,7 +622,7 @@ class ProtocolsView(tk.Frame):
                      Icon.UPDATED)
         t.tag_configure('protocol_base', image=self.getImage(Icon.GROUP))
         t.tag_configure('protocol_group', image=self.getImage(Icon.GROUP))
-        t.tag_configure('section', font=self.windows.fontBold)
+        t.tag_configure('section', font=self.window.fontBold)
         return t
 
     def _createProtocolsPanel(self, parent, bgColor):
@@ -1056,7 +1056,7 @@ class ProtocolsView(tk.Frame):
         marginV = 3
         marginH = 2
         labelWidth = (boxWidth - (2 * marginH)) / len(item.nodeInfo.getLabels())
-        labelHeight = 6
+        labelHeight = 8
 
         # Leave some margin on the right and bottom
         labelX = bottomRightX - marginH
@@ -1382,7 +1382,7 @@ class ProtocolsView(tk.Frame):
         """Open the Protocol GUI Form given a Protocol instance"""
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
-                       prot, self._executeSaveProtocol, self.windows,
+                       prot, self._executeSaveProtocol, self.window,
                        hostList=self.project.getHostNames(),
                        updateProtocolCallback=self._updateProtocol,
                        disableRunMode=disableRunMode)
@@ -1391,14 +1391,14 @@ class ProtocolsView(tk.Frame):
 
     def _browseSteps(self):
         """ Open a new window with the steps list. """
-        window = StepsWindow(Message.TITLE_BROWSE_DATA, self.windows,
+        window = StepsWindow(Message.TITLE_BROWSE_DATA, self.window,
                              self.getSelectedProtocol())
         window.show()
 
     def _browseRunData(self):
         provider = ProtocolTreeProvider(self.getSelectedProtocol())
         window = pwgui.browser.BrowserWindow(Message.TITLE_BROWSE_DATA,
-                                             self.windows)
+                                             self.window)
         window.setBrowser(pwgui.browser.ObjectBrowser(window.root, provider))
         window.itemConfig(self.getSelectedProtocol(), open=True)
         window.show()
@@ -1411,12 +1411,12 @@ class ProtocolsView(tk.Frame):
 
             protFolderShortCut = ShortCut.factory(workingDir,name="Protocol folder", icon=None ,toolTip="Protocol directory")
             window = pwgui.browser.FileBrowserWindow("Browsing: " + workingDir,
-                                                     master=self.windows,
+                                                     master=self.window,
                                                      path=workingDir,
                                                      shortCuts=[protFolderShortCut])
             window.show()
         else:
-            self.windows.showInfo("Protocol working dir does not exists: \n %s"
+            self.window.showInfo("Protocol working dir does not exists: \n %s"
                                   % workingDir)
 
     def _iterSelectedProtocols(self):
@@ -1542,7 +1542,7 @@ class ProtocolsView(tk.Frame):
 
     def _scheduleRunsUpdate(self, secs=1):
         # self.runsTree.after(secs*1000, self.refreshRuns)
-        self.windows.enqueue(self.refreshRuns)
+        self.window.enqueue(self.refreshRuns)
 
     def executeProtocol(self, prot):
         """ Function to execute a protocol called not
@@ -1550,7 +1550,7 @@ class ProtocolsView(tk.Frame):
         """
         # We need to equeue the execute action
         # to be executed in the same thread
-        self.windows.enqueue(lambda: self._executeSaveProtocol(prot))
+        self.window.enqueue(lambda: self._executeSaveProtocol(prot))
 
     def _executeSaveProtocol(self, prot, onlySave=False, doSchedule=False):
         if onlySave:
@@ -1600,7 +1600,7 @@ class ProtocolsView(tk.Frame):
             try:
                 self._deleteProtocol()
             except Exception as ex:
-                self.windows.showError(str(ex))
+                self.window.showError(str(ex))
 
     def _deleteProtocol(self):
         protocols = self._getSelectedProtocols()
@@ -1654,7 +1654,7 @@ class ProtocolsView(tk.Frame):
         if len(protocols) == 1:
             newProt = self.project.copyProtocol(protocols[0])
             if newProt is None:
-                self.windows.showError("Error copying protocol.!!!")
+                self.window.showError("Error copying protocol.!!!")
             else:
                 self._openProtocolForm(newProt, disableRunMode=True)
         else:
@@ -1795,7 +1795,7 @@ class ProtocolsView(tk.Frame):
         selectedNodes = self._getSelectedNodes()
 
         if selectedNodes:
-            dlg = self.windows.manageLabels()
+            dlg = self.window.manageLabels()
 
             if dlg.resultYes():
                 for node in selectedNodes:
@@ -1803,6 +1803,9 @@ class ProtocolsView(tk.Frame):
 
                 # self.updateRunsGraph()
                 self.drawRunsGraph()
+
+            # Save settings in any case
+            self.window.saveSettings()
 
     def _selectAncestors(self):
         self._selectNodes(down=False)
@@ -1856,7 +1859,7 @@ class ProtocolsView(tk.Frame):
                                     browser.getEntryValue())
             try:
                 if (not os.path.exists(filename) or
-                    self.windows.askYesNo("File already exists",
+                    self.window.askYesNo("File already exists",
                                           "*%s* already exists, do you want "
                                           "to overwrite it?" % filename)):
                     self.project.exportProtocols(protocols, filename)
@@ -1868,11 +1871,11 @@ class ProtocolsView(tk.Frame):
             except Exception as ex:
                 import traceback
                 traceback.print_exc()
-                self.windows.showError(str(ex))
+                self.window.showError(str(ex))
 
         browser = pwgui.browser.FileBrowserWindow(
             "Choose .json file to save workflow",
-            master=self.windows,
+            master=self.window,
             path=defaultPath or self.project.getPath(''),
             onSelect=_export,
             entryLabel='File  ', entryValue=defaultBasename or 'workflow.json')
@@ -1885,7 +1888,7 @@ class ProtocolsView(tk.Frame):
             WorkflowRepository().upload(jsonFn)
             pwutils.cleanPath(jsonFn)
         except Exception as ex:
-            self.windows.showError("Error connecting to workflow repository:\n"
+            self.window.showError("Error connecting to workflow repository:\n"
                                    + str(ex))
 
     def _stopProtocol(self, prot):
@@ -1902,10 +1905,10 @@ class ProtocolsView(tk.Frame):
             # TODO: If there are more than one viewer we should display
             # TODO: a selection menu
             firstViewer = viewers[0](project=self.project, protocol=prot,
-                                     parent=self.windows)
+                                     parent=self.window)
 
             if isinstance(firstViewer, ProtocolViewer):
-                firstViewer.visualize(prot, windows=self.windows)
+                firstViewer.visualize(prot, windows=self.window)
             else:
                 firstViewer.visualize(prot)
         else:
@@ -1922,9 +1925,9 @@ class ProtocolsView(tk.Frame):
                     viewerclass = viewers[0]
                     firstViewer = viewerclass(project=self.project,
                                               protocol=prot,
-                                              parent=self.windows)
+                                              parent=self.window)
                     # FIXME:Probably o longer needed protocol on args, already provided on init
-                    firstViewer.visualize(output, windows=self.windows,
+                    firstViewer.visualize(output, windows=self.window,
                                           protocol=prot)
 
     def _analyzeResultsClicked(self, e=None):
@@ -1938,7 +1941,7 @@ class ProtocolsView(tk.Frame):
         if os.path.exists(prot._getPath()):
             self._analyzeResults(prot)
         else:
-            self.windows.showInfo("Selected protocol hasn't been run yet.")
+            self.window.showInfo("Selected protocol hasn't been run yet.")
 
     def _bibExportClicked(self, e=None):
         try:
@@ -1973,7 +1976,7 @@ class ProtocolsView(tk.Frame):
                     pwgui.text.openTextFileEditor(bibFile.name)
 
         except Exception as ex:
-            self.windows.showError(str(ex))
+            self.window.showError(str(ex))
 
         return
 
@@ -2070,7 +2073,7 @@ class ProtocolsView(tk.Frame):
                         self._searchProtocol()
 
                 except Exception as ex:
-                    self.windows.showError(str(ex))
+                    self.window.showError(str(ex))
                     if Config.debugOn():
                         import traceback
                         traceback.print_exc()
