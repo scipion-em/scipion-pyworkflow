@@ -95,8 +95,8 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
     def _visualizeObject(self, ViewerClass, obj):
         viewer = ViewerClass(project=self.protocol.getProject(),
                              protocol=self.protocol,
-                             parent=self.parent.windows)
-        viewer.visualize(obj, windows=self.parent.windows)
+                             parent=self.parent.window)
+        viewer.visualize(obj, windows=self.parent.window)
 
     def _editObject(self, obj):
         """Open the Edit GUI Form given an instance"""
