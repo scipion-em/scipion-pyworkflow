@@ -2612,6 +2612,21 @@ class FormWindow(Window):
         btnExecute.config(text=btnText, command=cmd, state=btnState)
 
 
+    def takeScreenShot(self):
+        """ Method to take a screenshot of itself.
+        The idea is to, in the future, take a screenshot and collect parameter
+        to either create a page of the protocol in rst or send it to the
+        Scipion site and have there one page per protocol.
+
+        For now this is not used."""
+        from PIL import ImageGrab
+
+        x,y, width, height = (self.root.winfo_x(), self.root.winfo_y(), self.root.winfo_width(), self.root.winfo_height())
+        ss_region = (x,y,x+width, y+height)
+
+        ss_img = ImageGrab.grab(ss_region)
+        ss_img.save("/tmp/form.png")
+
 def editObject(self, title, root, obj, mapper):
     """ Show a Text area to edit the protocol label and comment. """
     return EditObjectDialog(root, title, obj, mapper)

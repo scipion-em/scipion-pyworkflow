@@ -37,6 +37,12 @@ from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
 
 import logging
+
+HERE = 'here'
+
+LAST = 'last'
+
+LIST = 'list'
 logger = logging.getLogger(__name__)
 
 def openProject(projectName):
@@ -50,9 +56,13 @@ def openProject(projectName):
     manager = Manager()
     projName = os.path.basename(projectName)
 
+
+    if projName == LIST:
+        showProjectList(manager)
+        return
     # Handle special name 'here' to create a project
     # from the current directory
-    if projName == 'here':
+    elif projName == HERE:
         cwd = Config.SCIPION_CWD
 
         if " " in cwd:
@@ -75,7 +85,7 @@ def openProject(projectName):
             projDir = os.path.dirname(cwd)
             manager.createProject(projName, location=projDir)
 
-    elif projName == 'last':  # Get last project
+    elif projName == LAST:  # Get last project
         projects = manager.listProjects()
         if not projects:
             sys.exit("No projects yet, cannot open the last one.")
@@ -89,9 +99,20 @@ def openProject(projectName):
     else:
         logger.error("Can't open project %s. It does not exist" % projPath)
 
+        #Show the list of projects
+        showProjectList(manager)
+
+def showProjectList(manager):
+
+    projects = manager.listProjects()
+
+    print("\n******** LIST OF PROJECTS *******\n")
+    for project in projects:
+        print(project.projName)
+    print("\n")
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
         openProject(sys.argv[1])
     else:
-        logger.info("usage: pw_project.py PROJECT_NAME or here or last")
+        logger.info("usage: pw_project.py PROJECT_NAME or %s or %s or %s" % (HERE, LAST, LIST))

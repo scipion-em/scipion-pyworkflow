@@ -3,6 +3,8 @@ V3.2.0
 users:
   - Templates validate booleans properly (false, true, 0 or 1)
   - Labels and box positions are saved after Labels being edited.
+  - scipion3 project list (or without list) should list existing projects.
+  - Windows are grouped by project under the project name.
 developers:
   - Tolerate loading of extra set properties but WARN the developer.
 
