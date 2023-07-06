@@ -126,7 +126,7 @@ class ProjectWindow(ProjectBaseWindow):
         self.showGraph = False
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
-                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ)
+                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ, _class=self.projName)
 
         OS.handler().maximizeWindow(self.root)
 
