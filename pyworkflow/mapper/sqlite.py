@@ -800,6 +800,8 @@ class SqliteFlatMapper(Mapper):
             if not self.doCreateTables:
                 self.__loadObjDict()
         except Exception as ex:
+            import traceback
+            traceback.print_exc()
             raise SqliteFlatMapperException('Error creating SqliteFlatMapper, '
                                             'dbName: %s, tablePrefix: %s\n error: %s' %
                                             (dbName, tablePrefix, ex))

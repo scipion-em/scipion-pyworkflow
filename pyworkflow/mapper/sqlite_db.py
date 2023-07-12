@@ -32,6 +32,7 @@ This module contains some sqlite basic tools to handle Databases.
 import logging
 logger = logging.getLogger(__name__)
 from sqlite3 import dbapi2 as sqlite
+from sqlite3 import Connection
 from sqlite3 import OperationalError as OperationalError
 from pyworkflow.utils import STATUS, getExtraLogInfo, Config
 
@@ -45,20 +46,25 @@ class SqliteDb:
     def __init__(self):
         self._reuseConnections = False
 
-    def _createConnection(self, dbName, timeout):
+    def _createConnection(self, dbNameOrCon, timeout):
         """Establish db connection"""
-        self._dbName = dbName
-        if self._reuseConnections and dbName in self.OPEN_CONNECTIONS:
-            self.connection = self.OPEN_CONNECTIONS[dbName]
-        else:
-            # self.closeConnection(dbName)  # Close the connect if exists for this db
-            self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
+        if isinstance(dbNameOrCon, Connection):
+            self._dbName = 'Unnamed connection'
+            self.connection = dbNameOrCon
             self.connection.row_factory = sqlite.Row
-            self.OPEN_CONNECTIONS[dbName] = self.connection
-            logger.debug("Connection open for %s" % dbName, extra=getExtraLogInfo(
-                "CONNECTIONS",
-                STATUS.START,
-                dbfilename=dbName))
+        else:
+            dbName = dbNameOrCon
+            self._dbName = dbName
+            if self._reuseConnections and dbName in self.OPEN_CONNECTIONS:
+                self.connection = self.OPEN_CONNECTIONS[dbName]
+            else:
+                self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
+                self.connection.row_factory = sqlite.Row
+                self.OPEN_CONNECTIONS[dbName] = self.connection
+                logger.debug("Connection open for %s" % dbName, extra=getExtraLogInfo(
+                    "CONNECTIONS",
+                    STATUS.START,
+                    dbfilename=dbName))
 
         self.cursor = self.connection.cursor()
         # Define some shortcuts functions

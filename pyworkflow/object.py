@@ -1122,6 +1122,11 @@ class Set(Object):
         """
         return self._getMapper().aggregate(operations, operationLabel, groupByLabels)
 
+    def setMapper(self, mapper):
+        """ Use this function with extreme care. It is meant to create in-memory
+        db mappers for efficiency and use that instead of a file. """
+        self._mapper = mapper
+
     def setMapperClass(self, MapperClass):
         """ Set the mapper to be used for storage. """
         if MapperClass is None:
