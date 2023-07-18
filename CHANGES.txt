@@ -5,9 +5,12 @@ users:
   - Labels and box positions are saved after Labels being edited.
   - scipion3 project list (or without list) should list existing projects.
   - Windows are grouped by project under the project name.
+  - Do not allow empty Config variables unless is the default value
+  - SCIPION_MAIN_COLOR: If not valid, fallsback to Firebrick
+  - Project names: Only accepts digits, "letters", - or _. Rest are turned into -
 developers:
   - Tolerate loading of extra set properties but WARN the developer.
-
+  - Show info id debug mode (print) when an infinite loop happens in the protocols graph
 V3.1.0
 ------
 users:
