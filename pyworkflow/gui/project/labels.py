@@ -45,9 +45,9 @@ class LabelsTreeProvider(TreeProvider):
     def getColumns(self):
         return [('name', 300), ('color', 150)]
 
-    def getObjectInfo(self, label):
+    def getObjectInfo(self, label:Label):
 
-        return {'key': label.getId(), 'parent': None,
+        return {'key': label.getName(), 'parent': None,
                 'text': label.getName(), 'values': (label.getColor()),
                 'tags': label.getColor()}
 
@@ -92,13 +92,17 @@ class LabelsDialog(dialog.ToolbarListDialog):
             dialog.ToolbarButton('Delete', self._deleteLabel, Icon.ACTION_DELETE)
         ]
 
+        helpMsg ="Select the label to edit or delete. Selected labels will be assigned to selected protocols." \
+                 "\nUse 'Control' key for multiple selection. Do not select any label to clear the labels of selected protocols."
+
         dialog.ToolbarListDialog.__init__(self, parent,
                                           "Manage labels",
                                           LabelsTreeProvider(labels),
-                                          "Select the label to edit or delete",
+                                          helpMsg,
                                           toolbarButtons,
                                           allowsEmptySelection=True,
                                           itemDoubleClick=self._editLabel,
+                                          cancelButton=False,
                                           **kwargs)
 
     def _newColor(self):

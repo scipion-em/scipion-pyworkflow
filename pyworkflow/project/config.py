@@ -376,12 +376,14 @@ class NodeConfigList(pwobj.List):
 class Label(pwobj.Scalar):
     """ Store Label information """
 
-    def __init__(self, labelId=None, name='', color=None):
+    EMPTY_OLD_NAME = None
+
+    def __init__(self, name='', color=None):
         pwobj.Scalar.__init__(self)
         # Special node id 0 for project node
-        self._values = {'id': labelId,
-                        'name': name,
+        self._values = {'name': name,
                         'color': color}
+        self._oldName = self.EMPTY_OLD_NAME
 
     def _convertValue(self, value):
         """Value should be a str with comma separated values
@@ -389,26 +391,43 @@ class Label(pwobj.Scalar):
         """
         self._values = json.loads(value)
 
+        # Clean unused "id" field
+        if "id" in self._values:
+            self._values.pop("id")
+
     def getObjValue(self):
         self._objValue = json.dumps(self._values)
+        
         return self._objValue
 
     def get(self):
         return self.getObjValue()
 
-    def getId(self):
-        return self._values['id']
 
-    def getName(self):
+    def getName(self)->str:
         return self._values['name']
 
     def setName(self, newName):
+        # For recurrent edit,
+        # we keep the old name only the first time
+        if not self.hasOldName():
+            self._oldName = self._values['name']
+
         self._values['name'] = newName
+
+    def hasOldName(self)->bool:
+        return self._oldName != self.EMPTY_OLD_NAME
+
+    def clearOldName(self):
+        self._oldName = self.EMPTY_OLD_NAME
+
+    def getOldName(self)->str:
+        return self._oldName
 
     def setColor(self, color):
         self._values['color'] = color
 
-    def getColor(self):
+    def getColor(self)->str:
         return self._values.get('color', None)
 
     def __str__(self):

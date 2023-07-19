@@ -1508,10 +1508,11 @@ class Protocol(Step):
 
     def run(self):
         """ Before calling this method, the working dir for the protocol
-        to run should exists.
+        to run should exist.
         """
         try:
-            self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
+            action = "RUNNING" if self.runMode == MODE_RESTART else "RESUMING"
+            self.info(pwutils.greenStr('%s PROTOCOL -----------------' % action))
             self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
                                                                project_name=self.getProject().getName(),
                                                                prot_id=self.getObjId(),

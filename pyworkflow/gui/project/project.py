@@ -83,8 +83,6 @@ class ProjectWindow(ProjectBaseWindow):
                             icon=Icon.FOLDER_OPEN)
         projMenu.addSubMenu('Remove temporary files', 'delete',
                             icon=Icon.ACTION_DELETE)
-        projMenu.addSubMenu('Manage project labels', 'labels',
-                            icon=Icon.TAGS)
         projMenu.addSubMenu('Toggle color mode', 'color_mode',
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
@@ -128,7 +126,7 @@ class ProjectWindow(ProjectBaseWindow):
         self.showGraph = False
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
-                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ)
+                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ, _class=self.projName)
 
         OS.handler().maximizeWindow(self.root)
 
@@ -148,14 +146,16 @@ class ProjectWindow(ProjectBaseWindow):
         return self.settings
     
     def saveSettings(self):
-        self.settings.write()
-        
-    def _onClosing(self):
+
         try:
-            if not self.project.openedAsReadOnly():
-                self.saveSettings()
+            self.settings.write()
         except Exception as ex:
-            logger.info("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
+            logger.error(Message.NO_SAVE_SETTINGS, exc_info=ex)
+
+    def _onClosing(self):
+        if not self.project.openedAsReadOnly():
+            self.saveSettings()
+
         ProjectBaseWindow._onClosing(self)
      
     def loadProject(self):
@@ -265,9 +265,6 @@ class ProjectWindow(ProjectBaseWindow):
         else:
             logger.info("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
 
-    def onManageProjectLabels(self):
-        self.manageLabels()
-
     def onToggleColorMode(self):
         self.getViewWidget()._toggleColorScheme(None)
 
@@ -284,9 +281,37 @@ class ProjectWindow(ProjectBaseWindow):
         self.getViewWidget()._scipionLog(None)
 
     def manageLabels(self):
-        return LabelsDialog(self.root,
-                            self.project.settings.getLabels(),
+
+        labels = self.project.settings.getLabels()
+        dialog = LabelsDialog(self.root,
+                            labels,
                             allowSelect=True)
+
+        # Scan for renamed labels to update node info...
+        labelsRenamed = dict()
+        for label in labels:
+            if label.hasOldName():
+                oldName = label.getOldName()
+                newName = label.getName()
+                logger.info("Label %s renamed to %s" % (oldName, newName))
+                labelsRenamed[oldName] = newName
+                label.clearOldName()
+
+        # If there are labels renamed
+        if labelsRenamed:
+            logger.info("Updating labels of protocols after renaming.")
+            labels.updateDict()
+
+            for node in self.project.settings.getNodes():
+                nodeLabels = node.getLabels()
+                for index, nodeLabel in enumerate(nodeLabels):
+
+                    newLabel = labelsRenamed.get(nodeLabel, None)
+                    if newLabel is not None:
+                        logger.info("Label %s found in %s. Updating it to %s" % (nodeLabel,node, newLabel))
+                        nodeLabels[index] = newLabel
+
+        return dialog
 
     def initProjectTCPServer(self):
         server = ProjectTCPServer((self.project.address, self.project.port),
