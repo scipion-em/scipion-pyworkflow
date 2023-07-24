@@ -123,7 +123,7 @@ class HostConfig(Object):
 
     def getScipionHome(self):
         """ Return the path where Scipion is installed in
-        the host. This is useful when launching remote jobs.
+        the host.
         """
         return self.scipionHome.get()
 
@@ -132,7 +132,7 @@ class HostConfig(Object):
 
     def getScipionConfig(self):
         """ From which file to read the configuration file in
-        this hosts. Useful for remote jobs.
+        this hosts.
         """
         return self.scipionConfig.get()
 

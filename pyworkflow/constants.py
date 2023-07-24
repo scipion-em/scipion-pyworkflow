@@ -62,7 +62,6 @@ DATA_TAG = 'data'
 # Scripts
 PW_SYNC_DATA = 'pw_sync_data.py'
 PW_SCHEDULE_RUN = 'pw_schedule_run.py'
-PW_PROTOCOL_MPIRUN = 'pw_protocol_mpirun.py'
 PW_RUN_TESTS = 'pw_run_tests.py'
 PW_VIEWER = 'pw_viewer.py'
 
