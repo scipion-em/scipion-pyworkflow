@@ -157,7 +157,6 @@ class StepThread(threading.Thread):
                     self.step.setFailed(error)
 
 
-
 class ThreadStepExecutor(StepExecutor):
     """ Run steps in parallel using threads. """
     def __init__(self, hostConfig, nThreads, **kwargs):

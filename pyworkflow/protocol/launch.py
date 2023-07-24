@@ -59,7 +59,13 @@ def launch(protocol, wait=False, stdin=None, stdout=None, stderr=None):
 def stop(protocol):
     """ 
     """
-    return _stopLocal(protocol)
+    if protocol.useQueue() and not protocol.isScheduled():
+        jobId = protocol.getJobId()
+        host = protocol.getHostConfig()
+        cancelCmd = host.getCancelCommand() % {'JOB_ID': jobId}
+        _run(cancelCmd, wait=True)
+    else:
+        process.killWithChilds(protocol.getPid())
 
 
 def schedule(protocol, initialSleepTime=0, wait=False):
@@ -164,6 +170,7 @@ def analyzeFormattingTypeError(string, dictionary):
                                    'Please review its format or content.\n%s' % (dictionary, pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
                                    url=pw.DOCSITEURLS.HOST_CONFIG)
 
+
 def _submit(hostConfig, submitDict, cwd=None, env=None):
     """ Submit a protocol to a queue system. Return its job id.
     """
@@ -222,18 +229,3 @@ def _run(command, wait, stdin=None, stdout=None, stderr=None):
         p.wait()
 
     return jobId
-
-
-# ******************************************************************
-# *                 Function related to STOP
-# ******************************************************************
-
-
-def _stopLocal(protocol):
-    if protocol.useQueue() and not protocol.isScheduled():
-        jobId = protocol.getJobId()
-        host = protocol.getHostConfig()
-        cancelCmd = host.getCancelCommand() % {'JOB_ID': jobId}
-        _run(cancelCmd, wait=True)
-    else:
-        process.killWithChilds(protocol.getPid())

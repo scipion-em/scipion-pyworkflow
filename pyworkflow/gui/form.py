@@ -1790,7 +1790,7 @@ class FormWindow(Window):
                 sticky = 'e'
 
                 if mode == pwprot.STEPS_PARALLEL:
-                    if allowThreads and numberOfThreads > 1:
+                    if allowThreads and numberOfThreads > 0:
                         prot.numberOfMpi.set(1)
                         self._createHeaderLabel(procFrame, pwutils.Message.LABEL_THREADS,
                                                 sticky=sticky, row=r2, column=c2,
