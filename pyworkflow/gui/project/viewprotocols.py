@@ -1771,6 +1771,9 @@ class ProtocolsView(tk.Frame):
                     return [], RESULT_RUN_ALL
 
                 elif result == RESULT_RUN_SINGLE:
+                    # If mode resume, we should not reset the "current" protocol
+                    if mode==pwprot.MODE_RESUME:
+                        workflowProtocolList.pop(protocol.getObjId())
                     errorList = project.resetWorkFlow(workflowProtocolList)
                     return errorList, RESULT_RUN_SINGLE
 

@@ -8,6 +8,10 @@ users:
 developers:
   - Tolerate loading of extra set properties but WARN the developer.
 
+V3.1.1
+------
+  - Hotfix: Fix resume single. Protocol was reset.
+
 V3.1.0
 ------
 users:
