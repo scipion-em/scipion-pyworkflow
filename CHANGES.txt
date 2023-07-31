@@ -5,6 +5,7 @@ users:
   - Labels and box positions are saved after Labels being edited.
   - scipion3 project list (or without list) should list existing projects.
   - Windows are grouped by project under the project name.
+  - Fix wrong PARALLEL_COMMAND in hosts.conf created during tests.
 developers:
   - Tolerate loading of extra set properties but WARN the developer.
 
