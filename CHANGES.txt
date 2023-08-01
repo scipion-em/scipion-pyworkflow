@@ -8,6 +8,7 @@ users:
   - Fix wrong PARALLEL_COMMAND in hosts.conf created during tests.
 developers:
   - Tolerate loading of extra set properties but WARN the developer.
+  - ListDialog: allows for a preview panel on the right if previewCallback is passed
 
 V3.1.1
 ------

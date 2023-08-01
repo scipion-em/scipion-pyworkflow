@@ -556,20 +556,22 @@ class ListDialog(Dialog):
 
     def __init__(self, parent, title, provider, message=None, **kwargs):
         """ From kwargs:
-                message: message tooltip to show when browsing.
-                selected: the item that should be selected.
-                validateSelectionCallback:
-                    a callback function to validate selected items.
-                allowSelect: if set to False, the 'Select' button will not
-                    be shown.
-                allowsEmptySelection: if set to True, it will not validate
-                    that at least one element was selected.
+
+        :param message: message tooltip to show when browsing.
+        :param validateSelectionCallback: a callback function to validate selected items.
+        :param previewCallback: method to be called on item click to fill the callback frame.
+        :param selectmode: 'extended' by default. Selection mode of the tk.Tree
+        :param selectOnDoubleClick: (False). If True, double click will trigger "Select" button click
+        :param allowsEmptySelection: (False). Allows empty selection
+        :param allowSelect: if set to False, the 'Select' button will not be shown.
+        :param allowsEmptySelection: if set to True, it will not validate that at least one element was selected.
         """
         self.values = []
         self.provider = provider
         self.message = message
-        self.validateSelectionCallback = kwargs.get('validateSelectionCallback',
-                                                    None)
+        self.validateSelectionCallback = kwargs.get('validateSelectionCallback', None)
+        self.previewCallBack = kwargs.get('previewCallback', None)
+
         self._selectmode = kwargs.get('selectmode', 'extended')
         self._selectOnDoubleClick = kwargs.get('selectOnDoubleClick', False)
         self._allowsEmptySelection = kwargs.get('allowsEmptySelection', False)
@@ -593,6 +595,9 @@ class ListDialog(Dialog):
         gui.configureWeigths(dialogFrame, row=1)
         self._createFilterBox(dialogFrame)
         self._createTree(dialogFrame)
+        if self.previewCallBack:
+            self._createPreviewPanel(dialogFrame)
+
         if self.message:
             label = tk.Label(bodyFrame, text=self.message, compound=tk.LEFT,
                              image=self.getImage(Icon.LIGHTBULB))
@@ -603,7 +608,18 @@ class ListDialog(Dialog):
         self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode, style=LIST_TREEVIEW)
         if self._selectOnDoubleClick:
             self.tree.itemDoubleClick = lambda obj: self._handleResult(RESULT_YES)
+
+        if self.previewCallBack:
+            self.tree.itemClick = self._itemClick
+
         self.tree.grid(row=1, column=0)
+
+    def _itemClick(self, obj):
+        self.previewCallBack(obj, self.previewFrame)
+
+    def _createPreviewPanel(self, parent):
+        self.previewFrame = tk.Frame(parent)
+        self.previewFrame.grid(row=1,column=1)
 
     def _createFilterBox(self, content):
         """ Create the Frame with Filter widgets """
