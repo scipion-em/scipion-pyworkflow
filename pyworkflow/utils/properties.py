@@ -126,7 +126,6 @@ class Message:
     LABEL_THREADS = 'Threads'
     LABEL_MPI = 'MPI'
     LABEL_QUEUE = 'Use a queue engine?'
-    LABEL_QUEUE_FOR_JOBS = 'Use queue for Jobs?'
 
     LABEL_WAIT_FOR = 'Wait for'
     

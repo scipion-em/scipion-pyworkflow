@@ -112,7 +112,7 @@ class Config:
     __activeColor = None
 
     CONDA_ACTIVATION_CMD = _get(CONDA_ACTIVATION_CMD_VAR,'')
-    "Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\""
+    "str: Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\""
 
     # SCIPION PATHS
     SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
@@ -139,13 +139,13 @@ class Config:
     "Path to the file where scipion will write GUI logging messages. Defaults to SCIPION_LOGS/scipion.log"
 
     SCIPION_LOG_FORMAT = _get('SCIPION_LOG_FORMAT', "%(message)s")
-    "Format for all the log lines, defaults to %(message)s. To compose the format see https://docs.python.org/3/library/logging.html#logrecord-attributes"
+    "str: Format for all the log lines, defaults to %(message)s. To compose the format see https://docs.python.org/3/library/logging.html#logrecord-attributes"
 
     SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
     "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO."
 
     NO_COLOR = _get('NO_COLOR', '')
-    "Comply with https://no-color.org/ initiative. Set it to something different than '' to deactivate colors in the output."
+    "str: Comply with https://no-color.org/ initiative. Set it to something different than '' to deactivate colors in the output."
 
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
     "Optional. Path to a location mounted in a scratch drive (SSD,...)"
@@ -202,10 +202,10 @@ class Config:
     "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10."
 
     SCIPION_MAIN_COLOR = _get('SCIPION_MAIN_COLOR', Color.MAIN_COLOR)
-    "Main color of the GUI. Background will be white, so for better contrast choose a dark color. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
-    SCIPION_BG_COLOR = _get('SCIPION_BG_COLOR', Color.BG_COLOR)
-    "Main background color of the GUI. Default is white, chose a light one. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
+    "str: Main color of the GUI. Background will be white, so for better contrast choose a dark color. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
 
+    SCIPION_BG_COLOR = _get('SCIPION_BG_COLOR', Color.BG_COLOR)
+    "str: Main background color of the GUI. Default is white, chose a light one. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
 
     WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
     "Color to use in some wizards."
@@ -214,6 +214,7 @@ class Config:
     SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
     "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it."
 
+    # *** Execution variables ***
     SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
     "Directory when scipion was launched"
 
@@ -233,7 +234,7 @@ class Config:
     # Priority package list: This variable is used in the view protocols in
     # order to load first the plugins that contains the main protocols.conf
     # sections, so other plugins can define only their sections avoiding
-    # duplicating all the sections in all plugins
+    # duplicating all the sections in all plugins. Scipion app is currently defining it for em tomo and chem
     SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', None)
 
     SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 5))
@@ -244,6 +245,9 @@ class Config:
 
     SCIPION_UPDATE_SET_ATTEMPT_WAIT = int(_get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2))
     "Time in seconds to wait until the next attempt when checking new outputs. The default value is 2 seconds"
+
+    SCIPION_USE_QUEUE = bool(_get("SCIPION_USE_QUEUE", False))
+    "Default value for using the queue. By default is False. ANY value will be True except and empty value. \"False\" or \"0\" will be True too."
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
@@ -350,8 +354,7 @@ class Config:
 
     @staticmethod
     def debugSQLOn():
-        from .utils import envVarOn
-        return bool(envVarOn(SCIPION_DEBUG_SQLITE))
+        return Config.debugOn()
 
     @staticmethod
     def toggleDebugSQL():
