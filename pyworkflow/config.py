@@ -77,6 +77,11 @@ class Config:
     @staticmethod
     def __get(key, default):
         value = os.environ.get(key, default)
+
+        # If empty use default value
+        if value == "" != default:
+            logger.warning("%s variable is empty, falling back to default value (%s)" % (key, default))
+            value = default
         # Expand user and variables if string value
         if isinstance(value, str):
             value = os.path.expandvars(os.path.expanduser(value))
@@ -406,8 +411,14 @@ class Config:
         if cls.__activeColor is None:
             import matplotlib.colors
             from pyworkflow.utils import lighter, rgb_to_hex
+            try:
+                rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
+            except Exception:
+                logger.error("Cannot convert SCIPION_MAIN_COLOR (%s) string to a color to compute the lighter color."
+                             " Falling back to %s" % (Config.SCIPION_MAIN_COLOR, Color.MAIN_COLOR))
+                cls.SCIPION_MAIN_COLOR = Color.MAIN_COLOR
+                rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
 
-            rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
             rgb_main = (rgb_main[0] * 255, rgb_main[1] * 255, rgb_main[2] * 255)
             rgb_active = lighter(rgb_main, 0.3)
             cls.__activeColor = rgb_to_hex(rgb_active)

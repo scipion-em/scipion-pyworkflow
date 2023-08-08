@@ -1742,9 +1742,10 @@ class Project(object):
     @staticmethod
     def cleanProjectName(projectName):
         """ Cleans a project name to avoid common errors
-        Use it whenever you want to get the final project name pyworkflow will endup.
+        Use it whenever you want to get the final project name pyworkflow will end up.
         Spaces will be replaced by _ """
-        return projectName.replace(" ", "_")
+
+        return re.sub("[^\w\d\-\_]", "-", projectName)
 
 
 class MissingProjectDbException(Exception):

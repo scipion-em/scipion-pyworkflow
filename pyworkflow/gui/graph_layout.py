@@ -133,7 +133,8 @@ class LevelTreeLayout(GraphLayout):
     
             if self.__isNodeExpanded(node):
                 for child in node.getChilds():
-                    logger.debug("%s: Setting layout for child %s" % ("-" * level, child))
+                    if Config.debugOn():
+                        print("%s: Setting layout for child %s" % ("-" * level, child), flush=True)
                     self._setLayoutLevel(child, level+1, node)
 
     def __isNodeExpanded(self, node):
