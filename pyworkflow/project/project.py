@@ -1194,7 +1194,7 @@ class Project(object):
                                         objComment=protDict.get('object.comment', None))
                 protocolsList[i] = prot.processImportDict(protDict, importDir) if importDir else protDict
 
-                prot._useQueue.set(protDict.get('_useQueue', False))
+                prot._useQueue.set(protDict.get('_useQueue', pw.Config.SCIPION_USE_QUEUE))
                 prot._queueParams.set(protDict.get('_queueParams', None))
                 prot._prerequisites.set(protDict.get('_prerequisites', None))
                 prot.forceSchedule.set(protDict.get('forceSchedule', False))

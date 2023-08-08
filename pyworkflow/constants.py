@@ -42,7 +42,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.1.0'
+VERSION_3_0 = '3.1.1'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -123,6 +123,12 @@ PROTOCOL_UPDATED = 3
 # Db names
 PROJECT_DBNAME = 'project.sqlite'
 PROJECT_SETTINGS = 'settings.sqlite'
+
+# Python values in str
+FALSE_STR = str(False)
+TRUE_STR = str(True)
+NONE_STR = str(None)
+EMPTY_STR = ""
 
 # GUI colors
 class Color:

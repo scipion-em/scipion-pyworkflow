@@ -454,7 +454,7 @@ class ProtocolsView(tk.Frame):
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
         """ Schedule automatic refresh increasing the time between refreshes. """
-        if pwutils.envVarOn(Config.SCIPION_GUI_CANCEL_AUTO_REFRESH):
+        if Config.SCIPION_GUI_CANCEL_AUTO_REFRESH:
             return
 
         self.refreshRuns(initRefreshCounter=False, checkPids=True)
@@ -1771,6 +1771,9 @@ class ProtocolsView(tk.Frame):
                     return [], RESULT_RUN_ALL
 
                 elif result == RESULT_RUN_SINGLE:
+                    # If mode resume, we should not reset the "current" protocol
+                    if mode==pwprot.MODE_RESUME:
+                        workflowProtocolList.pop(protocol.getObjId())
                     errorList = project.resetWorkFlow(workflowProtocolList)
                     return errorList, RESULT_RUN_SINGLE
 

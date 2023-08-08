@@ -67,7 +67,7 @@ class DataSet:
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
 
-        if not pwutils.strToBoolean(pw.Config.SCIPION_TEST_NOSYNC):
+        if not pw.Config.SCIPION_TEST_NOSYNC:
             command = ("%s %s --download %s %s"
                        % (pw.PYTHON, pw.getSyncDataScript(), folder, url))
             logger.info(">>>> %s" % command)
