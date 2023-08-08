@@ -6,12 +6,13 @@ users:
   - scipion3 project list (or without list) should list existing projects.
   - Windows are grouped by project under the project name.
   - Fix wrong PARALLEL_COMMAND in hosts.conf created during tests.
-  - SCIPION_USE_QUEUE: New variable, if defined (almost any value), new protocols will be sent to queue by default.
+  - SCIPION_USE_QUEUE: New variable (default=False). If defined to anything else than False, new protocols will be sent to queue by default.
 
 developers:
   - Tolerate loading of extra set properties but WARN the developer.
-  - ListDialog: allows for a preview panel on the right if previewCallback is passed
+  - ListDialog: allows for a preview panel on the right if previewCallback is passed.
   - SQL DEBUG deprecated: active when regular debug is on.
+  - Boolean Config variables refactored to be "reversible".
 
 V3.1.1
 ------

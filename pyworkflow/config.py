@@ -153,7 +153,7 @@ class Config:
     SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
     "Path to a folder Where the output of the tests will be written. Defaults to SCIPION_USER_DATA/Tests."
 
-    SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', "False")
+    SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', FALSE_STR) != FALSE_STR
     "Set it to 1, True, Yes or y to cancel test dataset synchronization. Needed when updating files in a dataset."
 
     SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL', 'scipion@cnb.csic.es')
@@ -211,31 +211,32 @@ class Config:
     "Color to use in some wizards."
 
     # Notification
-    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
+    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR) == TRUE_STR
     "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it."
 
     # *** Execution variables ***
     SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
     "Directory when scipion was launched"
 
-    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', 'False')
+    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', FALSE_STR) != FALSE_STR
     "True to refresh the runs graph with a thread. Unstable."
 
     SCIPION_GUI_REFRESH_INITIAL_WAIT = int(_get("SCIPION_GUI_REFRESH_INITIAL_WAIT", 5))
     "Seconds to wait after a manual refresh"
 
-    SCIPION_GUI_CANCEL_AUTO_REFRESH = _get("SCIPION_GUI_CANCEL_AUTO_REFRESH","False")
+    SCIPION_GUI_CANCEL_AUTO_REFRESH = _get("SCIPION_GUI_CANCEL_AUTO_REFRESH",FALSE_STR) != FALSE_STR
     "Set it to True to cancel automatic refresh of the runs."
 
-    # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not fallback on the slow copy.
-    SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', None)
-    "Cancel fast copy done by shutil (copying files) when it fails. Has happened in GPFS environments."
+    # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not
+    # fallback on the slow copy. For legacy reasons None is also False.
+    SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', FALSE_STR) not in [NONE_STR, FALSE_STR]
+    "Cancel fast copy done by shutil (copying files) when it fails. Has happened in GPFS environments. Defaults to False. None is also False otherwise fastcopy is cancelled."
 
     # Priority package list: This variable is used in the view protocols in
     # order to load first the plugins that contains the main protocols.conf
     # sections, so other plugins can define only their sections avoiding
     # duplicating all the sections in all plugins. Scipion app is currently defining it for em tomo and chem
-    SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', None)
+    SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', EMPTY_STR)
 
     SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 5))
     "Number of seconds to wait before checking if new input is available in streamified protocols."
@@ -246,7 +247,7 @@ class Config:
     SCIPION_UPDATE_SET_ATTEMPT_WAIT = int(_get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2))
     "Time in seconds to wait until the next attempt when checking new outputs. The default value is 2 seconds"
 
-    SCIPION_USE_QUEUE = bool(_get("SCIPION_USE_QUEUE", False))
+    SCIPION_USE_QUEUE = _get("SCIPION_USE_QUEUE", FALSE_STR) != FALSE_STR
     "Default value for using the queue. By default is False. ANY value will be True except and empty value. \"False\" or \"0\" will be True too."
 
     try:
@@ -363,8 +364,7 @@ class Config:
 
     @classmethod
     def refreshInThreads(cls):
-        from .utils import strToBoolean
-        return strToBoolean(cls.SCIPION_GUI_REFRESH_IN_THREAD)
+        return cls.SCIPION_GUI_REFRESH_IN_THREAD
 
     @classmethod
     def getExternalJsonTemplates(cls):
@@ -376,7 +376,7 @@ class Config:
 
     @classmethod
     def getPriorityPackageList(cls):
-        if cls.SCIPION_PRIORITY_PACKAGE_LIST is not None:
+        if cls.SCIPION_PRIORITY_PACKAGE_LIST != EMPTY_STR:
             return cls.SCIPION_PRIORITY_PACKAGE_LIST.split(" ")
         else:
             return []
