@@ -413,7 +413,7 @@ class Config:
             from pyworkflow.utils import lighter, rgb_to_hex
             try:
                 rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
-            except Exception as e:
+            except Exception:
                 logger.error("Cannot convert SCIPION_MAIN_COLOR (%s) string to a color to compute the lighter color."
                              " Falling back to %s" % (Config.SCIPION_MAIN_COLOR, Color.MAIN_COLOR))
                 cls.SCIPION_MAIN_COLOR = Color.MAIN_COLOR
