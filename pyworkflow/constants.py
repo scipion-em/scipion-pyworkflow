@@ -124,6 +124,12 @@ PROTOCOL_UPDATED = 3
 PROJECT_DBNAME = 'project.sqlite'
 PROJECT_SETTINGS = 'settings.sqlite'
 
+# Python values in str
+FALSE_STR = str(False)
+TRUE_STR = str(True)
+NONE_STR = str(None)
+EMPTY_STR = ""
+
 # GUI colors
 class Color:
     RED_COLOR = 'Firebrick'  # REMOVE when not used. Red color for background label  = #B22222

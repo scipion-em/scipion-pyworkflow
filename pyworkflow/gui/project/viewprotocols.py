@@ -454,7 +454,7 @@ class ProtocolsView(tk.Frame):
     # noinspection PyUnusedLocal
     def _automaticRefreshRuns(self, e=None):
         """ Schedule automatic refresh increasing the time between refreshes. """
-        if pwutils.envVarOn(Config.SCIPION_GUI_CANCEL_AUTO_REFRESH):
+        if Config.SCIPION_GUI_CANCEL_AUTO_REFRESH:
             return
 
         self.refreshRuns(initRefreshCounter=False, checkPids=True)
