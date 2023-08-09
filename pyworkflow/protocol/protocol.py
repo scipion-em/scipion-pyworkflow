@@ -415,7 +415,7 @@ class Protocol(Step):
         # Run mode
         self.runMode = Integer(kwargs.get('runMode', MODE_RESUME))
         # Use queue system?
-        self._useQueue = Boolean(False)
+        self._useQueue = Boolean(pw.Config.SCIPION_USE_QUEUE)
         # Store a json string with queue name
         # and queue parameters (only meaningful if _useQueue=True)
         self._queueParams = String()
