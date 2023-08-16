@@ -101,7 +101,7 @@ class Project(object):
         self.address = ''
         self.port = pwutils.getFreePort()
         self.mapper = None
-        self.settings = None
+        self.settings:config.ProjectSettings = None
         # Host configuration
         self._hosts = None
         #  Creation time should be stored in project.sqlite when the project
@@ -1194,7 +1194,7 @@ class Project(object):
                                         objComment=protDict.get('object.comment', None))
                 protocolsList[i] = prot.processImportDict(protDict, importDir) if importDir else protDict
 
-                prot._useQueue.set(protDict.get('_useQueue', False))
+                prot._useQueue.set(protDict.get('_useQueue', pw.Config.SCIPION_USE_QUEUE))
                 prot._queueParams.set(protDict.get('_queueParams', None))
                 prot._prerequisites.set(protDict.get('_prerequisites', None))
                 prot.forceSchedule.set(protDict.get('forceSchedule', False))
@@ -1742,9 +1742,10 @@ class Project(object):
     @staticmethod
     def cleanProjectName(projectName):
         """ Cleans a project name to avoid common errors
-        Use it whenever you want to get the final project name pyworkflow will endup.
+        Use it whenever you want to get the final project name pyworkflow will end up.
         Spaces will be replaced by _ """
-        return projectName.replace(" ", "_")
+
+        return re.sub("[^\w\d\-\_]", "-", projectName)
 
 
 class MissingProjectDbException(Exception):

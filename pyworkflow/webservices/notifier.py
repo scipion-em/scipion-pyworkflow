@@ -34,6 +34,7 @@ from datetime import timedelta, datetime
 from urllib.parse import urlencode
 from urllib.request import build_opener, HTTPHandler
 
+import pyworkflow
 import pyworkflow.utils as pwutils
 from . import config
 
@@ -105,7 +106,7 @@ class ProjectWorkflowNotifier(object):
 
         try:
             # check if environment exists otherwise abort
-            if not pwutils.envVarOn('SCIPION_NOTIFY'):
+            if not pyworkflow.Config.SCIPION_NOTIFY:
                 return
 
             # if project specifies not to send stats
@@ -152,7 +153,7 @@ class ProjectWorkflowNotifier(object):
         return os.path.basename(self.project.name).startswith("Test")
 
     def getEntryFromWebservice(self, uuid):
-        if not pwutils.envVarOn('SCIPION_NOTIFY'):
+        if not pyworkflow.Config.SCIPION_NOTIFY:
             return
         urlName = os.environ.get('SCIPION_NOTIFY_URL').strip()
         # remove last directory

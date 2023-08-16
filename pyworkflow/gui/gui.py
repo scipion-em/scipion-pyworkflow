@@ -35,6 +35,8 @@ from PIL import Image, ImageTk
 from .widgets import Button
 import numpy as np
 
+DEFAULT_WINDOW_CLASS = "Scipion Framework"
+
 # --------------- GUI CONFIGURATION parameters -----------------------
 # TODO: read font size and name from config file
 FONT_ITALIC = 'fontItalic'
@@ -322,9 +324,12 @@ class Window:
             # he first window generated a tk.Toplevel. After that, all steps executed later will go through the else
             # statement, being that way each new tk.Toplevel() correctly referenced.
             tk.Tk().withdraw()  # Main window, invisible
-            self.root = tk.Toplevel(class_="Scipion Framework")  # Toplevel of main window
+
+            self._class = kwargs.get("_class", DEFAULT_WINDOW_CLASS)
+            self.root = tk.Toplevel(class_=self._class)  # Toplevel of main window
         else:
-            self.root = tk.Toplevel(masterWindow.root, class_="Scipion Framework")
+            class_ = masterWindow._class if hasattr(masterWindow, "_class") else DEFAULT_WINDOW_CLASS
+            self.root = tk.Toplevel(masterWindow.root, class_=class_)
             self.root.group(masterWindow.root)
             self._images = masterWindow._images
 
