@@ -139,7 +139,7 @@ class Viewer(object):
     def shiftPressed(self):
         return self._keyPressed==KEYSYM.SHIFT
 
-    def ControlPressed(self):
+    def controlPressed(self):
         return self._keyPressed == KEYSYM.CONTROL
 
     def getTkRoot(self):

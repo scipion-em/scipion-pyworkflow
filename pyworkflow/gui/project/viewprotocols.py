@@ -2047,7 +2047,7 @@ class ProtocolsView(tk.Frame):
                     elif action == ACTION_CONTINUE:
                         self._continueProtocol(prot)
                     elif action == ACTION_RESULTS:
-                        self._analyzeResults(prot)
+                        self._analyzeResults(prot, None)
                     elif action == ACTION_EXPORT:
                         self._exportProtocols(defaultPath=pwutils.getHomePath())
                     elif action == ACTION_EXPORT_UPLOAD:
