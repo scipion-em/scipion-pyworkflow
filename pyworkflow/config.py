@@ -46,10 +46,6 @@ def getScheduleScript():
     return getAppsPath(PW_SCHEDULE_RUN)
 
 
-def getPwProtMpiRunScript():
-    return getAppsPath(PW_PROTOCOL_MPIRUN)
-
-
 def getTestsScript():
     return getAppsPath(PW_RUN_TESTS)
 

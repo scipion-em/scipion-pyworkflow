@@ -35,8 +35,7 @@ from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import LoggingConfigurator, getExtraLogInfo, STATUS, setDefaultLoggingContext
-from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
-                       QueueStepExecutor)
+from .executor import StepExecutor, ThreadStepExecutor, QueueStepExecutor
 from .constants import *
 from .params import Form
 from ..utils import getFileSize
@@ -895,8 +894,7 @@ class Protocol(Step):
 
     def getOutputFiles(self):
         """ Return the output files produced by this protocol.
-        This can be used in web to download or in remote
-        executions to copy results back.
+        This can be used in web to download results back.
         """
         # By default return the output file of each output attribute
         s = set()
@@ -2375,30 +2373,15 @@ def runProtocolMain(projectPath, protDbPath, protId):
     executor = None
     nThreads = max(protocol.numberOfThreads.get(), 1)
 
-    if protocol.stepsExecutionMode == STEPS_PARALLEL:
-        if protocol.numberOfMpi > 1:
-            # Handle special case to execute in parallel
-            # We run "scipion run pyworkflow/...mpirun.py blah" instead of
-            # calling directly "$SCIPION_PYTHON ...mpirun.py blah", so that
-            # when it runs on a MPI node, it *always* has the scipion env.
-            params = ['-m', 'scipion', 'runprotocol', pw.getPwProtMpiRunScript(),
-                      projectPath, protDbPath, protId]
-            # 'scipion' is treated now as an entry point, but if there is an alias with that name, the alias has higher
-            # priority
-            retcode = pwutils.runJob(None, pw.PYTHON, params,
-                                     numberOfMpi=protocol.numberOfMpi.get(),
-                                     hostConfig=hostConfig)
-            sys.exit(retcode)
-
-        elif nThreads > 1:
-            if protocol.useQueueForSteps():
-                executor = QueueStepExecutor(hostConfig,
-                                             protocol.getSubmitDict(),
-                                             nThreads - 1,
-                                             gpuList=protocol.getGpuList())
-            else:
-                executor = ThreadStepExecutor(hostConfig, nThreads - 1,
-                                              gpuList=protocol.getGpuList())
+    if protocol.stepsExecutionMode == STEPS_PARALLEL and nThreads > 1:
+        if protocol.useQueueForSteps():
+            executor = QueueStepExecutor(hostConfig,
+                                         protocol.getSubmitDict(),
+                                         nThreads - 1,
+                                         gpuList=protocol.getGpuList())
+        else:
+            executor = ThreadStepExecutor(hostConfig, nThreads - 1,
+                                          gpuList=protocol.getGpuList())
 
     if executor is None and protocol.useQueueForSteps():
         executor = QueueStepExecutor(hostConfig, protocol.getSubmitDict(), 1,
@@ -2407,22 +2390,6 @@ def runProtocolMain(projectPath, protDbPath, protId):
     if executor is None:
         executor = StepExecutor(hostConfig,
                                 gpuList=protocol.getGpuList())
-
-    protocol.setStepsExecutor(executor)
-    # Finally run the protocol
-    protocol.run()
-
-
-def runProtocolMainMPI(projectPath, protDbPath, protId, mpiComm):
-    """ This function only should be called after enter in runProtocolMain
-    and the proper MPI scripts have been started...so no validations
-    will be made.
-    """
-    protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
-    hostConfig = protocol.getHostConfig()
-    # Create the steps executor
-    executor = MPIStepExecutor(hostConfig, protocol.numberOfMpi.get() - 1,
-                               mpiComm, gpuList=protocol.getGpuList())
 
     protocol.setStepsExecutor(executor)
     # Finally run the protocol

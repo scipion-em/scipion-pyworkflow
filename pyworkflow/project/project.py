@@ -569,8 +569,7 @@ class Project(object):
         1. Store the protocol and assign name and working dir
         2. Create the working dir and also the protocol independent db
         3. Call the launch method in protocol.job to handle submission:
-            mpi, thread, queue,
-            and also take care if the execution is remotely.
+            mpi, thread, queue.
 
         If the protocol has some prerequisites (other protocols that
         needs to be finished first), it will be scheduled.
@@ -680,8 +679,6 @@ class Project(object):
             # If the protocol database has ....
             #  Comparing date will not work unless we have a reliable
             # lastModificationDate of a protocol in the project.sqlite
-            # TODO: when launching remote protocols, the db should be
-            # TODO: retrieved in a different way.
             prot2 = pwprot.getProtocolFromDb(self.path,
                                              protocol.getDbPath(),
                                              protocol.getObjId())
