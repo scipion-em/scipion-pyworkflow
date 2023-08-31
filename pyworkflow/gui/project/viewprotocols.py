@@ -260,8 +260,14 @@ class ProtocolsView(tk.Frame):
                                        image=self.getImage(Icon.ACTION_VISUALIZE),
                                        compound=tk.LEFT,
                                        activeforeground='white',
-                                       activebackground=Config.getActiveColor(),
-                                       command=self._analyzeResultsClicked)
+                                       activebackground=Config.getActiveColor())
+                                       # command=self._analyzeResultsClicked)
+        self.btnAnalyze.bind("<Shift-Button-1>", lambda e: self._analyzeResultsClicked(KEYSYM.SHIFT))
+        self.btnAnalyze.bind("<Control-Button-1>", lambda e: self._analyzeResultsClicked(KEYSYM.CONTROL))
+        self.btnAnalyze.bind("<Button-1>", lambda e: self._analyzeResultsClicked(None))
+
+        # self.btnAnalyze.bind("<Button-1>", self._analyzeResultsClicked)
+
         self.btnAnalyze.grid(row=0, column=0, sticky='ne', padx=15)
         # self.style.configure("W.TNotebook")#, background='white')
         tab = ttk.Notebook(infoFrame)  # , style='W.TNotebook')
@@ -1901,14 +1907,14 @@ class ProtocolsView(tk.Frame):
             self._lastStatus = None  # force logs to re-load
             self._scheduleRunsUpdate()
 
-    def _analyzeResults(self, prot):
+    def _analyzeResults(self, prot, keyPressed):
         viewers = self.domain.findViewers(prot.getClassName(), DESKTOP_TKINTER)
         if len(viewers):
             # Instantiate the first available viewer
             # TODO: If there are more than one viewer we should display
             # TODO: a selection menu
             firstViewer = viewers[0](project=self.project, protocol=prot,
-                                     parent=self.window)
+                                     parent=self.window, keyPressed=keyPressed)
 
             if isinstance(firstViewer, ProtocolViewer):
                 firstViewer.visualize(prot, windows=self.window)
@@ -1928,12 +1934,13 @@ class ProtocolsView(tk.Frame):
                     viewerclass = viewers[0]
                     firstViewer = viewerclass(project=self.project,
                                               protocol=prot,
-                                              parent=self.window)
+                                              parent=self.window,
+                                              keyPressed=keyPressed)
                     # FIXME:Probably o longer needed protocol on args, already provided on init
                     firstViewer.visualize(output, windows=self.window,
                                           protocol=prot)
 
-    def _analyzeResultsClicked(self, e=None):
+    def _analyzeResultsClicked(self, keyPressed=None):
         """ Function called when button "Analyze results" is called. """
         prot = self.getSelectedProtocol()
 
@@ -1942,7 +1949,8 @@ class ProtocolsView(tk.Frame):
             return
 
         if os.path.exists(prot._getPath()):
-            self._analyzeResults(prot)
+            # self.info('"Analyze result" clicked with %s key pressed.' % keyPressed)
+            self._analyzeResults(prot, keyPressed)
         else:
             self.window.showInfo("Selected protocol hasn't been run yet.")
 
@@ -2039,7 +2047,7 @@ class ProtocolsView(tk.Frame):
                     elif action == ACTION_CONTINUE:
                         self._continueProtocol(prot)
                     elif action == ACTION_RESULTS:
-                        self._analyzeResults(prot)
+                        self._analyzeResults(prot, None)
                     elif action == ACTION_EXPORT:
                         self._exportProtocols(defaultPath=pwutils.getHomePath())
                     elif action == ACTION_EXPORT_UPLOAD:

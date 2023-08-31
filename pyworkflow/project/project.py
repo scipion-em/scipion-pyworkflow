@@ -1481,7 +1481,7 @@ class Project(object):
             develTxt =''
             plugin=r.getPlugin()
             if plugin and plugin.inDevelMode():
-                develTxt='ẟ '
+                develTxt='* '
 
             n.setLabel('%s%s' % (develTxt , r.getRunName()))
             outputDict[r.getObjId()] = n
