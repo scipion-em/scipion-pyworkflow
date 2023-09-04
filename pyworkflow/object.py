@@ -567,7 +567,7 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = ''  # ' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            logger.info(tab, self.getClassName(), idStr)
+            logger.info("%s %s %s" % (tab, self.getClassName(), idStr))
         else:
             if name == 'submitTemplate':  # Skip this because very large value
                 value = '...'
