@@ -1446,7 +1446,7 @@ class ProtocolsView(tk.Frame):
 
     def getSelectedProtocol(self):
         if self._selection:
-            return self.project.getProtocol(self._selection[0])
+            return self.project.getProtocol(self._selection[0], fromRuns=True)
         return None
 
     def _showHideAnalyzeResult(self):
@@ -1641,6 +1641,7 @@ class ProtocolsView(tk.Frame):
 
             self.project.loadProtocols(jsonStr=self.clipboard_get())
             self.info("Clipboard content pasted successfully.")
+            self.updateRunsGraph(False)
         except Exception as e:
             self.info("Paste failed, maybe clipboard content is not valid content? See GUI log for details.")
             logger.error("Clipboard content couldn't be pasted." , exc_info=e)
@@ -2057,14 +2058,14 @@ class ProtocolsView(tk.Frame):
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(False)
                         self.setVisibleNodes(node, visible=False)
-                        self.updateRunsGraph(True)
+                        self.updateRunsGraph(False)
                         self._updateActionToolbar()
                     elif action == ACTION_EXPAND:
                         node = self.runsGraph.getNode(str(prot.getObjId()))
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(True)
                         self.setVisibleNodes(node, visible=True)
-                        self.updateRunsGraph(True)
+                        self.updateRunsGraph(False)
                         self._updateActionToolbar()
                     elif action == ACTION_LABELS:
                         self._selectLabels()

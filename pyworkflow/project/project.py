@@ -734,7 +734,6 @@ class Project(object):
                 time.sleep(0.5)
                 self._updateProtocol(protocol, tries + 1)
 
-
         return pw.PROTOCOL_UPDATED
 
     def stopProtocol(self, protocol):
@@ -1170,7 +1169,7 @@ class Project(object):
         elif jsonStr:
             protocolsList = json.loads(jsonStr)
         else:
-            logger.error("Invalid call to  loadProcols. Either filename or jsonStr has to be passed.")
+            logger.error("Invalid call to loadProtocols. Either filename or jsonStr has to be passed.")
             return
 
         emProtocols = self._domain.getProtocols()
@@ -1196,6 +1195,8 @@ class Project(object):
                 prot._prerequisites.set(protDict.get('_prerequisites', None))
                 prot.forceSchedule.set(protDict.get('forceSchedule', False))
                 newDict[protId] = prot
+                # This saves the protocol JUST with the common attributes. Is it necessary?
+                # Actually, if after this the is an error, the protocol appears.
                 self.saveProtocol(prot)
 
         # Second iteration: update pointers values
@@ -1205,7 +1206,24 @@ class Project(object):
             # Value to pointers could be None: Partial workflows
             if value:
                 parts = value.split('.')
-                target = newDict.get(parts[0], None)
+
+                protId = parts[0]
+                # Try to get the protocol holding the input form the dictionary
+                target = newDict.get(protId, None)
+
+                if target is None:
+                    # Try to use existing protocol in the project
+                    logger.info("Protocol identifier (%s) not self contained. Looking for it in the project." % protId)
+
+                    try:
+                        target = self.getProtocol(int(protId), fromRuns=True)
+                    except:
+                        # Not a protocol..
+                        logger.info("%s is not a protocol identifier. Probably a direct pointer created by tests. This case is not considered." % protId)
+
+                    if target:
+                        logger.info("Linking %s to existing protocol in the project: %s" % (prot, target))
+
                 pointer.set(target)
                 if not pointer.pointsNone():
                     pointer.setExtendedParts(parts[1:])
@@ -1276,8 +1294,25 @@ class Project(object):
         else:
             self._setupProtocol(protocol)
 
-    def getProtocol(self, protId):
-        protocol = self.mapper.selectById(protId)
+    def getProtocolFromRuns(self, protId):
+        """ Returns the protocol with the id=protId from the runs list (memory) or None"""
+        if self.runs:
+            for run in self.runs:
+                if run.getObjId() == protId:
+                    return run
+
+        return None
+
+    def getProtocol(self, protId, fromRuns=False):
+        """ Returns the protocol with the id=protId or raises an Exception
+
+        :param protId: integer with an existing protocol identifier
+        :param fromRuns: If true, it tries to get it from the runs list (memory) avoiding querying the db."""
+
+        protocol = self.getProtocolFromRuns(protId) if fromRuns else None
+
+        if protocol is None:
+            protocol = self.mapper.selectById(protId)
 
         if not isinstance(protocol, pwprot.Protocol):
             raise Exception('>>> ERROR: Invalid protocol id: %d' % protId)
