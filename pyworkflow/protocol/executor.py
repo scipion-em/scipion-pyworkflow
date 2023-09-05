@@ -30,10 +30,10 @@ There is one based on threads to execute steps in parallel
 using different threads and the last one with MPI processes.
 """
 
-
+import logging
+logger = logging.getLogger(__name__)
 import time
 import datetime
-import traceback
 import threading
 import os
 import re
@@ -101,7 +101,7 @@ class StepExecutor:
         lastCheck = datetime.datetime.now()
 
         while True:
-            # Get an step to run, if there is one
+            # Get a step to run, if there is any
             runnableSteps = self._getRunnable(steps)
 
             if runnableSteps:
@@ -148,14 +148,13 @@ class StepThread(threading.Thread):
             self.step._run()  # not self.step.run() , to avoid race conditions
         except Exception as e:
             error = str(e)
-            traceback.print_exc()
+            logger.error("Couldn't run the code in a thread." , exc_info=e)
         finally:
             with self.lock:
                 if error is None:
                     self.step.setFinished()
                 else:
                     self.step.setFailed(error)
-
 
 
 class ThreadStepExecutor(StepExecutor):
@@ -204,6 +203,7 @@ class ThreadStepExecutor(StepExecutor):
         :param stepsCheckSecs: seconds between stepsCheckCallback calls
 
         """
+
         delta = datetime.timedelta(seconds=stepsCheckSecs)
         lastCheck = datetime.datetime.now()
 
@@ -283,6 +283,17 @@ class QueueStepExecutor(ThreadStepExecutor):
         else:
             self.runJobs = StepExecutor.runSteps
 
+        self.renameGpuIds()
+
+    def renameGpuIds(self):
+        """ Reorganize the gpus ids starting from 0 since the queue engine is the one assigning them.
+        https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#env-vars """
+        for threadId, gpuList in self.gpuDict.items():
+            for i in range(len(gpuList)):
+                self.gpuDict[threadId][i] = i
+
+        logger.debug("Updated gpus ids rebase starting from 0: %s per thread" %self.gpuDict)
+
     def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
@@ -299,7 +310,7 @@ class QueueStepExecutor(ThreadStepExecutor):
         jobid = _submit(self.hostConfig, submitDict, cwd, env)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
-            print("jobId is none therefore we set it to fail")
+            logger.info("jobId is none therefore we set it to fail")
             raise Exception("Failed to submit to queue.")
 
         status = cts.STATUS_RUNNING
@@ -315,75 +326,27 @@ class QueueStepExecutor(ThreadStepExecutor):
         return status
 
     def _checkJobStatus(self, hostConfig, jobid):
-
         command = hostConfig.getCheckCommand() % {"JOB_ID": jobid}
+        logger.debug("checking job status for %s: %s" %(jobid, command))
         p = Popen(command, shell=True, stdout=PIPE, preexec_fn=os.setsid)
 
-        out = p.communicate()[0]
+        out = p.communicate()[0].decode(errors='backslashreplace')
 
         jobDoneRegex = hostConfig.getJobDoneRegex()
-
+        logger.debug("Queue engine replied %s, variable JOB_DONE_REGEX has %s" %(out, jobDoneRegex))
         # If nothing is returned we assume job is no longer in queue and thus finished
         if out == "":
+            logger.warning("Empty response from queue system to job (%s)" %jobid)
             return cts.STATUS_FINISHED
         # If some string is returned we use the JOB_DONE_REGEX variable (if present) to infer the status
         elif jobDoneRegex is not None:
             s = re.search(jobDoneRegex, out)
             if s:
+                logger.debug("Job (%s) finished" %jobid)
                 return cts.STATUS_FINISHED
             else:
+                logger.debug("Job (%s) still running" %jobid)
                 return cts.STATUS_RUNNING
         # If JOB_DONE_REGEX is not defined and queue has returned something we assume that job is still running
         else:
             return cts.STATUS_RUNNING
-
-
-class MPIStepExecutor(ThreadStepExecutor):
-    """ Run steps in parallel using threads.
-    But call runJob through MPI workers.
-    """
-    def __init__(self, hostConfig, nMPI, comm, **kwargs):
-        ThreadStepExecutor.__init__(self, hostConfig, nMPI, **kwargs)
-        self.comm = comm
-    
-    def runJob(self, log, programName, params,
-               numberOfMpi=1, numberOfThreads=1, env=None, cwd=None):
-        # Import mpi here so if MPI4py was not properly compiled
-        # we can still run in parallel with threads.
-        from pyworkflow.utils.mpi import runJobMPI
-        node = threading.current_thread().thId + 1
-        runJobMPI(programName, params, self.comm, node,
-                  numberOfMpi, hostConfig=self.hostConfig, env=env, cwd=cwd,
-                  gpuList=self.getGpuList())
-
-    def runSteps(self, steps, 
-                 stepStartedCallback, 
-                 stepFinishedCallback,
-                 checkStepsCallback,
-                 stepsCheckSecs=5):
-        """
-        Creates mpiprocesses using numpy and synchronize the steps execution.
-
-        :param steps: list of steps to run
-        :param stepStartedCallback: callback to be called before starting any step
-        :param stepFinishedCallback: callback to be run after all steps are done
-        :param stepsCheckCallback: callback to check if there are new steps to add (streaming)
-        :param stepsCheckSecs: seconds between stepsCheckCallback calls
-
-        """
-
-
-        ThreadStepExecutor.runSteps(self, steps,
-                                    stepStartedCallback, 
-                                    stepFinishedCallback,
-                                    checkStepsCallback,
-                                    stepsCheckSecs=stepsCheckSecs)
-
-        # Import mpi here so if MPI4py was not properly compiled
-        # we can still run in parallel with threads.
-        from pyworkflow.utils.mpi import TAG_RUN_JOB
-
-        # Send special command 'None' to MPI slaves to notify them
-        # that there are no more jobs to do and they can finish.
-        for node in range(1, self.numberOfProcs+1):
-            self.comm.send('None', dest=node, tag=(TAG_RUN_JOB+node))

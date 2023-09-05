@@ -28,6 +28,9 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
+import logging
+logger = logging.getLogger(__name__)
+
 from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
@@ -54,7 +57,7 @@ OBJECT_PARENT_ID = 'object_parent_id'
 
 class Object(object):
     """ All objects in our Domain should inherit from this class
-    that will contains all base properties"""
+    that will contain all base properties"""
 
     def __init__(self, value=None, **kwargs):
         object.__init__(self)
@@ -138,8 +141,8 @@ class Object(object):
             if obj is None:
                 if ignoreMissing:
                     return
-                raise Exception("Object.setAttributeValue: obj is None! attrName: "
-                                "%s, part: %s" % (attrName, partName))
+                raise Exception("Object.setAttributeValue: %s has no attribute %s."
+                                % (self.__class__.__name__, attrName))
         obj.set(value)
         
     def getAttributes(self):
@@ -157,11 +160,10 @@ class Object(object):
             try:
                 if attr is not None and attr._objDoStore:
                     yield key, attr
-            except:
-                print("Object.getAttributesToStore: attribute '%s' seems to "
-                      "be overwritten," % key)
-                print("   since '_objDoStore' was not found. "
-                      "Ignoring attribute. ")
+            except Exception as e:
+                logger.info("Object.getAttributesToStore: attribute '%s' (%s) seems to "
+                      "be overwritten, since '_objDoStore' was not found. Ignoring attribute." % (key, type(attr)))
+                logger.debug("Exception: %s" % e)
 
     def isPointer(self):
         """If this is true, the value field is a pointer 
@@ -341,9 +343,7 @@ class Object(object):
                 comp = v1 == v2
             if not comp:
                 if verbose:
-                    print("Different attributes: ")
-                    print("self.%s = %s" % (k, v1))
-                    print("other.%s = %s" % (k, v2))
+                    logger.info("Different attributes: self.%s = %s, other.%s = %s" % (k, v1, k, v2))
                 return False
         return True
             
@@ -559,14 +559,14 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = ''  # ' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            print(tab, self.getClassName(), idStr)
+            logger.info(tab, self.getClassName(), idStr)
         else:
             if name == 'submitTemplate':  # Skip this because very large value
                 value = '...'
             else:
                 value = self.getObjValue()
                 
-            print(tab, '%s = %s' % (name, value), idStr)
+            logger.info(tab, '%s = %s' % (name, value), idStr)
         for k, v in self.getAttributes():
             v.printAll(k, level + 1)
             
@@ -1042,7 +1042,12 @@ class CsvList(Scalar, list):
             else:
                 raise Exception("CsvList.set: Invalid value type: ",
                                 type(value))
-            
+
+    def equalAttributes(self, other, ignore=[], verbose=False):
+        """Compare that all attributes are equal"""
+
+        return self == other
+
     def getObjValue(self):
         self._objValue = ','.join(map(str, self))
         return self._objValue
@@ -1069,7 +1074,7 @@ class CsvList(Scalar, list):
 class Set(Object):
     """ This class will be a container implementation for elements.
     It will use an extra sqlite file to store the elements.
-    All items will have an unique id that identifies each element in the set.
+    All items will have a unique id that identifies each element in the set.
     """
     ITEM_TYPE = None  # This property should be defined to know the item type
     
@@ -1101,7 +1106,22 @@ class Set(Object):
         if filename:
             self._mapperPath.set('%s, %s' % (filename, prefix))
             self.load()
-            
+
+    def copy(self, other, copyId=True, ignoreAttrs=['_mapperPath', '_size', '_streamState']):
+        """ Copies the attributes of the set
+
+        :param other: Set to copy attributes from
+        :param copyId: True. Copies the objId.
+        :param ignoreAttrs: Attributes list to ignore while copying. _mapperPath, _size and _streamState
+        are ignored by default.
+        
+        """
+        
+        # Note: By default this behaves properly for cloning non identical objects. 
+        # This is to clone a set from another new set that is based on "other".
+        # For exact clone, we need to pass empty ignoreAttrs. This case happens in Protocol.__tryUpdateOutputSet
+        super().copy(other, copyId, ignoreAttrs)
+
     def _getMapper(self):
         """ This method will open the connection to the items
         database on demand. That's why this method should 
@@ -1171,8 +1191,8 @@ class Set(Object):
     def getFirstItem(self):
         """ Return the first item in the Set. """
         # This function is used in many contexts where the mapper can be
-        # left open and could be problematic locking other db
-        # So, we looking if the mapper was closed before, in which case
+        # left open and could be problematic locking the db for other processes
+        # So, we look if the mapper was closed before, in which case
         # we will close it after that
         closedMapper = self._mapper is None
         firstItem = self._getMapper().selectFirst()
@@ -1324,8 +1344,13 @@ class Set(Object):
         """ Get the value of a property and
         set its value as an object attribute.
         """
-        self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue))
-        
+        try:
+            self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue))
+        except Exception as e:
+            # There could be an exception with "extra" set properties. We tolerate it but warn the developers
+            # This happens in streaming scenarios where properties are only coming from the set sqlite.
+            logger.warning("DEVELOPERS: %s property could not be loaded from the disk. "
+                           "Is the property an extended property?. It is lost from now on." % propertyName)
     def loadAllProperties(self):
         """ Retrieve all properties stored by the mapper. """
         for key in self._getMapper().getPropertyKeys():

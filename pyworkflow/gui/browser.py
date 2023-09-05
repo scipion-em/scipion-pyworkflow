@@ -115,7 +115,7 @@ class ObjectBrowser(tk.Frame):
         self.label.grid(row=0, column=0, sticky='news')
 
     def _fillRightBottom(self, bottom):
-        self.text = TaggedText(bottom, width=40, height=15, bg='white',
+        self.text = TaggedText(bottom, width=40, height=15, bg=Config.SCIPION_BG_COLOR,
                                takefocus=0)
         self.text.grid(row=0, column=0, sticky='news')
 
@@ -129,9 +129,11 @@ class ObjectBrowser(tk.Frame):
             if img is None:
                 img = self.noImage
             self.label.config(image=img)
+
         # Update text preview
         self.text.setReadOnly(False)
         self.text.clear()
+
         if desc is not None:
             self.text.addText(desc)
         self.text.setReadOnly(True)
@@ -274,13 +276,23 @@ class FileTreeProvider(TreeProvider):
         return info
 
     def getObjectPreview(self, obj):
-        # Look for any preview available
-        fileHandlers = self.getFileHandlers(obj)
 
-        for fileHandler in fileHandlers:
-            preview = fileHandler.getFilePreview(obj)
-            if preview:
-                return preview
+        try:
+            # Look for any preview available
+            fileHandlers = self.getFileHandlers(obj)
+
+            for fileHandler in fileHandlers:
+                preview = fileHandler.getFilePreview(obj)
+                if preview:
+                    img, desc = preview
+                    if obj.isLink():
+                        desc = "Is a link" if desc is None else desc + "\nIs a link."
+                    return img, desc
+
+        except Exception as e:
+            msg = "Couldn't get preview for %s" % obj
+            logger.error(msg, exc_info=e)
+            return None, msg + " See scipion GUI log window for more details."
 
     def getObjectActions(self, obj):
         fileHandlers = self.getFileHandlers(obj)
@@ -456,7 +468,7 @@ class FileBrowser(ObjectBrowser):
                                                             sticky='nw', pady=3)
             tk.Entry(entryFrame,
                      textvariable=self.entryVar,
-                     bg='white',
+                     bg=Config.SCIPION_BG_COLOR,
                      width=65,
                      font=gui.getDefaultFont()).grid(row=0, column=1, sticky='nw', pady=3)
 

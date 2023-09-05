@@ -30,13 +30,13 @@ import os
 import re
 from datetime import datetime
 import traceback
-from enum import Enum
+import sysconfig
 
 import bibtexparser
 import numpy as np
 import math
 
-from pyworkflow import Config
+from pyworkflow import Config, StrColors
 
 
 def prettyDate(time=False):
@@ -258,73 +258,6 @@ def sortListByList(inList, priorityList):
         return inList
 
 
-def executeRemoteX(command, hostName, userName, password):
-    """
-    Execute a remote command with X11 forwarding. Currently not used.
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard output and error output.
-    """
-    scriptPath = os.path.abspath(os.path.join(os.path.dirname(__file__), "sshAskPass.sh"))
-    pswCommand = "echo '" + password + "' | " + scriptPath + " ssh -X " + userName + "@" + hostName + " " + command
-    import subprocess
-    p = subprocess.Popen(pswCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    return stdout, stderr
-
-
-def executeRemote(command, hostName, userName, password):
-    """ Execute a remote command. Currently not used
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard input, standard output and error output.
-    """
-    import paramiko
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostName, 22, userName, password)
-    stdin, stdout, stderr = ssh.exec_command(command)
-    ssh.close()
-    return stdin, stdout, stderr
-
-
-def executeLongRemote(command, hostName, userName, password):
-    """ Execute a remote command.
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard input, standard output and error output.
-
-    """
-    import paramiko
-    import select
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostName, 22, userName, password)
-    transport = ssh.get_transport()
-    channel = transport.open_session()
-    channel.exec_command(command)
-    while True:
-        if channel.exit_status_ready():
-            break
-        rl, wl, xl = select.select([channel], [], [], 0.0)
-        if len(rl) > 0:
-            print(channel.recv(1024))
-
-
 def getLocalUserName():
     """ Recover local machine user name.
     returns: Local machine user name.
@@ -347,6 +280,16 @@ def getHostFullName():
     """ Return the fully-qualified name of the local machine. """
     import socket
     return socket.getfqdn()
+
+def getPython():
+    return sys.executable
+
+def getPythonPackagesFolder():
+    # This does not work on MAC virtual envs
+    # import site
+    # return site.getsitepackages()[0]
+
+    return sysconfig.get_path("platlib")
 
 
 # ******************************File utils *******************************
@@ -395,15 +338,6 @@ def hasFileChangedSince(file, time):
 
 
 # ------------- Colored message strings -----------------------------
-
-class StrColors(Enum):
-    gray = 30
-    red = 31
-    green = 32
-    yellow = 33
-    blue = 34
-    magenta = 35
-    cyan = 36
 
 
 def getColorStr(text, color, bold=False):

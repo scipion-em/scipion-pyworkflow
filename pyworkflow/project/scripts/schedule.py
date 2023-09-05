@@ -40,12 +40,12 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: python -m pyworkflow.project.scripts.schedule projectName 
+    Usage: scipion python -m pyworkflow.project.scripts.schedule projectName 
     
               options: --ignore ProtClassName1 ProtClassName2 ProtClassLabel1 ...
               
         This script will schedule all the protocols in a project. If '--ignore' 
-          options is passed, it doesn't schedule those protocols that belongs to 
+          option is passed, it doesn't schedule those protocols that belongs to 
           ProtClassName1 or ProtClassName2 class, also those protocols with a 
           objLabel equals to ProtClassLabel1
     """ % error)
@@ -93,7 +93,7 @@ roots = runGraph.getRootNodes()
 
 for root in roots:
     for child in root.getChilds():
-        workflow, _ = project._getWorkflowFromProtocol(child.run)
+        workflow, _ = project._getSubworkflow(child.run)
         for prot, level in workflow.values():
             if prot.forceSchedule.get():
                 print(pwutils.blueStr("\nStopping scheduling at '%s'. Force scheduling found.\n"

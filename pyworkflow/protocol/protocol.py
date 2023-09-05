@@ -35,8 +35,7 @@ from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import LoggingConfigurator, getExtraLogInfo, STATUS, setDefaultLoggingContext
-from .executor import (StepExecutor, ThreadStepExecutor, MPIStepExecutor,
-                       QueueStepExecutor)
+from .executor import StepExecutor, ThreadStepExecutor, QueueStepExecutor
 from .constants import *
 from .params import Form
 from ..utils import getFileSize
@@ -160,6 +159,9 @@ class Step(Object):
 
     def setStatus(self, value):
         return self.status.set(value)
+
+    def isNew(self):
+        return self.getStatus() == STATUS_NEW
 
     def setInteractive(self, value):
         return self.interactive.set(value)
@@ -350,10 +352,15 @@ class Protocol(Step):
     """
     _possibleOutputs = None
 
+    # Cache package and plugin
+    _package = None
+    _plugin = None
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._size = None
         self._steps = []  # List of steps that will be executed
+        self._newSteps = False  # Boolean to annotate when there are new steps added to the above list. And need persistence.
         # All generated filePaths should be inside workingDir
         self.workingDir = String(kwargs.get('workingDir', '.'))
         self.mapper = kwargs.get('mapper', None)
@@ -408,7 +415,7 @@ class Protocol(Step):
         # Run mode
         self.runMode = Integer(kwargs.get('runMode', MODE_RESUME))
         # Use queue system?
-        self._useQueue = Boolean(False)
+        self._useQueue = Boolean(pw.Config.SCIPION_USE_QUEUE)
         # Store a json string with queue name
         # and queue parameters (only meaningful if _useQueue=True)
         self._queueParams = String()
@@ -488,7 +495,9 @@ class Protocol(Step):
                 outputSet.write()  # Write to commit changes
                 outputAttr = getattr(self, outputName)
                 # Copy the properties to the object contained in the protocol
-                outputAttr.copy(outputSet, copyId=False)
+                # Default Set.copy ignores some attributes like size or mapperPath.
+                # In this case we want all to be copied
+                outputAttr.copy(outputSet, copyId=False, ignoreAttrs=[])
                 # Persist changes
                 self._store(outputAttr)
             else:
@@ -537,7 +546,7 @@ class Protocol(Step):
         return hasattr(cls, '_definition')
 
     @classmethod
-    def isNew(cls):
+    def isNewDev(cls):
         if cls._devStatus == pw.NEW:
             return True
 
@@ -885,8 +894,7 @@ class Protocol(Step):
 
     def getOutputFiles(self):
         """ Return the output files produced by this protocol.
-        This can be used in web to download or in remote
-        executions to copy results back.
+        This can be used in web to download results back.
         """
         # By default return the output file of each output attribute
         s = set()
@@ -995,6 +1003,7 @@ class Protocol(Step):
             step.addPrerequisites(*prerequisites)
 
         self._steps.append(step)
+        self._newSteps = True
         # Setup and return step index
         step.setIndex(len(self._steps))
 
@@ -1443,6 +1452,17 @@ class Protocol(Step):
         else:
             pwutils.cleanPath(tmpFolder)
 
+        self._cleanExtraFiles()
+    def _cleanExtraFiles(self):
+        """ This method will be called when the protocol finishes correctly.
+        It is the responsibility of the protocols to implement this method to make extra cleanup
+        of its folders, like iterations folder and files that are not needed when finished
+        """
+
+        logger.info("Nothing to clean up")
+        logger.debug('FOR DEVELOPERS: implement Protocol._cleanExtraFiles this protocol could'
+                     ' free up some space upon finishing.')
+
     def _run(self):
         # Check that a proper Steps executor have been set
         if self._stepsExecutor is None:
@@ -1486,10 +1506,11 @@ class Protocol(Step):
 
     def run(self):
         """ Before calling this method, the working dir for the protocol
-        to run should exists.
+        to run should exist.
         """
         try:
-            self.info(pwutils.greenStr('RUNNING PROTOCOL -----------------'))
+            action = "RUNNING" if self.runMode == MODE_RESTART else "RESUMING"
+            self.info(pwutils.greenStr('%s PROTOCOL -----------------' % action))
             self.info("Protocol starts", extra=getExtraLogInfo("PROTOCOL", STATUS.START,
                                                                project_name=self.getProject().getName(),
                                                                prot_id=self.getObjId(),
@@ -1502,9 +1523,12 @@ class Protocol(Step):
             self.info('Hostname: %s' % self.getHostFullName())
             self.info('PID: %s' % self.getPid())
             self.info('pyworkflow: %s' % pw.__version__)
-            self.info('plugin: %s' % self.getClassPackageName())
-            if hasattr(self.getClassPackage(), "__version__"):
-                self.info('plugin v: %s' % self.getClassPackage().__version__)
+            plugin = self.getPlugin()
+            self.info('plugin: %s' %  plugin.getName())
+            package = self.getClassPackage()
+            if hasattr(package, "__version__"):
+                self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
+            self.info('plugin binary v: %s' % plugin.getActiveVersion())
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
@@ -1737,17 +1761,17 @@ class Protocol(Step):
         this method the protocol classes are registered with it Plugin
         and Domain info.
         """
-        # import pyworkflow.em as em
-        # em.Domain.getProtocols()  # make sure the _package is set for each Protocol class
-        # TODO: Check if we need to return scipion by default anymore
-        # Now the basic EM protocols are defined by scipion-em (pwem)
-        return getattr(cls, '_package', None)
+        return cls._package
 
     @classmethod
     def getClassPlugin(cls):
-        package = cls.getClassPackage()
-        return getattr(package, 'Plugin', None)
 
+        logger.warning("Deprecated on 04-2023. Use Protocol.getPlugin instead.")
+        return cls.getPlugin()
+
+    @classmethod
+    def getPlugin(cls):
+        return cls._plugin
     @classmethod
     def getClassPackageName(cls):
         return cls.getClassPackage().__name__ if cls.getClassPackage() else "orphan"
@@ -1810,7 +1834,11 @@ class Protocol(Step):
         """ Return a more readable string representing the protocol class """
         label = cls.__dict__.get('_label', cls.__name__)
         if prependPackageName:
-            label = "%s - %s" % (cls.getClassPackageName(), label)
+            try:
+                label = "%s - %s" % (cls.getPlugin().getName(), label)
+            except Exception as e:
+                label = "%s -%s" % ("missing", label)
+                logger.error("Couldn't get the plugin name for %s" % label, exc_info=e)
         return label
 
     @classmethod
@@ -1891,6 +1919,7 @@ class Protocol(Step):
         self._storeSteps()
         self._numberOfSteps.set(len(self._steps))
         self._store(self._numberOfSteps)
+        self._newSteps = False
 
     def getStatusMessage(self):
         """ Return the status string and if running the steps done.
@@ -1939,7 +1968,7 @@ class Protocol(Step):
 
     @classmethod
     def getUrl(cls):
-        return cls.getClassPlugin().getUrl(cls)
+        return cls.getPlugin().getUrl(cls)
 
     @classmethod
     def isInstalled(cls):
@@ -2183,8 +2212,8 @@ class Protocol(Step):
     def getHelpText(cls):
         """Get help text to show in the protocol help button"""
         helpText = cls.getDoc()
-        # NOt used since getClassPlugin is always None
-        # plugin = self.getClassPlugin()
+        # NOt used since getPlugin is always None
+        # plugin = self.getPlugin()
         # if plugin:
         #     pluginMetadata = plugin.metadata
         #     helpText += "\n\nPlugin info:\n"
@@ -2344,30 +2373,15 @@ def runProtocolMain(projectPath, protDbPath, protId):
     executor = None
     nThreads = max(protocol.numberOfThreads.get(), 1)
 
-    if protocol.stepsExecutionMode == STEPS_PARALLEL:
-        if protocol.numberOfMpi > 1:
-            # Handle special case to execute in parallel
-            # We run "scipion run pyworkflow/...mpirun.py blah" instead of
-            # calling directly "$SCIPION_PYTHON ...mpirun.py blah", so that
-            # when it runs on a MPI node, it *always* has the scipion env.
-            params = ['-m', 'scipion', 'runprotocol', pw.getPwProtMpiRunScript(),
-                      projectPath, protDbPath, protId]
-            # 'scipion' is treated now as an entry point, but if there is an alias with that name, the alias has higher
-            # priority
-            retcode = pwutils.runJob(None, pw.PYTHON, params,
-                                     numberOfMpi=protocol.numberOfMpi.get(),
-                                     hostConfig=hostConfig)
-            sys.exit(retcode)
-
-        elif nThreads > 1:
-            if protocol.useQueueForSteps():
-                executor = QueueStepExecutor(hostConfig,
-                                             protocol.getSubmitDict(),
-                                             nThreads - 1,
-                                             gpuList=protocol.getGpuList())
-            else:
-                executor = ThreadStepExecutor(hostConfig, nThreads - 1,
-                                              gpuList=protocol.getGpuList())
+    if protocol.stepsExecutionMode == STEPS_PARALLEL and nThreads > 1:
+        if protocol.useQueueForSteps():
+            executor = QueueStepExecutor(hostConfig,
+                                         protocol.getSubmitDict(),
+                                         nThreads - 1,
+                                         gpuList=protocol.getGpuList())
+        else:
+            executor = ThreadStepExecutor(hostConfig, nThreads - 1,
+                                          gpuList=protocol.getGpuList())
 
     if executor is None and protocol.useQueueForSteps():
         executor = QueueStepExecutor(hostConfig, protocol.getSubmitDict(), 1,
@@ -2376,22 +2390,6 @@ def runProtocolMain(projectPath, protDbPath, protId):
     if executor is None:
         executor = StepExecutor(hostConfig,
                                 gpuList=protocol.getGpuList())
-
-    protocol.setStepsExecutor(executor)
-    # Finally run the protocol
-    protocol.run()
-
-
-def runProtocolMainMPI(projectPath, protDbPath, protId, mpiComm):
-    """ This function only should be called after enter in runProtocolMain
-    and the proper MPI scripts have been started...so no validations
-    will be made.
-    """
-    protocol = getProtocolFromDb(projectPath, protDbPath, protId, chdir=True)
-    hostConfig = protocol.getHostConfig()
-    # Create the steps executor
-    executor = MPIStepExecutor(hostConfig, protocol.numberOfMpi.get() - 1,
-                               mpiComm, gpuList=protocol.getGpuList())
 
     protocol.setStepsExecutor(executor)
     # Finally run the protocol
@@ -2462,3 +2460,47 @@ def isProtocolUpToDate(protocol):
 
 class ProtImportBase(Protocol):
     """ Base Import protocol"""
+
+class ProtStreamingBase(Protocol):
+    """ Base protocol to implement streaming protocols.
+    stepsGeneratorStep should be implemented (see its description) and output
+    should be created at the end of the processing Steps created by the stepsGeneratorStep.
+    To avoid concurrency error, when creating the output, do it in a with self._lock: block.
+    Minimum number of threads is 3 and should run in parallel mode.
+    """
+
+    def __init__(self, **kwargs):
+
+        super().__init__()
+        self.stepsExecutionMode = STEPS_PARALLEL
+    def _insertAllSteps(self):
+        # Insert the step that generates the steps
+        self._insertFunctionStep(self.stepsGeneratorStep)
+
+    def _stepsCheck(self):
+
+        # Just store steps created in checkNewInputStep
+        if self._newSteps:
+            self.updateSteps()
+
+    def stepsGeneratorStep(self):
+        """
+        This step should be implemented by any streaming protocol.
+        It should check its input and when ready conditions are met
+        call the self._insertFunctionStep method.
+
+        :return: None
+        """
+        pass
+
+    def _validateThreads(self, messages:list):
+
+        if self.numberOfThreads.get() < 3:
+            messages.append("At least 3 threads are needed for running this protocol. 1 for the core process, "
+                            "1 for the 'step-generator step' and one more for the actual processing" )
+    def _validate(self):
+        """ If you want to implement a validate method do it but call _validateThreads or validate threads value."""
+        errors = []
+        self._validateThreads(errors)
+
+        return errors

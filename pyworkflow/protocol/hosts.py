@@ -123,7 +123,7 @@ class HostConfig(Object):
 
     def getScipionHome(self):
         """ Return the path where Scipion is installed in
-        the host. This is useful when launching remote jobs.
+        the host.
         """
         return self.scipionHome.get()
 
@@ -132,7 +132,7 @@ class HostConfig(Object):
 
     def getScipionConfig(self):
         """ From which file to read the configuration file in
-        this hosts. Useful for remote jobs.
+        this hosts.
         """
         return self.scipionConfig.get()
 
@@ -150,7 +150,7 @@ class HostConfig(Object):
         """ Write a very basic Host configuration for testing purposes. """
         with open(configFn, 'w') as f:
             f.write('[localhost]\nPARALLEL_COMMAND = '
-                    'mpirun -np %%(JOB_NODES)d --map-by node %%(COMMAND)s\n')
+                    'mpirun -np %_(JOB_NODES)d --map-by node %_(COMMAND)s\n')
 
     @classmethod
     def load(cls, hostsConf):

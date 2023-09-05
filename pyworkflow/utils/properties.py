@@ -28,7 +28,8 @@
 """
 This module defines the text used in the application.
 """
-
+# NOTE: DO NOT REMOVE UNTIL plugin manager uses Config.SCIPION_MAIN_COLOR and is released
+from pyworkflow.constants import Color
 
 class Message:
     # Example Usage: 
@@ -68,24 +69,20 @@ class Message:
     LABEL_NEW_ACTION = 'New     '
     LABEL_EDIT = 'Edit'
     LABEL_RENAME = 'Rename '
-    LABEL_EDIT_ACTION = 'Edit     '
     LABEL_COPY = 'Copy'
-    LABEL_COPY_ACTION = 'Copy   '
+    LABEL_PASTE = 'Paste'
+    LABEL_DUPLICATE = 'Duplicate'
     LABEL_DELETE = 'Delete'
-    LABEL_DELETE_ACTION = 'Delete    '
     LABEL_STEPS = 'Steps'
     LABEL_BROWSE = 'Browse'
-    LABEL_BROWSE_ACTION = 'Browse '
     LABEL_DB = 'Db'
     LABEL_STOP = 'Stop'
-    LABEL_STOP_ACTION = 'Stop execution'
     LABEL_ANALYZE = 'Analyze Results'
     LABEL_TREE = 'Tree'
     LABEL_SMALLTREE = 'Small Tree'
     LABEL_REFRESH = 'Refresh'
     LABEL_DEFAULT = 'Default'
     LABEL_CONTINUE = 'Continue'
-    LABEL_CONTINUE_ACTION = 'Approve continue'
     LABEL_EXPORT = 'Export'
     LABEL_EXPORT_UPLOAD = 'Export & upload'
     LABEL_RESTART_WORKFLOW = 'Restart workflow'
@@ -129,7 +126,6 @@ class Message:
     LABEL_THREADS = 'Threads'
     LABEL_MPI = 'MPI'
     LABEL_QUEUE = 'Use a queue engine?'
-    LABEL_QUEUE_FOR_JOBS = 'Use queue for Jobs?'
 
     LABEL_WAIT_FOR = 'Wait for'
     
@@ -277,6 +273,7 @@ Size ("Sampling Rate") (Ts) using the Scanner Pixel Size (Tm), Ts = Tm / M."""
     LABEL_SAVED_FORM = 'The protocol was saved successfully.'
     TITLE_DELETE_FORM = 'Confirm DELETE'
     TITLE_RESTART_FORM = 'Confirm RESTART'
+    TITLE_CONTINUE_FORM = 'Confirm CONTINUE'
     LABEL_DELETE_FORM = """
 You are going to *DELETE* the run(s): 
   - %s
@@ -284,21 +281,40 @@ You are going to *DELETE* the run(s):
 
 Do you really want to continue?'
 """
-    LABEL_RESTART_FORM = """
+    MESSAGE_RESTART_FORM = """
 You are going to *RESTART* the run: 
   %s
 
-Do you really want to restart it?'
+Do you really want to restart it?
 """
-    LABEL_RESTART_FORM_MANY = """
-Following data will be *REMOVED* : 
-  %s
+    MESSAGE_CONTINUE_FORM = """
+    You are going to *CONTINUE* the run: 
+      %s
 
-What do you want to restart?
+    Do you really want to continue it?
+    """
 
-  *Single* : Just this protocol, rest will be reset.
-  *All*: All above listed protocols will be restarted.
-"""
+    MESSAGE_RESTART_WORKFLOW_WITH_RESULTS = """
+    All previous results of the following protocols will be deleted:
+        %s
+
+        Do you really want to *RESTART* the workflow?'
+    """
+
+    MESSAGE_CONTINUE_WORKFLOW_WITH_RESULTS = """
+        All previous results of the following protocols will be affected: 
+        %s
+
+        Do you really want to *CONTINUE* the workflow?
+        """
+
+    MESSAGE_ASK_SINGLE_ALL = """
+        What do you want to do?
+
+        *Single* : Just this protocol.
+        *All*: All above listed protocols will be launched.
+    """
+
 
     TITLE_STOP_FORM = 'Confirm STOP'
     LABEL_STOP_FORM = 'Do you really want to *STOP* this run?'
@@ -308,10 +324,12 @@ What do you want to restart?
     TITLE_SAVE_OUTPUT = 'Save protocol output'
     LABEL_SAVE_OUTPUT = 'Do you wish to save protocol output?'
 
-    TITLE_RESTART_WORKFLOW_FORM = 'Confirm RESTART'
+    TITLE_RESTART_WORKFLOW_FORM = 'Confirm RESTART workflow'
+    TITLE_CONTINUE_WORKFLOW_FORM = 'Confirm CONTINUE workflow'
     TITLE_STOP_WORKFLOW_FORM = 'Confirm STOP'
     TITLE_RESET_WORKFLOW_FORM = 'Confirm RESET'
-    TITLE_RESTART_WORKFLOW = 'Do you really want to *RESTART* this Workflow? All previous results will be deleted'
+    MESSAGE_RESTART_WORKFLOW = 'Do you really want to *RESTART* this workflow?'
+    MESSAGE_CONTINUE_WORKFLOW = 'Do you really want to *CONTINUE* this workflow?'
     TITLE_STOP_WORKFLOW = 'Do you really want to *STOP* this Workflow?'
     TITLE_RESET_WORKFLOW = 'Do you really want to *RESET* this Workflow?'
     TITLE_LAUNCHED_WORKFLOW_FAILED_FORM = 'Error while launching the workflow'
@@ -432,11 +450,12 @@ class Icon:
     ACTION_EDIT = 'fa-pencil.png'
     ACTION_SELECT_FROM = 'fa-arrow-down.png'
     ACTION_SELECT_TO = 'fa-arrow-up.png'
-    ACTION_COPY = 'fa-files-o.png'
+    ACTION_COPY = 'clipboard-regular.png'
+    ACTION_PASTE = 'paste-solid.png'
+    ACTION_DUPLICATE = 'fa-files-o.png'
     ACTION_DELETE = 'fa-trash-o.png'
     ACTION_REFRESH = 'fa-refresh.png'
     ACTION_RENAME = 'rename.png'
-    # TODO: change action_steps icon - fa-codefork?
     ACTION_STEPS = 'fa-list-ul.png'
     ACTION_BROWSE = 'fa-folder-open.png'
     ACTION_DB = 'fa-database.png'
@@ -481,6 +500,10 @@ class Icon:
     FOLDER_OPEN = 'fa-folder-open.png'
     DB = 'file_sqlite.png'
     TXT_FILE = 'file_text.png'
+    POWER_OFF = 'power-off-solid.png'
+    BROOM = 'broom-solid.png'
+    BACKWARD = 'backward-solid.png'
+    CODE_BRANCH = 'code-branch-solid.png'
 
     SCIPION_ICON = 'scipion_icon.png'
     SCIPION_ICON_PROJ = SCIPION_ICON  # 'scipion_icon_proj.png'
@@ -498,7 +521,7 @@ class Icon:
     FAILURE = 'fa-failure.png'
     DELETE_OPERATION = 'fa-delete-operation.png'
     TO_UPDATE = 'fa-update.png'
-    WAITING = 'wait.png'
+    WAITING = 'wait.gif'
     ACTION_UNDO = 'fa-undo.png'
 
     PLUGIN_AUTHORS = 'users.png'
@@ -508,21 +531,6 @@ class Icon:
     PLUGIN_PACKAGE = 'file_folder.png'
 
 
-class Color:
-    RED_COLOR = 'Firebrick'  # Red color for background label  = #B22222
-    LIGHT_RED_COLOR = '#F3CBCB'  # Very light red for row selection
-    LIGHT_BLUE_COLOR = '#EAEBFF'  # Very light blue for even rows
-    LIGHT_GREY_COLOR = '#EAEBEC'  # Light grey for background color in form, protocol, table header and west container
-    LIGHT_GREY_COLOR_2 = '#F2F2F2'  # Very light grey for odd rows, input background, etc
-    DARK_GREY_COLOR = '#6E6E6E'  # Very dark grey for project title, tubes, etc
-    
-    STATUS_SAVED = '#D9F1FA', 
-    STATUS_LAUNCHED = '#D9F1FA', 
-    STATUS_RUNNING = '#FCCE62', 
-    STATUS_FINISHED = '#D2F5CB', 
-    STATUS_FAILED = '#F5CCCB', 
-    STATUS_INTERACTIVE = '#F3F5CB',
-    STATUS_ABORTED = '#F5CCCB',
 
 
 class colorText:
@@ -547,3 +555,5 @@ class KEYSYM:
     """
     DELETE = 'Delete'
     RETURN = 'Return'
+    SHIFT = 'Shift'
+    CONTROL = 'Control'

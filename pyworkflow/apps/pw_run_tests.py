@@ -110,6 +110,7 @@ class Tester:
             for k, p in self.paths:
                 testPath = os.path.join(p, k, 'tests')
                 if os.path.exists(testPath):
+                    self.logger.debug("Discovering tests at %s" % testPath)
                     testsDict[k] = testLoader.discover(testPath,
                                                        pattern=args.pattern,
                                                        top_level_dir=p)

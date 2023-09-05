@@ -83,20 +83,14 @@ class ProjectWindow(ProjectBaseWindow):
                             icon=Icon.FOLDER_OPEN)
         projMenu.addSubMenu('Remove temporary files', 'delete',
                             icon=Icon.ACTION_DELETE)
-        projMenu.addSubMenu('Manage project labels', 'labels',
-                            icon=Icon.TAGS)
         projMenu.addSubMenu('Toggle color mode', 'color_mode',
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
                             shortCut="Ctrl+a", icon=Icon.SELECT_ALL)
-        projMenu.addSubMenu('Find protocol to add', 'find protocol',
+        projMenu.addSubMenu('Add a protocol', 'find protocol',
                             shortCut="Ctrl+f", icon=Icon.FIND)
-        projMenu.addSubMenu('Scipion log', 'scipion log',
-                            icon=Icon.FILE_BW)
         projMenu.addSubMenu('Locate a protocol', 'locate protocol',
                             shortCut="Ctrl+l")
-        projMenu.addSubMenu('Add a protocol', 'find protocol',
-                            shortCut="Ctrl+f")
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
                             icon=Icon.DOWNLOAD)
@@ -106,9 +100,11 @@ class ProjectWindow(ProjectBaseWindow):
             projMenu.addSubMenu('Export tree graph', 'export_tree')
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Debug Mode', 'debug mode',
-                            shortCut="Ctrl+d", icon=Icon.DEBUG)
+                            shortCut="Ctrl+D", icon=Icon.DEBUG)
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Notes', 'notes', icon=Icon.ACTION_EDIT)
+        projMenu.addSubMenu('Scipion log', 'scipion log',
+                            icon=Icon.FILE_BW)
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Exit', 'exit', icon=Icon.ACTION_OUT)
 
@@ -130,7 +126,7 @@ class ProjectWindow(ProjectBaseWindow):
         self.showGraph = False
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
-                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ)
+                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ, _class=self.projName)
 
         OS.handler().maximizeWindow(self.root)
 
@@ -150,14 +146,16 @@ class ProjectWindow(ProjectBaseWindow):
         return self.settings
     
     def saveSettings(self):
-        self.settings.write()
-        
-    def _onClosing(self):
+
         try:
-            if not self.project.openedAsReadOnly():
-                self.saveSettings()
+            self.settings.write()
         except Exception as ex:
-            logger.info("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
+            logger.error(Message.NO_SAVE_SETTINGS, exc_info=ex)
+
+    def _onClosing(self):
+        if not self.project.openedAsReadOnly():
+            self.saveSettings()
+
         ProjectBaseWindow._onClosing(self)
      
     def loadProject(self):
@@ -236,9 +234,9 @@ class ProjectWindow(ProjectBaseWindow):
         
     def _loadWorkflow(self, obj):
         try:
-            self.getViewWidget().info('Importing the workflow...')
+            self.getViewWidget().info('Importing workflow %s' % obj.getPath())
             self.project.loadProtocols(obj.getPath())
-            self.getViewWidget().updateRunsGraph(True, reorganize=False)
+            self.getViewWidget().updateRunsGraph(True)
             self.getViewWidget().cleanInfo()
         except Exception as ex:
             self.showError(str(ex), exception=ex)
@@ -267,9 +265,6 @@ class ProjectWindow(ProjectBaseWindow):
         else:
             logger.info("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
 
-    def onManageProjectLabels(self):
-        self.manageLabels()
-
     def onToggleColorMode(self):
         self.getViewWidget()._toggleColorScheme(None)
 
@@ -286,9 +281,37 @@ class ProjectWindow(ProjectBaseWindow):
         self.getViewWidget()._scipionLog(None)
 
     def manageLabels(self):
-        return LabelsDialog(self.root,
-                            self.project.settings.getLabels(),
+
+        labels = self.project.settings.getLabels()
+        dialog = LabelsDialog(self.root,
+                            labels,
                             allowSelect=True)
+
+        # Scan for renamed labels to update node info...
+        labelsRenamed = dict()
+        for label in labels:
+            if label.hasOldName():
+                oldName = label.getOldName()
+                newName = label.getName()
+                logger.info("Label %s renamed to %s" % (oldName, newName))
+                labelsRenamed[oldName] = newName
+                label.clearOldName()
+
+        # If there are labels renamed
+        if labelsRenamed:
+            logger.info("Updating labels of protocols after renaming.")
+            labels.updateDict()
+
+            for node in self.project.settings.getNodes():
+                nodeLabels = node.getLabels()
+                for index, nodeLabel in enumerate(nodeLabels):
+
+                    newLabel = labelsRenamed.get(nodeLabel, None)
+                    if newLabel is not None:
+                        logger.info("Label %s found in %s. Updating it to %s" % (nodeLabel,node, newLabel))
+                        nodeLabels[index] = newLabel
+
+        return dialog
 
     def initProjectTCPServer(self):
         server = ProjectTCPServer((self.project.address, self.project.port),
@@ -382,7 +405,8 @@ class ProjectManagerWindow(ProjectBaseWindow):
         if os.path.exists(pw.Config.SCIPION_CONFIG):
             confMenu.addSubMenu('General', 'general')
         confMenu.addSubMenu('Hosts', 'hosts')
-        confMenu.addSubMenu('Protocols', 'protocols')
+        if os.path.exists(pw.Config.SCIPION_PROTOCOLS):
+            confMenu.addSubMenu('Protocols', 'protocols')
         if os.path.exists(pw.Config.SCIPION_LOCAL_CONFIG):
             confMenu.addSubMenu('User', 'user')
 
@@ -438,12 +462,6 @@ class ProjectManagerWindow(ProjectBaseWindow):
     @staticmethod
     def onUser():
         ProjectManagerWindow._openConfigFile(pw.Config.SCIPION_LOCAL_CONFIG)
-
-    # Moved to scipion-app
-    # def onPlugins(self):
-    #     # Config -> Plugins
-    #     PluginManager("Plugin Manager", self, pw.Config.SCIPION_USER_DATA,
-    #                   selectButton=None).show()
 
 
 class ProjectTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):

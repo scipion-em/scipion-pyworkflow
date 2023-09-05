@@ -349,13 +349,13 @@ class Form(object):
             self.addParam('numberOfThreads', IntParam, default=threads,
                           label='Threads',
                           help='This option provides shared-memory parallelization on multi-core machines.'
-                                'It does not require any additional software, other than <Xmipp>')
+                                'It does not require any additional software.')
         if mpi > 0:
             self.addParam('numberOfMpi', IntParam, default=mpi,
                           label='MPI processes',
                           help='This option provides the number of independent processes spawned'
                                 'in parallel by <mpirun> command in a cluster, usually through'
-                                'a queue system. This will require that you have compile <Xmipp>'
+                                'a queue system. This will require that you have compile this software '
                                 'with <mpi> support.')
         if jobsize > 0:
             self.addParam('mpiJobSize', IntParam, default=jobsize,
@@ -436,8 +436,17 @@ class FloatParam(Param):
 
         
 class BooleanParam(Param):
-    def __init__(self, **args):
+    """ Param to store boolean values. By default it will be displayed as 2 radio buttons with Yes/no labels.
+    Alternatively, if you pass checkbox it will be displayed as a checkbox.
+
+    :param display: (Optional) default DISPLAY_YES_NO.  (Yes /no)
+                    Alternatively use BooleanParam.DISPLAY_CHECKBOX to use checkboxes """
+    DISPLAY_YES_NO = 1
+    DISPLAY_CHECKBOX = 2
+
+    def __init__(self, display=DISPLAY_YES_NO, **args):
         Param.__init__(self, paramClass=Boolean, **args)
+        self.display = display
         self.addValidator(NonEmptyBool)
 
 
