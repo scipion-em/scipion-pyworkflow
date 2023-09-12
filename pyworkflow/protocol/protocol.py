@@ -617,7 +617,7 @@ class Protocol(Step):
         if self._queueParams:
             d['_queueParams'] = self._queueParams.get()
 
-        od = self.getObjDict()
+        od = self.getObjDict(includePointers=True)
 
         for attrName in od:
             if self.getParam(attrName) is not None:
