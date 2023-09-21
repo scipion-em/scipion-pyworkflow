@@ -436,8 +436,17 @@ class FloatParam(Param):
 
         
 class BooleanParam(Param):
-    def __init__(self, **args):
+    """ Param to store boolean values. By default it will be displayed as 2 radio buttons with Yes/no labels.
+    Alternatively, if you pass checkbox it will be displayed as a checkbox.
+
+    :param display: (Optional) default DISPLAY_YES_NO.  (Yes /no)
+                    Alternatively use BooleanParam.DISPLAY_CHECKBOX to use checkboxes """
+    DISPLAY_YES_NO = 1
+    DISPLAY_CHECKBOX = 2
+
+    def __init__(self, display=DISPLAY_YES_NO, **args):
         Param.__init__(self, paramClass=Boolean, **args)
+        self.display = display
         self.addValidator(NonEmptyBool)
 
 

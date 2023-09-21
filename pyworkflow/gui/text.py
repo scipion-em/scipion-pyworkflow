@@ -36,8 +36,9 @@ import tkinter as tk
 import tkinter.messagebox as tkMessageBox
 
 import pyworkflow as pw
+from pyworkflow import ASCII_COLOR_2_TKINTER
 from pyworkflow.utils import (HYPER_BOLD, HYPER_ITALIC, HYPER_LINK1, HYPER_LINK2,
-                              parseHyperText, renderLine, renderTextFile, colorName,
+                              parseHyperText, renderLine, renderTextFile,
                               which, envVarOn, expandPattern)
 from pyworkflow.utils.properties import Message, Color, Icon
 from . import gui
@@ -112,7 +113,7 @@ class HyperlinkManager:
     http://effbot.org/zone/tkinter-text-hyperlink.htm """
     def __init__(self, text):
         self.text = text
-        self.text.tag_config("hyper", foreground=Color.RED_COLOR, underline=1)
+        self.text.tag_config("hyper", foreground=pw.Config.SCIPION_MAIN_COLOR, underline=1)
         self.text.tag_bind("hyper", "<Enter>", self._enter)
         self.text.tag_bind("hyper", "<Leave>", self._leave)
         self.text.tag_bind("hyper", "<Button-1>", self._click)
@@ -312,7 +313,7 @@ class Text(tk.Text, Scrollable):
 def configureColorTags(text):
     """ Create tags in text (of type tk.Text) for all the supported colors. """
     try:
-        for color in colorName.values():
+        for color in ASCII_COLOR_2_TKINTER.values():
             text.tag_config(color, foreground=color)
         return True
     except Exception as e:
@@ -335,7 +336,7 @@ class TaggedText(Text):
         self.hm = HyperlinkManager(self)
 
     def getDefaults(self):
-        return {'bg': "white", 'bd': 0}
+        return {'bg': pw.Config.SCIPION_BG_COLOR, 'bd': 0}
         # It used to have also 'font': gui.fontNormal  but that stops
         # this file from running. Apparently there is no fontNormal in gui.
 
@@ -485,7 +486,7 @@ class OutputText(Text):
 class TextFileViewer(tk.Frame):
     """ Implementation of a simple text file viewer """
     
-    LabelBgColor = "white"
+    # Not used? --> LabelBgColor = "white"
     
     def __init__(self, master, fileList=[],
                  allowSearch=True, allowRefresh=True, allowOpen=False,
@@ -557,9 +558,10 @@ class TextFileViewer(tk.Frame):
             self.searchEntry = tk.Entry(right, textvariable=self.searchVar,
                                         font=self._font)
             self.searchEntry.grid(row=0, column=4, sticky='ew', padx=5)
-            self.searchEntry.bind('<Return>', self.findText)
-            self.searchEntry.bind('<KP_Enter>', self.findText)
-            # btn = IconButton(right, "Search", Icon.ACTION_SEARCH,
+
+            # self.searchEntry.bind('<Return>', self.findText)
+            # self.searchEntry.bind('<KP_Enter>', self.findText)
+            # # btn = IconButton(right, "Search", Icon.ACTION_SEARCH,
             #                  tooltip=Message.TOOLTIP_SEARCH,
             #                  command=self.findText, bg=None)
             # btn.grid(row=0, column=5, padx=(0, 5))
@@ -614,6 +616,8 @@ class TextFileViewer(tk.Frame):
                                (lambda e: self.findText(matchCase=True), "Trigger a case sensitive search", ['<Shift-Return>']),
                                (lambda e: self.findText(), "Move to the next highlighted item", ["<Down>", '<F3>']),
                                (lambda e: self.findText(-1), "Move to the previous highlighted item", ["<Up>", '<Shift-F3>']),
+                               (lambda e: self.modifyFontSize(pw.Config.SCIPION_FONT_SIZE + 2), "Increase the font size",["<Control-KP_Add>"]),
+                               (lambda e: self.modifyFontSize(pw.Config.SCIPION_FONT_SIZE), "Increase the font size",["<Control-KP_Subtract>"]),
                                ]
         tooltip = "Shortcuts:"
 
@@ -674,6 +678,10 @@ class TextFileViewer(tk.Frame):
 
     def findPrevText(self):
         self.findText(-1)
+
+    def modifyFontSize(self, newSize):
+        text = self.selectedText()
+        text['font']=(None, newSize)
 
     def findText(self, direction=1, matchCase=0):
         text = self.selectedText()

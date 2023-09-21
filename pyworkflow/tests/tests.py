@@ -12,6 +12,7 @@ import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.project import Manager
 from pyworkflow.protocol import MODE_RESTART, getProtocolFromDb
+from pyworkflow.object import Set
 
 SMALL = 'small'
 PULL_REQUEST = 'pull'
@@ -66,7 +67,7 @@ class DataSet:
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
 
-        if not pwutils.strToBoolean(pw.Config.SCIPION_TEST_NOSYNC):
+        if not pw.Config.SCIPION_TEST_NOSYNC:
             command = ("%s %s --download %s %s"
                        % (pw.PYTHON, pw.getSyncDataScript(), folder, url))
             logger.info(">>>> %s" % command)
@@ -210,6 +211,12 @@ class BaseTest(unittest.TestCase):
                 item1.printAll()
                 item2.printAll()
             test.assertTrue(areEqual)
+
+    def compareSetProperties(self, set1:Set, set2:Set, ignore = ["_size", "_mapperPath"]):
+        """ Compares 2 sets' properties"""
+
+        self.assertTrue(set1.equalAttributes(set2, ignore=ignore, verbose=True), "Set1 (%s) properties differs from set2 (%s)." % (set1, set2))
+        self.assertTrue(set2.equalAttributes(set1, ignore=ignore, verbose=True), 'Set2 (%s) has properties that set1 (%s) does not have.' % (set2, set1))
 
     def assertSetSize(self, setObject, size=None, msg=None, diffDelta=None):
         """ Check if a pyworkflow Set is not None nor is empty, or of a determined size or

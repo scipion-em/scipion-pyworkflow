@@ -193,28 +193,36 @@ class Validations:
 
     @staticmethod
     def validString(value):
-        return value is not None
+        if value is None:
+            return "String does not accept None/empty values."
 
     @staticmethod
     def validInteger(value):
-        return value.isdigit()
+        if not value.isdigit():
+            return "Value does not seem to be an integer number."
 
     @staticmethod
     def validPath(value):
-        return os.path.exists(value)
+        if not os.path.exists(value):
+            return "Path does not exists."
 
     @staticmethod
     def validDecimal(value):
 
         try:
             float(value)
-            return True
+            return None
         except Exception as e:
-            return False
+            return "Value can't be converted to a float (%s)" % str(e)
 
     @staticmethod
     def validBoolean(value):
-        return value is True or value is False
+        validValues = ["true", "1", "false", "0"]
+
+        valueL = value.lower()
+
+        if valueL not in validValues:
+            return "Only valid values for a boolean type are: %s" % validValues
 
 
 class TemplateList:
@@ -261,7 +269,7 @@ class TemplateList:
         # Check if there is any .json.template in the template folder
         # get the template folder (we only want it to be included once)
         for pluginName, pluginModule in domain.getPlugins().items():
-            tempListPlugin = pluginModule.Plugin.getTemplates()
+            tempListPlugin = pluginModule._pluginInstance.getTemplates()
             for t in tempListPlugin:
                 if tempId is not None:
                     if t.getObjId() == tempId:

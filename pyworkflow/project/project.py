@@ -25,6 +25,8 @@
 # *
 # **************************************************************************
 import logging
+
+ROOT_NODE_NAME = "PROJECT"
 logger = logging.getLogger(__name__)
 
 import datetime as dt
@@ -99,7 +101,7 @@ class Project(object):
         self.address = ''
         self.port = pwutils.getFreePort()
         self.mapper = None
-        self.settings = None
+        self.settings:config.ProjectSettings = None
         # Host configuration
         self._hosts = None
         #  Creation time should be stored in project.sqlite when the project
@@ -412,6 +414,8 @@ class Project(object):
         if continuedProtList is not None:
             for protocol, level in continuedProtList.values():
                 if not protocol.isInteractive():
+                    if protocol.isScheduled():
+                        continue
                     if protocol.worksInStreaming():
                         attrSet = [attr for name, attr in
                                    protocol.iterOutputAttributes(pwprot.Set)]
@@ -437,6 +441,8 @@ class Project(object):
                         if level != 0:
                             # we make sure that at least one protocol in streaming
                             # has been launched
+                            if protocol.isActive():
+                                self.stopProtocol(protocol)
                             self._restartWorkflow({protocol.getObjId(): (protocol, level)},
                                                   errorsList)
 
@@ -461,6 +467,10 @@ class Project(object):
             for protocol, level in restartedProtList.values():
                 if not protocol.isInteractive():
                     try:
+                        if protocol.isScheduled():
+                            continue
+                        elif protocol.isActive():
+                            self.stopProtocol(protocol)
                         protocol.runMode.set(MODE_RESTART)
                         self.scheduleProtocol(protocol,
                                               initialSleepTime=level*INITIAL_SLEEP_TIME)
@@ -510,7 +520,7 @@ class Project(object):
         :param initialProtocol: selected protocol
         """
         errorProtList = []
-        for protocol in activeProtList:
+        for protocol in activeProtList.values():
             try:
                 self.stopProtocol(protocol)
             except Exception:
@@ -819,38 +829,51 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _getWorkflowFromProtocol(self, protocol, fixProtParam=True):
+    def _getSubworkflow(self, protocol, fixProtParam=True, getStopped=True):
         """
         This function get the workflow from "protocol" and determine the
         protocol level into the graph. Also, checks if there are active
         protocols excluding interactive protocols.
+        :param protocol from where to start the subworkflow (included)
+        :param fixProtParam fix the old parameters configuration in the protocols
+        :param getStopped takes into account protocols that aren't stopped
         """
-        activeProtList = []
-        configuredProtList = {}
+        affectedProtocols = {}
+        affectedProtocolsActive = {}
         auxProtList = []
         # store the protocol and your level into the workflow
-        configuredProtList[protocol.getObjId()] = [protocol, 0]
-        auxProtList.append(protocol.getObjId())
+        affectedProtocols[protocol.getObjId()] = [protocol, 0]
+        auxProtList.append([protocol.getObjId(), 0])
         runGraph = self.getRunsGraph()
 
         while auxProtList:
-            protocol = runGraph.getNode(str(auxProtList.pop(0))).run
-            level = configuredProtList[protocol.getObjId()][1] + 1
+            protId, level = auxProtList.pop(0)
+            protocol = runGraph.getNode(str(protId)).run
+
+            # Increase the level for the children
+            level = level + 1
+
             if fixProtParam:
                 self._fixProtParamsConfiguration(protocol)
-            if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                activeProtList.append(protocol)
+
+            if not getStopped and protocol.isActive():
+                affectedProtocolsActive[protocol.getObjId()] = protocol
+            elif not protocol.getObjId() in affectedProtocolsActive.keys() and getStopped and \
+                    not protocol.isSaved() and protocol.getStatus() != STATUS_INTERACTIVE:
+                affectedProtocolsActive[protocol.getObjId()] = protocol
+
             node = runGraph.getNode(protocol.strId())
             dependencies = [node.run for node in node.getChilds()]
             for dep in dependencies:
                 if not dep.getObjId() in auxProtList:
-                    auxProtList.append(dep.getObjId())
-                if not dep.getObjId() in configuredProtList.keys():
-                    configuredProtList[dep.getObjId()] = [dep, level]
-                elif level > configuredProtList[dep.getObjId()][1]:
-                    configuredProtList[dep.getObjId()][1] = level
+                    auxProtList.append([dep.getObjId(), level])
 
-        return configuredProtList, activeProtList
+                if not dep.getObjId() in affectedProtocols.keys():
+                    affectedProtocols[dep.getObjId()] = [dep, level]
+                elif level > affectedProtocols[dep.getObjId()][1]:
+                    affectedProtocols[dep.getObjId()][1] = level
+
+        return affectedProtocols, affectedProtocolsActive
 
     def deleteProtocol(self, *protocols):
         self._checkModificationAllowed(protocols, 'Cannot DELETE protocols')
@@ -1136,14 +1159,22 @@ class Project(object):
         """ Load protocols generated in the same format as self.exportProtocols.
 
         :param filename: the path of the file where to read the workflow.
-        :param jsonStr: Not used.
+        :param jsonStr:
 
         Note: either filename or jsonStr should be not None.
 
         """
-        f = open(filename)
-        importDir = os.path.dirname(filename)
-        protocolsList = json.load(f)
+        importDir = None
+        if filename:
+            with open(filename) as f:
+                importDir = os.path.dirname(filename)
+                protocolsList = json.load(f)
+
+        elif jsonStr:
+            protocolsList = json.loads(jsonStr)
+        else:
+            logger.error("Invalid call to  loadProcols. Either filename or jsonStr has to be passed.")
+            return
 
         emProtocols = self._domain.getProtocols()
         newDict = OrderedDict()
@@ -1161,9 +1192,9 @@ class Project(object):
                 prot = self.newProtocol(protClass,
                                         objLabel=protLabel,
                                         objComment=protDict.get('object.comment', None))
-                protocolsList[i] = prot.processImportDict(protDict, importDir)
+                protocolsList[i] = prot.processImportDict(protDict, importDir) if importDir else protDict
 
-                prot._useQueue.set(protDict.get('_useQueue', False))
+                prot._useQueue.set(protDict.get('_useQueue', pw.Config.SCIPION_USE_QUEUE))
                 prot._queueParams.set(protDict.get('_queueParams', None))
                 prot._prerequisites.set(protDict.get('_prerequisites', None))
                 prot.forceSchedule.set(protDict.get('forceSchedule', False))
@@ -1230,7 +1261,6 @@ class Project(object):
 
                 self.mapper.store(prot)
 
-        f.close()
         self.mapper.commit()
 
         return newDict
@@ -1444,12 +1474,19 @@ class Project(object):
 
         """
         outputDict = {}  # Store the output dict
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
 
         for r in runs:
             n = g.createNode(r.strId())
             n.run = r
-            n.setLabel(r.getRunName())
+
+            # Legacy protocols do not have a plugin!!
+            develTxt =''
+            plugin=r.getPlugin()
+            if plugin and plugin.inDevelMode():
+                develTxt='ẟ '
+
+            n.setLabel('%s%s' % (develTxt , r.getRunName()))
             outputDict[r.getObjId()] = n
             for _, attr in r.iterOutputAttributes():
                 # mark this output as produced by r
@@ -1482,7 +1519,7 @@ class Project(object):
                         _checkInputAttr(node, parent)
         rootNode = g.getRoot()
         rootNode.run = None
-        rootNode.label = "PROJECT"
+        rootNode.label = ROOT_NODE_NAME
 
         for n in g.getNodes():
             if n.isRoot() and n is not rootNode:
@@ -1493,7 +1530,7 @@ class Project(object):
         """ Retrieve objects produced as outputs and
         make a graph taking into account the SOURCE relation. """
         relations = self.mapper.getRelationsByName(relation)
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
         root = g.getRoot()
         root.pointer = None
         runs = self.getRuns(refresh=refresh)
@@ -1679,7 +1716,6 @@ class Project(object):
             if isinstance(prot, ProtImportBase) or prot.getClassName() == "ProtImportMovies":
                 logger.info("Import detected")
                 for _, attr in prot.iterOutputAttributes():
-                    fn = attr.getFiles()
                     for f in attr.getFiles():
                         if ':' in f:
                             f = f.split(':')[0]
@@ -1690,22 +1726,26 @@ class Project(object):
                                 logger.info("Found broken links in run: %s" %
                                       pwutils.magenta(prot.getRunName()))
                             logger.info("  Missing: %s" % pwutils.magenta(f))
+
                             if os.path.islink(f):
-                                logger.info("    -> %s" % pwutils.red(os.path.realpath(f)))
-                            newFile = pwutils.findFile(os.path.basename(f),
+                                sourceFile = os.path.realpath(f)
+                                logger.info("    -> %s" % pwutils.red(sourceFile))
+
+                                newFile = pwutils.findFile(os.path.basename(sourceFile),
                                                        searchDir,
                                                        recursive=True)
-                            if newFile:
-                                logger.info("  Found file %s, creating link... %s" % (newFile,
-                                    pwutils.green("   %s -> %s" % (f, newFile))))
-                                pwutils.createAbsLink(newFile, f)
+                                if newFile:
+                                    logger.info("  Found file %s, creating link... %s" % (newFile,
+                                        pwutils.green("   %s -> %s" % (f, newFile))))
+                                    pwutils.createAbsLink(newFile, f)
 
     @staticmethod
     def cleanProjectName(projectName):
         """ Cleans a project name to avoid common errors
-        Use it whenever you want to get the final project name pyworkflow will endup.
+        Use it whenever you want to get the final project name pyworkflow will end up.
         Spaces will be replaced by _ """
-        return projectName.replace(" ", "_")
+
+        return re.sub("[^\w\d\-\_]", "-", projectName)
 
 
 class MissingProjectDbException(Exception):

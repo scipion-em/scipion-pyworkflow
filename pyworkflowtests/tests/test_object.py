@@ -56,7 +56,7 @@ class TestObject(pwtests.BaseTest):
     def test_ObjectsDict(self):
         # Validate that the object dict is populated correctly
         basicObjNames = [
-            'Object', 'Scalar', 'Integer', 'Float', 'String', 'Pointer',
+            'Scalar', 'Integer', 'Float', 'String', 'Pointer', 'Boolean',
             'OrderedObject', 'List', 'CsvList', 'PointerList', 'Set'
         ]
         self.assertTrue(all(name in pwobj.OBJECTS_DICT
@@ -345,6 +345,10 @@ class TestObject(pwtests.BaseTest):
         lastResort.setLevel(DEBUG)
         imgSetVerbose = MockSetOfImages(filename=fn)
         imgSetVerbose.loadAllProperties()
+
+        # Compare sets are "equal"
+        self.compareSetProperties(imgSet, imgSetVerbose, ignore=[])
+
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values

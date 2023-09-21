@@ -1,5 +1,6 @@
 
 import logging
+
 logger = logging.getLogger(__file__)
 import ast
 import importlib
@@ -76,6 +77,11 @@ class Config:
     @staticmethod
     def __get(key, default):
         value = os.environ.get(key, default)
+
+        # If empty use default value
+        if value == "" != default:
+            logger.warning("%s variable is empty, falling back to default value (%s)" % (key, default))
+            value = default
         # Expand user and variables if string value
         if isinstance(value, str):
             value = os.path.expandvars(os.path.expanduser(value))
@@ -100,11 +106,18 @@ class Config:
     SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
     "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"
 
+    # Actual SCIPION_HOME
+    SCIPION_HOME_DEFINED = _get(SCIPION_HOME_VAR, False)
+    "False if SCIPION_HOME is found in the environment"
+
     _root = Root(SCIPION_HOME)
     _join = _root.join
 
+    # Internal cached variables, use __ so they are not returned in getVars
+    __activeColor = None
+
     CONDA_ACTIVATION_CMD = _get(CONDA_ACTIVATION_CMD_VAR,'')
-    "Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\""
+    "str: Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\""
 
     # SCIPION PATHS
     SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
@@ -131,13 +144,13 @@ class Config:
     "Path to the file where scipion will write GUI logging messages. Defaults to SCIPION_LOGS/scipion.log"
 
     SCIPION_LOG_FORMAT = _get('SCIPION_LOG_FORMAT', "%(message)s")
-    "Format for all the log lines, defaults to %(message)s. To compose the format see https://docs.python.org/3/library/logging.html#logrecord-attributes"
+    "str: Format for all the log lines, defaults to %(message)s. To compose the format see https://docs.python.org/3/library/logging.html#logrecord-attributes"
 
     SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
     "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO."
 
     NO_COLOR = _get('NO_COLOR', '')
-    "Comply with https://no-color.org/ initiative. Set it to something different than '' to deactivate colors in the output."
+    "str: Comply with https://no-color.org/ initiative. Set it to something different than '' to deactivate colors in the output."
 
     SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
     "Optional. Path to a location mounted in a scratch drive (SSD,...)"
@@ -145,7 +158,7 @@ class Config:
     SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
     "Path to a folder Where the output of the tests will be written. Defaults to SCIPION_USER_DATA/Tests."
 
-    SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', "False")
+    SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', FALSE_STR) != FALSE_STR
     "Set it to 1, True, Yes or y to cancel test dataset synchronization. Needed when updating files in a dataset."
 
     SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL', 'scipion@cnb.csic.es')
@@ -193,34 +206,42 @@ class Config:
     SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', SCIPION_DEFAULT_FONT_SIZE))
     "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10."
 
+    SCIPION_MAIN_COLOR = _get('SCIPION_MAIN_COLOR', Color.MAIN_COLOR)
+    "str: Main color of the GUI. Background will be white, so for better contrast choose a dark color. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
+
+    SCIPION_BG_COLOR = _get('SCIPION_BG_COLOR', Color.BG_COLOR)
+    "str: Main background color of the GUI. Default is white, chose a light one. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
+
     WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
     "Color to use in some wizards."
 
     # Notification
-    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', 'True')
+    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR) == TRUE_STR
     "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it."
 
+    # *** Execution variables ***
     SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
     "Directory when scipion was launched"
 
-    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', 'False')
+    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', FALSE_STR) != FALSE_STR
     "True to refresh the runs graph with a thread. Unstable."
 
     SCIPION_GUI_REFRESH_INITIAL_WAIT = int(_get("SCIPION_GUI_REFRESH_INITIAL_WAIT", 5))
     "Seconds to wait after a manual refresh"
 
-    SCIPION_GUI_CANCEL_AUTO_REFRESH = _get("SCIPION_GUI_CANCEL_AUTO_REFRESH","False")
+    SCIPION_GUI_CANCEL_AUTO_REFRESH = _get("SCIPION_GUI_CANCEL_AUTO_REFRESH",FALSE_STR) != FALSE_STR
     "Set it to True to cancel automatic refresh of the runs."
 
-    # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not fallback on the slow copy.
-    SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', None)
-    "Cancel fast copy done by shutil (copying files) when it fails. Has happened in GPFS environments."
+    # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not
+    # fallback on the slow copy. For legacy reasons None is also False.
+    SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', FALSE_STR) not in [NONE_STR, FALSE_STR]
+    "Cancel fast copy done by shutil (copying files) when it fails. Has happened in GPFS environments. Defaults to False. None is also False otherwise fastcopy is cancelled."
 
     # Priority package list: This variable is used in the view protocols in
     # order to load first the plugins that contains the main protocols.conf
     # sections, so other plugins can define only their sections avoiding
-    # duplicating all the sections in all plugins
-    SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', None)
+    # duplicating all the sections in all plugins. Scipion app is currently defining it for em tomo and chem
+    SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', EMPTY_STR)
 
     SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 5))
     "Number of seconds to wait before checking if new input is available in streamified protocols."
@@ -231,12 +252,14 @@ class Config:
     SCIPION_UPDATE_SET_ATTEMPT_WAIT = int(_get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2))
     "Time in seconds to wait until the next attempt when checking new outputs. The default value is 2 seconds"
 
+    SCIPION_USE_QUEUE = _get("SCIPION_USE_QUEUE", FALSE_STR) != FALSE_STR
+    "Default value for using the queue. By default is False. ANY value will be True except and empty value. \"False\" or \"0\" will be True too."
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:
         VIEWERS = {}
-        print("ERROR loading preferred viewers, VIEWERS variable will be ignored")
-        print(e)
+        logger.error("ERROR loading preferred viewers, VIEWERS variable will be ignored", exc_info=e)
 
     SCIPION_DOMAIN = _get(SCIPION_DOMAIN, None)
     SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript())
@@ -289,7 +312,7 @@ class Config:
 
     @classmethod
     def printVars(cls):
-        """ Print the variables dict, mostly for debugging. """
+        """ Print the variables' dict, mostly for debugging. """
         from .utils import prettyDict
         prettyDict(cls.getVars())
 
@@ -337,8 +360,7 @@ class Config:
 
     @staticmethod
     def debugSQLOn():
-        from .utils import envVarOn
-        return bool(envVarOn(SCIPION_DEBUG_SQLITE))
+        return Config.debugOn()
 
     @staticmethod
     def toggleDebugSQL():
@@ -347,8 +369,7 @@ class Config:
 
     @classmethod
     def refreshInThreads(cls):
-        from .utils import strToBoolean
-        return strToBoolean(cls.SCIPION_GUI_REFRESH_IN_THREAD)
+        return cls.SCIPION_GUI_REFRESH_IN_THREAD
 
     @classmethod
     def getExternalJsonTemplates(cls):
@@ -360,7 +381,7 @@ class Config:
 
     @classmethod
     def getPriorityPackageList(cls):
-        if cls.SCIPION_PRIORITY_PACKAGE_LIST is not None:
+        if cls.SCIPION_PRIORITY_PACKAGE_LIST != EMPTY_STR:
             return cls.SCIPION_PRIORITY_PACKAGE_LIST.split(" ")
         else:
             return []
@@ -382,6 +403,35 @@ class Config:
         """ Returns true if colors are allowed. Based on NO_COLOR variable. Undefined or '' colors are enabled"""
         return cls.NO_COLOR == ''
 
+
+    @classmethod
+    def getActiveColor(cls):
+        """ Returns a color lighter than the SCIPION_MAIN_COLOR"""
+
+        if cls.__activeColor is None:
+            import matplotlib.colors
+            from pyworkflow.utils import lighter, rgb_to_hex
+            try:
+                rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
+            except Exception:
+                logger.error("Cannot convert SCIPION_MAIN_COLOR (%s) string to a color to compute the lighter color."
+                             " Falling back to %s" % (Config.SCIPION_MAIN_COLOR, Color.MAIN_COLOR))
+                cls.SCIPION_MAIN_COLOR = Color.MAIN_COLOR
+                rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
+
+            rgb_main = (rgb_main[0] * 255, rgb_main[1] * 255, rgb_main[2] * 255)
+            rgb_active = lighter(rgb_main, 0.3)
+            cls.__activeColor = rgb_to_hex(rgb_active)
+
+        return cls.__activeColor
+
+    @classmethod
+    def isScipionRunning(cls):
+        """ Returns true if this execution is understood to be running Scipion.
+        In some case, documentation inspection by sphynx or when packaging a plugin using setup.py
+        this code could be reached but is not an actual execution. This is useful for cancelling some actions
+        like registering FileHandlers or other stuff not needed when just importing modules."""
+        return cls.SCIPION_HOME_DEFINED != False
 
 # Add bindings folder to sys.path
 sys.path.append(Config.getBindingsFolder())

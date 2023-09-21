@@ -30,13 +30,13 @@ import os
 import re
 from datetime import datetime
 import traceback
-from enum import Enum
+import sysconfig
 
 import bibtexparser
 import numpy as np
 import math
 
-from pyworkflow import Config
+from pyworkflow import Config, StrColors
 
 
 def prettyDate(time=False):
@@ -348,6 +348,16 @@ def getHostFullName():
     import socket
     return socket.getfqdn()
 
+def getPython():
+    return sys.executable
+
+def getPythonPackagesFolder():
+    # This does not work on MAC virtual envs
+    # import site
+    # return site.getsitepackages()[0]
+
+    return sysconfig.get_path("platlib")
+
 
 # ******************************File utils *******************************
 
@@ -395,15 +405,6 @@ def hasFileChangedSince(file, time):
 
 
 # ------------- Colored message strings -----------------------------
-
-class StrColors(Enum):
-    gray = 30
-    red = 31
-    green = 32
-    yellow = 33
-    blue = 34
-    magenta = 35
-    cyan = 36
 
 
 def getColorStr(text, color, bold=False):

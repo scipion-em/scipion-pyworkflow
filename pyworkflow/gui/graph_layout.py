@@ -62,70 +62,20 @@ class GraphLayout(object):
 
         return self._fontScaleFactor
 
-
     def draw(self, graph, **kwargs):
         """ Setup the nodes position in the plane. """
         pass
 
 
-class BasicLayout(GraphLayout):
-    """ This layout will keep node position as much as possible.
-    It will try to allocate the nodes with x=0 and y=0.
-    """
-    def draw(self, graph, **kwargs):
-        """ Organize nodes of the graph in the plane.
-        Nodes should have: x, y, width and height attributes
-        x and y will be modified.
-        """
-        for node in graph.getNodes():
-            if hasattr(node, 'x') and hasattr(node, 'y'):
-                if getattr(node, 'x', 0) == 0 or node.y == 0:
-                    self._drawNode(node)
-                
-    def _drawNode(self, node):
-        """ Allocate node with x=0 and y=0. """
-
-        try:
-            parents = node.getParents()
-            if not parents:
-                logger.info("EMPTY NODE")
-                return
-            maxParent = parents[0]
-
-            for p in parents[1:]:
-                if p.y > maxParent.y:
-                    maxParent = p
-
-            siblings = maxParent.getChilds()
-
-            if len(siblings) == 1:
-                node.x = maxParent.x
-                node.y = maxParent.y + self.getY()
-            else:
-                rightSibling = siblings[0]
-                for s in siblings:
-                    if s.x > rightSibling.x:
-                        rightSibling = s
-                node.x = rightSibling.x + rightSibling.width/2 + self.DX + node.width/2
-                node.y = rightSibling.y
-        except Exception as e:
-            if Config.debugOn():
-                logger.debug("Can't draw node: %s" % node, e)
-                import traceback
-                logger.debug("".join(traceback.format_stack()))
-            else:
-                # Do nothing
-                return
-
-
 class LevelTreeLayout(GraphLayout):
     """ Organize the nodes of the graph by levels.
-    It will recursively organize childs and then
-    fit two sibling trees. """
+    It will recursively organize children and then
+    fit the sibling trees. """
     
-    def __init__(self):
+    def __init__(self, partial=False):
         GraphLayout.__init__(self)
         self.maxLevel = 9999
+        self.partial = partial
 
     def draw(self, graph, **kwargs):
         """
@@ -152,6 +102,9 @@ class LevelTreeLayout(GraphLayout):
         # Clean temporary _layout attributes
         for node in graph.getNodes():
             del node._layout
+
+    def _isNewNode(self, node):
+        return node.x == 0 or node.y == 0 or node.isRoot()
         
     def _setLayoutLevel(self, node, level, parent):
         """ Iterate over all nodes and set _layout dict.
@@ -166,7 +119,8 @@ class LevelTreeLayout(GraphLayout):
         if level > layout.get('level', 0):
             # Calculate the y-position depending on the level
             # and the delta-Y (DY)
-            node.y = level * self.getY()
+            if not self.partial or self._isNewNode(node):
+                node.y = level * self.getY()
             layout['level'] = level
             layout['parent'] = parent
             if hasattr(node, 'width'):
@@ -179,7 +133,8 @@ class LevelTreeLayout(GraphLayout):
     
             if self.__isNodeExpanded(node):
                 for child in node.getChilds():
-                    logger.debug("%s: Setting layout for child %s" % ("-" * level, child))
+                    if Config.debugOn():
+                        print("%s: Setting layout for child %s" % ("-" * level, child), flush=True)
                     self._setLayoutLevel(child, level+1, node)
 
     def __isNodeExpanded(self, node):
@@ -302,7 +257,9 @@ class LevelTreeLayout(GraphLayout):
             return 
         
         layout = node._layout
-        node.x = x + layout['offset']
+
+        if not self.partial or self._isNewNode(node):
+            node.x = x + layout['offset']
         
         childs = self.__getNodeChilds(node)
         

@@ -80,12 +80,16 @@ class Preview(tk.Frame):
         self.canvas.get_tk_widget().grid(column=0, row=0)  # , sticky=(N, W, E, S))
         self.canvas.get_tk_widget().config(bg=TK_GRAY_DEFAULT)
         if label:
-            tk.Label(self, text=label).grid(column=0, row=1)
+            self.label = tk.Label(self, text=label)
+            self.label.grid(column=0, row=1)
         self._createAxes()
 
         if listenersDict is not None:
             for bindingKey, callback in listenersDict.items():
                 self.canvas.get_tk_widget().bind(bindingKey, callback)
+
+    def setLabel(self, text):
+        self.label.config(text=text)
 
     def setWindowTitle(self, title):
         """ Set window title"""
