@@ -249,6 +249,17 @@ class SqliteMapper(Mapper):
             obj.set(objValue)
         
     def fillObject(self, obj, objRow, includeChildren=True):
+        """ Fills an already instantiated object the data in a row, including children
+
+        NOTE: This, incase children are included, makes a query to the db with all its children 'like 2.*'.
+        At some point it calls selectById triggering the loading of other protocols and ancestors.
+
+        :param obj: Object to fill
+        :param objRow: row with the values
+        :param includeChildren: (True). If true children are also populated
+
+        """
+
         self.fillObjectWithRow(obj, objRow)
         namePrefix = self.__getNamePrefix(obj)
 
@@ -272,11 +283,17 @@ class SqliteMapper(Mapper):
                     setattr(parentObj, childName, self.objDict[childId])
                     continue
 
+                # Try to get the instance from the parent
                 childObj = getattr(parentObj, childName, None)
+
+                # If parent does not have that attribute...
                 if childObj is None:
+                    # Instantiate it based on the class Name
                     childObj = self._buildObjectFromClass(childRow[CLASSNAME])
+
                     # If we have any problem building the object, just ignore it
                     if childObj is None:
+                        # This is the case for deprecated types.
                         continue
                     setattr(parentObj, childName, childObj)
 
@@ -415,6 +432,9 @@ class SqliteMapper(Mapper):
         return objs
 
     def _getObjectFromRow(self, row):
+        """ Creates and fills and object described iin row
+
+        :param row: A row with the Class to instantiate, and value to set."""
 
         # Get the ID first
         identifier = row[ID]

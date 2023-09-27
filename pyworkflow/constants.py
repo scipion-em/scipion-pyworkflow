@@ -177,7 +177,7 @@ ASCII_COLOR_2_TKINTER =\
      StrColors.white.value: 'white'}
 
 class DOCSITEURLS:
-    """Documentation site URL useful when exceptions happens and you want to point to some pages"""
+    """Documentation site URL useful when exceptions happen and you want to point to some pages"""
     HOME = 'https://scipion-em.github.io/docs/release-3.0.0/'
     DOCS = HOME + 'docs/'
     CONFIG = DOCS + 'scipion-modes/scipion-configuration.html'
