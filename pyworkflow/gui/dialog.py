@@ -71,6 +71,8 @@ class Dialog(tk.Toplevel):
             parent = tk.Tk()
             parent.withdraw()
             gui.setCommonFonts()
+            # invoke the button on the return key
+            parent.bind_class("Button", "<Key-Return>", lambda event: event.widget.invoke())
 
         tk.Toplevel.__init__(self, parent)
 

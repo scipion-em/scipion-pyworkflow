@@ -6,6 +6,7 @@ users:
   - Partial importing/pasting will be linked to existing protocols in the project with the same id.
   - Fix: Scheduling failed with direct pointers (impossible to get form GUI but programming or tests)
   - tests: possible to use " tomo." (e.g.) to test just a plugin. Unfortunately needs adaptation in the launcher
+  - "Return" keypress "clicks" the active button in a window
 
 developers:
   - Control and Shift keypress are captured when clicking in analyze result button and passed to the viewer.
