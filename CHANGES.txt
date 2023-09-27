@@ -4,10 +4,14 @@ users:
   - Boxes from Plugins in devel mode are prefixed with * now (not delta anymore)
   - Partial exporting/copying will carry also the input of those protocols not being exported
   - Partial importing/pasting will be linked to existing protocols in the project with the same id.
+  - Fix: Scheduling failed with direct pointers (impossible to get form GUI but programming or tests)
+  - tests: possible to use " tomo." (e.g.) to test just a plugin. Unfortunately needs adaptation in the launcher
+  - "Return" keypress "clicks" the active button in a window
 
 developers:
   - Control and Shift keypress are captured when clicking in analyze result button and passed to the viewer.
   - Project.getProtocol() has a fromRuns mode to prevent going to the db. Used in a couple of calls.(performance)
+  - Plotter.createSubPlot: allow plots without axis passing xlabel and ylabel as None
 
 V3.2.0
 ------

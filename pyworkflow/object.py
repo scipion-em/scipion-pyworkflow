@@ -854,7 +854,7 @@ class Pointer(Object):
     
     def get(self, default=None):
         """ Get the pointed object. 
-        By default all pointers store a "pointed object" value.
+        By default, all pointers store a "pointed object" value.
         The _extended attribute allows to also point to internal
         attributes or items (in case of sets) of the pointed object.
         """
