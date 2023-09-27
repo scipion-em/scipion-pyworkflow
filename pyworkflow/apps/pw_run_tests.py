@@ -86,12 +86,15 @@ class Tester:
         self.logger = logging.getLogger(__name__)
 
         # This goes intentionally to the output. Is not a logging line._S
-        print("Running tests....")
+        print("Scanning tests...")
+
 
         testsDict = OrderedDict()
         testLoader = unittest.defaultTestLoader
 
         if args.tests:
+            print(pwutils.cyanStr("Loading test/s %s" % args.tests))
+
             # In this case the tests are passed as argument.
             # The full name of the test will be used to load it.
             testsDict['tests'] = unittest.TestSuite()
@@ -116,7 +119,7 @@ class Tester:
                                                        top_level_dir=p)
 
         self.grep = [g.lower() for g in args.grep] if args.grep else []
-        self.skip = args.skip
+        self.skip = [s.lower() for s in args.skip] if args.skip else []
         self.mode = args.mode
 
         if args.tests:
@@ -139,11 +142,12 @@ class Tester:
                     self.printTests(moduleName, tests)
 
     def _match(self, itemName):
-        itemLower = itemName.lower()
+        # Add a space to allow " tomo." as a filter for example to narrow search to tomo and leaving out xmipptomo, emntomo, ...
+        itemLower = " " + itemName.lower()
         grep = (not self.grep or
-                all(g.lower() in itemLower for g in self.grep))
+                all(g in itemLower for g in self.grep))
         skip = (self.skip and
-                any(g.lower() in itemLower for g in self.skip))
+                any(s in itemLower for s in self.skip))
 
         return grep and not skip
 
