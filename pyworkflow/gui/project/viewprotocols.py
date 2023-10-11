@@ -487,11 +487,13 @@ class ProtocolsView(tk.Frame):
 
         x = node.x
         y = node.y
-        self._moveCanvas(x,y)
+        self._moveCanvas(x, y)
 
         # Select the protocol
         self._selectItemProtocol(node.run)
-        self.refreshDisplayedRuns()
+        # We comment the refresh because when the project is loaded,
+        # the workflow is traversed twice.
+        # self.refreshDisplayedRuns()
 
     def _moveCanvas(self, X, Y):
 

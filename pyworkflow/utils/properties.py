@@ -510,6 +510,9 @@ class Icon:
     SCIPION_ICON_PROJS = SCIPION_ICON  # 'scipion_icon_projs.png'
     SCIPION_ICON_PROT = SCIPION_ICON  # 'scipion_icon_prot.png'
 
+    # EXTERNAL PROGRAMS
+    CHIMERA = 'chimera.png'
+
     # PLUGIN MANAGER ICONS
     CHECKED = 'fa-checked.png'
     UNCHECKED = 'fa-unchecked.png'
