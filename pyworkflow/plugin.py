@@ -555,6 +555,7 @@ class Plugin:
 
     @classmethod
     def getCondaActivationCmd(cls):
+        """ Returns the conda activation command with && at the end if defined otherwise empty"""
         if cls._condaActivationCmd is None:
             condaActivationCmd = pw.Config.CONDA_ACTIVATION_CMD
             if not condaActivationCmd:

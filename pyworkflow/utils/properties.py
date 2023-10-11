@@ -558,3 +558,5 @@ class KEYSYM:
     """
     DELETE = 'Delete'
     RETURN = 'Return'
+    SHIFT = 'Shift'
+    CONTROL = 'Control'

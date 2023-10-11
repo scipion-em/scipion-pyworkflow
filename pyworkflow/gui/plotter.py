@@ -150,20 +150,30 @@ class Plotter(View):
         a = self.figure.add_subplot(self.gridx, self.gridy, pos, projection=projection)
         # a.get_label().set_fontsize(12)
         a.set_title(title, fontsize=self.plot_title_fontsize)
-        a.set_xlabel(xlabel, fontsize=self.plot_axis_fontsize)
-        a.set_ylabel(ylabel, fontsize=self.plot_axis_fontsize)
-            
-        if yformat:
-            import matplotlib.ticker as ticker
-            formatter = ticker.FormatStrFormatter(self.plot_yformat)
-            a.yaxis.set_major_formatter(formatter)
-        a.xaxis.get_label().set_fontsize(self.plot_axis_fontsize)
-        a.yaxis.get_label().set_fontsize(self.plot_axis_fontsize)
 
-        labels = a.xaxis.get_ticklabels() + a.yaxis.get_ticklabels()
-        for label in labels:
-            label.set_fontsize(self.plot_text_fontsize)  # Set fontsize
-            # label.set_text('aa')
+        def setTicksFont(labels):
+            for label in labels:
+                label.set_fontsize(self.plot_text_fontsize)  # Set fontsize
+
+        if xlabel is not None:
+            # Axis setup
+            a.set_xlabel(xlabel, fontsize=self.plot_axis_fontsize)
+            a.xaxis.get_label().set_fontsize(self.plot_axis_fontsize)
+            setTicksFont(a.xaxis.get_ticklabels())
+
+        if ylabel is not None:
+            a.set_ylabel(ylabel, fontsize=self.plot_axis_fontsize)
+
+            if yformat:
+                import matplotlib.ticker as ticker
+                formatter = ticker.FormatStrFormatter(self.plot_yformat)
+                a.yaxis.set_major_formatter(formatter)
+            a.yaxis.get_label().set_fontsize(self.plot_axis_fontsize)
+            setTicksFont(a.yaxis.get_ticklabels())
+
+        if xlabel is None and ylabel is None:
+            a.axis('off')
+
         self.last_subplot = a
         self.plot = a.plot
         self.hist = a.hist
