@@ -12,6 +12,8 @@ developers:
   - Control and Shift keypress are captured when clicking in analyze result button and passed to the viewer.
   - Project.getProtocol() has a fromRuns mode to prevent going to the db. Used in a couple of calls.(performance)
   - Plotter.createSubPlot: allow plots without axis passing xlabel and ylabel as None
+  - Fixing an error when loading a project where it is not possible to retrieve the current version of an installed plugin
+
 
 V3.2.0
 ------
