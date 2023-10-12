@@ -36,7 +36,7 @@ from configparser import RawConfigParser
 from collections import OrderedDict
 
 import pyworkflow as pw
-from pyworkflow.object import Object, String, Integer, Boolean
+from pyworkflow.object import Object, String, Integer
 
 
 class HostConfig(Object):
@@ -311,44 +311,3 @@ class QueueSystemConfig(Object):
                 if objId == queueConfig.getObjId():
                     return queueConfig
         return None
-
-
-# TODO: maybe deprecated
-class QueueConfig(Object):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.name = String('default')
-        self.maxCores = Integer()
-        self.allowMPI = Boolean()
-        self.allowThreads = Boolean()
-        self.maxHours = Integer()
-
-    def getName(self):
-        return self.name.get()
-
-    def getMaxCores(self):
-        return self.maxCores.get()
-
-    def getAllowMPI(self):
-        return self.allowMPI.get()
-
-    def getAllowThreads(self):
-        return self.allowThreads.get()
-
-    def getMaxHours(self):
-        return self.maxHours.get()
-
-    def setName(self, name):
-        self.name.set(name)
-
-    def setMaxCores(self, maxCores):
-        self.maxCores.set(maxCores)
-
-    def setAllowMPI(self, allowMPI):
-        self.allowMPI.set(allowMPI)
-
-    def setAllowThreads(self, allowThreads):
-        self.allowThreads.set(allowThreads)
-
-    def setMaxHours(self, maxHours):
-        self.maxHours.set(maxHours)
