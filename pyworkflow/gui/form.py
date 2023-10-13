@@ -1936,7 +1936,7 @@ class FormWindow(Window):
             btnHelp.grid(row=0, column=2, padx=(5, 0), pady=2, sticky='e')
         modeFrame.columnconfigure(0, weight=1)
         modeFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
-
+        r=2
         self._createParallel(runFrame, r)
 
         # ---- QUEUE ----
