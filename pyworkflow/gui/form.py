@@ -1790,38 +1790,22 @@ class FormWindow(Window):
                 sticky = 'e'
 
                 if mode == pwprot.STEPS_PARALLEL:
-                    self.procTypeVar = tk.StringVar()
-
-                    if allowThreads and allowMpi:
-                        if numberOfMpi > 1:
-                            procs = numberOfMpi
-                            self.procTypeVar.set(MPI)
-                            prot.numberOfThreads.set(1)
-                        else:
-                            procs = numberOfThreads
-                            self.procTypeVar.set(THREADS)
-                            prot.numberOfMpi.set(1)
-
-                        self.procTypeVar.trace('w', self._setThreadsOrMpi)
-                        procCombo = tk.Frame(procFrame, bg=pw.Config.SCIPION_BG_COLOR)
-                        for i, opt in enumerate([THREADS, MPI]):
-                            rb = tk.Radiobutton(procCombo, text=opt,
-                                                variable=self.procTypeVar,
-                                                value=opt, bg=pw.Config.SCIPION_BG_COLOR,
-                                                highlightthickness=0)
-                            rb.grid(row=0, column=i, sticky='w', padx=(0, 5))
-
-                        procCombo.grid(row=r2, column=0, sticky='w', pady=15)
-                        procEntry = self._createBoundEntry(procFrame,
-                                                           pwutils.Message.VAR_THREADS,
-                                                           func=self._setThreadsOrMpi,
-                                                           value=procs)
-                        procEntry.grid(row=r2, column=1, padx=(0, 5), sticky='w')
+                    if allowThreads and numberOfThreads > 0:
+                        prot.numberOfMpi.set(1)
+                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_THREADS,
+                                                sticky=sticky, row=r2, column=c2,
+                                                pady=0)
+                        entry = self._createBoundEntry(procFrame,
+                                                       pwutils.Message.VAR_THREADS)
+                        entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
+                    elif allowMpi and numberOfMpi > 1:
+                        self.showError("MPI parameter is deprecated for protocols "
+                                       "with execution is set to STEPS_PARALLEL. "
+                                       "Please use threads instead.")
                     else:
-                        # Show an error message
-                        self.showInfo(" If protocol execution is set to "
-                                      "STEPS_PARALLEL number of threads and mpi "
-                                      "should not be set to zero.")
+                        self.showError("If protocol execution is set to "
+                                       "STEPS_PARALLEL number of threads "
+                                       "should not be set to zero.")
 
                 else:
                     # ---- THREADS----
@@ -2479,21 +2463,6 @@ class FormWindow(Window):
 
         for s in self._sections:
             s.adjustContent()
-
-    def _setThreadsOrMpi(self, *args):
-        mode = self.procTypeVar.get()
-        prot = self.protocol  # shortcut notation
-        try:
-            procs = int(self.widgetDict['numberOfThreads'].get())
-            if mode == THREADS:  # threads mode
-                prot.numberOfThreads.set(procs)
-                prot.numberOfMpi.set(min(1, prot.numberOfMpi.get()))  # 0 or 1
-            else:
-                prot.numberOfMpi.set(procs)
-                m = min(1, prot.numberOfThreads.get())  # 0 or 1
-                prot.numberOfThreads.set(m)
-        except Exception:
-            pass
 
     def _setGpu(self, *args):
         prot = self.protocol  # shortcut notation

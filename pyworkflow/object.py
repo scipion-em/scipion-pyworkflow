@@ -370,14 +370,14 @@ class Object(object):
             else:
                 attr.set(otherAttr.get())
             
-    def __getObjDict(self, prefix, objDict, includeClass):
+    def __getObjDict(self, prefix, objDict, includeClass, includePointers=True):
         if prefix:
             prefix += '.'
         for k, v in self.getAttributesToStore():
-            self.fillObjDict(prefix, objDict, includeClass, k, v)
+            self.fillObjDict(prefix, objDict, includeClass, k, v, includePointers=includePointers)
 
     @staticmethod
-    def fillObjDict(prefix, objDict, includeClass, k, v):
+    def fillObjDict(prefix, objDict, includeClass, k, v, includePointers=False):
 
         if not v.isPointer():
             kPrefix = prefix + k
@@ -387,8 +387,13 @@ class Object(object):
                 objDict[kPrefix] = v.getObjValue()
             if not isinstance(v, Scalar):
                 v.__getObjDict(kPrefix, objDict, includeClass)
+        # Is a pointer ...
+        elif includePointers and not v.pointsNone():
+            # Should we take into account the prefix??
+            objDict[k]=v.getUniqueId()
 
-    def getObjDict(self, includeClass=False, includeBasic=False):
+
+    def getObjDict(self, includeClass=False, includeBasic=False, includePointers=False):
         """
         Return all attributes and values in a dictionary.
         Nested attributes will be separated with a dot in the dict key.
@@ -396,6 +401,9 @@ class Object(object):
         :param includeClass: if True, the values will be a tuple (ClassName, value)
             otherwise only the values of the attributes
         :param includeBasic: if True include the id, label and comment.
+        :param includePointers: If true pointer are also added using Pointer.getUniqueId --> "2.outputTomograms"
+
+        :return a dictionary
 
         includeBasic example::
 
@@ -414,7 +422,7 @@ class Object(object):
             d['object.label'] = self.getObjLabel()
             d['object.comment'] = self.getObjComment()
 
-        self.__getObjDict('', d, includeClass)
+        self.__getObjDict('', d, includeClass, includePointers=includePointers )
 
         return d
 
@@ -559,7 +567,7 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = ''  # ' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            logger.info(tab, self.getClassName(), idStr)
+            logger.info("%s %s %s" % (tab, self.getClassName(), idStr))
         else:
             if name == 'submitTemplate':  # Skip this because very large value
                 value = '...'
@@ -846,7 +854,7 @@ class Pointer(Object):
     
     def get(self, default=None):
         """ Get the pointed object. 
-        By default all pointers store a "pointed object" value.
+        By default, all pointers store a "pointed object" value.
         The _extended attribute allows to also point to internal
         attributes or items (in case of sets) of the pointed object.
         """
@@ -922,7 +930,7 @@ class Pointer(Object):
         return self.get() is None
     
     def getUniqueId(self):
-        """ Return an unique id concatenating the id
+        """ Return the unique id concatenating the id
         of the direct pointed object plus the extended 
         attribute.
         """

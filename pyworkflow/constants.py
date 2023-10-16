@@ -42,7 +42,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.2.0'
+VERSION_3_0 = '3.3.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -62,7 +62,6 @@ DATA_TAG = 'data'
 # Scripts
 PW_SYNC_DATA = 'pw_sync_data.py'
 PW_SCHEDULE_RUN = 'pw_schedule_run.py'
-PW_PROTOCOL_MPIRUN = 'pw_protocol_mpirun.py'
 PW_RUN_TESTS = 'pw_run_tests.py'
 PW_VIEWER = 'pw_viewer.py'
 
@@ -178,7 +177,7 @@ ASCII_COLOR_2_TKINTER =\
      StrColors.white.value: 'white'}
 
 class DOCSITEURLS:
-    """Documentation site URL useful when exceptions happens and you want to point to some pages"""
+    """Documentation site URL useful when exceptions happen and you want to point to some pages"""
     HOME = 'https://scipion-em.github.io/docs/release-3.0.0/'
     DOCS = HOME + 'docs/'
     CONFIG = DOCS + 'scipion-modes/scipion-configuration.html'

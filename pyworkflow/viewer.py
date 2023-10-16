@@ -26,7 +26,8 @@
 import os
 
 import pyworkflow.protocol as pwprot
-
+from pyworkflow.utils import KEYSYM
+from subprocess import call
 
 DESKTOP_TKINTER = 'tkinter'
 WEB_DJANGO = 'django'
@@ -59,7 +60,6 @@ class CommandView(View):
         self._cwd = kwargs.get('cwd', None)
         
     def show(self):
-        from subprocess import call
         call(self._cmd, shell=True, env=self._env, cwd=self._cwd)
         
 
@@ -130,8 +130,18 @@ class Viewer(object):
             raise Exception('Can not initialize a Viewer with None project.')
         self.protocol = args.get('protocol', None)
         self.formWindow = args.get('parent', None)
+        self._keyPressed = args.get('keyPressed', None)
         self._tkRoot = self.formWindow.root if self.formWindow else None
-        
+
+    def getKeyPressed(self):
+        return self._keyPressed
+
+    def shiftPressed(self):
+        return self._keyPressed==KEYSYM.SHIFT
+
+    def controlPressed(self):
+        return self._keyPressed == KEYSYM.CONTROL
+
     def getTkRoot(self):
         return self._tkRoot
 
