@@ -246,7 +246,13 @@ class SqliteMapper(Mapper):
             #      2.4 obj.set() for 2.4 pointer --> will reset the extended to None.
             obj.set(objValue, cleanExtended=False)
         else:
-            obj.set(objValue)
+            try:
+                obj.set(objValue)
+            except Exception as e:
+                # Case for parameter type change. Loading the project tolerates type changes like Float to Int.
+                # But when running a protocol loads happens differently (maybe something to look at) and comes here.
+                logger.error("Can't set %s to %s. Maybe its type has changed!. Continues with default value %s." %
+                             (objValue, rowName, obj.get()))
         
     def fillObject(self, obj, objRow, includeChildren=True):
         """ Fills an already instantiated object the data in a row, including children
