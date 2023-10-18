@@ -1391,7 +1391,6 @@ class ProtocolsView(tk.Frame):
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.window,
-                       hostList=self.project.getHostNames(),
                        updateProtocolCallback=self._updateProtocol,
                        disableRunMode=disableRunMode)
         w.adjustSize()
