@@ -1915,7 +1915,7 @@ class FormWindow(Window):
 
         self.updateLabelAndCommentVars()
 
-        r = 1  # Execution
+        r = 1  # Run mode
 
         modeFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
 
@@ -1935,11 +1935,9 @@ class FormWindow(Window):
                                  command=self._createHelpCommand(pwutils.Message.HELP_RUNMODE))
             btnHelp.grid(row=0, column=2, padx=(5, 0), pady=2, sticky='e')
         modeFrame.columnconfigure(0, weight=1)
-        modeFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
-        r=2
-        self._createParallel(runFrame, r)
-
-        # ---- QUEUE ----
+        modeFrame.grid(row=r, column=1, sticky='w', columnspan=2)
+        
+        # Queue
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_QUEUE, row=r,
                                 sticky='e',
                                 column=c)
@@ -1961,7 +1959,9 @@ class FormWindow(Window):
 
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=5, sticky='w')
 
-        r = 2  # ---- Wait for other protocols (SCHEDULE) ----
+        r = 2  # Parallel and Wait for other protocols (SCHEDULE)
+        self._createParallel(runFrame, r)
+
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_WAIT_FOR, row=r, sticky='e',
                                 column=c, padx=(15, 5), pady=0)
         self.waitForVar = tk.StringVar()
