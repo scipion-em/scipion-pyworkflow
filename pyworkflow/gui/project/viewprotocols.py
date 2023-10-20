@@ -2086,7 +2086,7 @@ class ProtocolsView(tk.Frame):
                         self._searchProtocol()
 
                 except Exception as ex:
-                    self.window.showError(str(ex))
+                    self.window.showError(str(ex), exception=ex)
                     if Config.debugOn():
                         import traceback
                         traceback.print_exc()
