@@ -176,13 +176,17 @@ def listDatasets(url):
     """ Print a list of local and remote datasets """
 
     tdir = pw.Config.SCIPION_TESTS
-    print("Local datasets in %s" % yellow(tdir))
-    for folder in sorted(os.listdir(tdir)):
-        if isdir(join(tdir, folder)):
-            if exists(join(tdir, folder, 'MANIFEST')):
-                print("  * %s" % folder)
-            else:
-                print("  * %s (not in dataset format)" % folder)
+    if exists(tdir):
+        print("Local datasets in %s" % yellow(tdir))
+        for folder in sorted(os.listdir(tdir)):
+            if isdir(join(tdir, folder)):
+                if exists(join(tdir, folder, 'MANIFEST')):
+                    print("  * %s" % folder)
+                else:
+                    print("  * %s (not in dataset format)" % folder)
+    else:
+        print(yellow("No local datasets were detected. Test dataset directory is "
+                     "missing. Expected: %s" % tdir))
 
     try:
         print("\nRemote datasets in %s" % yellow(url))

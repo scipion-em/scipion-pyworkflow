@@ -493,11 +493,13 @@ class ProtocolsView(tk.Frame):
 
         x = node.x
         y = node.y
-        self._moveCanvas(x,y)
+        self._moveCanvas(x, y)
 
         # Select the protocol
         self._selectItemProtocol(node.run)
-        self.refreshDisplayedRuns()
+        # We comment the refresh because when the project is loaded,
+        # the workflow is traversed twice.
+        # self.refreshDisplayedRuns()
 
     def _moveCanvas(self, X, Y):
 
@@ -1389,7 +1391,6 @@ class ProtocolsView(tk.Frame):
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.window,
-                       hostList=self.project.getHostNames(),
                        updateProtocolCallback=self._updateProtocol,
                        disableRunMode=disableRunMode)
         w.adjustSize()
@@ -1446,7 +1447,7 @@ class ProtocolsView(tk.Frame):
 
     def getSelectedProtocol(self):
         if self._selection:
-            return self.project.getProtocol(self._selection[0])
+            return self.project.getProtocol(self._selection[0], fromRuns=True)
         return None
 
     def _showHideAnalyzeResult(self):
@@ -1641,6 +1642,7 @@ class ProtocolsView(tk.Frame):
 
             self.project.loadProtocols(jsonStr=self.clipboard_get())
             self.info("Clipboard content pasted successfully.")
+            self.updateRunsGraph(False)
         except Exception as e:
             self.info("Paste failed, maybe clipboard content is not valid content? See GUI log for details.")
             logger.error("Clipboard content couldn't be pasted." , exc_info=e)
@@ -2057,14 +2059,14 @@ class ProtocolsView(tk.Frame):
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(False)
                         self.setVisibleNodes(node, visible=False)
-                        self.updateRunsGraph(True)
+                        self.updateRunsGraph(False)
                         self._updateActionToolbar()
                     elif action == ACTION_EXPAND:
                         node = self.runsGraph.getNode(str(prot.getObjId()))
                         nodeInfo = self.settings.getNodeById(prot.getObjId())
                         nodeInfo.setExpanded(True)
                         self.setVisibleNodes(node, visible=True)
-                        self.updateRunsGraph(True)
+                        self.updateRunsGraph(False)
                         self._updateActionToolbar()
                     elif action == ACTION_LABELS:
                         self._selectLabels()
@@ -2084,7 +2086,7 @@ class ProtocolsView(tk.Frame):
                         self._searchProtocol()
 
                 except Exception as ex:
-                    self.window.showError(str(ex))
+                    self.window.showError(str(ex), exception=ex)
                     if Config.debugOn():
                         import traceback
                         traceback.print_exc()

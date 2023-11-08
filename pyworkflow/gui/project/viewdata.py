@@ -434,8 +434,7 @@ class ProjectDataView(tk.Frame):
         """Open the Protocol GUI Form given a Protocol instance"""
         title = pwutils.Message.TITLE_NAME_RUN + prot.getClassName()
         w = gui.form.FormWindow(title, prot, self._executeSaveProtocol,
-                                self.windows,
-                                hostList=self.project.getHostNames())
+                                self.windows)
         w.adjustSize()
         w.show(center=True)
 

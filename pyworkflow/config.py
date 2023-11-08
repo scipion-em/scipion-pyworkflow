@@ -104,7 +104,7 @@ class Config:
 
     # Actual SCIPION_HOME
     SCIPION_HOME_DEFINED = _get(SCIPION_HOME_VAR, False)
-    "False if SCIPION_HOME is found in the environment"
+    "False if SCIPION_HOME is not found in the environment"
 
     _root = Root(SCIPION_HOME)
     _join = _root.join

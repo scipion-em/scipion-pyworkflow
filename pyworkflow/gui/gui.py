@@ -323,7 +323,10 @@ class Window:
             # Solution proposed is to generate the root as an invisible window if it doesn't exist previously, and make
             # he first window generated a tk.Toplevel. After that, all steps executed later will go through the else
             # statement, being that way each new tk.Toplevel() correctly referenced.
-            tk.Tk().withdraw()  # Main window, invisible
+            root = tk.Tk()
+            root.withdraw()  # Main window, invisible
+            # invoke the button on the return key
+            root.bind_class("Button", "<Key-Return>", lambda event: event.widget.invoke())
 
             self._class = kwargs.get("_class", DEFAULT_WINDOW_CLASS)
             self.root = tk.Toplevel(class_=self._class)  # Toplevel of main window

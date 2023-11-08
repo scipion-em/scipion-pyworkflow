@@ -46,7 +46,7 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
         n = len(self._selection)
         single = n == 1
         if n:
-            prot = self.project.getProtocol(self._selection[0])
+            prot = self.project.getProtocol(self._selection[0], fromRuns=True)
             status = prot.getStatus()
             nodeInfo = self.project.getSettings().getNodeById(prot.getObjId())
             expanded = nodeInfo.isExpanded() if nodeInfo else True
