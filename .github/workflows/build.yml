@@ -3,7 +3,7 @@ name: Test conda-based installation with different python
 
 on:
   push:
-    branches: [ "devel" ]
+    branches: [ "azazellochg-patch-1" ]
 
 env:
   FOLDER_WITH_VERSION: pyworkflow
@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       max-parallel: 6
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
@@ -40,5 +40,5 @@ jobs:
         pip install .
         export PACKAGE_VERSION=$(python -c "import $FOLDER_WITH_VERSION; print('v'+$FOLDER_WITH_VERSION.__version__);")
         echo Built $FOLDER_WITH_VERSION version $PACKAGE_VERSION
-        pip install git+https://github.com/scipion-em/scipion-em@devel#egg=scipion-em
+        pip install git+https://github.com/scipion-em/scipion-em@update-req#egg=scipion-em
         pip install git+https://github.com/scipion-em/scipion-app@devel#egg=scipion-app
