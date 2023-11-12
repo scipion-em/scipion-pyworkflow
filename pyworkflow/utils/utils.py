@@ -333,7 +333,7 @@ def hasAnyFileChanged(files, time):
 
 def hasFileChangedSince(file, time):
     """ Returns true if the file has changed after 'time'"""
-    modTime = datetime.datetime.fromtimestamp(getmtime(file))
+    modTime = datetime.fromtimestamp(os.path.getmtime(file))
     return time < modTime
 
 
