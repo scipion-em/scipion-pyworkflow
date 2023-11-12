@@ -186,7 +186,7 @@ class ThreadStepExecutor(StepExecutor):
     def getGpuList(self):
         """ Return the GPU list assigned to current thread
         or empty list if not using GPUs. """
-        return self.gpuDict.get(threading.currentThread().thId, [])
+        return self.gpuDict.get(threading.current_thread().ident, [])
         
     def runSteps(self, steps, 
                  stepStartedCallback, 
