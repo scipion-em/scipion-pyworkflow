@@ -37,10 +37,13 @@ logger = logging.getLogger(__name__)
 import glob
 import os
 import importlib
+try:
+    from importlib import metadata
+except ImportError:  # for Python<3.8
+    import importlib_metadata as metadata
 import inspect
 import traceback
 import types
-import pkg_resources
 from email import message_from_string
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
@@ -126,7 +129,7 @@ class Domain:
     def _discoverPlugins(cls):
         # Get the list of plugins registered
         plugin_modules = []
-        for entry_point in pkg_resources.iter_entry_points('pyworkflow.plugin'):
+        for entry_point in metadata.entry_points(group='pyworkflow.plugin'):
             plugin_modules.append(entry_point.name)
 
         # Sort the list taking into account the priority
@@ -138,7 +141,7 @@ class Domain:
 
     @classmethod
     def _discoverGUIPlugins(cls):
-        for entry_point in pkg_resources.iter_entry_points('pyworkflow.guiplugin'):
+        for entry_point in metadata.entry_points(group='pyworkflow.guiplugin'):
             entry_point.load()
 
     @classmethod
@@ -697,39 +700,3 @@ class Plugin:
         if self._inDevelMode is None:
             self._inDevelMode = pwutils.getPythonPackagesFolder() not in self.getPath()
         return self._inDevelMode
-
-
-class PluginInfo:
-    """
-    Information related to a given plugin when it is installed via PIP
-    """
-    def __init__(self, name):
-        try:
-            dist = pkg_resources.get_distribution(name)
-            lines = [l for l in dist._get_metadata(dist.PKG_INFO)]
-            tuples = message_from_string('\n'.join(lines))
-
-        except Exception:
-            logger.info("Plugin %s seems is not a pip module yet. "
-                  "No metadata found" % name)
-            tuples = message_from_string('Author: plugin in development mode?')
-
-        self._name = name
-        self._metadata = OrderedDict()
-
-        for v in tuples.items():
-            if v[0] == 'Keywords':
-                break
-            self._metadata[v[0]] = v[1]
-
-    def getAuthor(self):
-        return self._metadata.get('Author', "")
-
-    def getAuthorEmail(self):
-        return self._metadata.get('Author-email', '')
-
-    def getHomePage(self):
-        return self._metadata.get('Home-page', '')
-
-    def getKeywords(self):
-        return self._metadata.get('Keywords', '')
