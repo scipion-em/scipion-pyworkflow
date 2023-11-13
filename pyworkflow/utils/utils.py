@@ -28,7 +28,7 @@ import contextlib
 import sys
 import os
 import re
-from datetime import datetime
+from datetime import datetime, UTC
 import traceback
 import sysconfig
 
@@ -137,7 +137,7 @@ def prettyDelta(timedelta):
 
 class UtcConverter:
     """ Class to make date conversions to utc"""
-    utc_delta = datetime.utcnow() - datetime.now()
+    utc_delta = datetime.now(UTC) - datetime.now()
 
     def __call__(cls, t):
         return t + cls.utc_delta
