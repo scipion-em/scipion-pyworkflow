@@ -28,7 +28,7 @@ import contextlib
 import sys
 import os
 import re
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 import traceback
 import sysconfig
 
@@ -135,14 +135,11 @@ def prettyDelta(timedelta):
     """ Remove the milliseconds of the timedelta. """
     return str(timedelta).split('.')[0]
 
-class UtcConverter:
-    """ Class to make date conversions to utc"""
-    utc_delta = datetime.now(UTC) - datetime.now()
 
-    def __call__(cls, t):
-        return t + cls.utc_delta
-# Use to_utc like a function: to_utc(date)
-to_utc = UtcConverter()
+def to_utc(t):
+    """ Make date conversions to utc"""
+    return datetime.fromtimestamp(t, tz=timezone.utc)
+
 
 def prettyLog(msg):
     logger.info(cyanStr(msg))
