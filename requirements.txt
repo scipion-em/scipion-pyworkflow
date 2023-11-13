@@ -3,6 +3,8 @@ psutil<=5.9.6 # # up to date on 11-2023
 configparser==5.2.0; python_version == '3.6'
 configparser==5.3.0; python_version == '3.7'
 configparser==6.0.0; python_version >= '3.8' # up to date on 11-2023
+importlib-metadata==4.8.3; python_version == '3.6'
+importlib-metadata==6.7.0; python_version == '3.7'
 matplotlib==3.3.4; python_version == '3.6'
 matplotlib==3.5.3; python_version == '3.7'
 matplotlib==3.7.3; python_version == '3.8'

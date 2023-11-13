@@ -44,8 +44,6 @@ except ImportError:  # for Python<3.8
 import inspect
 import traceback
 import types
-from email import message_from_string
-from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
 import pyworkflow as pw
