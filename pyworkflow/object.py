@@ -553,7 +553,7 @@ class Object(object):
         """
         # Split in possible tokens
         import re
-        tokens = re.split('\W+', condition)
+        tokens = re.split(r'\W+', condition)
         condStr = condition
         
         for t in tokens:

@@ -60,8 +60,8 @@ PROJECT_CONFIG = '.config'
 PROJECT_CREATION_TIME = 'CreationTime'
 
 # Regex to get numbering suffix and automatically propose runName
-REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
-REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
+REGEX_NUMBER_ENDING = re.compile(r'(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
+REGEX_NUMBER_ENDING_CP = re.compile(r'(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
 
 
 class Project(object):
@@ -1777,7 +1777,7 @@ class Project(object):
         Use it whenever you want to get the final project name pyworkflow will end up.
         Spaces will be replaced by _ """
 
-        return re.sub("[^\w\d\-\_]", "-", projectName)
+        return re.sub(r"[^\w\d\-\_]", "-", projectName)
 
 
 class MissingProjectDbException(Exception):

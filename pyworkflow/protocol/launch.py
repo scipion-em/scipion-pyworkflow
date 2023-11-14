@@ -209,7 +209,7 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     out = p.communicate()[0]
     # Try to parse the result of qsub, searching for a number (jobId)
     # Review this, seems to exclusive to torque batch system
-    s = re.search('(\d+)', str(out))
+    s = re.search(r'(\d+)', str(out))
     if p.returncode == 0 and s:
         job = int(s.group(0))
         logger.info("Launched job with id %s" % job)
