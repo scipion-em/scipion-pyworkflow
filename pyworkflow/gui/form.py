@@ -2245,9 +2245,12 @@ class FormWindow(Window):
         if resultAction == RESULT_CANCEL:
             return
         elif resultAction == RESULT_RUN_ALL:
+            if errors:
+                self.showInfo(errors)
             self._close()
             return
 
+        # This code will happen when protocol is executed alone
         errors += self.protocol.validate()
 
         if errors:

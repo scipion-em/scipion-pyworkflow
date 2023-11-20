@@ -1,6 +1,5 @@
 
 import logging
-
 logger = logging.getLogger(__file__)
 import ast
 import importlib
@@ -10,7 +9,6 @@ import os
 import shutil
 import sys
 import types
-
 from .constants import *
 
 HOME = os.path.abspath(os.path.dirname(__file__))
@@ -428,6 +426,7 @@ class Config:
         this code could be reached but is not an actual execution. This is useful for cancelling some actions
         like registering FileHandlers or other stuff not needed when just importing modules."""
         return cls.SCIPION_HOME_DEFINED != False
+
 
 # Add bindings folder to sys.path
 sys.path.append(Config.getBindingsFolder())
