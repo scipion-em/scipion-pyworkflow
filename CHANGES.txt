@@ -1,3 +1,12 @@
+V3.3.1
+------
+users:
+  - Steps window can force finish steps too. Useful for some CS cases.
+  - "Continue workflow" from improved. Works with more cases.
+developers:
+  - Set class has isItemEnabled to be used as callback based on item.isEnabled()
+  - config.py.OS class (not for GUI): to return distro info (isCentos or isUbuntu) or isWSL (--> new dependency "distro")"...
+
 V3.3.0
 ------
 users:
