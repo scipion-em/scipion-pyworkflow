@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 import glob
 import os
 import importlib
-import importlib_metadata
 import inspect
 import traceback
 import types
@@ -48,6 +47,12 @@ import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 from pyworkflow.template import Template
 from pyworkflow.utils import sortListByList
+
+try:
+    import importlib_metadata
+except ModuleNotFoundError:
+    raise ModuleNotFoundError('You are missing importlib-metadata package. '
+                              'Please run: scipion3 pip install importlib-metadata')
 
 from .constants import *
 
