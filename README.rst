@@ -6,6 +6,10 @@
         :alt: Quality Gate Status
         :target: https://sonarcloud.io/summary/new_code?id=scipion-em_scipion-pyworkflow
 
+.. image:: https://img.shields.io/sonar/quality_gate/scipion-em_scipion-pyworkflow?server=https%3A%2F%2Fsonarcloud.io
+        :target: https://sonarcloud.io/dashboard?id=scipion-em_scipion-pyworkflow
+        :alt: SonarCloud quality gate
+
 .. image:: https://img.shields.io/pypi/l/scipion-pyworkflow.svg
         :target: https://pypi.python.org/pypi/scipion-pyworkflow
         :alt: License
