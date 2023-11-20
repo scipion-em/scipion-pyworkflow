@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 import glob
 import os
 import importlib
-from importlib import metadata
+import importlib_metadata
 import inspect
 import traceback
 import types
@@ -123,7 +123,7 @@ class Domain:
     @classmethod
     def _discoverPlugins(cls):
         # Get the list of plugins registered
-        plugin_modules = [m for m in metadata.entry_points(group='pyworkflow.plugin')]
+        plugin_modules = [m for m in importlib_metadata.entry_points(group='pyworkflow.plugin')]
 
         # Sort the list taking into account the priority
         plugin_modules = sortListByList(plugin_modules, pw.Config.getPriorityPackageList())
@@ -134,7 +134,7 @@ class Domain:
 
     @classmethod
     def _discoverGUIPlugins(cls):
-        for entry_point in metadata.entry_points(group='pyworkflow.guiplugin'):
+        for entry_point in importlib_metadata.entry_points(group='pyworkflow.guiplugin'):
             entry_point.load()
 
     @classmethod
