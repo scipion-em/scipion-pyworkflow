@@ -128,10 +128,10 @@ class Domain:
     @classmethod
     def _discoverPlugins(cls):
         # Get the list of plugins registered
-        plugin_modules = [m for m in importlib_metadata.entry_points(group='pyworkflow.plugin')]
+        plugin_modules = importlib_metadata.entry_points(group='pyworkflow.plugin')
 
         # Sort the list taking into account the priority
-        plugin_modules = sortListByList(plugin_modules, pw.Config.getPriorityPackageList())
+        plugin_modules = sortListByList(plugin_modules.names, pw.Config.getPriorityPackageList())
 
         for module in plugin_modules:
             cls.registerPlugin(module)
