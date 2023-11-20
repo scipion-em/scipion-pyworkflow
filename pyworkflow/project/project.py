@@ -391,7 +391,7 @@ class Project(object):
         """Clean all project data"""
         pwutils.path.cleanPath(*self.pathList)
 
-    def _continueWorkflow(self, continuedProtList=None, errorsList=None):
+    def _continueWorkflow(self, errorsList, continuedProtList=None):
         """
         This function continue a workflow from a selected protocol.
         The previous results are preserved.
@@ -416,11 +416,14 @@ class Project(object):
                 if not protocol.isInteractive():
                     if protocol.isScheduled():
                         continue
-                    if protocol.worksInStreaming():
+
+                    # streaming ...
+                    if protocol.worksInStreaming() and not protocol.isSaved():
                         attrSet = [attr for name, attr in
                                    protocol.iterOutputAttributes(pwprot.Set)]
                         try:
                             if attrSet:
+                                # Open output sets..
                                 for attr in attrSet:
                                     attr.setStreamState(attr.STREAM_OPEN)
                                     attr.write()
@@ -439,21 +442,18 @@ class Project(object):
                             break
                     else:
                         if level != 0:
-                            # we make sure that at least one protocol in streaming
-                            # has been launched
+                            # Not in streaming and not the first protocol.
                             if protocol.isActive():
                                 self.stopProtocol(protocol)
-                            self._restartWorkflow({protocol.getObjId(): (protocol, level)},
-                                                  errorsList)
+                            self._restartWorkflow(errorsList,{protocol.getObjId(): (protocol, level)})
 
-                        else:
-                            errorsList.append(("Error trying to launch the "
-                                               "protocol: %s\nERROR: The protocol is "
-                                               "not in streaming" %
-                                               (protocol.getObjLabel())))
-                            break
+                        else: # First protocol not in streaming
+                            if not protocol.isActive():
+                               self.scheduleProtocol(protocol)
 
-    def _restartWorkflow(self, restartedProtList=None, errorsList=None):
+
+
+    def _restartWorkflow(self, errorsList, restartedProtList=None):
         """
         This function restart a workflow from a selected protocol.
         All previous results will be deleted
@@ -556,9 +556,9 @@ class Project(object):
         """
         errorsList = []
         if mode == MODE_RESTART:
-            self._restartWorkflow(workflowProtocolList, errorsList)
+            self._restartWorkflow(errorsList, workflowProtocolList)
         else:
-            self._continueWorkflow(workflowProtocolList, errorsList)
+            self._continueWorkflow(errorsList,workflowProtocolList)
         return errorsList
 
     def launchProtocol(self, protocol, wait=False, scheduled=False,
@@ -1522,7 +1522,10 @@ class Project(object):
             outputDict[r.getObjId()] = n
             for _, attr in r.iterOutputAttributes():
                 # mark this output as produced by r
-                outputDict[attr.getObjId()] = n
+                if attr is None:
+                    logger.warning("Output attribute %s of %s is None" % (_, r))
+                else:
+                    outputDict[attr.getObjId()] = n
 
         def _checkInputAttr(node, pointed):
             """ Check if an attr is registered as output"""

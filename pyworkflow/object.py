@@ -126,7 +126,7 @@ class Object(object):
             value = attr  # behave well for non-Object attributes
         return value
     
-    def setAttributeValue(self, attrName, value, ignoreMissing=False):
+    def setAttributeValue(self, attrName, value, ignoreMissing=True):
         """ Set the attribute value given its name.
         Equivalent to setattr(self, name).set(value) 
         If the attrName contains dot: x.y
@@ -1428,6 +1428,13 @@ class Set(Object):
     def fmtDate(self, date):
         """ Formats a python date to a valid string for the mapper"""
         return self._getMapper().fmtDate(date)
+
+    @staticmethod
+    def isItemEnabled(item):
+        """ Returns if the item is enabled...to be used as a callback. In some other cases (new user subsets)
+         this method will be replaced"""
+
+        return item.isEnabled()
 
 def ObjectWrap(value):
     """This function will act as a simple Factory
