@@ -132,7 +132,7 @@ class Plotter(View):
         self.last_subplot.legend(loc=loc, **kwargs)
 
     def createSubPlot(self, title, xlabel, ylabel, xpos=None, ypos=None,
-                      yformat=False, projection='rectilinear'
+                      yformat=False, projection='rectilinear', subtitle=None
                       ):
         """
         Create a subplot in the figure.
@@ -150,6 +150,9 @@ class Plotter(View):
         a = self.figure.add_subplot(self.gridx, self.gridy, pos, projection=projection)
         # a.get_label().set_fontsize(12)
         a.set_title(title, fontsize=self.plot_title_fontsize)
+
+        if subtitle:
+            self.figure.text(0.5, 0.015, subtitle, horizontalalignment="center")
 
         def setTicksFont(labels):
             for label in labels:

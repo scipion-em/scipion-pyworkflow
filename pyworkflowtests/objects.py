@@ -459,7 +459,8 @@ class MockSet(pwobj.Set, MockObject):
     def copyItems(self, otherSet,
                   updateItemCallback=None,
                   itemDataIterator=None,
-                  copyDisabled=False):
+                  copyDisabled=False,
+                  itemSelectedCallback=None):
         """ Copy items from another set.
         If the updateItemCallback is passed, it will be
         called with each item (and optionally with a data row).
@@ -467,9 +468,13 @@ class MockSet(pwobj.Set, MockObject):
         This is useful to set new attributes or update values
         for each item.
         """
+        
+        if itemSelectedCallback is None:
+            itemSelectedCallback = self.isItemEnabled
+
         for item in otherSet:
             # copy items if enabled or copyDisabled=True
-            if copyDisabled or item.isEnabled():
+            if copyDisabled or itemSelectedCallback(item):
                 newItem = item.clone()
                 if updateItemCallback:
                     row = None if itemDataIterator is None \

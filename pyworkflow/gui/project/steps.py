@@ -107,14 +107,27 @@ class StepsWindow(pwgui.browser.BrowserWindow):
         btn.bind('<Button-1>', self._resetStep)
         btn.grid(row=0, column=1, sticky='nw')
 
-    def _resetStep(self, e=None):
+        # Finish status
+        btn = tk.Label(toolbar, text="Finish",
+                       image=self.getImage(Icon.CHECKED),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.bind('<Button-1>', self._finishStep)
+        btn.grid(row=0, column=2, sticky='nw')
+
+    def _setStepStatus(self, status):
 
         item = self.browser._lastSelected
         if item is not None:
             objId = item.getObjId()
-            self._protocol._updateSteps(lambda step: step.setStatus(pwprot.STATUS_NEW), where="id='%s'" % objId)
-            item.setStatus(pwprot.STATUS_NEW)
+            self._protocol._updateSteps(lambda step: step.setStatus(status), where="id='%s'" % objId)
+            item.setStatus(status)
             self.browser.tree.update()
+    def _resetStep(self, e=None):
+        self._setStepStatus(pwprot.STATUS_NEW)
+
+    def _finishStep(self, e=None):
+        self._setStepStatus(pwprot.STATUS_FINISHED)
+
     # noinspection PyUnusedLocal
     def _showTree(self, e=None):
         g = self._protocol.getStepsGraph()

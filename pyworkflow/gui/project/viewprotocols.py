@@ -1391,7 +1391,6 @@ class ProtocolsView(tk.Frame):
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.window,
-                       hostList=self.project.getHostNames(),
                        updateProtocolCallback=self._updateProtocol,
                        disableRunMode=disableRunMode)
         w.adjustSize()
@@ -1760,10 +1759,12 @@ class ProtocolsView(tk.Frame):
              message = Message.MESSAGE_CONTINUE_WORKFLOW_WITH_RESULTS % ('%s\n' % activeProtocols) if len(activeProtList) else Message.MESSAGE_CONTINUE_WORKFLOW
              title = Message.TITLE_CONTINUE_WORKFLOW_FORM
 
+        errorList=[]
+
         if not askSingleAll:
             if pwgui.dialog.askYesNo(title,  message, root):
-                project.launchWorkflow(workflowProtocolList, mode)
-                return [], RESULT_RUN_ALL
+                errorList = project.launchWorkflow(workflowProtocolList, mode)
+                return errorList, RESULT_RUN_ALL
             return [], RESULT_CANCEL
         else:  # launching from a form
             if len(workflowProtocolList) > 1:
@@ -1773,11 +1774,11 @@ class ProtocolsView(tk.Frame):
                                                          root)
                 if result == RESULT_RUN_ALL:
                     if mode == pwprot.MODE_RESTART:
-                        project._restartWorkflow(workflowProtocolList)
+                        project._restartWorkflow(errorList, workflowProtocolList)
                     else:
-                        project._continueWorkflow(workflowProtocolList)
+                        project._continueWorkflow(errorList, workflowProtocolList)
 
-                    return [], RESULT_RUN_ALL
+                    return errorList, RESULT_RUN_ALL
 
                 elif result == RESULT_RUN_SINGLE:
                     # If mode resume, we should not reset the "current" protocol
@@ -2087,7 +2088,7 @@ class ProtocolsView(tk.Frame):
                         self._searchProtocol()
 
                 except Exception as ex:
-                    self.window.showError(str(ex))
+                    self.window.showError(str(ex), exception=ex)
                     if Config.debugOn():
                         import traceback
                         traceback.print_exc()

@@ -108,15 +108,15 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         prot = self.protocol
         try:
             objLabel = self.getObjectLabel(obj, prot)
-            if self.parent.windows.askYesNo("Delete object",
+            if self.parent.window.askYesNo("Delete object",
                                             "Are you sure to delete *%s* object?"
                                             % objLabel):
                 prot.getProject().deleteProtocolOutput(prot, obj)
                 self.parent._fillSummary()
-                self.parent.windows.showInfo("Object *%s* successfully deleted."
+                self.parent.window.showInfo("Object *%s* successfully deleted."
                                              % objLabel)
         except Exception as ex:
-            self.parent.windows.showError(str(ex))
+            self.parent.window.showError(str(ex))
 
     @staticmethod
     def getObjectPreview(obj):

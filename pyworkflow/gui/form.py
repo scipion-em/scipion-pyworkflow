@@ -1624,14 +1624,13 @@ class FormWindow(Window):
     
     Layout:
         There are 4 main blocks that goes each one in a different row1.
-        1. Header: will contains the logo, title and some link buttons.
+        1. Header: will contain the logo, title and some link buttons.
         2. Common: common execution parameters of each run.
         3. Params: the expert level and tabs with the Protocol parameters.
         4. Buttons: buttons at bottom for close, save and execute.
     """
 
-    def __init__(self, title, protocol, callback, master=None,
-                 hostList=['localhost'], **kwargs):
+    def __init__(self, title, protocol, callback, master=None, **kwargs):
         """ Constructor of the Form window. 
         Params:
          title: title string of the windows.
@@ -1647,7 +1646,6 @@ class FormWindow(Window):
         self.visualizeDict = kwargs.get('visualizeDict', {})
         self.disableRunMode = kwargs.get('disableRunMode', False)
         self.bindings = []
-        self.hostList = hostList
         self.protocol = protocol
         # This control when to close or not after execute
         self.visualizeMode = kwargs.get('visualizeMode', False)
@@ -1917,7 +1915,7 @@ class FormWindow(Window):
 
         self.updateLabelAndCommentVars()
 
-        r = 1  # Execution
+        r = 1  # Run mode
 
         modeFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
 
@@ -1937,25 +1935,9 @@ class FormWindow(Window):
                                  command=self._createHelpCommand(pwutils.Message.HELP_RUNMODE))
             btnHelp.grid(row=0, column=2, padx=(5, 0), pady=2, sticky='e')
         modeFrame.columnconfigure(0, weight=1)
-        modeFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
-
-        # ---- Host---- 
-        self._createHeaderLabel(runFrame, pwutils.Message.LABEL_HOST, row=r, column=c,
-                                sticky='e')
-        # Keep track of hostname selection
-        self.hostVar = tk.StringVar()
-        protHost = self.protocol.getHostName()
-        hostName = protHost if protHost in self.hostList else self.hostList[0]
-        self.hostVar.trace('w', self._setHostName)
-        self.hostCombo = ttk.Combobox(runFrame, textvariable=self.hostVar,
-                                      state='readonly', width=10, font=self.font)
-        self.hostCombo['values'] = self.hostList
-        self.hostVar.set(hostName)
-        self.hostCombo.grid(row=r, column=c + 1, pady=0, sticky='we')
-        r = 2
-        self._createParallel(runFrame, r)
-
-        # ---- QUEUE ----
+        modeFrame.grid(row=r, column=1, sticky='w', columnspan=2)
+        
+        # Queue
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_QUEUE, row=r,
                                 sticky='e',
                                 column=c)
@@ -1977,7 +1959,9 @@ class FormWindow(Window):
 
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=5, sticky='w')
 
-        r = 3  # ---- Wait for other protocols (SCHEDULE) ----
+        r = 2  # Parallel and Wait for other protocols (SCHEDULE)
+        self._createParallel(runFrame, r)
+
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_WAIT_FOR, row=r, sticky='e',
                                 column=c, padx=(15, 5), pady=0)
         self.waitForVar = tk.StringVar()
@@ -2261,9 +2245,12 @@ class FormWindow(Window):
         if resultAction == RESULT_CANCEL:
             return
         elif resultAction == RESULT_RUN_ALL:
+            if errors:
+                self.showInfo(errors)
             self._close()
             return
 
+        # This code will happen when protocol is executed alone
         errors += self.protocol.validate()
 
         if errors:
