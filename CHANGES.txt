@@ -1,3 +1,8 @@
+V3.4.1
+------
+developers:
+  - Dialog class: add lockGui input to allow the viewers to prevent getting the screen focus if desired.
+
 V3.3.1
 ------
 users:
