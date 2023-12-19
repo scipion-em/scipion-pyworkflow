@@ -2242,6 +2242,11 @@ class FormWindow(Window):
             errors, resultAction = ProtocolsView._launchSubWorkflow(self.protocol,
                                                                     mode, self.root,
                                                                     askSingleAll=True)
+
+            if errors:
+                self.showInfo(errors)
+                return
+
         if resultAction == RESULT_CANCEL:
             return
         elif resultAction == RESULT_RUN_ALL:

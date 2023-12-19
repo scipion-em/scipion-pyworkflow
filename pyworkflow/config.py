@@ -251,6 +251,12 @@ class Config:
     SCIPION_USE_QUEUE = _get("SCIPION_USE_QUEUE", FALSE_STR) != FALSE_STR
     "Default value for using the queue. By default is False. ANY value will be True except and empty value. \"False\" or \"0\" will be True too."
 
+    SCIPION_DEFAULT_EXECUTION_ACTION = int(_get('SCIPION_DEFAULT_EXECUTION_ACTION', DEFAULT_EXECUTION_ACTION_ASK))
+    """Ask if you want to launch a single protocol or a sub-workflow. The default value is 1
+       1: Scipion always ask
+       2: Run a single protocol
+       3: Run a sub-workflow """
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
     except Exception as e:

@@ -198,3 +198,10 @@ class TK:
     LEFT_DOUBLE_CLICK = '<Double-1>'
     TREEVIEW_OPEN = '<<TreeviewOpen>>'
     TREEVIEW_CLOSE = '<<TreeviewClose>>'
+
+
+# Run protocol modes
+DEFAULT_EXECUTION_ACTION_ASK = 1
+DEFAULT_EXECUTION_ACTION_SINGLE = 2
+DEFAULT_EXECUTION_ACTION_ALL = 3
+
