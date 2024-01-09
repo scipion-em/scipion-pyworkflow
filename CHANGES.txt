@@ -1,3 +1,18 @@
+V3.4.1
+------
+developers:
+  - Dialog class: add lockGui input to allow the viewers to prevent getting the screen focus if desired.
+
+V3.3.1
+------
+users:
+  - Steps window can force finish steps too. Useful for some CS cases.
+  - "Continue workflow" from improved. Works with more cases.
+  - Fix output deletion when right-clicking on an output compatible with this option.
+developers:
+  - Set class has isItemEnabled to be used as callback based on item.isEnabled()
+  - config.py.OS class (not for GUI): to return distro info (isCentos or isUbuntu) or isWSL (--> new dependency "distro")"...
+
 V3.3.0
 ------
 users:

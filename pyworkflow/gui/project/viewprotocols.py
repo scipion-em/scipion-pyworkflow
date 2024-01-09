@@ -1759,10 +1759,12 @@ class ProtocolsView(tk.Frame):
              message = Message.MESSAGE_CONTINUE_WORKFLOW_WITH_RESULTS % ('%s\n' % activeProtocols) if len(activeProtList) else Message.MESSAGE_CONTINUE_WORKFLOW
              title = Message.TITLE_CONTINUE_WORKFLOW_FORM
 
+        errorList=[]
+
         if not askSingleAll:
             if pwgui.dialog.askYesNo(title,  message, root):
-                project.launchWorkflow(workflowProtocolList, mode)
-                return [], RESULT_RUN_ALL
+                errorList = project.launchWorkflow(workflowProtocolList, mode)
+                return errorList, RESULT_RUN_ALL
             return [], RESULT_CANCEL
         else:  # launching from a form
             if len(workflowProtocolList) > 1:
