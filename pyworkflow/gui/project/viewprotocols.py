@@ -1781,9 +1781,9 @@ class ProtocolsView(tk.Frame):
                 if result == RESULT_RUN_ALL:
                     errorList = []
                     if mode == pwprot.MODE_RESTART:
-                        project._restartWorkflow(workflowProtocolList, errorList)
+                        project._restartWorkflow(errorList, workflowProtocolList)
                     else:
-                        project._continueWorkflow(workflowProtocolList, errorList)
+                        project._continueWorkflow(errorList, workflowProtocolList)
 
                     return errorList, RESULT_RUN_ALL
 
