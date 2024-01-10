@@ -1400,8 +1400,8 @@ class Set(Object):
 
     # ******* Streaming helpers to deal with sets **********
     def hasChangedSince(self, time):
-        """ Returns if the set has changed since the timestamp passed as parameter. It will check the
-        the last modified time of the file this set uses to persists.
+        """ Returns if the set has changed since the timestamp passed as parameter. It will check
+                the last modified time of the file this set uses to persists.
 
         :parameter time: timestamp to compare to the last modification time  """
 

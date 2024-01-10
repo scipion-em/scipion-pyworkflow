@@ -103,8 +103,6 @@ class ProjectWindow(ProjectBaseWindow):
                             shortCut="Ctrl+D", icon=Icon.DEBUG)
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Notes', 'notes', icon=Icon.ACTION_EDIT)
-        projMenu.addSubMenu('Scipion log', 'scipion log',
-                            icon=Icon.FILE_BW)
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Exit', 'exit', icon=Icon.ACTION_OUT)
 
@@ -170,8 +168,6 @@ class ProjectWindow(ProjectBaseWindow):
             logger.info('Warning: settings.sqlite not found! '
                   'Creating default settings..')
             self.settings = proj.createSettings()
-
-        self.generalCfg = self.settings.getConfig()
 
         return proj
 
@@ -276,9 +272,6 @@ class ProjectWindow(ProjectBaseWindow):
 
     def onLocateAProtocol(self):
         self.getViewWidget()._locateProtocol(None)
-
-    def onScipionLog(self):
-        self.getViewWidget()._scipionLog(None)
 
     def manageLabels(self):
 
@@ -415,7 +408,6 @@ class ProjectManagerWindow(ProjectBaseWindow):
         helpMenu.addSubMenu('About', 'about', icon=Icon.ACTION_HELP)
 
         self.menuCfg = menu
-        self.generalCfg = settings.getConfig()
 
         try:
             title = '%s (%s on %s)' % (Message.LABEL_PROJECTS, 

@@ -6,15 +6,14 @@ Created on Mar 25, 2014
 @author: airen
 @author: roberto.marabini
 """
-
-
+import datetime
 from subprocess import Popen
 from io import StringIO
 
 from pyworkflow import APPS
 from pyworkflow.utils.process import killWithChilds
 from pyworkflow.tests import *
-from pyworkflow.utils import utils, prettyDict, getListFromValues
+from pyworkflow.utils import utils, prettyDict, getListFromValues, strToDuration
 from pyworkflow.utils import ProgressBar
 
 
@@ -174,3 +173,33 @@ class TestProgressBar(unittest.TestCase):
         self.caller(total=total, step=step,
                     fmt=ProgressBar.OBJID, resultGold=resultGold)
 
+
+
+class TestPathTools(unittest.TestCase):
+
+    def test_filemodificationtime(self):
+
+        # Test is file closed
+
+        import tempfile
+        import time
+
+        since = datetime.datetime.now()
+        time.sleep(1)
+
+        tmpFile = tempfile.NamedTemporaryFile()
+        self.assertFalse(pwutils.isFileFinished(tmpFile.name), "File is NOT finished")
+        time.sleep(1)
+
+        self.assertTrue(pwutils.isFileFinished(tmpFile.name, duration=0.5), "File is finished after 2 seconds")
+
+
+        self.assertTrue(pwutils.hasChangedSince(tmpFile.name, since ), "hasChanged should have returned true. False negative.")
+        since = datetime.datetime.now()
+        self.assertFalse(pwutils.hasChangedSince(tmpFile.name, since ), "hasChanged should have returned false. False positive.")
+
+
+
+    def test_durationstrings(self):
+
+        self.assertEqual(70, strToDuration("1m 10s"), "String duration wrongly converted")

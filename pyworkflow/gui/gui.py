@@ -32,6 +32,8 @@ import pyworkflow as pw
 from pyworkflow.object import Object
 from pyworkflow.utils import Message, Icon
 from PIL import Image, ImageTk
+
+from pyworkflow.utils import SpriteImage, Sprite
 from .widgets import Button
 import numpy as np
 
@@ -195,19 +197,30 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
     # NOTE: "convert  my-image.gif PNG32:my-image.png" has converted gifs to pngs RGBA (32 bits) it seems pillow
     # needs RGBA format to deal with transparencies.
 
-    if not os.path.isabs(imageName) and imageName not in [Icon.WAITING]:
-        imageName = imageName.replace(".gif", ".png")
+    # Most protocols.conf uses .gif extension. We need to use png!.
 
-    if imageName in image_cache:
-        return image_cache[imageName]
-
-    if not os.path.isabs(imageName):
-        imagePath = pw.findResource(imageName)
+    # ImageName could be either a file name (bookmark.gif) a full path image or a SpriteImage
+    if isinstance(imageName, SpriteImage):
+        fromSprite = True
+        imageStr = str(imageName)
     else:
-        imagePath = imageName
-    image = None
-    if imagePath:
-        image = Image.open(imagePath)
+        fromSprite=False
+        imageStr = imageName
+
+    if not os.path.isabs(imageStr) and imageStr not in [Icon.WAITING]:
+        imageStr = imageStr.replace(".gif", ".png")
+
+    if imageStr in image_cache:
+        return image_cache[imageStr]
+
+    # If it is a definition of a sprite image
+    if fromSprite:
+        image = Sprite.getImage(imageName)
+    else:
+        imagePath = pw.findResource(imageStr) if not os.path.isabs(imageStr) else imageStr
+        image = Image.open(imagePath) if imagePath else None
+
+    if image:
         # For a future dark mode we might need to invert the image but it requires some extra work to make it look nice:
         # image = invertImage(image)
         w, h = image.size
@@ -222,7 +235,7 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         if tkImage:
             image = ImageTk.PhotoImage(image)
 
-        image_cache[imageName] = image
+        image_cache[imageStr] = image
     return image
 
 def invertImage(img):
@@ -454,7 +467,7 @@ class Window:
         self.close()
 
     def getImage(self, imgName, percent=100, maxheight=None):
-        return getImage(imgName, self._images, percent=percent,
+        return getImage(imgName, percent=percent,
                         maxheight=maxheight)
 
     def createMainMenu(self, menuConfig):

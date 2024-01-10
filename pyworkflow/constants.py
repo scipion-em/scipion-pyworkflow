@@ -42,7 +42,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.4.1'
+VERSION_3_0 = '3.4.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -198,3 +198,6 @@ class TK:
     LEFT_DOUBLE_CLICK = '<Double-1>'
     TREEVIEW_OPEN = '<<TreeviewOpen>>'
     TREEVIEW_CLOSE = '<<TreeviewClose>>'
+
+
+HELP_DURATION_FORMAT = "Duration format example: 1d 20h 30m 30s --> 1 day 20 hours 30 minutes and 30 seconds"
