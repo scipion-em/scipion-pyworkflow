@@ -6,6 +6,7 @@ users:
   - New variable: SCIPION_SPRITES_FILE to point to a custom sprite. It should be compatible with sprites.png at pyworkflow/resources.
   - Scipion GUI log moved to the log tabs and removed from menu
   - New variable: SCIPION_SHOW_TEXT_IN_TOOLBAR, set it to anything to show the text of the icons below
+  - New variable: SCIPION_ICON_ZOOM, defaults to 75 (percent) to show icons at 24x24. 100 will set them to 32 or 50 to 16.
 developers:
   - Dialog class: add lockGui input to allow the viewers to prevent getting the screen focus if desired.
   - ProjectConfig class removed

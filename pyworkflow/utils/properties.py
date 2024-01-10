@@ -453,6 +453,14 @@ class Sprite:
         """ Loads the image of the sprite"""
         if not cls._image:
             cls._image = Image.open(cls.getSpritesFile())
+
+            from pyworkflow import Config
+            # If any zoom to apply
+            if Config.SCIPION_ICON_ZOOM != 100:
+                factor = Config.SCIPION_ICON_ZOOM/100
+                size = cls._image.size
+                newSize=size[0] * factor, size[1]* factor
+                cls.image = cls._image.thumbnail(newSize)
             width = cls._image.width
             cls.RATIO = width/cls.DEFAULT_WIDTH
         return cls._image

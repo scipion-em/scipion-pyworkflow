@@ -97,6 +97,10 @@ class Variable(object):
     def __fspath__(self):
         return self.__str__()
 
+    " We migth need to imlement more like this--> https://docs.python.org/3.3/reference/datamodel.html#object.__truediv__"
+    def __truediv__(self, other):
+        return float(self.value)/other
+
 class Config:
     """ Main Config for pyworkflow. It contains the main Scipion configuration variables
     providing default values or, if present, taking them from the environment.
@@ -245,6 +249,10 @@ class Config:
     "File (png) with the icons in a collage. Default is found at pyworkflow/resources/sprites.png. And a GIMP file could be found at the same folder in the github repo."
 
     SCIPION_SHOW_TEXT_IN_TOOLBAR = Variable(_get('SCIPION_SHOW_TEXT_IN_TOOLBAR', FALSE_STR)!=FALSE_STR, varType=VarTypes.BOOLEAN)
+    "Define it to anything else except False to show the label of the icons. It will take more space."
+
+    SCIPION_ICON_ZOOM = Variable(_get('SCIPION_ICON_ZOOM', 50), varType=VarTypes.INTEGER)
+    "Define it to anything else except False to show the label of the icons. It will take more space."
 
     # Notification
     SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR) == TRUE_STR

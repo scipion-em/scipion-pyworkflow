@@ -34,6 +34,7 @@ import stat
 import tkinter as tk
 import time
 import logging
+
 logger = logging.getLogger(__name__)
 
 import pyworkflow.utils as pwutils
@@ -124,7 +125,7 @@ class ObjectBrowser(tk.Frame):
         img, desc = self.treeProvider.getObjectPreview(obj)
         # Update image preview
         if self.showPreviewTop:
-            if isinstance(img, str):
+            if isinstance(img, (str, pwutils.SpriteImage)):
                 img = self.getImage(img)
             if img is None:
                 img = self.noImage
