@@ -22,8 +22,9 @@ def join(*paths):
 
 __resourcesPath = join('resources')
 
-def getResourcesPath():
-    return __resourcesPath
+def getResourcesPath(file=None):
+
+    return __resourcesPath if file is None else os.path.join(__resourcesPath, file)
 
 def findResource(filename):
     from .utils.path import findFile
@@ -100,6 +101,14 @@ class Variable(object):
     " We migth need to imlement more like this--> https://docs.python.org/3.3/reference/datamodel.html#object.__truediv__"
     def __truediv__(self, other):
         return float(self.value)/other
+
+    def __rtruediv__(self, other):
+        return  other / float(self.value)
+
+    def __add__(self, other):
+        return self.value+other
+    def __radd__(self, other):
+        return other+self.value
 
 class Config:
     """ Main Config for pyworkflow. It contains the main Scipion configuration variables

@@ -7,10 +7,11 @@ Created on Mar 25, 2014
 @author: roberto.marabini
 """
 import datetime
+import os
 from subprocess import Popen
 from io import StringIO
 
-from pyworkflow import APPS
+from pyworkflow import APPS, Variable
 from pyworkflow.utils.process import killWithChilds
 from pyworkflow.tests import *
 from pyworkflow.utils import utils, prettyDict, getListFromValues, strToDuration
@@ -203,3 +204,42 @@ class TestPathTools(unittest.TestCase):
     def test_durationstrings(self):
 
         self.assertEqual(70, strToDuration("1m 10s"), "String duration wrongly converted")
+
+
+class TestVarible(unittest.TestCase):
+
+    def test_operators(self):
+
+        myVar = Variable("Home")
+
+        # Join should work
+        try:
+            os.path.join(myVar, "hola")
+        except Exception as e:
+            self.fail("os.path.join for variables doesn't work")
+
+        # String concatenation ?
+        try:
+            newStr = myVar + "hola"
+            newStr = "hola" + myVar
+        except Exception as e:
+            self.fail("String concatenation with + for variables doesn't work")
+
+        myIntVar= Variable(50)
+
+        # Add should work
+        try:
+            sum = myIntVar + 3
+            sum = 3 + myIntVar
+        except Exception as e:
+            self.fail("Adding a value to an int variable doesn't work")
+
+        # Division should work
+        try:
+            result = myIntVar/2
+            result = 100/myIntVar
+
+        except Exception as e:
+            self.fail("Division does not work")
+
+
