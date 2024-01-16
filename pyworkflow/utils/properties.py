@@ -573,14 +573,14 @@ class Icon:
     # PLUGIN MANAGER ICONS
     CHECKED = SpriteImage(64,208,'fa-checked.png')
     UNCHECKED = SpriteImage(16,160,'fa-unchecked.png')
-    INSTALL = SpriteImage(64,32,'fa-install.png')
+    INSTALL = SpriteImage(32,64,'fa-install.png')
     UNINSTALL = SpriteImage(16,128,'fa-uninstall.png')
-    TO_INSTALL = SpriteImage(16,192,'fa-to_install.png')
+    TO_INSTALL = SpriteImage(32,256,'fa-to_install.png')
     INSTALLED = SpriteImage(16, 64,'fa-installed.png')
     PROCESSING = SpriteImage(32, 176, 'fa-processing.png',48,192)
     FAILURE = SpriteImage(48,224,'fa-failure.png')
     DELETE_OPERATION = ACTION_DELETE
-    TO_UPDATE = SpriteImage(16,112,'fa-update.png')
+    TO_UPDATE = SpriteImage(32,144,'fa-update.png')
     WAITING = 'wait.gif'
     ACTION_UNDO = SpriteImage(16,144,'fa-undo.png')
 
