@@ -803,6 +803,115 @@ class Project(object):
                     error += '\n   - '.join(deps)
         return error
 
+    def _getProtocolDescendents(self, protocol):
+        runsGraph = self.getRunsGraph()
+        node = runsGraph.getNode(protocol.strId())
+        visitedNodes = dict()
+        visitedNodes[int(node.getName())] = node
+
+        def getDescendents(rootNode):
+            for child in rootNode.getChilds():
+                if int(child.getName()) not in visitedNodes:
+                    visitedNodes[int(child.getName())] = child
+                    getDescendents(child)
+
+        getDescendents(node)
+        return visitedNodes
+
+    def getProtocolCompatibleOutputs(self, protocol, classes, condition):
+        objects = []
+        maxNum = 200
+        protocolDescendents = self._getProtocolDescendents(protocol)
+        runs = self.getRuns(refresh=False)
+
+        for prot in runs:
+            # Make sure we don't include previous output of the same
+            # and other descendent protocols
+            if prot.getObjId() not in protocolDescendents:
+                # Check if the protocol itself is one of the desired classes
+                if any(issubclass(prot.getClass(), c) for c in classes):
+                    p = pwobj.Pointer(prot)
+                    objects.append(p)
+
+                try:
+                    # paramName and attr must be set to None
+                    # Otherwise, if a protocol has failed and the corresponding output object of type XX does not exist
+                    # any other protocol that uses objects of type XX as input will not be able to choose then using
+                    # the magnifier glass (object selector of type XX)
+                    paramName = None
+                    attr = None
+                    for paramName, attr in prot.iterOutputAttributes(includePossible=True):
+                        def _checkParam(paramName, attr):
+                            # If attr is a subclasses of any desired one, add it to the list
+                            # we should also check if there is a condition, the object
+                            # must comply with the condition
+                            p = None
+
+                            match = False
+                            cancelConditionEval = False
+                            possibleOutput = isinstance(attr, type)
+
+                            # Go through all compatible Classes coming from in pointerClass string
+                            for c in classes:
+                                # If attr is an instance
+                                if isinstance(attr, c):
+                                    match = True
+                                    break
+                                # If it is a class already: "possibleOutput" case. In this case attr is the class and not
+                                # an instance of c. In this special case
+                                elif possibleOutput and attr == c:
+                                    match = True
+                                    cancelConditionEval = True
+
+                            # If attr matches the class
+                            if match:
+                                if cancelConditionEval or not condition or attr.evalCondition(condition):
+                                    p = pwobj.Pointer(prot, extended=paramName)
+                                    p._allowsSelection = True
+                                    objects.append(p)
+                                    return
+
+                            # JMRT: For all sets, we don't want to include the
+                            # subitems here for performance reasons (e.g. SetOfParticles)
+                            # Thus, a Set class can define EXPOSE_ITEMS = True
+                            # to enable the inclusion of its items here
+                            if getattr(attr, 'EXPOSE_ITEMS', False) and not possibleOutput:
+                                # If the ITEM type match any of the desired classes
+                                # we will add some elements from the set
+                                if (attr.ITEM_TYPE is not None and
+                                        any(issubclass(attr.ITEM_TYPE, c) for c in classes)):
+                                    if p is None:  # This means the set have not be added
+                                        p = pwobj.Pointer(prot, extended=paramName)
+                                        p._allowsSelection = False
+                                        objects.append(p)
+                                    # Add each item on the set to the list of objects
+                                    try:
+                                        for i, item in enumerate(attr):
+                                            if i == maxNum:  # Only load up to NUM particles
+                                                break
+                                            pi = pwobj.Pointer(prot, extended=paramName)
+                                            pi.addExtended(item.getObjId())
+                                            pi._parentObject = p
+                                            objects.append(pi)
+                                    except Exception as ex:
+                                        print("Error loading items from:")
+                                        print("  protocol: %s, attribute: %s" % (prot.getRunName(), paramName))
+                                        print("  dbfile: ", os.path.join(self.getPath(), attr.getFileName()))
+                                        print(ex)
+
+                        _checkParam(paramName, attr)
+                        # The following is a dirty fix for the RCT case where there
+                        # are inner output, maybe we should consider extend this for
+                        # in a more general manner
+                        for subParam in ['_untilted', '_tilted']:
+                            if hasattr(attr, subParam):
+                                _checkParam('%s.%s' % (paramName, subParam),
+                                            getattr(attr, subParam))
+                except Exception as e:
+                    print("Cannot read attributes for %s (%s)" % (prot.getClass(), e))
+
+        return objects
+
     def _checkProtocolsDependencies(self, protocols, msg):
         """ Check if the protocols have dependencies.
         This method is used before delete or save protocols to be sure
@@ -1513,12 +1622,12 @@ class Project(object):
             n.run = r
 
             # Legacy protocols do not have a plugin!!
-            develTxt =''
-            plugin=r.getPlugin()
+            develTxt = ''
+            plugin = r.getPlugin()
             if plugin and plugin.inDevelMode():
-                develTxt='* '
+                develTxt = '* '
 
-            n.setLabel('%s%s' % (develTxt , r.getRunName()))
+            n.setLabel('%s%s' % (develTxt, r.getRunName()))
             outputDict[r.getObjId()] = n
             for _, attr in r.iterOutputAttributes():
                 # mark this output as produced by r
@@ -1535,10 +1644,23 @@ class Project(object):
                 if pointedId in outputDict:
                     parentNode = outputDict[pointedId]
                     if parentNode is node:
-                        logger.warning("WARNING: Found a cyclic dependence from node "
-                              "%s to itself, probably a bug. " % pointedId)
+                        logger.warning("WARNING: Found a cyclic dependence from node %s to itself, probably a bug. " % pointedId)
                     else:
                         parentNode.addChild(node)
+                        if os.environ.get('CHECK_CYCLIC_REDUNDANCY') and self._checkCyclicRedundancy(parentNode, node):
+                            conflictiveNodes = set()
+                            for child in node.getChilds():
+                                if node in child._parents:
+                                    child._parents.remove(node)
+                                    conflictiveNodes.add(child)
+                                    logger.warning("WARNING: Found a cyclic dependence from node %s to %s, probably a bug. "
+                                                   % (node.getLabel() + '(' + node.getName() + ')',
+                                                      child.getLabel() + '(' + child.getName() + ')'))
+
+                            for conflictNode in conflictiveNodes:
+                                node._childs.remove(conflictNode)
+
+                            return False
                         return True
             return False
 
@@ -1560,6 +1682,27 @@ class Project(object):
             if n.isRoot() and n is not rootNode:
                 rootNode.addChild(n)
         return g
+
+    @staticmethod
+    def _checkCyclicRedundancy(parent, child):
+        visitedNodes = set()
+        recursionStack = set()
+
+        def depthFirstSearch(node):
+            visitedNodes.add(node)
+            recursionStack.add(node)
+            for child in node.getChilds():
+                if child not in visitedNodes:
+                    if depthFirstSearch(child):
+                        return True
+                elif child in recursionStack and child != parent:
+                    return True
+
+            recursionStack.remove(node)
+            return False
+
+        return depthFirstSearch(child)
+
 
     def _getRelationGraph(self, relation=pwobj.RELATION_SOURCE, refresh=False):
         """ Retrieve objects produced as outputs and
