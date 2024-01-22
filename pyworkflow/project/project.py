@@ -804,6 +804,7 @@ class Project(object):
         return error
 
     def _getProtocolDescendents(self, protocol):
+        """Getting the descendents protocols from a given one"""
         runsGraph = self.getRunsGraph()
         node = runsGraph.getNode(protocol.strId())
         visitedNodes = dict()
@@ -819,6 +820,7 @@ class Project(object):
         return visitedNodes
 
     def getProtocolCompatibleOutputs(self, protocol, classes, condition):
+        """Getting the outputs compatible with an object type. The outputs of the child protocols are excluded. """
         objects = []
         maxNum = 200
         protocolDescendents = self._getProtocolDescendents(protocol)
