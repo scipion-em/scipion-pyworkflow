@@ -806,8 +806,11 @@ class Project(object):
     def _getProtocolDescendents(self, protocol):
         """Getting the descendents protocols from a given one"""
         runsGraph = self.getRunsGraph()
-        node = runsGraph.getNode(protocol.strId())
         visitedNodes = dict()
+        node = runsGraph.getNode(protocol.strId())
+        if node is None:
+            return visitedNodes
+
         visitedNodes[int(node.getName())] = node
 
         def getDescendents(rootNode):
