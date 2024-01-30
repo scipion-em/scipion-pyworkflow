@@ -522,6 +522,7 @@ class Icon:
     ACTION_FIND_PREVIOUS = SpriteImage(32,192,'fa-previous.png')
     ACTION_COLLAPSE = SpriteImage(32,240,'fa-minus-square.png')
     ACTION_EXPAND = SpriteImage(32,224,'fa-plus-square.png')
+    ACTION_CIRCLE = SpriteImage(48,192,'circle.png')
     # Host template
     BUTTON_SELECT = SpriteImage(64,224,'fa-check.png')
     BUTTON_CLOSE = ACTION_CLOSE
