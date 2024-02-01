@@ -2,6 +2,7 @@ V3.4.1
 ------
 developers:
   - Dialog class: add lockGui input to allow the viewers to prevent getting the screen focus if desired.
+  - Avoiding cyclic redundancies between protocols
 
 V3.3.1
 ------
