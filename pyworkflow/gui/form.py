@@ -464,105 +464,12 @@ class SubclassesTreeProvider(TreeProvider):
         # Get the classes that are valid as input object in this Domain
         domain = pw.Config.getDomain()
         classes = [domain.findClass(c.strip()) for c in className.split(",")]
-        objects = []
-
-        # Do no refresh again and take the runs that are loaded
-        # already in the project. We will prefer to save time
-        # here than have the 'very last' version of the runs and objects
-        runs = project.getRuns(refresh=False)
-
-        for prot in runs:
-            # Make sure we don't include previous output of the same 
-            # protocol, it will cause a recursive loop
-            if prot.getObjId() != self.protocol.getObjId():
-                # Check if the protocol itself is one of the desired classes
-                if any(issubclass(prot.getClass(), c) for c in classes):
-                    p = pwobj.Pointer(prot)
-                    objects.append(p)
-
-                try:
-                    # paramName and attr must be set to None 
-                    # Otherwise, if a protocol has failed and the corresponding output object of type XX does not exist 
-                    # any other protocol that uses objects of type XX as input will not be able to choose then using
-                    # the magnifier glass (object selector of type XX)
-                    paramName = None
-                    attr = None
-                    for paramName, attr in prot.iterOutputAttributes(includePossible=True):
-                        def _checkParam(paramName, attr):
-                            # If attr is a sub-classes of any desired one, add it to the list
-                            # we should also check if there is a condition, the object
-                            # must comply with the condition
-                            p = None
-
-                            match = False
-                            cancelConditionEval = False
-                            possibleOutput = isinstance(attr, type)
-
-                            # Go through all compatible Classes coming from in pointerClass string
-                            for c in classes:
-                                # If attr is instance
-                                if isinstance(attr, c):
-                                    match = True
-                                    break
-                                # If it is a class already: "possibleOutput" case. In this case attr is the class and not
-                                # an instance of c. In this special case
-                                elif possibleOutput and attr == c:
-                                    match = True
-                                    cancelConditionEval = True
-
-                            # If attr matches the class
-                            if match:
-                                if cancelConditionEval or not condition or attr.evalCondition(condition):
-                                    p = pwobj.Pointer(prot, extended=paramName)
-                                    p._allowsSelection = True
-                                    objects.append(p)
-                                    return
-
-                            # JMRT: For all sets, we don't want to include the
-                            # subitems here for performance reasons (e.g SetOfParticles)
-                            # Thus, a Set class can define EXPOSE_ITEMS = True
-                            # to enable the inclusion of its items here
-                            if getattr(attr, 'EXPOSE_ITEMS', False) and not possibleOutput:
-                                # If the ITEM type match any of the desired classes
-                                # we will add some elements from the set
-                                if (attr.ITEM_TYPE is not None and
-                                        any(issubclass(attr.ITEM_TYPE, c) for c in classes)):
-                                    if p is None:  # This means the set have not be added
-                                        p = pwobj.Pointer(prot, extended=paramName)
-                                        p._allowsSelection = False
-                                        objects.append(p)
-                                    # Add each item on the set to the list of objects
-                                    try:
-                                        for i, item in enumerate(attr):
-                                            if i == self.maxNum:  # Only load up to NUM particles
-                                                break
-                                            pi = pwobj.Pointer(prot, extended=paramName)
-                                            pi.addExtended(item.getObjId())
-                                            pi._parentObject = p
-                                            objects.append(pi)
-                                    except Exception as ex:
-                                        print("Error loading items from:")
-                                        print("  protocol: %s, attribute: %s"
-                                              % (prot.getRunName(), paramName))
-                                        print("  dbfile: ",
-                                              os.path.join(project.getPath(),
-                                                           attr.getFileName()))
-                                        print(ex)
-
-                        _checkParam(paramName, attr)
-                        # The following is a dirty fix for the RCT case where there
-                        # are inner output, maybe we should consider extend this for
-                        # in a more general manner
-                        for subParam in ['_untilted', '_tilted']:
-                            if hasattr(attr, subParam):
-                                _checkParam('%s.%s' % (paramName, subParam),
-                                            getattr(attr, subParam))
-                except Exception as e:
-                    print("Cannot read attributes for %s (%s)" % (prot.getClass(), e))
+        # Obtaining only the outputs of the protocols that do not violate the sense of processing,
+        # thus avoiding circular references between protocols
+        objects = project.getProtocolCompatibleOutputs(self.protocol, classes, condition)
 
         # Sort objects before returning them
         self._sortObjects(objects)
-
         return objects
 
     def _sortObjects(self, objects):
@@ -2242,6 +2149,11 @@ class FormWindow(Window):
             errors, resultAction = ProtocolsView._launchSubWorkflow(self.protocol,
                                                                     mode, self.root,
                                                                     askSingleAll=True)
+
+            if errors:
+                self.showInfo(errors)
+                return
+
         if resultAction == RESULT_CANCEL:
             return
         elif resultAction == RESULT_RUN_ALL:

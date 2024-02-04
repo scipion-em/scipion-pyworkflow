@@ -25,9 +25,9 @@
 import logging
 import threading
 
-from pyworkflow import Config
-from pyworkflow.gui import TextFileViewer, getDefaultFont, LIST_TREEVIEW, \
-    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL
+from pyworkflow import Config, DEFAULT_EXECUTION_ACTION_ASK, DEFAULT_EXECUTION_ACTION_SINGLE
+from pyworkflow.gui import (TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut, ToolTip, RESULT_RUN_ALL,
+                            RESULT_RUN_SINGLE, RESULT_CANCEL)
 from pyworkflow.gui.project.constants import *
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
@@ -1768,11 +1768,18 @@ class ProtocolsView(tk.Frame):
             return [], RESULT_CANCEL
         else:  # launching from a form
             if len(workflowProtocolList) > 1:
-                title = Message.TITLE_RESTART_FORM if mode == pwprot.MODE_RESTART else Message.TITLE_CONTINUE_FORM
-                message += Message.MESSAGE_ASK_SINGLE_ALL
-                result = pwgui.dialog.askSingleAllCancel(title, message,
-                                                         root)
+                if Config.SCIPION_DEFAULT_EXECUTION_ACTION == DEFAULT_EXECUTION_ACTION_ASK:
+                    title = Message.TITLE_RESTART_FORM if mode == pwprot.MODE_RESTART else Message.TITLE_CONTINUE_FORM
+                    message += Message.MESSAGE_ASK_SINGLE_ALL
+                    result = pwgui.dialog.askSingleAllCancel(title, message,
+                                                             root)
+                elif Config.SCIPION_DEFAULT_EXECUTION_ACTION == DEFAULT_EXECUTION_ACTION_SINGLE:
+                    result = RESULT_RUN_SINGLE
+                else:
+                    result = RESULT_RUN_ALL
+
                 if result == RESULT_RUN_ALL:
+                    errorList = []
                     if mode == pwprot.MODE_RESTART:
                         project._restartWorkflow(errorList, workflowProtocolList)
                     else:
@@ -1782,7 +1789,7 @@ class ProtocolsView(tk.Frame):
 
                 elif result == RESULT_RUN_SINGLE:
                     # If mode resume, we should not reset the "current" protocol
-                    if mode==pwprot.MODE_RESUME:
+                    if mode == pwprot.MODE_RESUME:
                         workflowProtocolList.pop(protocol.getObjId())
                     errorList = project.resetWorkFlow(workflowProtocolList)
                     return errorList, RESULT_RUN_SINGLE
