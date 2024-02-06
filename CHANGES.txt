@@ -1,4 +1,4 @@
-V3.4.0
+V3.5.0
 ------
 users:
   - New Icons.
@@ -8,7 +8,6 @@ users:
   - New variable: SCIPION_SHOW_TEXT_IN_TOOLBAR, set it to anything to show the text of the icons below
   - New variable: SCIPION_ICON_ZOOM, defaults to 75 (percent) to show icons at 24x24. 100 will set them to 32 or 50 to 16.
 developers:
-  - Dialog class: add lockGui input to allow the viewers to prevent getting the screen focus if desired.
   - ProjectConfig class removed
   - New methods in path: hasChangedSince and isFileFinished
   - New method in utils: strToDuration (useful to translate "1h 35m" to seconds). For duration parameters.
