@@ -524,6 +524,7 @@ class Icon:
     ACTION_EXPAND = SpriteImage(32,224,'fa-plus-square.png')
     ACTION_CIRCLE = SpriteImage(48,192,'circle.png')
     ACTION_PICKING = SpriteImage(64, 192, 'picking.png')
+    ACTION_STATS = SpriteImage(80, 192, 'stats.png')
 
     # Host template
     BUTTON_SELECT = SpriteImage(64,224,'fa-check.png')
