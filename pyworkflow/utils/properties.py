@@ -525,6 +525,10 @@ class Icon:
     ACTION_CIRCLE = SpriteImage(48,192,'circle.png')
     ACTION_PICKING = SpriteImage(64, 192, 'picking.png')
     ACTION_STATS = SpriteImage(80, 192, 'stats.png')
+    ACTION_ZOOM = SpriteImage(64, 176, 'zoom.png')
+    ACTION_HAND = SpriteImage(80, 176, 'hand.png')
+    ACTION_FILAMENT_PICKING = SpriteImage(48, 176, 'filament.png')
+
 
     # Host template
     BUTTON_SELECT = SpriteImage(64,224,'fa-check.png')
