@@ -527,6 +527,7 @@ class Icon:
     ACTION_ZOOM = SpriteImage(64, 176, 'zoom.png')
     ACTION_HAND = SpriteImage(80, 176, 'hand.png')
     ACTION_FILAMENT_PICKING = SpriteImage(48, 176, 'filament.png')
+    ACTION_GRID = SpriteImage(64, 160, 'grid.png')
 
 
     # Host template
