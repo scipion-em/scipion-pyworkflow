@@ -157,7 +157,6 @@ class StepThread(threading.Thread):
                     self.step.setFailed(error)
 
 
-
 class ThreadStepExecutor(StepExecutor):
     """ Run steps in parallel using threads. """
     def __init__(self, hostConfig, nThreads, **kwargs):
@@ -351,54 +350,3 @@ class QueueStepExecutor(ThreadStepExecutor):
         # If JOB_DONE_REGEX is not defined and queue has returned something we assume that job is still running
         else:
             return cts.STATUS_RUNNING
-
-
-class MPIStepExecutor(ThreadStepExecutor):
-    """ Run steps in parallel using threads.
-    But call runJob through MPI workers.
-    """
-    def __init__(self, hostConfig, nMPI, comm, **kwargs):
-        ThreadStepExecutor.__init__(self, hostConfig, nMPI, **kwargs)
-        self.comm = comm
-    
-    def runJob(self, log, programName, params,
-               numberOfMpi=1, numberOfThreads=1, env=None, cwd=None):
-        # Import mpi here so if MPI4py was not properly compiled
-        # we can still run in parallel with threads.
-        from pyworkflow.utils.mpi import runJobMPI
-        node = threading.current_thread().thId + 1
-        runJobMPI(programName, params, self.comm, node,
-                  numberOfMpi, hostConfig=self.hostConfig, env=env, cwd=cwd,
-                  gpuList=self.getGpuList())
-
-    def runSteps(self, steps, 
-                 stepStartedCallback, 
-                 stepFinishedCallback,
-                 checkStepsCallback,
-                 stepsCheckSecs=5):
-        """
-        Creates mpiprocesses using numpy and synchronize the steps execution.
-
-        :param steps: list of steps to run
-        :param stepStartedCallback: callback to be called before starting any step
-        :param stepFinishedCallback: callback to be run after all steps are done
-        :param stepsCheckCallback: callback to check if there are new steps to add (streaming)
-        :param stepsCheckSecs: seconds between stepsCheckCallback calls
-
-        """
-
-
-        ThreadStepExecutor.runSteps(self, steps,
-                                    stepStartedCallback, 
-                                    stepFinishedCallback,
-                                    checkStepsCallback,
-                                    stepsCheckSecs=stepsCheckSecs)
-
-        # Import mpi here so if MPI4py was not properly compiled
-        # we can still run in parallel with threads.
-        from pyworkflow.utils.mpi import TAG_RUN_JOB
-
-        # Send special command 'None' to MPI slaves to notify them
-        # that there are no more jobs to do and they can finish.
-        for node in range(1, self.numberOfProcs+1):
-            self.comm.send('None', dest=node, tag=(TAG_RUN_JOB+node))

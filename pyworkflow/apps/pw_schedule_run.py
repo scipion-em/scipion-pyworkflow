@@ -115,7 +115,7 @@ class RunScheduler:
             if pointer.hasExtended():  # case B
                 protocol = pointer.getObjValue()
             else:  # case C
-                protocol = self.project.getNode(str(output.getObjParentId())).run
+                protocol = self.project.getRunsGraph().getNode(str(output.getObjParentId())).run
         return protocol
 
     def _getSecondsToWait(self, inProt):

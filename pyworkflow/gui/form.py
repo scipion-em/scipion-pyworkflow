@@ -464,105 +464,12 @@ class SubclassesTreeProvider(TreeProvider):
         # Get the classes that are valid as input object in this Domain
         domain = pw.Config.getDomain()
         classes = [domain.findClass(c.strip()) for c in className.split(",")]
-        objects = []
-
-        # Do no refresh again and take the runs that are loaded
-        # already in the project. We will prefer to save time
-        # here than have the 'very last' version of the runs and objects
-        runs = project.getRuns(refresh=False)
-
-        for prot in runs:
-            # Make sure we don't include previous output of the same 
-            # protocol, it will cause a recursive loop
-            if prot.getObjId() != self.protocol.getObjId():
-                # Check if the protocol itself is one of the desired classes
-                if any(issubclass(prot.getClass(), c) for c in classes):
-                    p = pwobj.Pointer(prot)
-                    objects.append(p)
-
-                try:
-                    # paramName and attr must be set to None 
-                    # Otherwise, if a protocol has failed and the corresponding output object of type XX does not exist 
-                    # any other protocol that uses objects of type XX as input will not be able to choose then using
-                    # the magnifier glass (object selector of type XX)
-                    paramName = None
-                    attr = None
-                    for paramName, attr in prot.iterOutputAttributes(includePossible=True):
-                        def _checkParam(paramName, attr):
-                            # If attr is a sub-classes of any desired one, add it to the list
-                            # we should also check if there is a condition, the object
-                            # must comply with the condition
-                            p = None
-
-                            match = False
-                            cancelConditionEval = False
-                            possibleOutput = isinstance(attr, type)
-
-                            # Go through all compatible Classes coming from in pointerClass string
-                            for c in classes:
-                                # If attr is instance
-                                if isinstance(attr, c):
-                                    match = True
-                                    break
-                                # If it is a class already: "possibleOutput" case. In this case attr is the class and not
-                                # an instance of c. In this special case
-                                elif possibleOutput and attr == c:
-                                    match = True
-                                    cancelConditionEval = True
-
-                            # If attr matches the class
-                            if match:
-                                if cancelConditionEval or not condition or attr.evalCondition(condition):
-                                    p = pwobj.Pointer(prot, extended=paramName)
-                                    p._allowsSelection = True
-                                    objects.append(p)
-                                    return
-
-                            # JMRT: For all sets, we don't want to include the
-                            # subitems here for performance reasons (e.g SetOfParticles)
-                            # Thus, a Set class can define EXPOSE_ITEMS = True
-                            # to enable the inclusion of its items here
-                            if getattr(attr, 'EXPOSE_ITEMS', False) and not possibleOutput:
-                                # If the ITEM type match any of the desired classes
-                                # we will add some elements from the set
-                                if (attr.ITEM_TYPE is not None and
-                                        any(issubclass(attr.ITEM_TYPE, c) for c in classes)):
-                                    if p is None:  # This means the set have not be added
-                                        p = pwobj.Pointer(prot, extended=paramName)
-                                        p._allowsSelection = False
-                                        objects.append(p)
-                                    # Add each item on the set to the list of objects
-                                    try:
-                                        for i, item in enumerate(attr):
-                                            if i == self.maxNum:  # Only load up to NUM particles
-                                                break
-                                            pi = pwobj.Pointer(prot, extended=paramName)
-                                            pi.addExtended(item.getObjId())
-                                            pi._parentObject = p
-                                            objects.append(pi)
-                                    except Exception as ex:
-                                        print("Error loading items from:")
-                                        print("  protocol: %s, attribute: %s"
-                                              % (prot.getRunName(), paramName))
-                                        print("  dbfile: ",
-                                              os.path.join(project.getPath(),
-                                                           attr.getFileName()))
-                                        print(ex)
-
-                        _checkParam(paramName, attr)
-                        # The following is a dirty fix for the RCT case where there
-                        # are inner output, maybe we should consider extend this for
-                        # in a more general manner
-                        for subParam in ['_untilted', '_tilted']:
-                            if hasattr(attr, subParam):
-                                _checkParam('%s.%s' % (paramName, subParam),
-                                            getattr(attr, subParam))
-                except Exception as e:
-                    print("Cannot read attributes for %s (%s)" % (prot.getClass(), e))
+        # Obtaining only the outputs of the protocols that do not violate the sense of processing,
+        # thus avoiding circular references between protocols
+        objects = project.getProtocolCompatibleOutputs(self.protocol, classes, condition)
 
         # Sort objects before returning them
         self._sortObjects(objects)
-
         return objects
 
     def _sortObjects(self, objects):
@@ -1624,14 +1531,13 @@ class FormWindow(Window):
     
     Layout:
         There are 4 main blocks that goes each one in a different row1.
-        1. Header: will contains the logo, title and some link buttons.
+        1. Header: will contain the logo, title and some link buttons.
         2. Common: common execution parameters of each run.
         3. Params: the expert level and tabs with the Protocol parameters.
         4. Buttons: buttons at bottom for close, save and execute.
     """
 
-    def __init__(self, title, protocol, callback, master=None,
-                 hostList=['localhost'], **kwargs):
+    def __init__(self, title, protocol, callback, master=None, **kwargs):
         """ Constructor of the Form window. 
         Params:
          title: title string of the windows.
@@ -1647,7 +1553,6 @@ class FormWindow(Window):
         self.visualizeDict = kwargs.get('visualizeDict', {})
         self.disableRunMode = kwargs.get('disableRunMode', False)
         self.bindings = []
-        self.hostList = hostList
         self.protocol = protocol
         # This control when to close or not after execute
         self.visualizeMode = kwargs.get('visualizeMode', False)
@@ -1790,38 +1695,22 @@ class FormWindow(Window):
                 sticky = 'e'
 
                 if mode == pwprot.STEPS_PARALLEL:
-                    self.procTypeVar = tk.StringVar()
-
-                    if allowThreads and allowMpi:
-                        if numberOfMpi > 1:
-                            procs = numberOfMpi
-                            self.procTypeVar.set(MPI)
-                            prot.numberOfThreads.set(1)
-                        else:
-                            procs = numberOfThreads
-                            self.procTypeVar.set(THREADS)
-                            prot.numberOfMpi.set(1)
-
-                        self.procTypeVar.trace('w', self._setThreadsOrMpi)
-                        procCombo = tk.Frame(procFrame, bg=pw.Config.SCIPION_BG_COLOR)
-                        for i, opt in enumerate([THREADS, MPI]):
-                            rb = tk.Radiobutton(procCombo, text=opt,
-                                                variable=self.procTypeVar,
-                                                value=opt, bg=pw.Config.SCIPION_BG_COLOR,
-                                                highlightthickness=0)
-                            rb.grid(row=0, column=i, sticky='w', padx=(0, 5))
-
-                        procCombo.grid(row=r2, column=0, sticky='w', pady=15)
-                        procEntry = self._createBoundEntry(procFrame,
-                                                           pwutils.Message.VAR_THREADS,
-                                                           func=self._setThreadsOrMpi,
-                                                           value=procs)
-                        procEntry.grid(row=r2, column=1, padx=(0, 5), sticky='w')
+                    if allowThreads and numberOfThreads > 0:
+                        prot.numberOfMpi.set(1)
+                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_THREADS,
+                                                sticky=sticky, row=r2, column=c2,
+                                                pady=0)
+                        entry = self._createBoundEntry(procFrame,
+                                                       pwutils.Message.VAR_THREADS)
+                        entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
+                    elif allowMpi and numberOfMpi > 1:
+                        self.showError("MPI parameter is deprecated for protocols "
+                                       "with execution is set to STEPS_PARALLEL. "
+                                       "Please use threads instead.")
                     else:
-                        # Show an error message
-                        self.showInfo(" If protocol execution is set to "
-                                      "STEPS_PARALLEL number of threads and mpi "
-                                      "should not be set to zero.")
+                        self.showError("If protocol execution is set to "
+                                       "STEPS_PARALLEL number of threads "
+                                       "should not be set to zero.")
 
                 else:
                     # ---- THREADS----
@@ -1933,7 +1822,7 @@ class FormWindow(Window):
 
         self.updateLabelAndCommentVars()
 
-        r = 1  # Execution
+        r = 1  # Run mode
 
         modeFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
 
@@ -1953,25 +1842,9 @@ class FormWindow(Window):
                                  command=self._createHelpCommand(pwutils.Message.HELP_RUNMODE))
             btnHelp.grid(row=0, column=2, padx=(5, 0), pady=2, sticky='e')
         modeFrame.columnconfigure(0, weight=1)
-        modeFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
-
-        # ---- Host---- 
-        self._createHeaderLabel(runFrame, pwutils.Message.LABEL_HOST, row=r, column=c,
-                                sticky='e')
-        # Keep track of hostname selection
-        self.hostVar = tk.StringVar()
-        protHost = self.protocol.getHostName()
-        hostName = protHost if protHost in self.hostList else self.hostList[0]
-        self.hostVar.trace('w', self._setHostName)
-        self.hostCombo = ttk.Combobox(runFrame, textvariable=self.hostVar,
-                                      state='readonly', width=10, font=self.font)
-        self.hostCombo['values'] = self.hostList
-        self.hostVar.set(hostName)
-        self.hostCombo.grid(row=r, column=c + 1, pady=0, sticky='we')
-        r = 2
-        self._createParallel(runFrame, r)
-
-        # ---- QUEUE ----
+        modeFrame.grid(row=r, column=1, sticky='w', columnspan=2)
+        
+        # Queue
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_QUEUE, row=r,
                                 sticky='e',
                                 column=c)
@@ -1993,7 +1866,9 @@ class FormWindow(Window):
 
         btnHelp.grid(row=r, column=c + 2, padx=(5, 0), pady=5, sticky='w')
 
-        r = 3  # ---- Wait for other protocols (SCHEDULE) ----
+        r = 2  # Parallel and Wait for other protocols (SCHEDULE)
+        self._createParallel(runFrame, r)
+
         self._createHeaderLabel(runFrame, pwutils.Message.LABEL_WAIT_FOR, row=r, sticky='e',
                                 column=c, padx=(15, 5), pady=0)
         self.waitForVar = tk.StringVar()
@@ -2274,12 +2149,20 @@ class FormWindow(Window):
             errors, resultAction = ProtocolsView._launchSubWorkflow(self.protocol,
                                                                     mode, self.root,
                                                                     askSingleAll=True)
+
+            if errors:
+                self.showInfo(errors)
+                return
+
         if resultAction == RESULT_CANCEL:
             return
         elif resultAction == RESULT_RUN_ALL:
+            if errors:
+                self.showInfo(errors)
             self._close()
             return
 
+        # This code will happen when protocol is executed alone
         errors += self.protocol.validate()
 
         if errors:
@@ -2479,21 +2362,6 @@ class FormWindow(Window):
 
         for s in self._sections:
             s.adjustContent()
-
-    def _setThreadsOrMpi(self, *args):
-        mode = self.procTypeVar.get()
-        prot = self.protocol  # shortcut notation
-        try:
-            procs = int(self.widgetDict['numberOfThreads'].get())
-            if mode == THREADS:  # threads mode
-                prot.numberOfThreads.set(procs)
-                prot.numberOfMpi.set(min(1, prot.numberOfMpi.get()))  # 0 or 1
-            else:
-                prot.numberOfMpi.set(procs)
-                m = min(1, prot.numberOfThreads.get())  # 0 or 1
-                prot.numberOfThreads.set(m)
-        except Exception:
-            pass
 
     def _setGpu(self, *args):
         prot = self.protocol  # shortcut notation

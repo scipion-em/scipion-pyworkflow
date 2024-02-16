@@ -404,20 +404,28 @@ class Domain:
             preferedFlag = 0
 
             for viewer in cls.getViewers().values():
+                viewerAdded=False
                 if environment in viewer._environments:
                     for t in viewer._targets:
                         if t in baseClasses:
                             for prefViewer in preferredViewers:
                                 if viewer is prefViewer:
                                     viewers.insert(0, viewer)
+                                    viewerAdded=True
                                     preferedFlag = 1
                                     break
                             else:
                                 if t == clazz:
                                     viewers.insert(preferedFlag, viewer)
+                                    viewerAdded = True
                                 else:
                                     viewers.append(viewer)
+                                    viewerAdded = True
                                 break
+
+                        if viewerAdded:
+                            break
+
         except Exception as e:
             # Catch if there is a missing plugin, we will get Legacy which triggers and Exception
             pass
@@ -555,6 +563,7 @@ class Plugin:
 
     @classmethod
     def getCondaActivationCmd(cls):
+        """ Returns the conda activation command with && at the end if defined otherwise empty"""
         if cls._condaActivationCmd is None:
             condaActivationCmd = pw.Config.CONDA_ACTIVATION_CMD
             if not condaActivationCmd:

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 import contextlib
 import sys
+import platform
 import os
 import re
 from datetime import datetime
@@ -35,8 +36,8 @@ import sysconfig
 import bibtexparser
 import numpy as np
 import math
-
-from pyworkflow import Config, StrColors
+from pyworkflow.constants import StrColors
+from pyworkflow import Config
 
 
 def prettyDate(time=False):
@@ -258,73 +259,6 @@ def sortListByList(inList, priorityList):
         return inList
 
 
-def executeRemoteX(command, hostName, userName, password):
-    """
-    Execute a remote command with X11 forwarding. Currently not used.
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard output and error output.
-    """
-    scriptPath = os.path.abspath(os.path.join(os.path.dirname(__file__), "sshAskPass.sh"))
-    pswCommand = "echo '" + password + "' | " + scriptPath + " ssh -X " + userName + "@" + hostName + " " + command
-    import subprocess
-    p = subprocess.Popen(pswCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    return stdout, stderr
-
-
-def executeRemote(command, hostName, userName, password):
-    """ Execute a remote command. Currently not used
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard input, standard output and error output.
-    """
-    import paramiko
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostName, 22, userName, password)
-    stdin, stdout, stderr = ssh.exec_command(command)
-    ssh.close()
-    return stdin, stdout, stderr
-
-
-def executeLongRemote(command, hostName, userName, password):
-    """ Execute a remote command.
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard input, standard output and error output.
-
-    """
-    import paramiko
-    import select
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostName, 22, userName, password)
-    transport = ssh.get_transport()
-    channel = transport.open_session()
-    channel.exec_command(command)
-    while True:
-        if channel.exit_status_ready():
-            break
-        rl, wl, xl = select.select([channel], [], [], 0.0)
-        if len(rl) > 0:
-            print(channel.recv(1024))
-
-
 def getLocalUserName():
     """ Recover local machine user name.
     returns: Local machine user name.
@@ -533,10 +467,10 @@ def parseHyperText(text, matchCallback):
 #    return text
 
 class LazyDict(object):
-    """ Dictionary to be initialized in the moment it is accessed for the first time.
+    """ Dictionary to be initialized at the moment it is accessed for the first time.
     Initialization is done by a callback passed at instantiation"""
     def __init__(self, callback=dict):
-        """ :param callback: method to initialize the dictionary. SHould return a dictionary"""
+        """ :param callback: method to initialize the dictionary. Should return a dictionary"""
         self.data = None
         self.callback = callback
 
@@ -859,7 +793,7 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
 
 
 @contextlib.contextmanager
-def weakImport(package):
+def weakImport(package, msg=None):
     """
     This method can be used to tolerate imports that may fail.
 
@@ -880,3 +814,43 @@ def weakImport(package):
     except ImportError as e:
         if "'%s'" % package not in str(e):
             raise e
+        elif msg is not None:
+            logger.warning(msg)
+# To be removed once developers have installed distro. 20-Nov-2023.
+with weakImport("distro", msg='You are missing distro package. '
+            'Did you "git pulled"?. Please run "scipion3 pip install distro==1.8".'):
+    import distro
+
+class OS:
+    @staticmethod
+    def getPlatform():
+        return platform.system()
+
+    @classmethod
+    def getDistro(cls):
+        return distro
+
+    @classmethod
+    def isWSL(cls):
+
+        # For now lets assume that if WSL_DISTRO_NAME exists is a WLS
+        return cls.getWLSNAME() is not None
+
+    @classmethod
+    def getWLSNAME(cls):
+        return os.environ.get("WSL_DISTRO_NAME", None)
+
+    @classmethod
+    def isUbuntu(cls):
+        return distro.id() == "ubuntu"
+
+    @classmethod
+    def isCentos(cls):
+        return distro.id() == "centos"
+
+    @classmethod
+    def WLSfile2Windows(cls, file):
+        # Links in WSL are not valid in windows
+        file = os.path.realpath(file).replace("/", "\\")
+        file = ("\\\\wsl.localhost\\" + cls.getWLSNAME() + file)
+        return file

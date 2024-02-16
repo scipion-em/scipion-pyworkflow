@@ -58,7 +58,7 @@ class Dialog(tk.Toplevel):
     An image name can be passed to display left to the message.
     """
 
-    def __init__(self, parent, title, **kwargs):
+    def __init__(self, parent, title, lockGui=True, **kwargs):
         """Initialize a dialog.
         Arguments:
             parent -- a parent window (the application window)
@@ -71,6 +71,8 @@ class Dialog(tk.Toplevel):
             parent = tk.Tk()
             parent.withdraw()
             gui.setCommonFonts()
+            # invoke the button on the return key
+            parent.bind_class("Button", "<Key-Return>", lambda event: event.widget.invoke())
 
         tk.Toplevel.__init__(self, parent)
 
@@ -80,7 +82,7 @@ class Dialog(tk.Toplevel):
         # If the master is not viewable, don't
         # make the child transient, or else it
         # would be opened withdrawn
-        if parent.winfo_viewable():
+        if parent.winfo_viewable() and lockGui:
             self.transient(parent)
 
         if title:
@@ -100,7 +102,7 @@ class Dialog(tk.Toplevel):
         # Frame for the info/message label
         infoFrame = tk.Frame(self)
         infoFrame.grid(row=1, column=0, sticky='sew',
-                      padx=5, pady=(0, 5))
+                       padx=5, pady=(0, 5))
         self.floatingMessage = tk.Label(infoFrame, text="", fg=Config.SCIPION_MAIN_COLOR)
         self.floatingMessage.grid(row=0, column=0, sticky='news')
 
@@ -139,7 +141,8 @@ class Dialog(tk.Toplevel):
         # window ".139897767953072.139897384058440" was deleted before its visibility changed
         # wait for window to appear on screen before calling grab_set
         self.wait_visibility()
-        self.grab_set()
+        if lockGui:
+            self.grab_set()
         self.wait_window(self)
 
     def destroy(self):
@@ -326,7 +329,7 @@ class ExceptionDialog(MessageDialog):
             detailsText = TaggedText(bodyFrame, bg=Config.SCIPION_BG_COLOR, bd=0, highlightthickness=0)
             traceStr = traceback.format_exc()
             fillMessageText(detailsText, traceStr)
-            detailsText.frame.grid(row=row+1, column=0, columnspan=2, sticky='news', padx=5, pady=5)
+            detailsText.frame.grid(row=row + 1, column=0, columnspan=2, sticky='news', padx=5, pady=5)
             event.widget.grid_forget()
 
         row = 1
@@ -335,7 +338,7 @@ class ExceptionDialog(MessageDialog):
             if isinstance(self._exception, PyworkflowException):
                 helpUrl = self._exception.getUrl()
                 labelUrl = TaggedText(bodyFrame, bg=Config.SCIPION_BG_COLOR, bd=0, highlightthickness=0)
-                fillMessageText(labelUrl,"Please go here for more details: %s" % helpUrl)
+                fillMessageText(labelUrl, "Please go here for more details: %s" % helpUrl)
                 labelUrl.grid(row=row, column=0, columnspan=2, sticky='news')
                 row += 1
 
@@ -619,7 +622,7 @@ class ListDialog(Dialog):
 
     def _createPreviewPanel(self, parent):
         self.previewFrame = tk.Frame(parent)
-        self.previewFrame.grid(row=1,column=1)
+        self.previewFrame.grid(row=1, column=1)
 
     def _createFilterBox(self, content):
         """ Create the Frame with Filter widgets """
@@ -779,10 +782,9 @@ class FlashMessage:
 class FloatingMessage:
     def __init__(self, master, msg, xPos=None, yPos=None, textWidth=280,
                  font='Helvetica', size=12, bd=1, bg=Config.SCIPION_MAIN_COLOR, fg='white'):
-
         if xPos is None:
-            xPos = (master.winfo_width()-textWidth)/2
-            yPos = master.winfo_height()/2
+            xPos = (master.winfo_width() - textWidth) / 2
+            yPos = master.winfo_height() / 2
 
         self.floatingMessage = tk.Label(master, text="   %s   " % msg,
                                         bd=bd, bg=bg, fg=fg)
@@ -837,9 +839,6 @@ class FileBrowseDialog(Dialog):
         return True
 
 
-
-
-
 class SearchBaseWindow(Window):
     """ Base window for searching in a list
     You are going to implement several elements:
@@ -872,7 +871,7 @@ class SearchBaseWindow(Window):
 
     def __init__(self, parentWindow, title="Search element", onClick=None, onDoubleClick=None, **kwargs):
         super().__init__(title=title,
-                              masterWindow=parentWindow)
+                         masterWindow=parentWindow)
 
         self.onClick = self._click if onClick is None else onClick
         self.onDoubleClick = self._double_click if onDoubleClick is None else onDoubleClick
@@ -903,8 +902,8 @@ class SearchBaseWindow(Window):
         entry.focus_set()
         entry.grid(row=0, column=1, sticky='nw')
         btn = widgets.IconButton(frame, "Search",
-                                       imagePath=Icon.ACTION_SEARCH,
-                                       command=self._onSearchClick)
+                                 imagePath=Icon.ACTION_SEARCH,
+                                 command=self._onSearchClick)
         btn.grid(row=0, column=2, sticky='nw')
 
         frame.grid(row=0, column=0, sticky='new', padx=5, pady=(10, 5))
@@ -945,7 +944,7 @@ class SearchBaseWindow(Window):
 
             if searchtext in linelower[index]:
                 # prioritize findings in label
-                weight += column[self.WEIGHT_INDEX]*2
+                weight += column[self.WEIGHT_INDEX] * 2
 
             elif " " in searchtext:
                 for word in searchtext.split():
