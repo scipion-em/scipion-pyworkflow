@@ -506,7 +506,6 @@ class Icon:
     ACTION_CONTINUE = SpriteImage(32,256,'fa-play-circle-o.png')
     ACTION_STOP_WORKFLOW = SpriteImage(16,240,'fa-stop-workflow.png')
     ACTION_RESULTS = SpriteImage(48,240,'fa-eye.png')
-    ACTION_CLOSE = SpriteImage(16,208,'fa-times.png')
     ACTION_SAVE = SpriteImage(32,112, 'fa-save.png')
     ACTION_VISUALIZE = ACTION_RESULTS
     ACTION_WIZ = SpriteImage(32,288,'fa-magic.png')
@@ -528,12 +527,14 @@ class Icon:
     ACTION_ZOOM = SpriteImage(64, 176, 'zoom.png')
     ACTION_HAND = SpriteImage(80, 176, 'hand.png')
     ACTION_FILAMENT_PICKING = SpriteImage(48, 176, 'filament.png')
+    ACTION_GRID = SpriteImage(64, 160, 'grid.png')
 
 
     # Host template
     BUTTON_SELECT = SpriteImage(64,224,'fa-check.png')
-    BUTTON_CLOSE = ACTION_CLOSE
     BUTTON_CANCEL = SpriteImage(64,240,'fa-ban.png')
+    ACTION_CLOSE = BUTTON_CANCEL
+    BUTTON_CLOSE = ACTION_CLOSE
     BUTTON_SAVE = ACTION_SAVE
 
     ARROW_UP = ACTION_SELECT_TO
@@ -582,7 +583,7 @@ class Icon:
     CHECKED = SpriteImage(64,208,'fa-checked.png')
     UNCHECKED = SpriteImage(16,160,'fa-unchecked.png')
     INSTALL = SpriteImage(32,64,'fa-install.png')
-    UNINSTALL = SpriteImage(16,128,'fa-uninstall.png')
+    UNINSTALL = ACTION_CLOSE
     TO_INSTALL = SpriteImage(32,256,'fa-to_install.png')
     INSTALLED = SpriteImage(16, 64,'fa-installed.png')
     PROCESSING = SpriteImage(32, 176, 'fa-processing.png',48,192)
