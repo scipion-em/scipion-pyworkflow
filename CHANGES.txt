@@ -14,6 +14,14 @@ developers:
   - New class Variable to be tested in Config class. A step towards a Config editing GUI.
   - SCIPION_DEBUG_SQLITE rescued to activate SQL clauses in debug.
 
+V3.4.0
+------
+users:
+  - Prevent cyclic loops in protocols. Cannot chose as input, as output that is derived or will be derived from the current protocol.
+  - Tolerate cyclic loops saved projects projects, disconnecting the "problematic" protocol.
+developers:
+  - Dialog class: add lockGui input to allow the viewers to prevent getting the screen focus if desired.
+
 V3.3.1
 ------
 users:
