@@ -227,6 +227,7 @@ class TestVarible(unittest.TestCase):
 
         myIntVar= Variable(50)
 
+
         # Add should work
         try:
             sum = myIntVar + 3

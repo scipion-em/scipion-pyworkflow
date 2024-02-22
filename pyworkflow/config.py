@@ -73,7 +73,6 @@ class VarTypes(enum.Enum):
 
 class Variable(object):
     """ Class for variables of the Config class."""
-
     def __init__(self, value, varType:VarTypes=VarTypes.STRING):
         """
         :param value: Value of the variable
@@ -144,7 +143,7 @@ class Config:
 
     # Home for scipion
     _get = __get.__func__
-    SCIPION_HOME = Variable(os.path.abspath(_get(SCIPION_HOME_VAR, '')))
+    SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
     "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"
 
     # Actual SCIPION_HOME
@@ -257,10 +256,10 @@ class Config:
     SCIPION_SPRITES_FILE = _get('SCIPION_SPRITES_FILE', _join(getResourcesPath(),'sprites.png'))
     "File (png) with the icons in a collage. Default is found at pyworkflow/resources/sprites.png. And a GIMP file could be found at the same folder in the github repo."
 
-    SCIPION_SHOW_TEXT_IN_TOOLBAR = Variable(_get('SCIPION_SHOW_TEXT_IN_TOOLBAR', FALSE_STR)!=FALSE_STR, varType=VarTypes.BOOLEAN)
+    SCIPION_SHOW_TEXT_IN_TOOLBAR = _get('SCIPION_SHOW_TEXT_IN_TOOLBAR', FALSE_STR)!=FALSE_STR
     "Define it to anything else except False to show the label of the icons. It will take more space."
 
-    SCIPION_ICON_ZOOM = Variable(_get('SCIPION_ICON_ZOOM', 50), varType=VarTypes.INTEGER)
+    SCIPION_ICON_ZOOM = int(_get('SCIPION_ICON_ZOOM', 50))
     "Define it to anything else except False to show the label of the icons. It will take more space."
 
     # Notification
