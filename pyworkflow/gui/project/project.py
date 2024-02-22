@@ -384,8 +384,6 @@ class ProjectManagerWindow(ProjectBaseWindow):
     _pluginMenus = dict()
 
     def __init__(self, **kwargs):
-        # Load global configuration
-        settings = ProjectSettings()
 
         # TODO: put the menu part more nicely. From here:
         menu = MenuConfig()

@@ -206,7 +206,7 @@ class TestPathTools(unittest.TestCase):
         self.assertEqual(70, strToDuration("1m 10s"), "String duration wrongly converted")
 
 
-class TestVarible(unittest.TestCase):
+class TestVariable(unittest.TestCase):
 
     def test_operators(self):
 
@@ -215,14 +215,14 @@ class TestVarible(unittest.TestCase):
         # Join should work
         try:
             os.path.join(myVar, "hola")
-        except Exception as e:
+        except Exception:
             self.fail("os.path.join for variables doesn't work")
 
         # String concatenation ?
         try:
-            newStr = myVar + "hola"
-            newStr = "hola" + myVar
-        except Exception as e:
+            myVar + "hola"
+            "hola" + myVar
+        except Exception:
             self.fail("String concatenation with + for variables doesn't work")
 
         myIntVar= Variable(50)
@@ -230,17 +230,17 @@ class TestVarible(unittest.TestCase):
 
         # Add should work
         try:
-            sum = myIntVar + 3
-            sum = 3 + myIntVar
-        except Exception as e:
+            myIntVar + 3
+            3 + myIntVar
+        except Exception:
             self.fail("Adding a value to an int variable doesn't work")
 
         # Division should work
         try:
-            result = myIntVar/2
-            result = 100/myIntVar
+            myIntVar/2
+            100/myIntVar
 
-        except Exception as e:
+        except Exception:
             self.fail("Division does not work")
 
 
