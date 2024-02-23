@@ -48,7 +48,7 @@ class Tree(ttk.Treeview, Scrollable):
         Scrollable.__init__(self, master, ttk.Treeview, frame, **opts)
 
     def getImage(self, img):
-        return gui.getImage(img, Tree._images)
+        return gui.getImage(img)
 
     def getFirst(self):
         """ Return first selected item or None if selection empty"""

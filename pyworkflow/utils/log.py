@@ -160,9 +160,9 @@ class LoggingConfigurator:
         logging.config.dictConfig(config)
 
     @classmethod
-    def setUpGUILogging(cls):
+    def setUpGUILogging(cls, logFile=None):
         """Sets up the logging library for the GUI processes: By default all goes to SCIPION_LOG file and console."""
-        cls.setupLogging()
+        cls.setupLogging(logFile=logFile)
 
     @classmethod
     def setUpProtocolSchedulingLog(cls, scheduleLogFile):

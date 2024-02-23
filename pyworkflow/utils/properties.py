@@ -30,6 +30,7 @@ This module defines the text used in the application.
 """
 # NOTE: DO NOT REMOVE UNTIL plugin manager uses Config.SCIPION_MAIN_COLOR and is released
 from pyworkflow.constants import Color
+from PIL import Image
 
 class Message:
     # Example Usage: 
@@ -77,7 +78,7 @@ class Message:
     LABEL_BROWSE = 'Browse'
     LABEL_DB = 'Db'
     LABEL_STOP = 'Stop'
-    LABEL_ANALYZE = 'Analyze Results'
+    LABEL_ANALYZE = 'Analyze results'
     LABEL_TREE = 'Tree'
     LABEL_SMALLTREE = 'Small Tree'
     LABEL_REFRESH = 'Refresh'
@@ -85,8 +86,8 @@ class Message:
     LABEL_CONTINUE = 'Continue'
     LABEL_EXPORT = 'Export'
     LABEL_EXPORT_UPLOAD = 'Export & upload'
-    LABEL_RESTART_WORKFLOW = 'Restart workflow'
-    LABEL_CONTINUE_WORKFLOW = 'Continue workflow'
+    LABEL_RESTART_WORKFLOW = 'Restart all'
+    LABEL_CONTINUE_WORKFLOW = 'Continue all'
     LABEL_STOP_WORKFLOW = 'Stop from here'
     LABEL_RESET_WORKFLOW = 'Reset from here'
 
@@ -424,116 +425,179 @@ class PluginInformation:
     PLUGIN_DESCRIPTION = 'pluginDescription'
     PLUGIN_AUTHORS = 'pluginAuthor'
 
+class SpriteImage:
+    def __init__(self, top, left, name, bottom=None, right=None):
+        self.top = top
+        self.left = left
+        self.bottom = bottom if bottom else top+16
+        self.right = right if right else left+16
+        self.name = name
+    def __str__(self):
+        return self.name
+    def __len__(self):
+        return len(self.name)
+
+class Sprite:
+    _image=None
+    # Default width of the sprite to calculate the ratio. For other sprites make sprite file n times bigger
+    DEFAULT_WIDTH = 320
+    RATIO = None
+    "Ratio of the sprite file of the SpriteImage definitions"
+
+    @classmethod
+    def getSpritesFile(cls):
+        from pyworkflow import Config
+        return Config.SCIPION_SPRITES_FILE
+    @classmethod
+    def loadSprites(cls):
+        """ Loads the image of the sprite"""
+        if not cls._image:
+            cls._image = Image.open(cls.getSpritesFile())
+
+            from pyworkflow import Config
+            # If any zoom to apply
+            if Config.SCIPION_ICON_ZOOM != 100:
+                factor = Config.SCIPION_ICON_ZOOM/100
+                size = cls._image.size
+                newSize=size[0] * factor, size[1]* factor
+                cls.image = cls._image.thumbnail(newSize)
+            width = cls._image.width
+            cls.RATIO = width/cls.DEFAULT_WIDTH
+        return cls._image
+
+    @classmethod
+    def getImage(cls, sprite:SpriteImage):
+        """ Returns the image cut put from the stripe file at the locations define by SpriteImage"""
+        sprites = cls.loadSprites()
+        return sprites.crop((sprite.left*cls.RATIO, sprite.top*cls.RATIO, sprite.right*cls.RATIO, sprite.bottom*cls.RATIO))
+
 
 # To get font awesome icons into png use: http://fa2png.io/
 class Icon:
     # Protocols status
-    PROT_DISABLED = 'prot_disabled.png'
-    BETA = 'beta.png'
-    NEW = 'new.png'
-    PRODUCTION = 'production.png'
-    UPDATED = 'updated.png'
-    GROUP = 'class_obj.png'
-    DEBUG = 'debug.png'
-    DOWNLOAD = 'fa-download.png'
-    FILE_BW = 'fa-file-o.png'
-    FIND = 'binoculares.png'
-    SELECT_ALL = 'workflow.png'
+    PROT_DISABLED = SpriteImage(16,32,'prot_disabled.png',bottom=32,right=64)
+    BETA = SpriteImage(0,0,'beta.png',bottom=16,right=32)
+    NEW = SpriteImage(32,0,'new.png',bottom=48,right=32)
+    PRODUCTION = SpriteImage(32,32,'production.png',bottom=48,right=64)
+    UPDATED = SpriteImage(16,0,'updated.png',bottom=32,right=32)
+
+    GROUP = SpriteImage(80, 224,'class_obj.png')
+    FAVORITE = SpriteImage(80,256,'bookmark.png')
+    DEBUG = SpriteImage(64,288,'debug.png')
+    DOWNLOAD = SpriteImage(48,272,'fa-download.png')
+    FIND = SpriteImage(80,272,'binoculares.png')
+    SELECT_ALL = SpriteImage(0,32,'workflow.png')
+
+    # Project window icons
+    RUNS_TREE = SpriteImage(16,272,'fa-sitemap.png')
+    ACTION_NEW = SpriteImage(80,304,'fa-plus-circle.png')
+    ACTION_EDIT = SpriteImage(32,272,'fa-pencil.png')
+    ACTION_SELECT_FROM = SpriteImage(64,272,'fa-arrow-down.png')
+    ACTION_SELECT_TO = SpriteImage(64,256,'fa-arrow-up.png')
+    ACTION_COPY = SpriteImage(80,208,'clipboard-regular.png')
+    ACTION_PASTE = SpriteImage(0,64,'paste-solid.png')
+    ACTION_DUPLICATE = SpriteImage(48,208,'fa-files-o.png')
+    ACTION_DELETE = SpriteImage(16,176,'fa-trash-o.png')
+    ACTION_REFRESH = SpriteImage(32,144, 'fa-refresh.png')
+    ACTION_RENAME = SpriteImage(0,48,'rename.png')
+    ACTION_BROWSE = SpriteImage(32,304,'fa-folder-open.png')
+    ACTION_DB = SpriteImage(48,288,'fa-database.png')
+    ACTION_STOP = SpriteImage(16,256,'fa-stop.png')
+    ACTION_CONTINUE = SpriteImage(32,256,'fa-play-circle-o.png')
+    ACTION_STOP_WORKFLOW = SpriteImage(16,240,'fa-stop-workflow.png')
+    ACTION_RESULTS = SpriteImage(48,240,'fa-eye.png')
+    ACTION_SAVE = SpriteImage(32,112, 'fa-save.png')
+    ACTION_VISUALIZE = ACTION_RESULTS
+    ACTION_WIZ = SpriteImage(32,288,'fa-magic.png')
+    ACTION_HELP = SpriteImage(32,160,'fa-question-circle.png')
+    ACTION_REFERENCES = SpriteImage(48,256,'link')
+    ACTION_EXPORT = ACTION_REFERENCES
+    ACTION_EXPORT_UPLOAD = SpriteImage(16,96, 'fa-upload.png')
+    ACTION_SEARCH = SpriteImage(32,96, 'fa-search.png')
+    ACTION_EXECUTE = SpriteImage(48,304,'fa-cogs.png')
+    ACTION_IN = SpriteImage(16,304,'fa-sign-in.png')
+    ACTION_OUT = SpriteImage(16,288,'fa-sign-out.png')
+    ACTION_FIND_NEXT = SpriteImage(32,208,'fa-next.png')
+    ACTION_FIND_PREVIOUS = SpriteImage(32,192,'fa-previous.png')
+    ACTION_COLLAPSE = SpriteImage(32,240,'fa-minus-square.png')
+    ACTION_EXPAND = SpriteImage(32,224,'fa-plus-square.png')
+    ACTION_CIRCLE = SpriteImage(48,192,'circle.png')
+    ACTION_PICKING = SpriteImage(64, 192, 'picking.png')
+    ACTION_STATS = SpriteImage(80, 192, 'stats.png')
+    ACTION_ZOOM = SpriteImage(64, 176, 'zoom.png')
+    ACTION_HAND = SpriteImage(80, 176, 'hand.png')
+    ACTION_FILAMENT_PICKING = SpriteImage(48, 176, 'filament.png')
+    ACTION_GRID = SpriteImage(64, 160, 'grid.png')
+
+
+    # Host template
+    BUTTON_SELECT = SpriteImage(64,224,'fa-check.png')
+    BUTTON_CANCEL = SpriteImage(64,240,'fa-ban.png')
+    ACTION_CLOSE = BUTTON_CANCEL
+    BUTTON_CLOSE = ACTION_CLOSE
+    BUTTON_SAVE = ACTION_SAVE
+
+    ARROW_UP = ACTION_SELECT_TO
+    TAGS = SpriteImage(16,224,'fa-tags.png')
+    HOME = SpriteImage(0,304,'fa-home.png')
+    LIGHTBULB = SpriteImage(32,80,'fa-lightbulb-o.png')
+    ROCKET = SpriteImage(32,128, 'fa-rocket.png')
+
+    # File browser icons
+    FOLDER_OPEN = ACTION_BROWSE
+    DB = SpriteImage(0,144,'file_sqlite.png')
+    TXT_FILE = SpriteImage(0,96,'file_text.png')
+    FILE_VOL = SpriteImage(0,80,'file_vol.png')
+    FILE_STACK = SpriteImage(0,112,'file_stack.png')
+    FILE_STACK_LINK = SpriteImage(0,128, 'file_stack_link.png')
+    PYTHON_FILE = SpriteImage(0,160,'file_python.png')
+    FILE_METADATA = SpriteImage(0,176,'file_md.png')
+    FILE_METADATA_LINK = SpriteImage(0,192, 'file_md_link.png')
+    FILE_IMAGE = SpriteImage(0,208, 'file_image.png')
+    FILE_IMAGE_LINK = SpriteImage(0,224, 'file_image_link.png')
+    FILE = SpriteImage(0,240, 'file_generic.png')
+    FILE_LINK = SpriteImage(0,256, 'file_generic_link.png')
+    FOLDER = SpriteImage(0,272, 'file_folder.png')
+    FOLDER_LINK = SpriteImage(0,288, 'file_folder_link.png')
+
+    BROOM = SpriteImage(80,240,'broom-solid.png')
+    BACKWARD = SpriteImage(80,288,'backward-solid.png')
+    CODE_BRANCH = SpriteImage(64,304,'code-branch-solid.png')
+
+    # Dialog icons
     ERROR = 'fa-times-circle_alert.png'
     INFO = 'fa-info-circle_alert.png'
     ALERT = 'fa-exclamation-triangle_alert.png'
-    JAVA_FILE = 'file_java.png'
-    PYTHON_FILE = 'file_python.png'
-    # Project window icons
-    RUNS_TREE = 'fa-sitemap.png'
-    ACTION_NEW = 'fa-plus-circle.png'
-    ACTION_EDIT = 'fa-pencil.png'
-    ACTION_SELECT_FROM = 'fa-arrow-down.png'
-    ACTION_SELECT_TO = 'fa-arrow-up.png'
-    ACTION_COPY = 'clipboard-regular.png'
-    ACTION_PASTE = 'paste-solid.png'
-    ACTION_DUPLICATE = 'fa-files-o.png'
-    ACTION_DELETE = 'fa-trash-o.png'
-    ACTION_REFRESH = 'fa-refresh.png'
-    ACTION_RENAME = 'rename.png'
-    ACTION_STEPS = 'fa-list-ul.png'
-    ACTION_BROWSE = 'fa-folder-open.png'
-    ACTION_DB = 'fa-database.png'
-    ACTION_TREE = None
-    ACTION_STOP = 'fa-stop.png'
-    ACTION_CONTINUE = 'fa-play-circle-o.png'
-    ACTION_STOP_WORKFLOW = 'fa-stop-workflow.png'
-    ACTION_RESULTS = 'fa-eye.png'
-    ACTION_CLOSE = 'fa-times.png'
-    ACTION_SAVE = 'fa-save.png'
-    ACTION_VISUALIZE = 'fa-eye.png'
-    ACTION_WIZ = 'fa-magic.png'
-    ACTION_HELP = 'fa-question-circle.png'
-    ACTION_REFERENCES = 'fa-external-link.png'
-    ACTION_EXPORT = 'fa-external-link.png'
-    ACTION_EXPORT_UPLOAD = 'fa-upload.png'
-    ACTION_SEARCH = 'fa-search.png'
-    ACTION_EXECUTE = 'fa-cogs.png'
-    ACTION_IN = 'fa-sign-in.png'
-    ACTION_OUT = 'fa-sign-out.png'
-    ACTION_FIND_NEXT = 'fa-next.png'
-    ACTION_FIND_PREVIOUS = 'fa-previous.png'
-    ACTION_COLLAPSE = 'fa-minus-square.png'
-    ACTION_EXPAND ='fa-plus-square.png'
-    # Host template
-    BUTTON_SELECT = 'fa-check.png'
-    BUTTON_CLOSE = 'fa-times.png'
-    BUTTON_CANCEL = 'fa-ban.png'
-    BUTTON_SAVE = ACTION_SAVE
-
-    ARROW_UP = 'fa-arrow-up.png'
-    TAGS = 'fa-tags.png'
-    HOME = 'fa-home.png'
-    LIGHTBULB = 'fa-lightbulb-o.png'
-    PLUS_CIRCLE = 'fa-plus-circle.png'
-    ROCKET = 'fa-rocket.png'
     NO_IMAGE_128 = 'no-image128.png'
-    FOLDER = 'file_folder.png'
-    FOLDER_LINK = 'file_folder_link.png'
-    FILE = 'file_generic.png'
-    FILE_LINK = 'file_generic_link.png'
-    FOLDER_OPEN = 'fa-folder-open.png'
-    DB = 'file_sqlite.png'
-    TXT_FILE = 'file_text.png'
-    POWER_OFF = 'power-off-solid.png'
-    BROOM = 'broom-solid.png'
-    BACKWARD = 'backward-solid.png'
-    CODE_BRANCH = 'code-branch-solid.png'
 
     SCIPION_ICON = 'scipion_icon.png'
-    SCIPION_ICON_PROJ = SCIPION_ICON  # 'scipion_icon_proj.png'
-    SCIPION_ICON_PROJS = SCIPION_ICON  # 'scipion_icon_projs.png'
-    SCIPION_ICON_PROT = SCIPION_ICON  # 'scipion_icon_prot.png'
+    SCIPION_ICON_PROJ = 'scipion_icon_proj.png'
+    SCIPION_ICON_PROJS = 'scipion_icon_projs.png'
+    SCIPION_ICON_PROT = 'scipion_icon_prot.png'
+    SCIPION_LOGO_SMALL = 'scipion_logo_small.png'
 
     # EXTERNAL PROGRAMS
     CHIMERA = 'chimera.png'
 
     # PLUGIN MANAGER ICONS
-    CHECKED = 'fa-checked.png'
-    UNCHECKED = 'fa-unchecked.png'
-    INSTALL = 'fa-install.png'
-    UNINSTALL = 'fa-uninstall.png'
-    TO_INSTALL = 'fa-to_install.png'
-    INSTALLED = 'fa-installed.png'
-    PROCESSING = 'fa-processing.png'
-    FAILURE = 'fa-failure.png'
-    DELETE_OPERATION = 'fa-delete-operation.png'
-    TO_UPDATE = 'fa-update.png'
+    CHECKED = SpriteImage(64,208,'fa-checked.png')
+    UNCHECKED = SpriteImage(16,160,'fa-unchecked.png')
+    INSTALL = SpriteImage(32,64,'fa-install.png')
+    UNINSTALL = ACTION_CLOSE
+    TO_INSTALL = SpriteImage(32,256,'fa-to_install.png')
+    INSTALLED = SpriteImage(16, 64,'fa-installed.png')
+    PROCESSING = SpriteImage(32, 176, 'fa-processing.png',48,192)
+    FAILURE = SpriteImage(48,224,'fa-failure.png')
+    DELETE_OPERATION = ACTION_DELETE
+    TO_UPDATE = SpriteImage(32,144,'fa-update.png')
     WAITING = 'wait.gif'
-    ACTION_UNDO = 'fa-undo.png'
+    ACTION_UNDO = SpriteImage(16,144,'fa-undo.png')
 
-    PLUGIN_AUTHORS = 'users.png'
-    PLUGIN_DESCRIPTION = 'file_stack.png'
-    PLUGIN_RELEASE_DATE = 'fa-upload.png'
-    PLUGIN_VERSION = 'file_vol.png'
-    PLUGIN_PACKAGE = 'file_folder.png'
-
-
+    PLUGIN_AUTHORS = SpriteImage(16,80,'users.png')
+    PLUGIN_DESCRIPTION = FILE_STACK
+    PLUGIN_RELEASE_DATE = ACTION_EXPORT_UPLOAD
+    PLUGIN_VERSION = FILE_VOL
+    PLUGIN_PACKAGE = FOLDER
 
 
 class colorText:
