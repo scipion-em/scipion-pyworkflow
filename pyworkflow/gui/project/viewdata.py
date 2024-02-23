@@ -33,7 +33,6 @@ import tkinter.font as tkFont
 
 from pyworkflow import Config
 import pyworkflow.utils as pwutils
-import pyworkflow.protocol as pwprot
 import pyworkflow.viewer as pwviewer
 
 import pyworkflow.gui as gui
@@ -45,39 +44,7 @@ from pyworkflow.gui.graph import LevelTree
 from pyworkflow.gui.form import getObjectLabel
 from pyworkflow.constants import DATA_TAG
 
-ACTION_EDIT = pwutils.Message.LABEL_EDIT
-ACTION_COPY = pwutils.Message.LABEL_COPY
-ACTION_DELETE = pwutils.Message.LABEL_DELETE
-ACTION_REFRESH = pwutils.Message.LABEL_REFRESH
-ACTION_STEPS = pwutils.Message.LABEL_BROWSE
-ACTION_TREE = pwutils.Message.LABEL_TREE
-ACTION_STOP = pwutils.Message.LABEL_STOP
-ACTION_DEFAULT = pwutils.Message.LABEL_DEFAULT
-ACTION_CONTINUE = pwutils.Message.LABEL_CONTINUE
-ACTION_RESULTS = pwutils.Message.LABEL_ANALYZE
 
-ActionIcons = {
-    ACTION_EDIT: pwutils.Icon.ACTION_EDIT,
-    ACTION_COPY: pwutils.Icon.ACTION_COPY,
-    ACTION_DELETE:  pwutils.Icon.ACTION_DELETE,
-    ACTION_REFRESH:  pwutils.Icon.ACTION_REFRESH,
-    ACTION_STEPS:  pwutils.Icon.ACTION_STEPS,
-    ACTION_TREE:  None,  # should be set
-    ACTION_STOP: pwutils.Icon.ACTION_STOP,
-    ACTION_CONTINUE: pwutils.Icon.ACTION_CONTINUE,
-    ACTION_RESULTS: pwutils.Icon.ACTION_RESULTS,
-}
-
-STATUS_COLORS = {
-    pwprot.STATUS_SAVED: '#D9F1FA',
-    pwprot.STATUS_LAUNCHED: '#D9F1FA',
-    pwprot.STATUS_RUNNING: '#FCCE62',
-    pwprot.STATUS_FINISHED: '#D2F5CB',
-    pwprot.STATUS_FAILED: '#F5CCCB',
-    pwprot.STATUS_INTERACTIVE: '#F3F5CB',
-    pwprot.STATUS_ABORTED: '#F5CCCB',
-    # pwprot.STATUS_SAVED: '#124EB0',
-}
 
 
 def populateTree(tree, elements, parentId=''):

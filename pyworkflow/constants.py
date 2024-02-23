@@ -200,6 +200,8 @@ class TK:
     TREEVIEW_CLOSE = '<<TreeviewClose>>'
 
 
+HELP_DURATION_FORMAT = "Duration format example: 1d 20h 30m 30s --> 1 day 20 hours 30 minutes and 30 seconds"
+
 # Run protocol modes
 DEFAULT_EXECUTION_ACTION_ASK = 1
 DEFAULT_EXECUTION_ACTION_SINGLE = 2

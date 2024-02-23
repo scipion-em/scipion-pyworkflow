@@ -237,7 +237,7 @@ class Dialog(tk.Toplevel):
 
     def getImage(self, imgName):
         """A shortcut to get an image from its name"""
-        return gui.getImage(imgName, self._images)
+        return gui.getImage(imgName)
 
     def getResult(self):
         return self.result

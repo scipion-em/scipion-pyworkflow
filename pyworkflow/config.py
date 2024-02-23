@@ -1,4 +1,4 @@
-
+import enum
 import logging
 logger = logging.getLogger(__file__)
 import ast
@@ -20,12 +20,15 @@ def join(*paths):
     return os.path.join(HOME, *paths)
 
 
-__resourcesPath = [join('resources')]
+__resourcesPath = join('resources')
 
+def getResourcesPath(file=None):
+
+    return __resourcesPath if file is None else os.path.join(__resourcesPath, file)
 
 def findResource(filename):
     from .utils.path import findFile
-    return findFile(filename, *__resourcesPath)
+    return findFile(filename, *[__resourcesPath])
 
 
 def genNotesHeading():
@@ -62,6 +65,49 @@ def getModuleFolder(moduleName):
     spec = importlib.util.find_spec(moduleName)
     return os.path.dirname(spec.origin)
 
+class VarTypes(enum.Enum):
+    STRING = 1
+    INTEGER = 2
+    BOOLEAN = 3
+    PATH = 4
+
+class Variable(object):
+    """ Class for variables of the Config class."""
+    def __init__(self, value, varType:VarTypes=VarTypes.STRING):
+        """
+        :param value: Value of the variable
+        :param type: Type of the variable"""
+        super().__init__()
+        self.value = value
+        self.varType = varType
+    def __bool__(self):
+        return bool(self.value)
+
+    def __int__(self):
+        return int(self.value)
+    def __str__(self):
+        return str(self.value)
+
+    def __eq__(self, other):
+        return other == self.value
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __fspath__(self):
+        return self.__str__()
+
+    " We migth need to imlement more like this--> https://docs.python.org/3.3/reference/datamodel.html#object.__truediv__"
+    def __truediv__(self, other):
+        return float(self.value)/other
+
+    def __rtruediv__(self, other):
+        return  other / float(self.value)
+
+    def __add__(self, other):
+        return self.value+other
+    def __radd__(self, other):
+        return other+self.value
 
 class Config:
     """ Main Config for pyworkflow. It contains the main Scipion configuration variables
@@ -104,7 +150,7 @@ class Config:
     SCIPION_HOME_DEFINED = _get(SCIPION_HOME_VAR, False)
     "False if SCIPION_HOME is not found in the environment"
 
-    _root = Root(SCIPION_HOME)
+    _root = Root(str(SCIPION_HOME))
     _join = _root.join
 
     # Internal cached variables, use __ so they are not returned in getVars
@@ -157,8 +203,6 @@ class Config:
 
     SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL', 'scipion@cnb.csic.es')
 
-    SCIPION_LOGO = _get('SCIPION_LOGO', 'scipion_logo.gif')
-
     # Config variables
     SCIPION_CONFIG = _get('SCIPION_CONFIG', 'scipion.conf')
     "Path to the scipion configuration file where all this variables could be defined."
@@ -208,6 +252,15 @@ class Config:
 
     WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
     "Color to use in some wizards."
+
+    SCIPION_SPRITES_FILE = _get('SCIPION_SPRITES_FILE', _join(getResourcesPath(),'sprites.png'))
+    "File (png) with the icons in a collage. Default is found at pyworkflow/resources/sprites.png. And a GIMP file could be found at the same folder in the github repo."
+
+    SCIPION_SHOW_TEXT_IN_TOOLBAR = _get('SCIPION_SHOW_TEXT_IN_TOOLBAR', FALSE_STR)!=FALSE_STR
+    "Define it to anything else except False to show the label of the icons. It will take more space."
+
+    SCIPION_ICON_ZOOM = int(_get('SCIPION_ICON_ZOOM', 50))
+    "Define it to anything else except False to show the label of the icons. It will take more space."
 
     # Notification
     SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR) == TRUE_STR
@@ -306,7 +359,7 @@ class Config:
             for name, value in vars(baseCls).items():
                 # Skip methods and internal attributes starting with __
                 # (e.g __doc__, __module__, etc)
-                if (isinstance(value, str) or isinstance(value, int)) and not name.startswith('__'):
+                if isinstance(value, (str, int, Variable)) and not name.startswith('__'):
                     configVars[name] = str(value)
         return configVars
 
@@ -360,7 +413,8 @@ class Config:
 
     @staticmethod
     def debugSQLOn():
-        return Config.debugOn()
+        from .utils import envVarOn
+        return bool(envVarOn(SCIPION_DEBUG_SQLITE))
 
     @staticmethod
     def toggleDebugSQL():
