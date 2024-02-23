@@ -25,7 +25,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from pyworkflow import Config
+from pyworkflow import Config, DEFAULT_EXECUTION_ACTION_ASK, DEFAULT_EXECUTION_ACTION_SINGLE
 from pyworkflow.gui import LIST_TREEVIEW, \
     ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL
 from pyworkflow.gui.project.constants import *
