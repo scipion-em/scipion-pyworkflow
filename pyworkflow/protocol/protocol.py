@@ -420,7 +420,7 @@ class Protocol(Step):
         # and queue parameters (only meaningful if _useQueue=True)
         self._queueParams = String()
         self.queueShown = False
-        self._jobId = String()  # Store queue job id
+        self._jobId = CsvList() # Store queue job ids
         self._pid = Integer()
         self._stepsExecutor = None
         self._stepsDone = Integer(0)
@@ -1693,6 +1693,7 @@ class Protocol(Step):
             executor = StepExecutor(self.getHostConfig())
 
         self._stepsExecutor = executor
+        self._stepsExecutor.setProtocol(self) # executor needs the protocol to store the jobs Ids submitted to a queue
 
     def getFiles(self):
         resultFiles = set()
@@ -1731,12 +1732,25 @@ class Protocol(Step):
         # in the configuration information, the hostname is enough
         self.hostConfig.setStore(False)
 
-    def getJobId(self):
-        """ Return the jobId associated to a running protocol. """
-        return self._jobId.get()
+    def getJobIds(self):
+        """ Return an iterable list of jobs Ids associated to a running protocol. """
+        return self._jobId
 
     def setJobId(self, jobId):
-        self._jobId.set(jobId)
+        " Reset this list to have the first active job "
+        self._jobId.clear()
+        self.appendJobId(jobId)
+
+    def setJobIds(self, jobIds):
+        " Reset this list to have a list of active jobs "
+        self._jobId = jobIds
+
+    def appendJobId(self, jobId):
+        " Append active jobs to the list "
+        self._jobId.append(jobId)
+    def removeJobId(self, jobId):
+        " Remove inactive jobs from the list "
+        self._jobId.remove(jobId)
 
     def getPid(self):
         return self._pid.get()
@@ -1885,6 +1899,11 @@ class Protocol(Step):
         """ This function will return True if the protocol has been set
         to be launched through a queue by steps """
         return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "Y")
+
+    def useQueueForProtocol(self):
+        """ This function will return True if the protocol has been set
+        to be launched through a queue """
+        return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "N")
 
     def getQueueParams(self):
         if self._queueParams.hasValue():
@@ -2330,6 +2349,11 @@ class Protocol(Step):
             self._size = getFileSize(self.getPath())
 
         return self._size
+
+    def cleanExecutionAttributes(self):
+        """ Clean all the executions attributes """
+        self.setPid(0)
+        self._jobId.clear()
 
 class LegacyProtocol(Protocol):
     """ Special subclass of Protocol to be used when a protocol class

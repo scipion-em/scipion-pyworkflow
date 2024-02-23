@@ -605,6 +605,10 @@ class Project(object):
             # Delete the relations created by this protocol
             if isRestart:
                 self.mapper.deleteRelations(self)
+                # Clean and persist execution attributes; otherwise, this would retain old job IDs and PIDs.
+                protocol.cleanExecutionAttributes()
+                protocol._store(protocol._jobId)
+
             self.mapper.commit()
 
             # NOTE: now we are simply copying the entire project db, this can be
@@ -666,7 +670,7 @@ class Project(object):
 
             # Backup the values of 'jobId', 'label' and 'comment'
             # to be restored after the .copy
-            jobId = protocol.getJobId()
+            jobId = protocol.getJobIds()
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
 
@@ -699,7 +703,9 @@ class Project(object):
                     protocol._outputs.append(attr)
 
             # Restore backup values
-            protocol.setJobId(jobId)
+            if protocol.useQueueForProtocol():
+                protocol.setJobIds(jobId)
+
             protocol.setObjLabel(label)
             protocol.setObjComment(comment)
             # Use the run.db timestamp instead of the system TS to prevent
@@ -740,6 +746,7 @@ class Project(object):
         """ Stop a running protocol """
         try:
             if protocol.getStatus() in ACTIVE_STATUS:
+                self._updateProtocol(protocol) # update protocol to have the latest rub.db values
                 pwprot.stop(protocol)
         except Exception as e:
             logger.error("Couldn't stop the protocol: %s" % e)
@@ -764,6 +771,7 @@ class Project(object):
             protocol._store()
             self._storeProtocol(protocol)
             protocol.makePathsAndClean()  # Create working dir if necessary
+            protocol.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
             protocol._store()
             self._storeProtocol(protocol)
 
@@ -1134,6 +1142,7 @@ class Project(object):
         newProt.copyDefinitionAttributes(protocol)
         newProt.copyAttributes(protocol, 'hostName', '_useQueue', '_queueParams')
         newProt.runMode.set(MODE_RESTART)
+        newProt.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
 
         return newProt
 
