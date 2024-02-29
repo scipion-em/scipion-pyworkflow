@@ -51,19 +51,30 @@ from pyworkflow.protocol.constants import UNKNOWN_JOBID
 def launch(protocol, wait=False, stdin=None, stdout=None, stderr=None):
     """ This function should be used to launch a protocol. """
     jobId = _launchLocal(protocol, wait, stdin, stdout, stderr)
-    protocol.setJobId(jobId)
+    protocol.setJobId(jobId) # TODO: check if this should be a jobID or a pid?
 
     return jobId
 
 
 def stop(protocol):
-    """ 
+    """
+    Stop function for three scenarios:
+    - If the queue is not used, kill the main protocol process and its child processes.
+    - If the queue is used and the entire protocol is sent to the queue, cancel the job running the protocol using
+    scancel.
+    - If the queue is used and individual steps are sent to the queue, cancel all active jobs and kill the main protocol
+    process and its child processes.
     """
     if protocol.useQueue() and not protocol.isScheduled():
-        jobId = protocol.getJobId()
-        host = protocol.getHostConfig()
-        cancelCmd = host.getCancelCommand() % {'JOB_ID': jobId}
-        _run(cancelCmd, wait=True)
+        jobIds = protocol.getJobIds()
+        for jobId in jobIds: # Iter even though it contains only one jobId
+            host = protocol.getHostConfig()
+            cancelCmd = host.getCancelCommand() % {'JOB_ID': jobId}
+            logger.info(cancelCmd)
+            _run(cancelCmd, wait=True)
+
+        if protocol.useQueueForSteps():
+            process.killWithChilds(protocol.getPid())
     else:
         process.killWithChilds(protocol.getPid())
 
@@ -79,7 +90,7 @@ def schedule(protocol, initialSleepTime=0, wait=False):
                               protocol.getScheduleLog(),
                               initialSleepTime)
     jobId = _run(cmd, wait)
-    protocol.setJobId(jobId)
+    protocol.setJobId(jobId) # TODO: check if this should be a jobID or a pid?
 
     return jobId
 
@@ -130,13 +141,13 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
     )
 
     hostConfig = protocol.getHostConfig()
-    useQueue = protocol.useQueue()
 
-    # Empty PID: 0
-    protocol.setPid(0)
+    # Clean Pid and JobIds
+    protocol.cleanExecutionAttributes()
+    protocol._store(protocol._jobId)
 
-    # Check if need to submit to queue    
-    if useQueue and (protocol.getSubmitDict()["QUEUE_FOR_JOBS"] == "N"):
+    # Check if need to submit to queue
+    if protocol.useQueueForProtocol():
         submitDict = dict(hostConfig.getQueuesDefault())
         submitDict.update(protocol.getSubmitDict())
         submitDict['JOB_COMMAND'] = command
