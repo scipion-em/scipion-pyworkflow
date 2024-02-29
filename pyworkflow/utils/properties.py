@@ -528,6 +528,7 @@ class Icon:
     ACTION_HAND = SpriteImage(80, 176, 'hand.png')
     ACTION_FILAMENT_PICKING = SpriteImage(48, 176, 'filament.png')
     ACTION_GRID = SpriteImage(64, 160, 'grid.png')
+    ACTION_CONTRAST = SpriteImage(80, 160, 'contrast.png')
 
 
     # Host template
