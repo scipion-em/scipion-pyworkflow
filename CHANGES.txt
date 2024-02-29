@@ -16,6 +16,9 @@ developers:
   - SCIPION_DEBUG_SQLITE rescued to activate SQL clauses in debug.
   - Active jobs are stored in the 'jobIds' protocol variable. Iteration through these job IDs allows for canceling each active job sent to the queue.
   - Implemented cleaning of old protocol job IDs and PIDs.
+  - Extending the ToolbarDialog buttons. Now is possible to define a tooltip and a shortcut
+  - Viewers has getName class method.
+  - Object.getClassName is now a class method
 
 V3.4.0
 ------

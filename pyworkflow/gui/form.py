@@ -561,7 +561,7 @@ class SubclassesTreeProvider(TreeProvider):
         viewers = domain.findViewers(obj.getClassName(), DESKTOP_TKINTER)
         proj = self.protocol.getProject()
         for v in viewers:
-            actions.append(('Open with %s' % v.__name__,
+            actions.append((v.getName(),
                             lambda: v(project=proj).visualize(obj)))
         return actions
 

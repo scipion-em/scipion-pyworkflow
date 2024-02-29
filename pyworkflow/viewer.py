@@ -209,6 +209,12 @@ class Viewer(object):
             raise Exception("self.protocol is not defined for this Viewer.")
         return self.protocol.strId()
 
+    @classmethod
+    def getName(cls):
+        if cls._name is None:
+            return cls.__name__
+        return cls._name
+
 
 class ProtocolViewer(pwprot.Protocol, Viewer):
     """ Special kind of viewer that have a Form to organize better

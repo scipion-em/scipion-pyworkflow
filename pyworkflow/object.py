@@ -86,8 +86,9 @@ class Object(object):
         self._objEnabled = True
         self.set(value)
 
-    def getClassName(self):
-        return self.__class__.__name__
+    @classmethod
+    def getClassName(cls):
+        return cls.__name__
     
     def getClass(self):
         return type(self)
