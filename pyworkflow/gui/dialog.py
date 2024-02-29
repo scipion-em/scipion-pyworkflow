@@ -34,7 +34,7 @@ from tkcolorpicker import askcolor as _askColor
 from pyworkflow import Config
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon, Color
-from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle
+from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle, ToolTip
 from .tree import BoundTree, Tree
 from .text import Text, TaggedText
 
@@ -697,11 +697,12 @@ class ToolbarButton:
     Store information about the buttons that will be added to the toolbar.
     """
 
-    def __init__(self, text, command, icon=None, tooltip=None):
+    def __init__(self, text, command, icon=None, tooltip=None, shortcut=None):
         self.text = text
         self.command = command
         self.icon = icon
         self.tooltip = tooltip
+        self.shortcut = shortcut
 
 
 class ToolbarListDialog(ListDialog):
@@ -726,29 +727,36 @@ class ToolbarListDialog(ListDialog):
         ListDialog.__init__(self, parent, title, provider, message, **kwargs)
 
     def body(self, bodyFrame):
-        bodyFrame.config(bg=Config.SCIPION_BG_COLOR)
         gui.configureWeigths(bodyFrame, 1, 0)
 
         # Add an extra frame to insert the Toolbar
         # and another one for the ListDialog's body
-        self.toolbarFrame = tk.Frame(bodyFrame, bg=Config.SCIPION_BG_COLOR)
+        self.toolbarFrame = tk.Frame(bodyFrame)
         self.toolbarFrame.grid(row=0, column=0, sticky='new')
-        if self.toolbarButtons:
-            for i, b in enumerate(self.toolbarButtons):
-                self._addButton(b, i)
 
         subBody = tk.Frame(bodyFrame)
         subBody.grid(row=1, column=0, sticky='news', padx=5, pady=5)
         ListDialog.body(self, subBody)
+
+        if self.toolbarButtons:
+            for i, b in enumerate(self.toolbarButtons):
+                self._addButton(b, i)
+
         if self._itemDoubleClick:
             self.tree.itemDoubleClick = self._itemDoubleClick
 
     def _addButton(self, button, col):
         btn = tk.Label(self.toolbarFrame, text=button.text,
                        image=self.getImage(button.icon),
-                       compound=tk.LEFT, cursor='hand2', bg=Config.SCIPION_BG_COLOR)
+                       compound=tk.LEFT, cursor='hand2')
         btn.grid(row=0, column=col, sticky='nw', padx=(5, 0), pady=(5, 0))
         btn.bind('<Button-1>', button.command)
+        if button.tooltip:
+            tooltip = button.tooltip + ' (%s)' % button.shortcut if button.shortcut else button.tooltip
+            self.bind(button.shortcut, button.command)
+            ToolTip(btn, tooltip, delay=150)
+        if button.shortcut:
+            self.bind(button.shortcut, button.command)
 
 
 class FlashMessage:

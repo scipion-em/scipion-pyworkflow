@@ -144,7 +144,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             return lambda: self._visualizeObject(viewer, obj)
 
         for v in viewers:
-            actions.append(('Open with %s' % v.__name__ if v._name is None else v._name,
+            actions.append((v.getName(),
                             viewerCallback(v),
                             Icon.ACTION_VISUALIZE))
         # EDIT

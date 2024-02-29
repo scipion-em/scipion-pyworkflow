@@ -13,6 +13,10 @@ developers:
   - New method in utils: strToDuration (useful to translate "1h 35m" to seconds). For duration parameters.
   - New class Variable to be tested in Config class. A step towards a Config editing GUI.
   - SCIPION_DEBUG_SQLITE rescued to activate SQL clauses in debug.
+  - Extending the ToolbarDialog buttons. Now is possible to define a tooltip and a shortcut
+  - Viewers has getName class method.
+  - Object.getClassName is now a class method
+
 
 V3.4.0
 ------
