@@ -1175,6 +1175,14 @@ class Set(Object):
             MapperClass = SqliteFlatMapper
         Object.__setattr__(self, '_MapperClass', MapperClass)
         
+    def getItem(self, field, value):
+        """ Alternative to [] to get a single item form the set.
+
+        :param field: attribute of the item to look up for. Should be a unique identifier
+        :param value: value to look for"""
+
+        return self.__getitem__({field:value})
+
     def __getitem__(self, itemId):
         """ Get the image with the given id.
 
