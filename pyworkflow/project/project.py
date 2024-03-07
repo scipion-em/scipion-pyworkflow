@@ -615,10 +615,8 @@ class Project(object):
             # changed later to only create a subset of the db need for the run
             pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
 
-        # Launch the protocol, the jobId should be set after this call
-        jobId = pwprot.launch(protocol, wait)
-        if jobId is None or jobId == UNKNOWN_JOBID:
-            protocol.setStatus(pwprot.STATUS_FAILED)
+        # Launch the protocol, the jobId should be set in this call
+        pwprot.launch(protocol, wait)
 
         # Commit changes
         if wait:  # This is only useful for launching tests...
@@ -670,7 +668,7 @@ class Project(object):
 
             # Backup the values of 'jobId', 'label' and 'comment'
             # to be restored after the .copy
-            jobId = protocol.getJobIds()
+            jobId = protocol.getJobIds().clone()  # Use clone to prevent this variable from being overwritten
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
 
@@ -703,8 +701,9 @@ class Project(object):
                     protocol._outputs.append(attr)
 
             # Restore backup values
-            if protocol.useQueueForProtocol():
+            if protocol.useQueueForProtocol() and jobId:  # If jobId not empty then restore value as the db is empty
                 protocol.setJobIds(jobId)
+            # When the protocol is scheduled, the jobId is empty and should be copied from the database
 
             protocol.setObjLabel(label)
             protocol.setObjComment(comment)

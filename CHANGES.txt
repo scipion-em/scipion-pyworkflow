@@ -19,6 +19,7 @@ developers:
   - Extending the ToolbarDialog buttons. Now is possible to define a tooltip and a shortcut
   - Viewers has getName class method.
   - Object.getClassName is now a class method
+  - Better case-specific implementation of pID and jobID. Three scenarios: normal execution, sending the entire protocol to the queue, or sending individual steps.
 
 V3.4.0
 ------
