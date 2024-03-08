@@ -28,6 +28,7 @@ import queue
 from functools import partial
 from tkinter.ttk import Style
 
+import pyworkflow
 import pyworkflow as pw
 from pyworkflow.object import Object
 from pyworkflow.utils import Message, Icon
@@ -76,6 +77,7 @@ cfgWrapLenght = cfgMaxWidth - 50
 
 # Style of treeviews where row height is variable based on the font size
 LIST_TREEVIEW = 'List.Treeview'
+BORDERLESS_TREEVIEW = 'Borderless.Treeview'
 
 image_cache = dict()
 
@@ -298,12 +300,20 @@ def defineStyle():
     # Should be centralized somewhere.
     style = Style()
     defaultFont = getDefaultFont()
-    rowheight = defaultFont.metrics()['linespace']
+
+    iconsSizePx = int((pyworkflow.Config.SCIPION_ICON_ZOOM/100 * 32))
+    fontHeight = defaultFont.metrics()['linespace']
+    rowheight = max(iconsSizePx, fontHeight)
 
     style.configure(LIST_TREEVIEW, rowheight=rowheight,
                     background=pw.Config.SCIPION_BG_COLOR,
                     fieldbackground=pw.Config.SCIPION_BG_COLOR)
     style.configure(LIST_TREEVIEW+".Heading", font=(defaultFont["family"],defaultFont["size"]))
+
+    style.configure(BORDERLESS_TREEVIEW, rowheight=rowheight,
+                    background=pw.Config.SCIPION_BG_COLOR,
+                    fieldbackground=pw.Config.SCIPION_BG_COLOR,
+                    borderwidth=0, font=(defaultFont["family"],defaultFont["size"]))
 
 
 class Window:
