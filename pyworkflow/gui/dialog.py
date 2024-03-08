@@ -192,7 +192,8 @@ class Dialog(tk.Toplevel):
         self.result = resultValue
         noCancel = self.result != RESULT_CANCEL and self.result != RESULT_CLOSE
 
-        if noCancel and not self.validate():
+        callBack = self.validate if noCancel else self.validateClose
+        if not callBack():
             self.initial_focus.focus_set()  # put focus back
             return
 
@@ -227,6 +228,9 @@ class Dialog(tk.Toplevel):
         dialog is destroyed. By default, it always validates OK.
         """
         return 1  # override
+
+    def validateClose(self):
+        return True
 
     def apply(self):
         """process the data
