@@ -40,8 +40,7 @@ import pyworkflow as pw
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
-from pyworkflow.protocol.constants import UNKNOWN_JOBID
-
+from pyworkflow.protocol.constants import UNKNOWN_JOBID, STATUS_FAILED
 
 
 # ******************************************************************
@@ -50,10 +49,7 @@ from pyworkflow.protocol.constants import UNKNOWN_JOBID
 
 def launch(protocol, wait=False, stdin=None, stdout=None, stderr=None):
     """ This function should be used to launch a protocol. """
-    jobId = _launchLocal(protocol, wait, stdin, stdout, stderr)
-    protocol.setJobId(jobId) # TODO: check if this should be a jobID or a pid?
-
-    return jobId
+    _launchLocal(protocol, wait, stdin, stdout, stderr)
 
 
 def stop(protocol):
@@ -89,10 +85,8 @@ def schedule(protocol, initialSleepTime=0, wait=False):
                               protocol.strId(),
                               protocol.getScheduleLog(),
                               initialSleepTime)
-    jobId = _run(cmd, wait)
-    protocol.setJobId(jobId) # TODO: check if this should be a jobID or a pid?
-
-    return jobId
+    pid = _run(cmd, wait)
+    protocol.setPid(pid)  # Set correctly the pid
 
 
 # ******************************************************************
@@ -122,7 +116,6 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
     :param stdin: stdin object to direct stdin to
     :param stdout: stdout object to send process stdout
     :param stderr: stderr object to send process stderr
-    :return: PID of queue's JOBID
     """
 
     command = '{python} {prot_run} "{project_path}" "{db_path}" {prot_id} "{stdout_log}" "{stderr_log}"'.format(
@@ -146,16 +139,19 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
     protocol.cleanExecutionAttributes()
     protocol._store(protocol._jobId)
 
-    # Check if need to submit to queue
-    if protocol.useQueueForProtocol():
+    # Handle three use cases: one will use the job ID, and the other two will use the process ID.
+    if protocol.useQueueForProtocol():  # Retrieve the job ID and set it; this will be used to control the protocol.
         submitDict = dict(hostConfig.getQueuesDefault())
         submitDict.update(protocol.getSubmitDict())
         submitDict['JOB_COMMAND'] = command
         jobId = _submit(hostConfig, submitDict)
-    else:
-        jobId = _run(command, wait, stdin, stdout, stderr)
-
-    return jobId
+        if jobId is None or jobId == UNKNOWN_JOBID:
+            protocol.setStatus(STATUS_FAILED)
+        else:
+            protocol.setJobId(jobId)
+    else:  # If not, retrieve and set the process ID (both for normal execution or when using the queue for steps)
+        pId = _run(command, wait, stdin, stdout, stderr)
+        protocol.setPid(pId)
 
 
 def analyzeFormattingTypeError(string, dictionary):

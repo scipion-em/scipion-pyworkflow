@@ -615,10 +615,8 @@ class Project(object):
             # changed later to only create a subset of the db need for the run
             pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
 
-        # Launch the protocol, the jobId should be set after this call
-        jobId = pwprot.launch(protocol, wait)
-        if jobId is None or jobId == UNKNOWN_JOBID:
-            protocol.setStatus(pwprot.STATUS_FAILED)
+        # Launch the protocol; depending on the case, either the pId or the jobId will be set in this call
+        pwprot.launch(protocol, wait)
 
         # Commit changes
         if wait:  # This is only useful for launching tests...
@@ -670,7 +668,7 @@ class Project(object):
 
             # Backup the values of 'jobId', 'label' and 'comment'
             # to be restored after the .copy
-            jobId = protocol.getJobIds()
+            jobId = protocol.getJobIds().clone()  # Use clone to prevent this variable from being overwritten or cleared in the latter .copy() call
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
 
@@ -703,8 +701,13 @@ class Project(object):
                     protocol._outputs.append(attr)
 
             # Restore backup values
-            if protocol.useQueueForProtocol():
+            if protocol.useQueueForProtocol() and jobId:  # If jobId not empty then restore value as the db is empty
+                # Case for direct protocol launch from the GUI. Without passing through a scheduling process.
+                # In this case the jobid is obtained by the GUI and the job id should be preserved.
                 protocol.setJobIds(jobId)
+
+            # In case of scheduling a protocol, the jobid is obtained during the "scheduling job"
+            # and it is written in the rub.db. Therefore, it should be taken from there.
 
             protocol.setObjLabel(label)
             protocol.setObjComment(comment)
