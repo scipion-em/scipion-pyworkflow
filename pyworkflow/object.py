@@ -472,18 +472,19 @@ class Object(object):
     def getValuesFromMappedDict(self, mappedDict):
         return [v.getObjValue() for v in mappedDict.values()]
     
-    def copy(self, other, copyId=True, ignoreAttrs=[]):
+    def copy(self, other, copyId=True, ignoreAttrs=[], copyEnable=False):
         """
         Copy all attributes values from one object to the other.
         The attributes will be created if needed with the corresponding type.
 
         :param other: the other object from which to make the copy.
         :param copyId: if true, the _objId will be also copied.
-            ignoreAttrs: pass a list with attributes names to ignore.
+        :param ignoreAttrs: pass a list with attributes names to ignore.
+        :param copyEnable: Pass true if you want enabled flag to be copied
 
         """
         copyDict = {'internalPointers': []} 
-        self._copy(other, copyDict, copyId, ignoreAttrs=ignoreAttrs)
+        self._copy(other, copyDict, copyId, ignoreAttrs=ignoreAttrs, copyEnable=copyEnable)
         self._updatePointers(copyDict)
         return copyDict
         
@@ -497,14 +498,19 @@ class Object(object):
             if pointedId in copyDict:
                 ptr.set(copyDict[pointedId])
         
-    def _copy(self, other, copyDict, copyId, level=1, ignoreAttrs=[]):
+    def _copy(self, other, copyDict, copyId, level=1, ignoreAttrs=[], copyEnable=False):
         """ Recursively clone all attributes from one object to the other.
         (Currently, we are not deleting attributes missing in the 'other' object.)
         Params:
-        copyDict: this dict is used to store the ids map between 'other' and
+
+        :param copyDict: this dict is used to store the ids map between 'other' and
             'self' attributes. It is used for update pointers and relations
             later on. This will only work if the ids of 'other' attributes
             has been properly set.
+        :param copyId: Pass true to copy the id
+        :param level: (1), depth to the copy
+        :param ignoreAttrs: List with attributes to ignore
+        :param copyEnable: (False) pass true to copy the enable flag
         """
         # Copy basic object data
         # self._objName = other._objName
@@ -513,6 +519,10 @@ class Object(object):
         self._objValue = other._objValue
         self._objLabel = other._objLabel
         self._objComment = other._objComment
+
+        if copyEnable:
+            self._objEnabled = other._objEnabled
+
         # Copy attributes recursively
         for name, attr in other.getAttributes():
             if name not in ignoreAttrs:
@@ -532,9 +542,16 @@ class Object(object):
                 if myAttr.isPointer() and myAttr.hasValue():
                     copyDict['internalPointers'].append(myAttr)
     
-    def clone(self):
+    def clone(self, copyEnable=False):
+        """ Clones the object
+
+        :param copyEnable (False): clone also the enable flag"""
+
+        #NOTE: Maybe be, as default, we should be cloning the enable, but we found it is not doing so.
+        # So for now it is not cloned, probably to void carying out the enable which may be a decision by one method that should not be
+        # tranferred to the next method. Only Subsetting protocols should respect this.
         clone = self.getClass()()
-        clone.copy(self)        
+        clone.copy(self, copyEnable=copyEnable)
         return clone    
     
     def evalCondition(self, condition):
@@ -1158,6 +1175,14 @@ class Set(Object):
             MapperClass = SqliteFlatMapper
         Object.__setattr__(self, '_MapperClass', MapperClass)
         
+    def getItem(self, field, value):
+        """ Alternative to [] to get a single item form the set.
+
+        :param field: attribute of the item to look up for. Should be a unique identifier
+        :param value: value to look for"""
+
+        return self.__getitem__({field:value})
+
     def __getitem__(self, itemId):
         """ Get the image with the given id.
 

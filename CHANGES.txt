@@ -20,6 +20,8 @@ developers:
   - Viewers has getName class method.
   - Object.getClassName is now a class method
   - Better case-specific implementation of pID and jobID. Three scenarios: normal execution, sending the entire protocol to the queue, or sending individual steps.
+  - Object.clone an copy optionaly clones the enable flag
+  - Set.getItem: returns the first item with a value in the fiels passed. Useful for querying by TsId in tomo.
 
 V3.4.0
 ------
