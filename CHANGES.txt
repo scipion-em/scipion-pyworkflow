@@ -19,6 +19,7 @@ developers:
   - Extending the ToolbarDialog buttons. Now is possible to define a tooltip and a shortcut
   - Viewers has getName class method.
   - Object.getClassName is now a class method
+  - Validating the Close method in the Dialog class. Now we can to reimplement de validateClose method.
 
 V3.4.0
 ------
