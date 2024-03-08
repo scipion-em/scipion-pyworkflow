@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 from pyworkflow import Config, DEFAULT_EXECUTION_ACTION_ASK, DEFAULT_EXECUTION_ACTION_SINGLE
 from pyworkflow.gui import LIST_TREEVIEW, \
-    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL
+    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL, BORDERLESS_TREEVIEW
 from pyworkflow.gui.project.constants import *
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
@@ -224,13 +224,9 @@ class ProtocolsView(tk.Frame):
         provider = RunIOTreeProvider(self, None,
                                      self.project.mapper, self.info)
 
-        rowheight = pwgui.getDefaultFont().metrics()['linespace']
-        self.style.configure("NoBorder.Treeview", background=Config.SCIPION_BG_COLOR,
-                             borderwidth=0, font=self.window.font,
-                             rowheight=rowheight, fieldbackground=Config.SCIPION_BG_COLOR)
         self.infoTree = pwgui.browser.BoundTree(dframe, provider, height=6,
                                                 show='tree',
-                                                style="NoBorder.Treeview")
+                                                style=BORDERLESS_TREEVIEW)
         self.infoTree.grid(row=0, column=0, sticky='news')
         label = tk.Label(dframe, text='SUMMARY', bg=Config.SCIPION_BG_COLOR,
                          font=self.window.fontBold)
@@ -498,8 +494,8 @@ class ProtocolsView(tk.Frame):
         self._createViewCombo(viewFrame)
 
         # Add refresh Tree button
-        btn = addButton(ACTION_TREE, "Re-organize", self.allToolbar)
-        pwgui.tooltip.ToolTip(btn, "Re-organize the node positions.", 1500)
+        btn = addButton(ACTION_TREE, "Organize", self.allToolbar)
+        pwgui.tooltip.ToolTip(btn, "Organize the node positions.", 1500)
         self.viewButtons[ACTION_TREE] = btn
         if self.runsView != VIEW_LIST:
             btn.grid(row=0, column=1)

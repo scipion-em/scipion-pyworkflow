@@ -88,8 +88,8 @@ class Message:
     LABEL_EXPORT_UPLOAD = 'Export & upload'
     LABEL_RESTART_WORKFLOW = 'Restart all'
     LABEL_CONTINUE_WORKFLOW = 'Continue all'
-    LABEL_STOP_WORKFLOW = 'Stop from here'
-    LABEL_RESET_WORKFLOW = 'Reset from here'
+    LABEL_STOP_WORKFLOW = 'Stop from'
+    LABEL_RESET_WORKFLOW = 'Reset from'
 
     # -- Tabs --
     LABEL_DATA = 'Data'
@@ -364,8 +364,8 @@ Do you really want to restart it?
     LABEL_ENABLE = 'Enable'
     LABEL_DISABLE = 'Disable'
     LABEL_SELECT_ALL = 'Select all'
-    LABEL_SELECT_FROM = 'Select from here'
-    LABEL_SELECT_TO = 'Select to here'
+    LABEL_SELECT_FROM = 'Select from'
+    LABEL_SELECT_TO = 'Select to'
     
     LABEL_DISPLAY_TABLE_CONFIG = 'Display Table Configuration'
     
