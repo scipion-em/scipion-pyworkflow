@@ -121,7 +121,7 @@ class Template:
             if field.getAlias() == alias:
                 oldValue = field.getValue()
                 field.setValue(newValue)
-                if field.validate():
+                if field.validate() is None:
                     paramsSetted += 1
                     print(greenStr("%s set to %s") %
                           (field.getTitle(), str(newValue)))

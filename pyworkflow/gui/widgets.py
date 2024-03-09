@@ -52,7 +52,7 @@ class Button(tk.Button):
             del defaults['bg']
 
         if imagePath is not None:
-            btnImage = gui.getImage(imagePath, Button._images)
+            btnImage = gui.getImage(imagePath)
         else:
             btnImage = None
 

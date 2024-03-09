@@ -44,7 +44,6 @@ class ProjectSettings(pwobj.Object):
 
     def __init__(self, confs={}, **kwargs):
         super().__init__(**kwargs)
-        self.config = ProjectConfig()
         # Store the current view selected by the user
         self.currentProtocolsView = pwobj.String()
         # Store the color mode: 0= Status, 1=Labels, ...
@@ -97,9 +96,6 @@ class ProjectSettings(pwobj.Object):
 
     def setLifeTime(self, value):
         self.lifeTime.set(value)
-
-    def getConfig(self):
-        return self.config
 
     def getProtocolView(self):
         return self.currentProtocolsView.get()
@@ -205,17 +201,6 @@ class ProjectSettings(pwobj.Object):
         settings.mapper = mapper
 
         return settings
-
-
-class ProjectConfig(pwobj.Object):
-    """A simple base class to store ordered parameters"""
-
-    def __init__(self, **args):
-        super().__init__(**args)
-        self.logo = pwobj.String('scipion_logo_small.png')
-        # Do not store this object, unless we implement some kind of
-        # icon customization
-        self._objDoStore = False
 
 
 class MenuConfig(object):

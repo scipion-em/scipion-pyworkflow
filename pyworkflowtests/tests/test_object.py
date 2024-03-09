@@ -339,6 +339,14 @@ class TestObject(pwtests.BaseTest):
         self.assertIsInstance(next(iter(ids)), int, "getIdSet items are not integer")
         self.assertEqual(len(ids), 10, "getIdSet does not return 10 items")
 
+        # Request item by id
+        item = imgSet[1]
+        self.assertEqual(item.getObjId(), 1, "Item accesed by [] and id does not work")
+
+        # Request item by field
+        item = imgSet.getItem("id", 2)
+        self.assertEqual(item.getObjId(), 2, "Item accesed field id does not work")
+
         # Test load properties queries
         from pyworkflow.mapper.sqlite_db import logger
         logger.setLevel(DEBUG)

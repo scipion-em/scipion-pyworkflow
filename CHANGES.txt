@@ -1,3 +1,30 @@
+V3.5.0
+------
+users:
+  - New Icons.
+  - Icons based on sprites, easier to resize or customized
+  - New variable: SCIPION_SPRITES_FILE to point to a custom sprite. It should be compatible with sprites.png at pyworkflow/resources.
+  - Scipion GUI log moved to the log tabs and removed from menu
+  - New variable: SCIPION_SHOW_TEXT_IN_TOOLBAR, set it to anything to show the text of the icons below
+  - New variable: SCIPION_ICON_ZOOM, defaults to 50 (percent) to show icons at 16x16. 100 will set them to 32 or 75 to 24.
+  - Icons in toolbar grouped. Better row height adjustment in trees.
+  - Improved handling of the case where protocols steps are send to the queue, fix stop protocol functionality
+developers:
+  - ProjectConfig class removed
+  - New methods in path: hasChangedSince and isFileFinished
+  - New method in utils: strToDuration (useful to translate "1h 35m" to seconds). For duration parameters.
+  - New class Variable to be tested in Config class. A step towards a Config editing GUI.
+  - SCIPION_DEBUG_SQLITE rescued to activate SQL clauses in debug.
+  - Active jobs are stored in the 'jobIds' protocol variable. Iteration through these job IDs allows for canceling each active job sent to the queue.
+  - Implemented cleaning of old protocol job IDs and PIDs.
+  - Extending the ToolbarDialog buttons. Now is possible to define a tooltip and a shortcut
+  - Viewers has getName class method.
+  - Object.getClassName is now a class method
+  - Validating the Close method in the Dialog class. Now we can to reimplement de validateClose method.
+  - Better case-specific implementation of pID and jobID. Three scenarios: normal execution, sending the entire protocol to the queue, or sending individual steps.
+  - Object.clone an copy optionaly clones the enable flag
+  - Set.getItem: returns the first item with a value in the fiels passed. Useful for querying by TsId in tomo.
+
 V3.4.0
 ------
 users:

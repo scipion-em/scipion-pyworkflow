@@ -701,6 +701,16 @@ def strToBoolean(string):
     """ Converts a string into a Boolean if the string is on of true, yes, on, 1. Case insensitive."""
     return string is not None and string.lower() in ['true', 'yes', 'on', '1']
 
+def strToDuration(durationStr):
+    """ Converts a string representing an elapsed time to seconds
+    E.g.: for "1m 10s" it'll return  70 """
+
+    toEval = durationStr.replace("d", "*3600*24")\
+        .replace("h", "*3600")\
+        .replace("m", "*60") \
+        .replace("s", "") \
+        .replace(" ", "+")
+    return eval(toEval)
 
 def getMemoryAvailable():
     """ Return the total memory of the system in MB """

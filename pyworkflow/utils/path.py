@@ -26,6 +26,9 @@ This module contains the PATH related utilities
 inside the utils module
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 import os
 import shutil
@@ -101,7 +104,7 @@ def getParentFolder(path):
 
 def replaceExt(filename, newExt):
     """ Replace the current path extension(from last .)
-    with a new one. The new one should not contains the ."""
+    with a new one. The new one should not contain the ."""
     return os.path.splitext(filename)[0] + '.' + newExt
 
 
@@ -464,6 +467,29 @@ def getFileSize(fn):
         return os.path.getsize(fn)
 
 
+def hasChangedSince(fn, time):
+    """ Returns if the file has changed since the timestamp passed as parameter. It will check
+            the last modified time of the file this set uses to persists.
+
+    :parameter time: timestamp to compare to the last modification time  """
+
+    if time is None:
+        return True
+
+    # Get the last time it was modified
+    modTime = getFileLastModificationDate(fn)
+
+    return time < modTime
+
+def isFileFinished(fn , duration=60):
+    """ Returns True if the file (fn) last modification has not changed for 60 seconds (default duration)"""
+
+    modTime = getFileLastModificationDate(fn)
+    fileAge = datetime.datetime.now()-modTime
+
+    return fileAge.seconds > duration
+
+
 def getFileLastModificationDate(fn):
     """ Returns the last modification date of a file or None
     if it doesn't exist. """
@@ -471,5 +497,5 @@ def getFileLastModificationDate(fn):
         ts = os.path.getmtime(fn)
         return datetime.datetime.fromtimestamp(ts)
     else:
-        print(fn + " does not exist!!. Can't check last modification date.")
+        logger.info(fn + " does not exist!!. Can't check last modification date.")
         return None
