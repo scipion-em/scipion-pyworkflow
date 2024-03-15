@@ -97,7 +97,7 @@ class Plotter(View):
             if mainTitle:
                 self.figure.suptitle(mainTitle, fontsize=fontsize + 4)
             if windowTitle:
-                self.figure.canvas.set_window_title(windowTitle) 
+                self.figure.canvas.manager.set_window_title(windowTitle)
             self.plot_count = 0
             self.last_subplot = None
             self.plot_yformat = '%1.2e'

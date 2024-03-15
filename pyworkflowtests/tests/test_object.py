@@ -23,7 +23,7 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import datetime
 import os
 import datetime as dt
 from logging import DEBUG, lastResort
@@ -268,7 +268,7 @@ class TestObject(pwtests.BaseTest):
             imgSet.append(img)
             if i == 4:
                 sleep(1)
-                halfTimeStamp = dt.datetime.utcnow().replace(microsecond=0)
+                halfTimeStamp = dt.datetime.now(datetime.UTC).replace(microsecond=0)
         imgSet.write()
 
         # Test size is 10

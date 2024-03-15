@@ -1917,7 +1917,7 @@ class ProtocolsView(tk.Frame):
                             jsonStr = json.dumps(refDict, indent=4,
                                                  ensure_ascii=False)[1:]
                             jsonStr = jsonStr.replace('": "', '"= "')
-                            jsonStr = re.sub('(?<!= )"(\S*?)"', '\\1', jsonStr)
+                            jsonStr = re.sub(r'(?<!= )"(\S*?)"', '\\1', jsonStr)
                             jsonStr = jsonStr.replace('= "', ' = "')
                             refStr = '@%s{%s,%s\n\n' % (refType, refId, jsonStr)
                             bibFile.write(refStr.encode('utf-8'))
