@@ -36,19 +36,14 @@ from pyworkflow.project import Manager
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
 
-import logging
-
 HERE = 'here'
-
 LAST = 'last'
-
 LIST = 'list'
-logger = logging.getLogger(__name__)
 
 def openProject(projectName):
     """ Opens a scipion project:
 
-    :param projectName: Name of a existing project to open,
+    :param projectName: Name of an existing project to open,
             or "here" to create a project in the current working dir,
             or "last" to open the most recent project
 
@@ -97,7 +92,7 @@ def openProject(projectName):
         projWindow = ProjectWindow(projPath)
         projWindow.show()
     else:
-        logger.error("Can't open project %s. It does not exist" % projPath)
+        print("Can't open project %s. It does not exist" % projPath)
 
         #Show the list of projects
         showProjectList(manager)
@@ -115,4 +110,4 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         openProject(sys.argv[1])
     else:
-        logger.info("usage: pw_project.py PROJECT_NAME or %s or %s or %s" % (HERE, LAST, LIST))
+        print("usage: pw_project.py PROJECT_NAME or %s or %s or %s" % (HERE, LAST, LIST))

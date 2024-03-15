@@ -134,7 +134,7 @@ class Canvas(tk.Canvas, Scrollable):
         return self._runsFont
 
     def getImage(self, img):
-        return gui.getImage(img, self._images)
+        return gui.getImage(img)
 
     def _unpostMenu(self, e=None):
         self._menu.unpost()

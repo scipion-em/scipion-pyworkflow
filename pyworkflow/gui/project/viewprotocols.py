@@ -23,11 +23,11 @@
 # *
 # **************************************************************************
 import logging
-import threading
+logger = logging.getLogger(__name__)
 
 from pyworkflow import Config, DEFAULT_EXECUTION_ACTION_ASK, DEFAULT_EXECUTION_ACTION_SINGLE
-from pyworkflow.gui import (TextFileViewer, getDefaultFont, LIST_TREEVIEW, ShortCut, ToolTip, RESULT_RUN_ALL,
-                            RESULT_RUN_SINGLE, RESULT_CANCEL)
+from pyworkflow.gui import LIST_TREEVIEW, \
+    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL, BORDERLESS_TREEVIEW
 from pyworkflow.gui.project.constants import *
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
@@ -61,8 +61,6 @@ from pyworkflow.gui.project.steps import StepsWindow
 from pyworkflow.gui.project.viewprotocols_extra import RunIOTreeProvider, ProtocolTreeConfig
 from pyworkflow.gui.project.searchrun import RunsTreeProvider, SearchRunWindow
 
-logger = logging.getLogger(__name__)
-
 DEFAULT_BOX_COLOR = '#f8f8f8'
 
 
@@ -72,61 +70,6 @@ VIEW_LIST = 0
 VIEW_TREE = 1
 VIEW_TREE_SMALL = 2
 
-
-class ScipionLogWindow(pwgui.Window):
-    """Class that create a windows where the system log is display """
-    def __init__(self, parentWindow, **kwargs):
-        pwgui.Window.__init__(self, title="Scipion log",
-                              masterWindow=parentWindow,
-                              minsize=(1000, 400))
-        content = tk.Frame(self.root)
-        content.grid(row=0, column=0, sticky='news')
-        pwgui.configureWeigths(content)
-        self.showScipionLog = threading.Thread(name="scipion_log",
-                                              target=self._showScipionLog,
-                                              args=(content,))
-        self.showScipionLog.start()
-
-    def _showScipionLog(self, content):
-        """
-        Create a content of the system log window
-        """
-
-        # Fill the Output Log
-        terminal = tk.Frame(content)
-        terminal.grid(row=0, column=0, sticky='news')
-        pwgui.configureWeigths(terminal)
-
-        self.textLog = TextFileViewer(terminal, font=getDefaultFont(),
-                                      height=30, width=100)
-        self.textLog.grid(row=0, column=0, sticky='news')
-
-        fileLogPath = Config.SCIPION_LOG
-        self.fileLog = open(fileLogPath, 'r')
-        # Create a tab where the log will appear
-        self.textLog.createWidgets([fileLogPath])
-        self.textLog.refreshAll(goEnd=True)
-        # Refreshing the log every 3 seconds
-        self.threadRefresh = threading.Thread(name="refresh_log",
-                                              target=self._refreshLogComponent,
-                                              args=(3,))
-        self.threadRefresh.start()
-
-    def _refreshLogComponent(self, wait=3):
-        """ Refresh the Plugin Manager log """
-        import time
-        while True:
-            time.sleep(wait)
-            # Taking the vertical scroll position. If this action fail, assume
-            # that the log window was closed and finalized the refresh thread
-            try:
-                vsPos = self.textLog.taList[0].getVScroll()
-                if vsPos[1] == 1.0:
-                    self.textLog.refreshAll(goEnd=True)
-                else:
-                    self.textLog.refreshAll(goEnd=False)
-            except Exception:
-                break
 
 # noinspection PyAttributeOutsideInit
 class ProtocolsView(tk.Frame):
@@ -281,13 +224,9 @@ class ProtocolsView(tk.Frame):
         provider = RunIOTreeProvider(self, None,
                                      self.project.mapper, self.info)
 
-        rowheight = pwgui.getDefaultFont().metrics()['linespace']
-        self.style.configure("NoBorder.Treeview", background=Config.SCIPION_BG_COLOR,
-                             borderwidth=0, font=self.window.font,
-                             rowheight=rowheight, fieldbackground=Config.SCIPION_BG_COLOR)
         self.infoTree = pwgui.browser.BoundTree(dframe, provider, height=6,
                                                 show='tree',
-                                                style="NoBorder.Treeview")
+                                                style=BORDERLESS_TREEVIEW)
         self.infoTree.grid(row=0, column=0, sticky='news')
         label = tk.Label(dframe, text='SUMMARY', bg=Config.SCIPION_BG_COLOR,
                          font=self.window.fontBold)
@@ -309,23 +248,23 @@ class ProtocolsView(tk.Frame):
         self.methodText = pwgui.text.TaggedText(mframe, width=40, height=15,
                                                 bg=Config.SCIPION_BG_COLOR, handlers=hView)
         self.methodText.grid(row=0, column=0, sticky='news')
-        # Reference export button
-        # btnExportBib = pwgui.Button(mframe, text=Message.LABEL_BIB_BTN,
-        #                             fg='white', bg=Color.MAIN_COLOR,
-        #                             image=self.getImage(Icon.ACTION_BROWSE),
-        #                             compound=tk.LEFT,
-        #                             activeforeground='white',
-        #                             activebackground='#A60C0C',
-        #                             command=self._bibExportClicked)
-        # btnExportBib.grid(row=2, column=0, sticky='w', padx=0)
 
-        # Logs
+        # Output Logs
         ologframe = tk.Frame(tab)
         pwgui.configureWeigths(ologframe)
         self.outputViewer = pwgui.text.TextFileViewer(ologframe, allowOpen=True,
                                                       font=self.window.font)
         self.outputViewer.grid(row=0, column=0, sticky='news')
         self.outputViewer.windows = self.window
+
+        # Project log
+        projLogFrame = tk.Frame(tab)
+        pwgui.configureWeigths(projLogFrame)
+        self.projLog = pwgui.text.TextFileViewer(projLogFrame, allowOpen=True,
+                                                      font=self.window.font)
+        self.projLog.grid(row=0, column=0, sticky='news')
+        self.projLog.windows = self.window
+        self.projLog.addFile(Config.SCIPION_LOG) # TODO: Have a project specific log
 
         self._updateSelection()
 
@@ -342,7 +281,7 @@ class ProtocolsView(tk.Frame):
         tab.add(mframe, text=Message.LABEL_METHODS)
         tab.add(ologframe, text=Message.LABEL_LOGS_OUTPUT)
         #         tab.add(elogframe, text=Message.LABEL_LOGS_ERROR)
-        #         tab.add(slogframe, text=Message.LABEL_LOGS_SCIPION)
+        tab.add(projLogFrame, text=Message.LABEL_LOGS_SCIPION)
         tab.grid(row=1, column=0, sticky='news')
 
         v.add(runsFrame, weight=1)
@@ -402,7 +341,7 @@ class ProtocolsView(tk.Frame):
             import threading
             # Refresh the status of displayed runs.
             if self.refreshSemaphore:
-                # print("Launching a thread to refresh the runs...")
+
                 threadRefreshRuns = threading.Thread(name="Refreshing runs",
                                                      target=self.refreshDisplayedRuns,
                                                      args=(e, initRefreshCounter,
@@ -505,10 +444,6 @@ class ProtocolsView(tk.Frame):
 
         self.runsGraphCanvas.moveTo(X, Y)
 
-    def _scipionLog(self, e=None):
-        windows = ScipionLogWindow(self.window)
-        windows.show()
-
     def createActionToolbar(self):
         """ Prepare the buttons that will be available for protocol actions. """
 
@@ -526,9 +461,11 @@ class ProtocolsView(tk.Frame):
         ]
 
         def addButton(action, text, toolbar):
-            btn = tk.Label(toolbar, text="",
+
+            labelTxt = text if Config.SCIPION_SHOW_TEXT_IN_TOOLBAR else ""
+            btn = tk.Label(toolbar, text=labelTxt,
                            image=self.getImage(ActionIcons.get(action, None)),
-                           compound=tk.LEFT, cursor='hand2', bg=Config.SCIPION_BG_COLOR)
+                           compound=tk.TOP, cursor='hand2', bg=Config.SCIPION_BG_COLOR)
 
             callback = lambda e: self._runActionClicked(action, event=e)
             btn.bind(TK.LEFT_CLICK, callback)
@@ -557,8 +494,8 @@ class ProtocolsView(tk.Frame):
         self._createViewCombo(viewFrame)
 
         # Add refresh Tree button
-        btn = addButton(ACTION_TREE, "  ", self.allToolbar)
-        pwgui.tooltip.ToolTip(btn, "Re-organize the node positions.", 1500)
+        btn = addButton(ACTION_TREE, "Organize", self.allToolbar)
+        pwgui.tooltip.ToolTip(btn, "Organize the node positions.", 1500)
         self.viewButtons[ACTION_TREE] = btn
         if self.runsView != VIEW_LIST:
             btn.grid(row=0, column=1)
@@ -625,7 +562,7 @@ class ProtocolsView(tk.Frame):
         # Disable protocols (not installed) are allowed to be added.
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_DISABLED,
                      Icon.PROT_DISABLED)
-        # Updates protocols
+        # Updated protocols
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL_UPDATED,
                      Icon.UPDATED)
         t.tag_configure('protocol_base', image=self.getImage(Icon.GROUP))
@@ -671,8 +608,7 @@ class ProtocolsView(tk.Frame):
             viewKey = self.getProtocolViews()[0]
             self.project.settings.setProtocolView(viewKey)
             if currentView is not None:
-                print("PROJECT: Warning, protocol view '%s' not found." % currentView)
-                print("         Using '%s' instead." % viewKey)
+                logger.warning("PROJECT: Warning, protocol view '%s' not found. Using '%s' instead." % (currentView, viewKey))
 
         return self._protocolViews[viewKey]
 
@@ -695,7 +631,7 @@ class ProtocolsView(tk.Frame):
         self.protCfg = self.getCurrentProtocolView()
         self.updateProtocolsTree(self.protCfg)
 
-    def populateTree(self, tree, treeItems, prefix, obj, subclassedDict, level=0):
+    def populateTree(self, tree, treeItems, prefix, obj, level=0):
 
         # If node does not have leaves (protocols) do not add it
         if not obj.visible:
@@ -708,7 +644,9 @@ class ProtocolsView(tk.Frame):
             img = obj.icon if obj.icon is not None else ''
             tag = obj.tag if obj.tag is not None else ''
 
-            if len(img):
+            if img:
+                if isinstance(img,str) and "bookmark" in img:
+                    img = pwutils.Icon.FAVORITE
                 img = self.getImage(img)
                 # If image is none
                 img = img if img is not None else ''
@@ -719,7 +657,7 @@ class ProtocolsView(tk.Frame):
 
             if tag == 'protocol' and text == 'default':
                 if prot is None:
-                    print("Protocol className '%s' not found!!!. \n"
+                    logger.warning("Protocol className '%s' not found!!!. \n"
                           "Fix your config/protocols.conf configuration."
                           % protClassName)
                     return
@@ -740,7 +678,7 @@ class ProtocolsView(tk.Frame):
             key = prefix
 
         for sub in obj:
-            self.populateTree(tree, treeItems, key, sub, subclassedDict,
+            self.populateTree(tree, treeItems, key, sub,
                               level + 1)
 
     def updateProtocolsTree(self, protCfg):
@@ -751,21 +689,14 @@ class ProtocolsView(tk.Frame):
             self.protTree.unbind(TK.TREEVIEW_OPEN)
             self.protTree.unbind(TK.TREEVIEW_CLOSE)
             self.protTreeItems = {}
-            subclassedDict = {}  # Check which classes serve as base to not show them
-            emProtocolsDict = self.domain.getProtocols()
-            for _, v1 in emProtocolsDict.items():
-                for k2, v2 in emProtocolsDict.items():
-                    if v1 is not v2 and issubclass(v1, v2):
-                        subclassedDict[k2] = True
-            self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg,
-                              subclassedDict)
+            self.populateTree(self.protTree, self.protTreeItems, '', self.protCfg)
             self.protTree.bind(TK.TREEVIEW_OPEN,
                                lambda e: self._treeViewItemChange(True))
             self.protTree.bind(TK.TREEVIEW_CLOSE,
                                lambda e: self._treeViewItemChange(False))
         except Exception as e:
             # Tree can't be loaded report back, but continue
-            print("Protocols tree couldn't be loaded: %s" % e)
+            logger.error("Protocols tree couldn't be loaded.", exc_info=e)
 
     def _treeViewItemChange(self, openItem):
         item = self.protTree.focus()
@@ -1248,7 +1179,6 @@ class ProtocolsView(tk.Frame):
 
         # If click is in a empty area....start panning
         if item is None:
-            print("Click on empty area")
             return
 
         self.runsGraphCanvas.focus_set()
@@ -1992,7 +1922,7 @@ class ProtocolsView(tk.Frame):
                             refStr = '@%s{%s,%s\n\n' % (refType, refId, jsonStr)
                             bibFile.write(refStr.encode('utf-8'))
                         else:
-                            print("WARNING: reference %s not properly defined or unpublished." % refId)
+                            logger.warning("Reference %s not properly defined or unpublished." % refId)
                     # flush so we can see content when opening
                     bibFile.flush()
                     pwgui.text.openTextFileEditor(bibFile.name)

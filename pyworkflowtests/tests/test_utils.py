@@ -6,15 +6,15 @@ Created on Mar 25, 2014
 @author: airen
 @author: roberto.marabini
 """
-
-
+import datetime
+import os
 from subprocess import Popen
 from io import StringIO
 
-from pyworkflow import APPS
+from pyworkflow import APPS, Variable
 from pyworkflow.utils.process import killWithChilds
 from pyworkflow.tests import *
-from pyworkflow.utils import utils, prettyDict, getListFromValues
+from pyworkflow.utils import utils, prettyDict, getListFromValues, strToDuration
 from pyworkflow.utils import ProgressBar
 
 
@@ -173,4 +173,74 @@ class TestProgressBar(unittest.TestCase):
                       '(objectId=33)')
         self.caller(total=total, step=step,
                     fmt=ProgressBar.OBJID, resultGold=resultGold)
+
+
+
+class TestPathTools(unittest.TestCase):
+
+    def test_filemodificationtime(self):
+
+        # Test is file closed
+
+        import tempfile
+        import time
+
+        since = datetime.datetime.now()
+        time.sleep(1)
+
+        tmpFile = tempfile.NamedTemporaryFile()
+        self.assertFalse(pwutils.isFileFinished(tmpFile.name), "File is NOT finished")
+        time.sleep(1)
+
+        self.assertTrue(pwutils.isFileFinished(tmpFile.name, duration=0.5), "File is finished after 2 seconds")
+
+
+        self.assertTrue(pwutils.hasChangedSince(tmpFile.name, since ), "hasChanged should have returned true. False negative.")
+        since = datetime.datetime.now()
+        self.assertFalse(pwutils.hasChangedSince(tmpFile.name, since ), "hasChanged should have returned false. False positive.")
+
+
+
+    def test_durationstrings(self):
+
+        self.assertEqual(70, strToDuration("1m 10s"), "String duration wrongly converted")
+
+
+class TestVariable(unittest.TestCase):
+
+    def test_operators(self):
+
+        myVar = Variable("Home")
+
+        # Join should work
+        try:
+            os.path.join(myVar, "hola")
+        except Exception:
+            self.fail("os.path.join for variables doesn't work")
+
+        # String concatenation ?
+        try:
+            myVar + "hola"
+            "hola" + myVar
+        except Exception:
+            self.fail("String concatenation with + for variables doesn't work")
+
+        myIntVar= Variable(50)
+
+
+        # Add should work
+        try:
+            myIntVar + 3
+            3 + myIntVar
+        except Exception:
+            self.fail("Adding a value to an int variable doesn't work")
+
+        # Division should work
+        try:
+            myIntVar/2
+            100/myIntVar
+
+        except Exception:
+            self.fail("Division does not work")
+
 

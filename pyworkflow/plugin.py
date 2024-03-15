@@ -135,22 +135,22 @@ class Domain:
         for module in plugin_modules:
             cls.registerPlugin(module)
 
-
     @classmethod
     def _discoverGUIPlugins(cls):
         for entry_point in pkg_resources.iter_entry_points('pyworkflow.guiplugin'):
             entry_point.load()
 
     @classmethod
-    def getPlugin(cls, name):
-        """ Load a given plugin name. """
-        m = importlib.import_module(name)
+    def getPluginModule(cls, name):
+        """ Return the root of a plugin module initialized properly """
+        cls.registerPlugin(name)
 
-        # if not cls.__isPlugin(m):
-        #     raise Exception("Invalid plugin '%s'. "
-        #                     "Class Plugin with __metaclass__=PluginMeta "
-        #                     "not found" % name)
-        return m
+        return cls._plugins[name]
+
+    @classmethod
+    def getPlugin(cls, name):
+        logger.warning("This method will return the plugin class in the future. Please use getPluginModule instead")
+        return cls.getPluginModule(name)
 
     @classmethod
     def refreshPlugin(cls, name):

@@ -209,8 +209,14 @@ class Viewer(object):
             raise Exception("self.protocol is not defined for this Viewer.")
         return self.protocol.strId()
 
+    @classmethod
+    def getName(cls):
+        if cls._name is None:
+            return cls.__name__
+        return cls._name
 
-class ProtocolViewer(pwprot.Protocol, Viewer):
+
+class ProtocolViewer(Viewer, pwprot.Protocol):
     """ Special kind of viewer that have a Form to organize better
     complex visualization associated with protocol results.
     If should provide a mapping between form params and the corresponding
