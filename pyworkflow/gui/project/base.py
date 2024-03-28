@@ -87,7 +87,7 @@ class ProjectBaseWindow(Window):
         header.columnconfigure(1, weight=1)
         header.columnconfigure(2, weight=1)
         # Create the SCIPION logo label
-        logoImg = self.getImage(self.generalCfg.logo.get())
+        logoImg = self.getImage(Icon.SCIPION_LOGO_SMALL)
         logoLabel = tk.Label(header, image=logoImg, 
                              borderwidth=0, anchor='nw', bg=pw.Config.SCIPION_BG_COLOR)
         logoLabel.grid(row=0, column=0, sticky='nw', padx=(5, 0), pady=5)

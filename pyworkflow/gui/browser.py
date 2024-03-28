@@ -34,6 +34,7 @@ import stat
 import tkinter as tk
 import time
 import logging
+
 logger = logging.getLogger(__name__)
 
 import pyworkflow.utils as pwutils
@@ -124,7 +125,7 @@ class ObjectBrowser(tk.Frame):
         img, desc = self.treeProvider.getObjectPreview(obj)
         # Update image preview
         if self.showPreviewTop:
-            if isinstance(img, str):
+            if isinstance(img, (str, pwutils.SpriteImage)):
                 img = self.getImage(img)
             if img is None:
                 img = self.noImage
@@ -716,13 +717,4 @@ class FileBrowserWindow(BrowserWindow):
                  '.txt', '.log', '.out', '.err', '.stdout', '.stderr', '.emx',
                  '.json', '.xml', '.pam')
         register(TextFileHandler(pwutils.Icon.PYTHON_FILE), '.py')
-        register(TextFileHandler(pwutils.Icon.JAVA_FILE), '.java')
         register(SqlFileHandler(), '.sqlite', '.db')
-        # register(MdFileHandler(), '.xmd', '.star', '.pos', '.ctfparam', '.doc')
-        # register(ParticleFileHandler(),
-        #          '.xmp', '.tif', '.tiff', '.spi', '.mrc', '.map', '.raw',
-        #          '.inf', '.dm3', '.em', '.pif', '.psd', '.spe', '.ser', '.img',
-        #          '.hed', *STANDARD_IMAGE_EXTENSIONS)
-        # register(VolFileHandler(), '.vol')
-        # register(StackHandler(), '.stk', '.mrcs', '.st', '.pif', '.dm4')
-        # register(ChimeraHandler(), '.bild')

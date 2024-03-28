@@ -605,16 +605,18 @@ class Project(object):
             # Delete the relations created by this protocol
             if isRestart:
                 self.mapper.deleteRelations(self)
+                # Clean and persist execution attributes; otherwise, this would retain old job IDs and PIDs.
+                protocol.cleanExecutionAttributes()
+                protocol._store(protocol._jobId)
+
             self.mapper.commit()
 
             # NOTE: now we are simply copying the entire project db, this can be
             # changed later to only create a subset of the db need for the run
             pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
 
-        # Launch the protocol, the jobId should be set after this call
-        jobId = pwprot.launch(protocol, wait)
-        if jobId is None or jobId == UNKNOWN_JOBID:
-            protocol.setStatus(pwprot.STATUS_FAILED)
+        # Launch the protocol; depending on the case, either the pId or the jobId will be set in this call
+        pwprot.launch(protocol, wait)
 
         # Commit changes
         if wait:  # This is only useful for launching tests...
@@ -666,7 +668,7 @@ class Project(object):
 
             # Backup the values of 'jobId', 'label' and 'comment'
             # to be restored after the .copy
-            jobId = protocol.getJobId()
+            jobId = protocol.getJobIds().clone()  # Use clone to prevent this variable from being overwritten or cleared in the latter .copy() call
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
 
@@ -699,7 +701,14 @@ class Project(object):
                     protocol._outputs.append(attr)
 
             # Restore backup values
-            protocol.setJobId(jobId)
+            if protocol.useQueueForProtocol() and jobId:  # If jobId not empty then restore value as the db is empty
+                # Case for direct protocol launch from the GUI. Without passing through a scheduling process.
+                # In this case the jobid is obtained by the GUI and the job id should be preserved.
+                protocol.setJobIds(jobId)
+
+            # In case of scheduling a protocol, the jobid is obtained during the "scheduling job"
+            # and it is written in the rub.db. Therefore, it should be taken from there.
+
             protocol.setObjLabel(label)
             protocol.setObjComment(comment)
             # Use the run.db timestamp instead of the system TS to prevent
@@ -740,6 +749,7 @@ class Project(object):
         """ Stop a running protocol """
         try:
             if protocol.getStatus() in ACTIVE_STATUS:
+                self._updateProtocol(protocol) # update protocol to have the latest rub.db values
                 pwprot.stop(protocol)
         except Exception as e:
             logger.error("Couldn't stop the protocol: %s" % e)
@@ -764,6 +774,7 @@ class Project(object):
             protocol._store()
             self._storeProtocol(protocol)
             protocol.makePathsAndClean()  # Create working dir if necessary
+            protocol.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
             protocol._store()
             self._storeProtocol(protocol)
 
@@ -1134,6 +1145,7 @@ class Project(object):
         newProt.copyDefinitionAttributes(protocol)
         newProt.copyAttributes(protocol, 'hostName', '_useQueue', '_queueParams')
         newProt.runMode.set(MODE_RESTART)
+        newProt.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
 
         return newProt
 

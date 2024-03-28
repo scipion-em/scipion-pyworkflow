@@ -51,10 +51,15 @@ class StepExecutor:
     def __init__(self, hostConfig, **kwargs):
         self.hostConfig = hostConfig
         self.gpuList = kwargs.get(cts.GPU_LIST, None)
+        self.protocol = None
 
     def getGpuList(self):
         """ Return the GPU list assigned to current thread. """
         return self.gpuList
+
+    def setProtocol(self, protocol):
+        """ Set protocol to append active jobs to its jobIds. """
+        self.protocol = protocol
 
     def runJob(self, log, programName, params,           
                numberOfMpi=1, numberOfThreads=1,
@@ -308,6 +313,9 @@ class QueueStepExecutor(ThreadStepExecutor):
         submitDict['JOB_LOGS'] = os.path.join(getParentFolder(submitDict['JOB_SCRIPT']), submitDict['JOB_NAME'])
 
         jobid = _submit(self.hostConfig, submitDict, cwd, env)
+        # if self.protocol._lock: # Just in case we detect concurrency problem
+        self.protocol.appendJobId(jobid) # append active jobs
+        self.protocol._store(self.protocol._jobId)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
             logger.info("jobId is none therefore we set it to fail")
@@ -322,6 +330,10 @@ class QueueStepExecutor(ThreadStepExecutor):
             time.sleep(wait)
             if wait < 300:
                 wait += 3
+
+        # if self.protocol._lock: # Just in case we detect concurrency problem
+        self.protocol.removeJobId(jobid) # After completion, remove inactive jobs.
+        self.protocol._store(self.protocol._jobId)
 
         return status
 
