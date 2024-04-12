@@ -761,7 +761,6 @@ class Protocol(Step):
                                                    f"in streaming scenarios. Developers should avoid them.")
 
             protocolIds.append(protocol.getObjId())
-            logger.debug('Protocols Ids: %s' % protocolIds)
 
         return protocolIds
 
