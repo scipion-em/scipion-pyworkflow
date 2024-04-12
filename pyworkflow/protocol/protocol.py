@@ -713,9 +713,12 @@ class Protocol(Step):
         protocolIds = []
         protocol = None
         for key, attrInput in self.iterInputAttributes():
+            outputs = []
             output = attrInput.get()
             if isinstance(output, Protocol):  # case A
                 protocol = output
+                for _, protOutput in protocol.iterOutputAttributes():
+                    outputs.append(protOutput)  # for case A store all the protocols outputs
             else:
                 if attrInput.hasExtended():  # case B
                     protocol = attrInput.getObjValue()
@@ -736,8 +739,13 @@ class Protocol(Step):
                               "scheduling protocols. Value: %s" % (key, self, attrInput))
                         continue
 
-                # If there is output
                 if output is not None:
+                    outputs.append(output)
+
+            # If there is output
+            if outputs:
+                # Iter over all the outputs
+                for output in outputs:
                     # For each output attribute: Looking for pointers like SetOfCoordinates.micrographs
                     for k, attr in output.getAttributes():
                         # If it's a pointer
@@ -751,7 +759,9 @@ class Protocol(Step):
                                     logger.warning(f"We have found that {output}.{key} points to {attr} "
                                                    f"and is a direct pointer. Direct pointers are less reliable "
                                                    f"in streaming scenarios. Developers should avoid them.")
+
             protocolIds.append(protocol.getObjId())
+            logger.debug('Protocols Ids: %s' % protocolIds)
 
         return protocolIds
 
