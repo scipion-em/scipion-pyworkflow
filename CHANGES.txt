@@ -1,3 +1,8 @@
+V3.6.1
+------
+Developers:
+  - Add counter to open connections that is used to avoid closed connections issues when there are multiple accesses
+    to a set without re-opening the connection via loop or a call to getMapper.
 V3.5.0
 ------
 users:
