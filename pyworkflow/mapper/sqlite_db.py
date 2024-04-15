@@ -49,12 +49,14 @@ class SqliteDb:
         """Establish db connection"""
         self._dbName = dbName
         if self._reuseConnections and dbName in self.OPEN_CONNECTIONS:
-            self.connection = self.OPEN_CONNECTIONS[dbName]
+            connection, counter = self.OPEN_CONNECTIONS[dbName]
+            self.connection = connection
+            self.OPEN_CONNECTIONS[dbName][1] = counter + 1   # increase the no. connections
         else:
             # self.closeConnection(dbName)  # Close the connect if exists for this db
             self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
             self.connection.row_factory = sqlite.Row
-            self.OPEN_CONNECTIONS[dbName] = self.connection
+            self.OPEN_CONNECTIONS[dbName] = [self.connection, 1]  # conn obj, no. connections
             logger.debug("Connection open for %s" % dbName, extra=getExtraLogInfo(
                 "CONNECTIONS",
                 STATUS.START,
@@ -71,24 +73,20 @@ class SqliteDb:
     @classmethod
     def closeConnection(cls, dbName):
         if dbName in cls.OPEN_CONNECTIONS:
-            connection = cls.OPEN_CONNECTIONS[dbName]
-            del cls.OPEN_CONNECTIONS[dbName]
-            connection.close()
-            logger.debug("Connection closed for %s" % dbName,
-                         extra=getExtraLogInfo('CONNECTIONS', STATUS.STOP, dbfilename=dbName))
+            connection, counter = cls.OPEN_CONNECTIONS[dbName]
+            counter -= 1
+            cls.OPEN_CONNECTIONS[dbName][1] = counter
+            if counter == 0:
+                del cls.OPEN_CONNECTIONS[dbName]
+                connection.close()
+                logger.debug("Connection closed for %s" % dbName,
+                             extra=getExtraLogInfo('CONNECTIONS', STATUS.STOP, dbfilename=dbName))
 
     def getDbName(self):
         return self._dbName
     
     def close(self):
-        self.connection.close()
-        logger.debug("Connection closed for %s" % self._dbName,
-                     extra=getExtraLogInfo(
-                                        "CONNECTIONS",
-                                        STATUS.STOP,
-                                        dbfilename=self._dbName))
-        if self._dbName in self.OPEN_CONNECTIONS:
-            del self.OPEN_CONNECTIONS[self._dbName]
+        self.closeConnection(self._dbName)
         
     def _debugExecute(self, *args):
         try:
