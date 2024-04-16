@@ -48,7 +48,7 @@ class SqliteDb:
     def _createConnection(self, dbName, timeout):
         """Establish db connection"""
         self._dbName = dbName
-        if self._reuseConnections and dbName in self.OPEN_CONNECTIONS:
+        if dbName in self.OPEN_CONNECTIONS:
             connection, counter = self.OPEN_CONNECTIONS[dbName]
             self.connection = connection
             self.OPEN_CONNECTIONS[dbName][1] = counter + 1   # increase the no. connections

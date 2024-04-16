@@ -1293,8 +1293,7 @@ class Set(Object):
            
     def __del__(self):
         # Close connections to db when destroy this object
-        if self._mapper is not None:
-            self.close()
+        self.close()
         
     def close(self):
         if self._mapper is not None:
