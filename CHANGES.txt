@@ -3,6 +3,8 @@ V3.5.1
 Developers:
   - Add counter to open connections that is used to avoid closed connections issues when there are multiple accesses
     to a set without re-opening the connection via loop or a call to getMapper.
+  - Set: __del__ refactored.
+  - SQliteDb: _createConnection: remove self._reuseConnections.
 V3.5.0
 ------
 users:
