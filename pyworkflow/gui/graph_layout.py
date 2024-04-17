@@ -25,8 +25,6 @@
 # **************************************************************************
 import logging
 
-from pyworkflow.gui import cfgFontSize
-
 logger = logging.getLogger(__name__)
 
 from pyworkflow import Config, SCIPION_DEFAULT_FONT_SIZE
@@ -58,7 +56,7 @@ class GraphLayout(object):
         """
         if self._fontScaleFactor is None:
 
-            self._fontScaleFactor = cfgFontSize/SCIPION_DEFAULT_FONT_SIZE
+            self._fontScaleFactor = Config.SCIPION_FONT_SIZE/SCIPION_DEFAULT_FONT_SIZE
 
         return self._fontScaleFactor
 

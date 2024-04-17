@@ -28,9 +28,11 @@ Tree widget implementation.
 """
         
 import tkinter as tk
+
+
 from pyworkflow import Config
 from pyworkflow.project import Label
-from pyworkflow.gui import Icon, configureWeigths
+from pyworkflow.gui import Icon, configureWeigths, getDefaultFont
 from pyworkflow.gui.tree import TreeProvider
 import pyworkflow.gui.dialog as dialog
 
@@ -162,7 +164,7 @@ class EditLabelDialog(dialog.Dialog):
         var = tk.StringVar()
         var.set(self.label.getName())
         self.textVar = var
-        self.textLabel = tk.Entry(bodyFrame, width=20, textvariable=var)
+        self.textLabel = tk.Entry(bodyFrame, width=20, font=getDefaultFont(), textvariable=var)
         self.textLabel.grid(row=0, column=1, sticky='news', padx=5, pady=5)
 
         # Comment

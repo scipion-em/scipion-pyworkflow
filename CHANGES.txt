@@ -1,3 +1,14 @@
+V3.6.0
+------
+users:
+  - Window to see/edit config variables. Launched from Project menu in project window.
+developers:
+  - FileBrowser window tweaks: Can be called from a dialog.
+  - Windows can be called as dialogs with show(modal=True)
+  - askPath: Method to ask for a path (PATH, FOLDER or BASENAME)
+  - backup: Method in pyworkflow.utils.path to backup files
+  - All variables are centralized and Plugin._defineVar or _defineEmVar accept variable description, and type (VarTypes enum) to better describe the variable.
+
 V3.5.0
 ------
 users:
