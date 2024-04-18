@@ -255,11 +255,11 @@ class Config:
     "Optional. Path to get the json file with all the plugins available for Scipion.")
 
     SCIPION_PLUGIN_REPO_URL = _get('SCIPION_PLUGIN_REPO_URL',
-                                   'http://scipion.i2pc.es/getplugins/',
+                                   'https://scipion.i2pc.es/getplugins/',
     "Url from where to get the list of plugins.")
 
     # REMOTE Section
-    SCIPION_URL = 'http://scipion.cnb.csic.es/downloads/scipion'
+    SCIPION_URL = 'https://scipion.cnb.csic.es/downloads/scipion'
     SCIPION_URL_SOFTWARE = SCIPION_URL + '/software'
     SCIPION_URL_TESTDATA = SCIPION_URL + '/data/tests'
 
