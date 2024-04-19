@@ -86,7 +86,11 @@ class Domain:
 
             # Define variables
             m._pluginInstance = m.Plugin()
-            m._pluginInstance.name=name
+            # This needs an explanation. _defineVariables() are classmethods, therfore we need a class variable and thus .name can't be used.
+            # Ideally, since Plugin class is instantiated we could transform _defineVariables methods into instance methods and only then we
+            # could use .name.
+            Plugin._tmpName = name
+            m._pluginInstance.name = name
             m._pluginInstance._defineVariables()
 
             m.Domain = cls  # Register the domain class for this module
