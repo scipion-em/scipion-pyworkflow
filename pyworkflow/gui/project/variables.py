@@ -55,10 +55,6 @@ class VariablesTreeProvider(TreeProvider):
     def getObjects(self):
         return VariablesRegistry.__iter__()
 
-    # def configureTags(self, tree):
-    #     for label in self.getObjects():
-    #         tree.tag_configure(label.getColor(), background=label.getColor())
-
 
 class VariablesDialog(dialog.ToolbarListDialog):
     """
@@ -153,18 +149,6 @@ class EditVariableDialog(dialog.Dialog):
         if self.variable.var_type in [VarTypes.PATH, VarTypes.FOLDER, VarTypes.FILENAME]:
             self._addButton(bodyFrame, self.buttonClicked, icon=Icon.ACTION_BROWSE, row=2, col=2,tooltip="Click to browse file system for a file or folder")
 
-        # Button
-
-        # # Value
-        # colorLabel = tk.Label(bodyFrame, text='Color \n(Click to change)',
-        #                       bg=Config.SCIPION_BG_COLOR, bd=0)
-        # colorLabel.grid(row=1, column=0, sticky='nw', padx=(15, 10), pady=15)
-        # self.colorVar = tk.StringVar()
-        # self.colorVar.set(self.variable.getColor())
-        # self.colorBox = tk.Frame(bodyFrame, bg=self.colorVar.get())
-        # self.colorBox.grid(row=1, column=1, sticky='news', padx=5, pady=5)
-        # colorLabel.bind('<Button-1>', self._changeColor)
-        # self.colorBox.bind('<Button-1>', self._changeColor)
     def buttonClicked(self, e):
         """ Callback for when the wizard button has been clicked"""
 
@@ -180,12 +164,6 @@ class EditVariableDialog(dialog.Dialog):
             self.valueVar.set(value)
     def apply(self):
         self.variable.value = self.valueVar.get()
-
-    # def _changeColor(self, e=None):
-    #     hexColor = dialog.askColor(parent=self, defaultColor=self.colorVar.get())
-    #     if hexColor is not None:
-    #         self.colorBox.config(bg=hexColor)
-    #         self.colorVar.set(hexColor)
 
     def validate(self):
 
