@@ -34,8 +34,8 @@ import re
 class ProgressBar(object):
     """ Text progress bar class for Python.
 
-    A text progress bar is typically used to display the progress of a long
-    running operation, providing a visual cue that processing is underway.
+    A text progress bar is typically used to display the progress of a long-running
+    operation, providing a visual cue that processing is underway.
 
     Example::
 
@@ -47,6 +47,7 @@ class ProgressBar(object):
             sleep(0.1)
         pb.finish()
 
+    Optionally you can pass a step param (default to 10000) and call increase in each loop. Only when the step is reached, the progress is printed.
     """
     DEFAULT = 'Progress: %(bar)s %(percent)3d%%'
     FULL = '%(bar)s %(current)d/%(total)d (%(percent)3d%%) %(remaining)d to go'
@@ -57,7 +58,7 @@ class ProgressBar(object):
     DOT = '.'
 
     def __init__(self, total, width=40, fmt=DEFAULT, symbol='=',
-                 output=None, extraArgs=None):
+                 output=None, extraArgs=None, step=10000):
         """
         Create a new ProgressBar object.
 
@@ -71,6 +72,7 @@ class ProgressBar(object):
         :param output:
         :param extraArgs: Additional arguments that can be passed to be used
             the fmt format. (e.g extraArgs={'objectId': 1} for fmt=OBJID
+        :param step: interval between printing progress. Use in combination with "increase"
         """
         if len(symbol) != 1:
             raise Exception("Symbol should be only 1 character length. ")
@@ -83,6 +85,7 @@ class ProgressBar(object):
         self._extraArgs = extraArgs or {}
         self._fmt = fmt
         self._directPrint = fmt == self.DOT
+        self.step = step
 
         if not self._directPrint:
             # This line computes the number of digits
@@ -132,6 +135,14 @@ class ProgressBar(object):
         self._current = value
         self._output.write(self.__getStr())
         self._output.flush()
+
+    def increase(self):
+        """ Increase the value by 1. Is new value matches the step. update is called"""
+        nextValue = self._current + 1
+        if (nextValue) % self.step == 0:
+            self.update(nextValue)
+        else:
+            self._current=nextValue
 
     def finish(self, printNewLine=True):
         """ Finalize the progress and

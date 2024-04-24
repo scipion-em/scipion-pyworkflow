@@ -37,7 +37,6 @@ from pyworkflow.utils.utils import prettyDate, prettyTime
 from pyworkflow.utils.path import getHomePath
 
 from pyworkflow.project import Manager
-import pyworkflow.gui as pwgui
 from pyworkflow.gui.text import TaggedText
 from pyworkflow.gui.dialog import askString, askYesNo, showError
 
@@ -59,11 +58,10 @@ class ProjectsView(tk.Frame):
 
         # Bind to root "focus in"
         self.root.bind("<FocusIn>", self._onWindowFocusIn)
-        bigSize = pwgui.cfgFontSize + 2
-        smallSize = pwgui.cfgFontSize - 2
-        fontName = pwgui.cfgFontName
+        smallSize = pw.Config.SCIPION_FONT_SIZE - 2
+        fontName = pw.Config.SCIPION_FONT_NAME
 
-        self.projNameFont = tkFont.Font(size=bigSize, family=fontName,
+        self.projNameFont = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE+2, family=fontName,
                                         weight='bold')
         self.projDateFont = tkFont.Font(size=smallSize, family=fontName)
         self.projDelFont = tkFont.Font(size=smallSize, family=fontName,

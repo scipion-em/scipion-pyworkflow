@@ -1,15 +1,15 @@
-import enum
 import logging
+
 logger = logging.getLogger(__file__)
 import ast
 import importlib
 import inspect
-import json
 import os
 import shutil
 import sys
 import types
 from .constants import *
+from matplotlib.colors import to_rgb
 
 HOME = os.path.abspath(os.path.dirname(__file__))
 PYTHON = os.environ.get(SCIPION_PYTHON, SCIPION_PYTHON_DEFAULT)
@@ -65,49 +65,71 @@ def getModuleFolder(moduleName):
     spec = importlib.util.find_spec(moduleName)
     return os.path.dirname(spec.origin)
 
-class VarTypes(enum.Enum):
-    STRING = 1
-    INTEGER = 2
-    BOOLEAN = 3
-    PATH = 4
 
-class Variable(object):
-    """ Class for variables of the Config class."""
-    def __init__(self, value, varType:VarTypes=VarTypes.STRING):
-        """
-        :param value: Value of the variable
-        :param type: Type of the variable"""
-        super().__init__()
+def validColor(colorname):
+    """ If it can be converted to rgb is a valid color"""
+    to_rgb(colorname)
+    return colorname
+
+class VarTypes(Enum):
+    STRING = 0
+    BOOLEAN = 1
+    PATH = 2  # Any Path: Folder or file
+    INTEGER = 3
+    DECIMAL = 4
+    FILENAME = 5  # Just the base name of a file
+    FOLDER = 6  # A folder
+
+class Variable:
+    def __init__(self, name, description, source, value, default, var_type: VarTypes = VarTypes.STRING, isDefault=None):
+        self.name = name
+        self.description = description
+        self.source = source
         self.value = value
-        self.varType = varType
-    def __bool__(self):
-        return bool(self.value)
+        self.default = default
+        self.var_type = var_type
+        self.isDefault = isDefault if isDefault is not None else value==default
+    def setToDefault(self):
+        self.isDefault=True
+        self.value=self.default
 
-    def __int__(self):
-        return int(self.value)
-    def __str__(self):
-        return str(self.value)
+class VariablesRegistry:
+    _variables={}
 
-    def __eq__(self, other):
-        return other == self.value
+    def __init__(self):
+        raise RuntimeError("Variables class doesn't need to be instantiated.")
+    @classmethod
+    def register(cls, variable: Variable):
+        cls._variables[variable.name] = variable
 
-    def __repr__(self):
-        return self.__str__()
+    @classmethod
+    def variables(cls):
+        return cls._variables
 
-    def __fspath__(self):
-        return self.__str__()
+    @classmethod
+    def __iter__(cls):
+        """ Iterate alphabetically"""
+        for key in sorted(cls._variables):
+            yield cls._variables[key]
 
-    " We migth need to imlement more like this--> https://docs.python.org/3.3/reference/datamodel.html#object.__truediv__"
-    def __truediv__(self, other):
-        return float(self.value)/other
+    @classmethod
+    def save(cls, path):
+        """ Saves the variables in the path specified """
+        from pyworkflow.utils import backup
+        backup(path)
 
-    def __rtruediv__(self, other):
-        return  other / float(self.value)
+        with open(path,"w") as fh:
+            # Save the section as in any python config file format.
+            fh.write("[PYWORKFLOW]\n")
+            for var in cls.__iter__():
+                if var.source == "pyworkflow" and not var.isDefault:
+                    fh.write("%s=%s\n" % (var.name, var.value))
 
-    def __add__(self, other):
-        return self.value+other
-    def __radd__(self, other):
-        return other+self.value
+            fh.write("\n[PLUGINS]\n")
+            for var in cls._variables.values():
+                if var.source != "pyworkflow" and not var.isDefault:
+                    fh.write("%s=%s\n" % (var.name, var.value))
+
 
 class Config:
     """ Main Config for pyworkflow. It contains the main Scipion configuration variables
@@ -115,17 +137,34 @@ class Config:
     Necessary value is SCIPION_HOME and has to be present in the environment"""
 
     @staticmethod
-    def __get(key, default):
-        value = os.environ.get(key, default)
+    def __get(key, default, description=None, caster=None, var_type:VarTypes=VarTypes.STRING, source="pyworkflow"):
 
+        if key in os.environ:
+            value = os.environ.get(key)
+            isDefault = (value==default)
+        else:
+            isDefault = True
+            value = default
+
+        # If the caster is passed do the casting, if fails go back to default
+        if caster:
+            try:
+                value=caster(value)
+            except:
+                logger.warning("Variable %s has this value %s that can't be casted to the right type (%s). Using %s (default value)" %
+                               (key,value, caster, default))
+                value = default
         # If empty use default value
         if value == "" != default:
             logger.warning("%s variable is empty, falling back to default value (%s)" % (key, default))
             value = default
+
         # Expand user and variables if string value
         if isinstance(value, str):
             value = os.path.expandvars(os.path.expanduser(value))
 
+        # Register the variable
+        VariablesRegistry.register(Variable(key,description, source, value, default, var_type=var_type, isDefault=isDefault))
         return value
 
     class Root:
@@ -143,12 +182,11 @@ class Config:
 
     # Home for scipion
     _get = __get.__func__
-    SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, ''))
-    "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"
+    SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, '',
+    "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"))
 
-    # Actual SCIPION_HOME
-    SCIPION_HOME_DEFINED = _get(SCIPION_HOME_VAR, False)
-    "False if SCIPION_HOME is not found in the environment"
+    # False if SCIPION_HOME is not found in the environment. To distinguish API documentation generation execution.
+    SCIPION_HOME_DEFINED = SCIPION_HOME != ''
 
     _root = Root(str(SCIPION_HOME))
     _join = _root.join
@@ -156,133 +194,133 @@ class Config:
     # Internal cached variables, use __ so they are not returned in getVars
     __activeColor = None
 
-    CONDA_ACTIVATION_CMD = _get(CONDA_ACTIVATION_CMD_VAR,'')
-    "str: Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\""
+    CONDA_ACTIVATION_CMD = _get(CONDA_ACTIVATION_CMD_VAR,'',
+    "str: Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\"")
 
     # SCIPION PATHS
-    SCIPION_SOFTWARE = _join(_get('SCIPION_SOFTWARE', 'software'))
-    "Path where Scipion will install the software. Defaults to SCIPION_HOME/software."
+    SCIPION_SOFTWARE = _get('SCIPION_SOFTWARE', _join('software'),
+    "Path where Scipion will install the software. Defaults to SCIPION_HOME/software.", var_type=VarTypes.FOLDER)
 
-    SCIPION_TESTS = _join(_get('SCIPION_TESTS', os.path.join('data', 'tests')))
-    "Path where to find/download test data. Defaults to SCIPION_HOME/data/tests."
+    SCIPION_TESTS = _get('SCIPION_TESTS', _join('data', 'tests'),
+    "Path where to find/download test data. Defaults to SCIPION_HOME/data/tests.", var_type=VarTypes.FOLDER)
 
     # User dependent paths
-    SCIPION_USER_DATA = _get('SCIPION_USER_DATA', '~/ScipionUserData')
-    "Path where Scipion projects are or will be created. Defaults to ~/ScipionUserData"
-
-    SCIPION_TMP = _get('SCIPION_TMP', _join(SCIPION_USER_DATA, 'tmp'))
-    "General purpose scipion tmp folder. Defaults to SCIPION_USER_DATA/tmp"
+    SCIPION_USER_DATA = _get('SCIPION_USER_DATA', '~/ScipionUserData',
+    "Path where Scipion projects are or will be created. Defaults to ~/ScipionUserData", var_type=VarTypes.FOLDER)
 
     # LOGGING variables
-    SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA, 'logs'))
-    "Path for Scipion logs folder used by the GUI. Defaults to SCIPION_USER_DATA/logs."
+    SCIPION_LOGS = _get('SCIPION_LOGS', _join(SCIPION_USER_DATA, 'logs'),
+    "Folder for Scipion logs used by the GUI. Defaults to SCIPION_USER_DATA/logs.", var_type=VarTypes.FOLDER)
 
-    SCIPION_LOG_CONFIG = _get('SCIPION_LOG_CONFIG', None)
-    "Optional. Path to a python logging configuration file fine tune the logging."
+    SCIPION_LOG_CONFIG = _get('SCIPION_LOG_CONFIG', None,
+    "Optional. Path to a python logging configuration file to fine tune the logging.", var_type=VarTypes.PATH)
 
-    SCIPION_LOG = _join(SCIPION_LOGS, 'scipion.log')
-    "Path to the file where scipion will write GUI logging messages. Defaults to SCIPION_LOGS/scipion.log"
+    SCIPION_LOG = _get('SCIPION_LOG', _join(SCIPION_LOGS, 'scipion.log'),
+    "Path to the file where scipion will write GUI logging messages. Defaults to SCIPION_LOGS/scipion.log", var_type=VarTypes.PATH)
 
-    SCIPION_LOG_FORMAT = _get('SCIPION_LOG_FORMAT', "%(message)s")
-    "str: Format for all the log lines, defaults to %(message)s. To compose the format see https://docs.python.org/3/library/logging.html#logrecord-attributes"
+    SCIPION_LOG_FORMAT = _get('SCIPION_LOG_FORMAT', "%(message)s",
+    "str: Format for all the log lines, defaults to %(message)s. To compose the format see https://docs.python.org/3/library/logging.html#logrecord-attributes")
 
-    SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO')
-    "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO."
+    SCIPION_LOG_LEVEL = _get(SCIPION_LOG_LEVEL, 'INFO',
+    "Default logging level. String among CRITICAL, ERROR, WARNING, INFO, DEBUG, NOTSET. Default value is INFO.")
 
-    NO_COLOR = _get('NO_COLOR', '')
-    "str: Comply with https://no-color.org/ initiative. Set it to something different than '' to deactivate colors in the output."
+    NO_COLOR = _get('NO_COLOR', '',
+    "str: Comply with https://no-color.org/ initiative. Set it to something different than '' to deactivate colors in the output.")
 
-    SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None)
-    "Optional. Path to a location mounted in a scratch drive (SSD,...)"
+    SCIPION_SCRATCH = _get(SCIPION_SCRATCH, None,
+    "Optional. Path to a location mounted in a scratch drive (SSD,...)")
 
-    SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'))
-    "Path to a folder Where the output of the tests will be written. Defaults to SCIPION_USER_DATA/Tests."
+    SCIPION_TESTS_OUTPUT = _get('SCIPION_TESTS_OUTPUT', _join(SCIPION_USER_DATA, 'Tests'),
+    "Path to a folder where the output of the tests will be written. Defaults to SCIPION_USER_DATA/Tests.", var_type=VarTypes.FOLDER)
 
-    SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', FALSE_STR) != FALSE_STR
-    "Set it to 1, True, Yes or y to cancel test dataset synchronization. Needed when updating files in a dataset."
+    SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', FALSE_STR,
+    "Set it to 1, True, Yes or y to cancel test dataset synchronization. Needed when updating files in a dataset.") != FALSE_STR
 
-    SCIPION_SUPPORT_EMAIL = _get('SCIPION_SUPPORT_EMAIL', 'scipion@cnb.csic.es')
+    SCIPION_SUPPORT_EMAIL = 'scipion@cnb.csic.es'
 
     # Config variables
-    SCIPION_CONFIG = _get('SCIPION_CONFIG', 'scipion.conf')
-    "Path to the scipion configuration file where all this variables could be defined."
+    SCIPION_CONFIG = _get('SCIPION_CONFIG', _join('config','scipion.conf'),
+    "Path to the scipion configuration file where all this variables could be defined.", var_type=VarTypes.PATH)
 
-    SCIPION_LOCAL_CONFIG = _get('SCIPION_LOCAL_CONFIG', SCIPION_CONFIG)
-    "Path to an optional/extra/user configuration file meant to overwrite default variables."
+    SCIPION_LOCAL_CONFIG = _get('SCIPION_LOCAL_CONFIG', SCIPION_CONFIG,
+    "Path to an optional/extra/user configuration file meant to overwrite default variables.", var_type=VarTypes.PATH)
 
-    SCIPION_HOSTS = _get('SCIPION_HOSTS', 'hosts.conf')
-    "Path to the host.cof file to allow scipion to use queue engines and run in HPC environments."
+    SCIPION_HOSTS = _get('SCIPION_HOSTS', _join('config','hosts.conf'),
+    "Path to the host.cof file to allow scipion to use queue engines and run in HPC environments.")
 
-    SCIPION_PROTOCOLS = _get('SCIPION_PROTOCOLS', 'protocols.conf')
-    ""
+    SCIPION_PROTOCOLS = _get('SCIPION_PROTOCOLS', _join('config','protocols.conf'),
+    "Custom conf file to extend the protocols tree view panel (panel on the left)")
 
-    SCIPION_PLUGIN_JSON = _get('SCIPION_PLUGIN_JSON', None)
-    "Optional. Path to get the json file with all the plugins available for Scipion."
+    SCIPION_PLUGIN_JSON = _get('SCIPION_PLUGIN_JSON', None,
+    "Optional. Path to get the json file with all the plugins available for Scipion.")
 
     SCIPION_PLUGIN_REPO_URL = _get('SCIPION_PLUGIN_REPO_URL',
-                                   'http://scipion.i2pc.es/getplugins/')
-    "Url from where to get the list of plugins."
+                                   'https://scipion.i2pc.es/getplugins/',
+    "Url from where to get the list of plugins.")
 
     # REMOTE Section
-    SCIPION_URL = _get('SCIPION_URL', 'http://scipion.cnb.csic.es/downloads/scipion')
-    SCIPION_URL_SOFTWARE = _get('SCIPION_URL_SOFTWARE', SCIPION_URL + '/software')
-    SCIPION_URL_TESTDATA = _get('SCIPION_URL_TESTDATA', SCIPION_URL + '/data/tests')
+    SCIPION_URL = 'https://scipion.cnb.csic.es/downloads/scipion'
+    SCIPION_URL_SOFTWARE = SCIPION_URL + '/software'
+    SCIPION_URL_TESTDATA = SCIPION_URL + '/data/tests'
 
     # Scipion Notes
-    SCIPION_NOTES_FILE = _get(SCIPION_NOTES_FILE, 'notes.txt')
-    "Name of the file where to write per project notes."
+    SCIPION_NOTES_FILE = _get(SCIPION_NOTES_FILE, 'notes.txt',
+    "Name of the file where to write per project notes.")
 
-    SCIPION_NOTES_PROGRAM = _get(SCIPION_NOTES_PROGRAM, None)
-    "Command or program to use to open the notes file. Otherwise system will extension association will take place."
+    SCIPION_NOTES_PROGRAM = _get(SCIPION_NOTES_PROGRAM, None,
+    "Command or program to use to open the notes file. Otherwise system will extension association will take place.")
 
     SCIPION_NOTES_ARGS = _get(SCIPION_NOTES_ARGS, None)
 
     # Aspect
-    SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica")
-    "Name of the font to use in Scipion GUI. Defaults to Helvetica."
+    SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica",
+    "Name of the font to use in Scipion GUI. Defaults to Helvetica.")
 
-    SCIPION_FONT_SIZE = int(_get('SCIPION_FONT_SIZE', SCIPION_DEFAULT_FONT_SIZE))
-    "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10."
+    SCIPION_FONT_SIZE = _get('SCIPION_FONT_SIZE', SCIPION_DEFAULT_FONT_SIZE,
+    "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10.", caster=int)
 
-    SCIPION_MAIN_COLOR = _get('SCIPION_MAIN_COLOR', Color.MAIN_COLOR)
-    "str: Main color of the GUI. Background will be white, so for better contrast choose a dark color. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
+    SCIPION_MAIN_COLOR = _get('SCIPION_MAIN_COLOR', Color.MAIN_COLOR,
+    "str: Main color of the GUI. Background will be white, so for better contrast choose a dark color. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html",
+                              caster=validColor)
 
-    SCIPION_BG_COLOR = _get('SCIPION_BG_COLOR', Color.BG_COLOR)
-    "str: Main background color of the GUI. Default is white, chose a light one. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html"
+    SCIPION_BG_COLOR = _get('SCIPION_BG_COLOR', Color.BG_COLOR,
+    "str: Main background color of the GUI. Default is white, chose a light one. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html",
+                            validColor)
 
-    WIZARD_MASK_COLOR = _get('WIZARD_MASK_COLOR', '[0.125, 0.909, 0.972]')
-    "Color to use in some wizards."
+    SCIPION_CONTRAST_COLOR = _get('SCIPION_CONTRAST_COLOR', 'cyan',
+    "Color used to highlight features over grayscaled images.", caster=validColor)
 
-    SCIPION_SPRITES_FILE = _get('SCIPION_SPRITES_FILE', _join(getResourcesPath(),'sprites.png'))
-    "File (png) with the icons in a collage. Default is found at pyworkflow/resources/sprites.png. And a GIMP file could be found at the same folder in the github repo."
+    SCIPION_SPRITES_FILE = _get('SCIPION_SPRITES_FILE', _join(getResourcesPath(),'sprites.png'),
+    "File (png) with the icons in a collage. Default is found at pyworkflow/resources/sprites.png. And a GIMP file could be found at the same folder in the github repo.")
 
-    SCIPION_SHOW_TEXT_IN_TOOLBAR = _get('SCIPION_SHOW_TEXT_IN_TOOLBAR', TRUE_STR) == TRUE_STR
-    "Define it to anything else except False to show the label of the icons. It will take more space."
+    SCIPION_SHOW_TEXT_IN_TOOLBAR = _get('SCIPION_SHOW_TEXT_IN_TOOLBAR', TRUE_STR,
+    "Define it to anything else except False to show the label of the icons. It will take more space.") == TRUE_STR
 
-    SCIPION_ICON_ZOOM = int(_get('SCIPION_ICON_ZOOM', 50))
-    "Define it to anything else except False to show the label of the icons. It will take more space."
+    SCIPION_ICON_ZOOM = _get('SCIPION_ICON_ZOOM', 50,
+    "Define it to anything else except False to show the label of the icons. It will take more space.", var_type=VarTypes.INTEGER, caster=int)
 
     # Notification
-    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR) == TRUE_STR
-    "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it."
+    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR,
+    "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it.") == TRUE_STR
 
     # *** Execution variables ***
-    SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()))
-    "Directory when scipion was launched"
+    SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()),
+    "Directory when scipion was launched")
 
-    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', FALSE_STR) != FALSE_STR
-    "True to refresh the runs graph with a thread. Unstable."
+    SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', FALSE_STR,
+    "True to refresh the runs graph with a thread. Unstable.") != FALSE_STR
 
-    SCIPION_GUI_REFRESH_INITIAL_WAIT = int(_get("SCIPION_GUI_REFRESH_INITIAL_WAIT", 5))
-    "Seconds to wait after a manual refresh"
+    SCIPION_GUI_REFRESH_INITIAL_WAIT = _get("SCIPION_GUI_REFRESH_INITIAL_WAIT", 5,
+    "Seconds to wait after a manual refresh", caster=int)
 
-    SCIPION_GUI_CANCEL_AUTO_REFRESH = _get("SCIPION_GUI_CANCEL_AUTO_REFRESH",FALSE_STR) != FALSE_STR
-    "Set it to True to cancel automatic refresh of the runs."
+    SCIPION_GUI_CANCEL_AUTO_REFRESH = _get("SCIPION_GUI_CANCEL_AUTO_REFRESH",FALSE_STR,
+    "Set it to True to cancel automatic refresh of the runs.") != FALSE_STR
 
     # Cancel shutil fast copy. In GPFS, shutil.copy does fail when trying a fastcopy and does not
-    # fallback on the slow copy. For legacy reasons None is also False.
-    SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', FALSE_STR) not in [NONE_STR, FALSE_STR]
+    # fall back on the slow copy. For legacy reasons None is also False.
+    SCIPION_CANCEL_FASTCOPY = _get('SCIPION_CANCEL_FASTCOPY', FALSE_STR,
     "Cancel fast copy done by shutil (copying files) when it fails. Has happened in GPFS environments. Defaults to False. None is also False otherwise fastcopy is cancelled."
+                                   ) not in [NONE_STR, FALSE_STR]
 
     # Priority package list: This variable is used in the view protocols in
     # order to load first the plugins that contains the main protocols.conf
@@ -290,32 +328,32 @@ class Config:
     # duplicating all the sections in all plugins. Scipion app is currently defining it for em tomo and chem
     SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', EMPTY_STR)
 
-    SCIPION_STEPS_CHECK_SEC = int(_get('SCIPION_STEPS_CHECK_SEC', 5))
-    "Number of seconds to wait before checking if new input is available in streamified protocols."
+    SCIPION_STEPS_CHECK_SEC = _get('SCIPION_STEPS_CHECK_SEC', 5,
+    "Number of seconds to wait before checking if new input is available in streamified protocols.", caster=int)
 
-    SCIPION_UPDATE_SET_ATTEMPTS = int(_get('SCIPION_UPDATE_SET_ATTEMPTS', 3))
-    "Number of attempts to modify the protocol output before failing. The default value is 3"
+    SCIPION_UPDATE_SET_ATTEMPTS = _get('SCIPION_UPDATE_SET_ATTEMPTS', 3,
+    "Number of attempts to modify the protocol output before failing. The default value is 3", caster=int)
 
-    SCIPION_UPDATE_SET_ATTEMPT_WAIT = int(_get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2))
-    "Time in seconds to wait until the next attempt when checking new outputs. The default value is 2 seconds"
+    SCIPION_UPDATE_SET_ATTEMPT_WAIT = _get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2,
+    "Time in seconds to wait until the next attempt when checking new outputs. The default value is 2 seconds", caster=int)
 
-    SCIPION_USE_QUEUE = _get("SCIPION_USE_QUEUE", FALSE_STR) != FALSE_STR
-    "Default value for using the queue. By default is False. ANY value will be True except and empty value. \"False\" or \"0\" will be True too."
+    SCIPION_USE_QUEUE = _get("SCIPION_USE_QUEUE", FALSE_STR,
+    "Default value for using the queue. By default is False. ANY value will be True except and empty value. \"False\" or \"0\" will be True too.")!= FALSE_STR
 
-    SCIPION_DEFAULT_EXECUTION_ACTION = int(_get('SCIPION_DEFAULT_EXECUTION_ACTION', DEFAULT_EXECUTION_ACTION_ASK))
+    SCIPION_DEFAULT_EXECUTION_ACTION = _get('SCIPION_DEFAULT_EXECUTION_ACTION', DEFAULT_EXECUTION_ACTION_ASK,
     """Ask if you want to launch a single protocol or a sub-workflow. The default value is 1
        1: Scipion always ask
        2: Run a single protocol
-       3: Run a sub-workflow """
+       3: Run a sub-workflow """, caster=int)
 
     try:
-        VIEWERS = ast.literal_eval(_get('VIEWERS', "{}"))
+        VIEWERS = ast.literal_eval(_get('VIEWERS', "{}", "Json string to define which viewer are the default ones per output type."))
     except Exception as e:
         VIEWERS = {}
         logger.error("ERROR loading preferred viewers, VIEWERS variable will be ignored", exc_info=e)
 
-    SCIPION_DOMAIN = _get(SCIPION_DOMAIN, None)
-    SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript())
+    SCIPION_DOMAIN = _get(SCIPION_DOMAIN, None, "Domain base class. Ignore.")
+    SCIPION_TESTS_CMD = _get(SCIPION_TESTS_CMD, getTestsScript(), "Command to run tests")
 
     # ---- Getters ---- #
     # Getters are alternatives to offer a variable, but preventing it to be stored in the config
@@ -359,15 +397,9 @@ class Config:
             for name, value in vars(baseCls).items():
                 # Skip methods and internal attributes starting with __
                 # (e.g __doc__, __module__, etc)
-                if isinstance(value, (str, int, Variable)) and not name.startswith('__'):
+                if isinstance(value, (str, int)) and not name.startswith('__'):
                     configVars[name] = str(value)
         return configVars
-
-    @classmethod
-    def printVars(cls):
-        """ Print the variables' dict, mostly for debugging. """
-        from .utils import prettyDict
-        prettyDict(cls.getVars())
 
     @classmethod
     def getDomain(cls):
@@ -431,7 +463,8 @@ class Config:
 
     @classmethod
     def getWizardMaskColor(cls):
-        return json.loads(cls.WIZARD_MASK_COLOR)
+        """ Color is a name"""
+        return list(to_rgb(cls.SCIPION_CONTRAST_COLOR))
 
     @classmethod
     def getPriorityPackageList(cls):
@@ -463,16 +496,8 @@ class Config:
         """ Returns a color lighter than the SCIPION_MAIN_COLOR"""
 
         if cls.__activeColor is None:
-            import matplotlib.colors
             from pyworkflow.utils import lighter, rgb_to_hex
-            try:
-                rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
-            except Exception:
-                logger.error("Cannot convert SCIPION_MAIN_COLOR (%s) string to a color to compute the lighter color."
-                             " Falling back to %s" % (Config.SCIPION_MAIN_COLOR, Color.MAIN_COLOR))
-                cls.SCIPION_MAIN_COLOR = Color.MAIN_COLOR
-                rgb_main = matplotlib.colors.to_rgb(cls.SCIPION_MAIN_COLOR)
-
+            rgb_main = to_rgb(cls.SCIPION_MAIN_COLOR)
             rgb_main = (rgb_main[0] * 255, rgb_main[1] * 255, rgb_main[2] * 255)
             rgb_active = lighter(rgb_main, 0.3)
             cls.__activeColor = rgb_to_hex(rgb_active)

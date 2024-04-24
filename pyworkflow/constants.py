@@ -182,7 +182,7 @@ class DOCSITEURLS:
     DOCS = HOME + 'docs/'
     CONFIG = DOCS + 'scipion-modes/scipion-configuration.html'
     CONFIG_SECTION = CONFIG + '#%s'
-    CONTACTUS = 'http://scipion.i2pc.es/contact'
+    CONTACTUS = 'https://scipion.i2pc.es/contact'
     USER = DOCS + 'user/'
     GUI = USER + 'scipion-gui.html'
     WAIT_FOR = GUI + '#waiting-for-other-protocols'
