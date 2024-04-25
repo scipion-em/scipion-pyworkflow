@@ -332,7 +332,7 @@ class FileTreeProvider(TreeProvider):
                 # All ok...add item.
                 fileInfoList.append(FileInfo(self._currentDir, f))
         except Exception as e:
-            logger.error("Can't list files at " + self._currentDir, e)
+            logger.info("Can't list files at " + self._currentDir, e)
 
         # Sort objects
         fileInfoList.sort(key=self.fileKey, reverse=not self.isSortingAscending())
@@ -361,7 +361,7 @@ SELECT_PATH = 3  # Can be either file or folder
 
 
 class FileBrowser(ObjectBrowser):
-    """ The FileBrowser is a particular class of ObjectBrowser
+    """ The FileBrowser is a particular class of ObjectBrowser (Tk.Frame)
     where the "objects" are just files and directories.
     """
 
@@ -417,12 +417,12 @@ class FileBrowser(ObjectBrowser):
         # focuses on the browser in order to allow to move with the keyboard
         self._goDir(os.path.abspath(initialDir))
 
-        if selectionType == SELECT_NONE:
-            selectButton = None
-
         buttonsFrame = tk.Frame(self)
         self._fillButtonsFrame(buttonsFrame)
         buttonsFrame.grid(row=1, column=0)
+
+        # Callback to be called "on Select" button key press
+        self.onSelect=None
 
     def _showInfo(self, msg):
         """ Default way (logger.info to console) to show a message with a given info.
@@ -635,7 +635,10 @@ class FileBrowser(ObjectBrowser):
         self._lastSelected = self.getSelected()
 
         if self._lastSelected is not None:
-            self.onSelect(self._lastSelected)
+            if self.onSelect:
+                self.onSelect(self._lastSelected)
+            else:
+                self.onClose()
         else:
             self.showInfo('Select a valid file/folder')
 
@@ -687,6 +690,7 @@ def isStandardImage(filename):
 class FileBrowserWindow(BrowserWindow):
     """ Windows to hold a file browser frame inside. """
 
+    lastValue=None
     def __init__(self, title, master=None, path=None,
                  onSelect=None, shortCuts=None, **kwargs):
         BrowserWindow.__init__(self, title, master, **kwargs)
@@ -707,6 +711,8 @@ class FileBrowserWindow(BrowserWindow):
     def getEntryValue(self):
         return self.browser.getEntryValue()
 
+    def getLastSelection(self):
+        return self.browser._lastSelected.getPath()
     def getCurrentDir(self):
         return self.browser.getCurrentDir()
 

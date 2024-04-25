@@ -504,8 +504,7 @@ class ProtocolTreeConfig:
 
             except Exception as e:
                 print('Failed to read settings. The reported error was:\n  %s\n'
-                      'To solve it, fix %s and run again.' % (
-                          e, os.path.abspath(protocolsConfPath)))
+                      'To solve it, fix %s and run again.' % e)
 
         # Clean empty sections
         cls._hideEmptySections(protocols)

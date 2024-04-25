@@ -514,7 +514,8 @@ class Icon:
     ACTION_EXPORT = ACTION_REFERENCES
     ACTION_EXPORT_UPLOAD = SpriteImage(16,96, 'fa-upload.png')
     ACTION_SEARCH = SpriteImage(32,96, 'fa-search.png')
-    ACTION_EXECUTE = SpriteImage(48,304,'fa-cogs.png')
+    SETTINGS = SpriteImage(48,304,'fa-cogs.png')
+    ACTION_EXECUTE = SETTINGS
     ACTION_IN = SpriteImage(16,304,'fa-sign-in.png')
     ACTION_OUT = SpriteImage(16,288,'fa-sign-out.png')
     ACTION_FIND_NEXT = SpriteImage(32,208,'fa-next.png')

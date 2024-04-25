@@ -1393,7 +1393,7 @@ class SqliteFlatDb(SqliteDb):
 
         whereStr = where
         # Split by valid where operators: =, <, >
-        result = re.split(r'<=|<=|=|<|>|AND|OR', where)
+        result = re.split('<=|>=|=|<|>|AND|OR', where)
         # For each item
         for term in result:
             # trim it

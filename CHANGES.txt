@@ -1,3 +1,15 @@
+V3.6.0
+------
+users:
+  - Window to see/edit config variables. Launched from Project menu in project window.
+developers:
+  - FileBrowser window tweaks: Can be called from a dialog.
+  - Windows can be called as dialogs with show(modal=True)
+  - askPath: Method to ask for a path (PATH, FOLDER or BASENAME)
+  - backup: Method in pyworkflow.utils.path to backup files
+  - All variables are centralized and Plugin._defineVar or _defineEmVar accept variable description, and type (VarTypes enum) to better describe the variable.
+  - ProgressBar handles the step in combination with increase method call
+
 V3.5.0
 ------
 users:
@@ -22,8 +34,9 @@ developers:
   - Object.getClassName is now a class method
   - Validating the Close method in the Dialog class. Now we can to reimplement de validateClose method.
   - Better case-specific implementation of pID and jobID. Three scenarios: normal execution, sending the entire protocol to the queue, or sending individual steps.
-  - Object.clone an copy optionaly clones the enable flag
-  - Set.getItem: returns the first item with a value in the fiels passed. Useful for querying by TsId in tomo.
+  - Object.clone a copy optionally clones the enable flag
+  - Set.getItem: returns the first item with a value in the fields passed. Useful for querying by TsId in tomo.
+  - Correctly update the protocols in streaming workflows when the input pointer points to a protocol, the protocol points to a set (i.e., classes), and this set points to another set (i.e., particles).
 
 V3.4.0
 ------

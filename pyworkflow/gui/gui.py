@@ -46,9 +46,6 @@ FONT_ITALIC = 'fontItalic'
 FONT_NORMAL = 'fontNormal'
 FONT_BOLD = 'fontBold'
 FONT_BIG = 'fontBig'
-cfgFontName = pw.Config.SCIPION_FONT_NAME
-cfgFontSize = pw.Config.SCIPION_FONT_SIZE
-cfgFontBigSize = cfgFontSize + 8
 # TextColor
 # cfgCitationTextColor = "dark olive green"
 # cfgLabelTextColor = "black"
@@ -57,10 +54,11 @@ cfgFontBigSize = cfgFontSize + 8
 # cfgBgColor = "light grey"
 # cfgLabelBgColor = "white"
 # cfgHighlightBgColor = cfgBgColor
+#This with trigger the validation of the color falling back the firebrick if fails
+cfgButtonActiveBgColor = pw.Config.getActiveColor()
 cfgButtonFgColor = pw.Config.SCIPION_BG_COLOR
 cfgButtonActiveFgColor = pw.Config.SCIPION_BG_COLOR
 cfgButtonBgColor = pw.Config.SCIPION_MAIN_COLOR
-cfgButtonActiveBgColor = pw.Config.getActiveColor()
 cfgEntryBgColor = "lemon chiffon"
 # cfgExpertLabelBgColor = "light salmon"
 # cfgSectionBgColor = cfgButtonBgColor
@@ -138,25 +136,22 @@ def getBigFont():
 def setCommonFonts(windows=None):
     """Set some predefined common fonts.
     Same conditions of setFont applies here."""
-    f = setFont(FONT_NORMAL, family=cfgFontName, size=cfgFontSize)
+    f = setFont(FONT_NORMAL, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE)
     aliasFont('fontButton', FONT_NORMAL)
 
     # Set default font size
     default_font = getDefaultFont()
-    default_font.configure(size=cfgFontSize, family=cfgFontName)
+    default_font.configure(size=pw.Config.SCIPION_FONT_SIZE, family=pw.Config.SCIPION_FONT_NAME)
 
-    fb = setFont(FONT_BOLD, family=cfgFontName, size=cfgFontSize,
+    fb = setFont(FONT_BOLD, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE,
                  weight='bold')
-    fi = setFont(FONT_ITALIC, family=cfgFontName, size=cfgFontSize,
+    fi = setFont(FONT_ITALIC, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE,
                  slant='italic')
 
-    setFont(FONT_BIG, family=cfgFontName, size=cfgFontBigSize)
-
-    # not used?
-    # setFont('fontLabel', family=cfgFontName, size=cfgFontSize+1, weight='bold')
+    setFont(FONT_BIG, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE+8)
 
     if windows:
-        windows.fontBig = tkFont.Font(size=cfgFontSize + 2, family=cfgFontName,
+        windows.fontBig = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE + 2, family=pw.Config.SCIPION_FONT_NAME,
                                       weight='bold')
         windows.font = f
         windows.fontBold = fb
@@ -336,7 +331,7 @@ class Window:
         pw.Config.getDomain()._discoverGUIPlugins()
 
         if masterWindow is None:
-            Window._root = self
+            # Unused?? Window._root = self
             self._images = {}
             # If a window which isn't the main Scipion window is generated from another main window, e. g. with Scipion
             # template after the refactoring of the kickoff, in which a dialog is launched and then a form, being it
@@ -355,8 +350,8 @@ class Window:
             self.root = tk.Toplevel(class_=self._class)  # Toplevel of main window
         else:
             class_ = masterWindow._class if hasattr(masterWindow, "_class") else DEFAULT_WINDOW_CLASS
-            self.root = tk.Toplevel(masterWindow.root, class_=class_)
-            self.root.group(masterWindow.root)
+            self.root = tk.Toplevel(masterWindow.getRoot(), class_=class_)
+            self.root.group(masterWindow.getRoot())
             self._images = masterWindow._images
 
         self.root.withdraw()
@@ -441,20 +436,25 @@ class Window:
         """Override this method to respond to move events."""
         pass
 
-    def show(self, center=True):
+    def show(self, center=True, modal=False):
         """This function will enter in the Tk mainloop"""
         if center:
             if self.master is None:
                 refw = None
             else:
-                refw = self.master.root
+                refw = self.master.getRoot()
             centerWindows(self.root, dim=self.desiredDimensions(),
                           refWindows=refw)
+
         self.root.deiconify()
         self.root.focus_set()
         if self.queue is not None:
             self._queueTimer = self.root.after(1000, self.__processQueue)
-        self.root.mainloop()
+
+        if modal:
+            self.root.wait_window(self.root)
+        else:
+            self.root.mainloop()
 
     def close(self, e=None):
         self.root.destroy()
@@ -471,7 +471,7 @@ class Window:
         if self.master is None:
             pass
         else:
-            self.master.root.focus_set()
+            self.master.getRoot().focus_set()
         if self.queue is not None:
             self.root.after_cancel(self._queueTimer)
         self.close()
