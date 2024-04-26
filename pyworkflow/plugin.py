@@ -630,7 +630,7 @@ class Plugin:
     def getActiveVersion(cls, home=None, versions=None):
         """
         Returns the version of the binaries that are currently active.
-        In the current implementation it will be inferred from the \*_HOME
+        In the current implementation it will be inferred from the *_HOME
         variable, so it should contain the version number in it. """
 
         # FIXME: (JMRT) Use the basename might alleviate the issue with matching
