@@ -150,6 +150,9 @@ class TestObject(pwtests.BaseTest):
         s2.set("2x4, 4, 7")
         self.assertEqual(s2.getListFromValues(), [4, 4, 4, 7])
 
+        # Values ...
+        self.assertEqual(s2.getListFromValues(caster=str), ["2x4", "4", "7"])
+
         # Ranges
         s2.set("2-8, 1-2, 7")
         self.assertEqual(s2.getListFromRange(), [2, 3, 4, 5, 6, 7, 8, 1, 2, 7])
@@ -330,7 +333,7 @@ class TestObject(pwtests.BaseTest):
 
         # Use creation timestamp
         # Request id list
-        result = imgSet.getUniqueValues(ID, where="%s>=%s" % (CREATION , imgSet.fmtDate(halfTimeStamp)))
+        result = imgSet.getUniqueValues(ID, where="%s>=%s" % (CREATION, imgSet.fmtDate(halfTimeStamp)))
         self.assertEqual(len(result), 5, "Unique values after a time stamp does not work")
 
         # Test getIdSet
@@ -341,11 +344,11 @@ class TestObject(pwtests.BaseTest):
 
         # Request item by id
         item = imgSet[1]
-        self.assertEqual(item.getObjId(), 1, "Item accesed by [] and id does not work")
+        self.assertEqual(item.getObjId(), 1, "Item accessed by [] and id does not work")
 
         # Request item by field
         item = imgSet.getItem("id", 2)
-        self.assertEqual(item.getObjId(), 2, "Item accesed field id does not work")
+        self.assertEqual(item.getObjId(), 2, "Item accessed field id does not work")
 
         # Test load properties queries
         from pyworkflow.mapper.sqlite_db import logger

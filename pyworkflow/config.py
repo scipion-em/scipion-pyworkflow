@@ -9,7 +9,6 @@ import shutil
 import sys
 import types
 from .constants import *
-from matplotlib.colors import to_rgb
 
 HOME = os.path.abspath(os.path.dirname(__file__))
 PYTHON = os.environ.get(SCIPION_PYTHON, SCIPION_PYTHON_DEFAULT)
@@ -68,6 +67,7 @@ def getModuleFolder(moduleName):
 
 def validColor(colorname):
     """ If it can be converted to rgb is a valid color"""
+    from matplotlib.colors import to_rgb
     to_rgb(colorname)
     return colorname
 
@@ -464,6 +464,7 @@ class Config:
     @classmethod
     def getWizardMaskColor(cls):
         """ Color is a name"""
+        from matplotlib.colors import to_rgb
         return list(to_rgb(cls.SCIPION_CONTRAST_COLOR))
 
     @classmethod
@@ -497,6 +498,7 @@ class Config:
 
         if cls.__activeColor is None:
             from pyworkflow.utils import lighter, rgb_to_hex
+            from matplotlib.colors import to_rgb
             rgb_main = to_rgb(cls.SCIPION_MAIN_COLOR)
             rgb_main = (rgb_main[0] * 255, rgb_main[1] * 255, rgb_main[2] * 255)
             rgb_active = lighter(rgb_main, 0.3)

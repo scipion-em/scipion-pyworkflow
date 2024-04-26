@@ -77,8 +77,7 @@ class Mapper:
         objClass = self.dictClasses[className]
         
         if not issubclass(objClass, obj.Object):
-            print("WARNING: Class '%s' is not a subclass of Object. Ignored. "
-                  % className)
+            logger.warning("WARNING: Class '%s' is not a subclass of Object. Ignored. " % className)
             return None
 
         try:
