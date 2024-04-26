@@ -23,9 +23,12 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-import datetime
-import os
 import datetime as dt
+try:
+    from datetime import UTC  # python 3.11+
+except ImportError:
+    UTC = dt.timezone.utc
+import os
 from logging import DEBUG, lastResort
 from time import sleep
 
@@ -268,7 +271,7 @@ class TestObject(pwtests.BaseTest):
             imgSet.append(img)
             if i == 4:
                 sleep(1)
-                halfTimeStamp = dt.datetime.now(datetime.UTC).replace(microsecond=0)
+                halfTimeStamp = dt.datetime.now(UTC).replace(microsecond=0)
         imgSet.write()
 
         # Test size is 10
