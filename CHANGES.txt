@@ -2,6 +2,7 @@ V3.6.0
 ------
 users:
   - Window to see/edit config variables. Launched from Project menu in project window.
+  - Fix installation error: matplotlib imported at installation time
 developers:
   - FileBrowser window tweaks: Can be called from a dialog.
   - Windows can be called as dialogs with show(modal=True)
@@ -9,6 +10,11 @@ developers:
   - backup: Method in pyworkflow.utils.path to backup files
   - All variables are centralized and Plugin._defineVar or _defineEmVar accept variable description, and type (VarTypes enum) to better describe the variable.
   - ProgressBar handles the step in combination with increase method call
+  - Set.aggregate more flexible and versatile.
+        Accepts strings or lists in operations, labels or groupby args.
+        Accepts id or _objId ar fields
+  - String.getListFromValues: works now with strings with an x inside (e.g.: _x _y)
+  - New utils method: valueToList (converts the argument into a list if is not a list): Useful for "dual type arguments) that can be a list or not
 
 V3.5.0
 ------
