@@ -266,6 +266,7 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         for i in indexes:
             img = MockImage()
             img.setLocation(i, IMAGES_STK)
+            img.setSamplingRate(i%2)
             mapper.insert(img)
 
         self.assertEqual(n, mapper.count())
@@ -325,6 +326,27 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
 
         # Make sure that maxId() returns the proper value after loading db
         self.assertEqual(bigId + 1, mapper2.maxId())
+
+        # test aggregation
+        result = mapper2.aggregate("COUNT", "id")  # As strings
+        self.assertEqual(result[0]["COUNT"], 12, "Aggregation fo count does not work")
+
+        result = mapper2.aggregate(["COUNT"], ["id"])  # As lists
+        self.assertEqual(result[0]["COUNT"], 12, "Aggregation as list of count does not work")
+
+        result = mapper2.aggregate(["MAX","AVG"], "id")
+        self.assertEqual(result[0]["MAX"], bigId+1, "Aggregation  max, avg does not work")
+        self.assertAlmostEqual(result[0]["AVG"], 171.33, places=2, msg="Aggregation  max, avg does not work")
+
+        result = mapper2.aggregate(["MAX", "COUNT"], "_samplingRate", "id")
+        self.assertEqual(result[0]["MAX"], 1, "Aggregation max, grouped does not work")
+        self.assertEqual(result[0]["COUNT"], 1, "Aggregation  max, count does not work")
+        self.assertEqual(result[0]["id"], 1, "Aggregation  group field not returned")
+
+        # Aggregation on more than one field
+        result = mapper2.aggregate(["MAX"], ["id","_samplingRate"])
+        self.assertEqual(result[0]["MAX"], 1001, "Aggregation max, grouped does not work")
+        self.assertEqual(result[0]["MAX_samplingRate"], 1.0, "Aggregation  max, count does not work")
 
     def test_emtpySet(self):
         dbName = self.getOutputPath('empty.sqlite')
