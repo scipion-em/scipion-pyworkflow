@@ -1163,7 +1163,7 @@ class Set(Object):
          GROUP BY clause to group values into subsets
         :param operations: list of aggregate function such as COUNT, MAX, MIN,...
         :param operationLabel: label to use by the aggregate function
-        :param groupByLabels: list of labels to group
+        :param groupByLabels: list of labels to group by
         :return: the aggregated value of each group
         """
         return self._getMapper().aggregate(operations, operationLabel, groupByLabels)
