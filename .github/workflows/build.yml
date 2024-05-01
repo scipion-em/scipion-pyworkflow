@@ -3,7 +3,7 @@ name: Test conda-based installation with different python
 
 on:
   push:
-    branches: [ "devel" ]
+    branches: [ "azazellochg-patch-1" ]
 
 env:
   FOLDER_WITH_VERSION: pyworkflow
