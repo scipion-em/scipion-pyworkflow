@@ -1,3 +1,10 @@
+V3.7.0
+users:
+  - Add protocol is an icon.
+  - Right clik on canvas offers to add a protocol on the clicked location.
+developers:
+  - Canvas has a testing method: _drawGrid to draw a grid on the canvas (unused now)
+  - String.toSeconds:converts to seconds any "duration" string like "1h 4m 34s" -> 3600 + 240 + 34.
 V3.6.0
 users:
   - Window to see/edit config variables. Launched from Project menu in project window.

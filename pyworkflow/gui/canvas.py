@@ -48,7 +48,7 @@ DEFAULT_CONNECTOR_OUTLINE = "black"
 
 class Canvas(tk.Canvas, Scrollable):
     """Canvas to draw some objects.
-    It will really contains a Frame, a Canvas and scrollbars"""
+    It actually is a Frame, a Canvas and scrollbars"""
     _images = {}
 
     def __init__(self, parent, tooltipCallback=None, tooltipDelay=1500, **kwargs):
@@ -59,7 +59,7 @@ class Canvas(tk.Canvas, Scrollable):
         self.lastItem = None  # Track last item selected
         self.lastPos = (0, 0)  # Track last clicked position
         self.eventPos = (0, 0)
-        self.firstPos = None  # Track first clicked position (for a drag action)
+        self.dragging = False  # Track first clicked position (for a drag action)
         self.items = {}  # Keep a dictionary with high-level items
         self.cleanSelected = True
 
@@ -100,6 +100,18 @@ class Canvas(tk.Canvas, Scrollable):
             self._createTooltip()  # This should set
 
         self._menu = tk.Menu(self, tearoff=0)
+
+    def _drawGrid(self):
+        """ For debugging purposes. Do not delete.
+        Draws a grid on the canvas to get an ide about where click is happening"""
+        self.update()
+        _, _, width, height = self.frame.bbox(self)
+
+        for line in range(0, width, 100):  # range(start, stop, step)
+            self.create_line([(line, 0), (line, height)], fill='black', tags='grid_line_w')
+
+        for line in range(0, height, 100):
+            self.create_line([(0, line), (width, line)], fill='black', tags='grid_line_h')
 
     def _createTooltip(self):
         """ Create a Tooltip window to display tooltips in 
@@ -186,19 +198,21 @@ class Canvas(tk.Canvas, Scrollable):
         xc, yc = self.getCoordinates(event)
         self.lastItem = self._findItem(xc, yc)
         self.callbackResults = None
-        self.lastPos = (0, 0)
 
-        if self.lastItem is not None:
-            if callback:
-                self.callbackResults = callback(self.lastItem)
-        self.lastPos = (xc, yc)
+        if callback:
+            self.callbackResults = callback(self.lastItem, event)
 
     def onClick(self, event):
+        # On click happens completely before onDrag
         self.cleanSelected = True
         self._unpostMenu()
         self._handleMouseEvent(event, self.onClickCallback)
         if self.lastItem is None:
+            # Moving the canvas as a whole
             self.move_start(event)
+        else:
+            # Dragging a single box
+            self.captureLastPosition(event)
 
     def onControlClick(self, event):
         self.cleanSelected = False
@@ -233,7 +247,10 @@ class Canvas(tk.Canvas, Scrollable):
                             if shortCut:
                                 label= "%s (%s)" % (label, shortCut)
 
-                    self._menu.add_command(label=label, command=a[1],
+                    def getAction(callback):
+                        return lambda: callback(e)
+
+                    self._menu.add_command(label=label, command=getAction(a[1]),
                                            image=img, compound=tk.LEFT,
                                            font=gui.getDefaultFont())
             self._menu.post(e.x_root, e.y_root)
@@ -248,6 +265,7 @@ class Canvas(tk.Canvas, Scrollable):
     def move_start(self, event):
         # If nothing was click on ButtonPress
         if self.lastItem is None:
+            self.captureLastPosition(event)
             self.config(cursor='fleur')
             self.scan_mark(event.x, event.y)
 
@@ -256,12 +274,12 @@ class Canvas(tk.Canvas, Scrollable):
 
             if self.lastItem:
                 xc, yc = self.getCoordinates(event)
-                self.lastItem.move(xc - self.lastPos[0], yc - self.lastPos[1])
+                dx, dy = xc - self.lastPos[0], yc - self.lastPos[1]
+                # logger.info("Moving item %s, %s." % (dx,dy))
+                self.lastItem.move(dx, dy)
                 self.lastPos = (xc, yc)
             else:
-                if self.firstPos is None:
-                    self.firstPos = (event.x, event.y)
-                (x, y) = self.getCoordinates(event)
+                self.dragging = True
                 self.scan_dragto(event.x, event.y, gain=1)
 
         except Exception as ex:
@@ -270,13 +288,19 @@ class Canvas(tk.Canvas, Scrollable):
             # event and the refresh one. For now, just ignore it.
             pass
 
+    def captureLastPosition(self, event):
+        """ Captures the last position the mouse were located upon the event
+        """
+        self.lastPos = self.getCoordinates(event)
+
+
     def onButton1Release(self, event):
-        if self.firstPos is not None:
+        if self.dragging:
             # Failing in "data" view.
             # TODO: This is not fully implemented
             # self.onAreaSelected(self.firstPos[0], self.firstPos[1], event.x, event.y)
 
-            self.firstPos = None
+            self.dragging = False
 
         self.config(cursor='arrow')
 

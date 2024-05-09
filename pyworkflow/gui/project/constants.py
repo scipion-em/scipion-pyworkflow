@@ -46,7 +46,7 @@ STATUS_COLORS = {
 # For protocols with warnings
 WARNING_COLOR = '#848484'
 
-
+ACTION_NEW = Message.LABEL_NEW
 ACTION_EDIT = Message.LABEL_EDIT
 ACTION_RENAME = Message.LABEL_RENAME
 ACTION_SELECT_FROM = Message.LABEL_SELECT_FROM
@@ -77,6 +77,7 @@ ACTION_RESET_WORKFLOW = Message.LABEL_RESET_WORKFLOW
 ACTION_SEARCH = 'Search'
 
 ActionIcons = {
+    ACTION_NEW: Icon.ACTION_NEW,
     ACTION_EDIT: Icon.ACTION_EDIT,
     ACTION_SELECT_FROM: Icon.ACTION_SELECT_FROM,
     ACTION_SELECT_TO: Icon.ACTION_SELECT_TO,
@@ -107,6 +108,7 @@ ActionIcons = {
 
 # TODO: Centralize this and the 2 above collections
 ActionShortCuts = {
+    ACTION_NEW: "<Control-f>",
     # F keys
     ACTION_RENAME: "<F2>",
     ACTION_REFRESH: "<F5>",

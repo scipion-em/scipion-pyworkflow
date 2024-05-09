@@ -90,8 +90,6 @@ class ProjectWindow(ProjectBaseWindow):
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
                             shortCut="Ctrl+a", icon=Icon.SELECT_ALL)
-        projMenu.addSubMenu('Add a protocol', 'find protocol',
-                            shortCut="Ctrl+f", icon=Icon.FIND)
         projMenu.addSubMenu('Locate a protocol', 'locate protocol',
                             shortCut="Ctrl+l")
         projMenu.addSubMenu('', '')  # add separator
@@ -257,9 +255,6 @@ class ProjectWindow(ProjectBaseWindow):
 
     def onSelectAllProtocols(self):
         self.getViewWidget()._selectAllProtocols(None)
-
-    def onAddAProtocol(self):
-        self.getViewWidget()._findProtocol(None)
 
     def onLocateAProtocol(self):
         self.getViewWidget()._locateProtocol(None)

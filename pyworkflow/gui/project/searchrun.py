@@ -38,13 +38,14 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
 
     def __init__(self, project, actionFunc):
         super().__init__(project)
-        self.actionFunc = actionFunc
+        self.actionFunc = actionFunc  # ProtocolsView._runActionClicked
         self._selection = project.getSettings().runSelection
 
     def getActionsFromSelection(self):
         """ Return the list of options available for selection. """
         n = len(self._selection)
         single = n == 1
+        anyselected = n > 0
         if n:
             prot = self.project.getProtocol(self._selection[0], fromRuns=True)
             status = prot.getStatus()
@@ -57,7 +58,7 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                                pwprot.STATUS_LAUNCHED]
 
         # This list defines the order the icons are shown
-        return [
+        return [(ACTION_NEW, True),
                 (ACTION_EDIT, single and status and expanded),
                 (ACTION_BROWSE, single and status and expanded),
                 (ACTION_RENAME, single and status and expanded),
@@ -68,8 +69,8 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                 (ACTION_PASTE, status and expanded),
                 (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
 
-                (ACTION_SELECT_FROM, True),
-                (ACTION_SELECT_TO, True),
+                (ACTION_SELECT_FROM, anyselected),
+                (ACTION_SELECT_TO, anyselected),
                 (ACTION_COLLAPSE, single and status and expanded),
                 (ACTION_EXPAND, single and status and not expanded),
 
@@ -79,20 +80,23 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                 (ACTION_CONTINUE_WORKFLOW, single),
                 (ACTION_RESET_WORKFLOW, single),
 
-                (ACTION_EXPORT, not single),
-                (ACTION_EXPORT_UPLOAD, not single),
+                (ACTION_EXPORT, anyselected),
+                (ACTION_EXPORT_UPLOAD, anyselected),
 
                 (ACTION_STEPS, single and Config.debugOn() and status and expanded),
                 (ACTION_DB, single and Config.debugOn() and status and expanded),
                 ]
 
     def getObjectActions(self, obj):
+        """ Get actions available to perform.
+
+        :param obj: optional, if passed, actions on the object. otherwise generic actions"""
 
         def addAction(actionLabel):
             if actionLabel:
                 text = actionLabel
                 action = actionLabel
-                actionLabel = (text, lambda: self.actionFunc(action),
+                actionLabel = (text, lambda e: self.actionFunc(action, e),
                                ActionIcons.get(action, None),
                                ActionShortCuts.get(action,None))
             return actionLabel
@@ -100,7 +104,7 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
         actions = [addAction(a)
                    for a, cond in self.getActionsFromSelection() if cond]
 
-        if hasattr(obj, 'getActions'):
+        if obj is not None and hasattr(obj, 'getActions'):
             for text, action in obj.getActions():
                 actions.append((text, action, None))
 
