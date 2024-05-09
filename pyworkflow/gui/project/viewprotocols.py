@@ -1229,7 +1229,7 @@ class ProtocolsView(tk.Frame):
             self._deselectItems(None)
             self._updateSelection()
 
-        return self.provider.getObjectActions(prot)
+        return self.provider.getObjectActions(prot,withEvent=True)
 
     def _runItemControlClick(self, item=None, event=None):
         # Get last selected item for tree or graph

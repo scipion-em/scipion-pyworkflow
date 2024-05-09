@@ -87,16 +87,28 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                 (ACTION_DB, single and Config.debugOn() and status and expanded),
                 ]
 
-    def getObjectActions(self, obj):
+    def getObjectActions(self, obj, withEvent=False):
         """ Get actions available to perform.
 
-        :param obj: optional, if passed, actions on the object. otherwise generic actions"""
+        This method is called in 2 cases:
+        1.- Right-click on the tree (list of runs)
+        2.- Right-click on the canvas. When called from the canvas we need the event to get the click's position.
+
+        :param obj: optional, if passed, actions on the object. otherwise generic actions
+        :param withEvent: pass True if callback has to have the event as a parameter (call from canvas but not from tree)
+
+        """
 
         def addAction(actionLabel):
             if actionLabel:
                 text = actionLabel
                 action = actionLabel
-                actionLabel = (text, lambda e: self.actionFunc(action, e),
+                if withEvent:
+                    callback=lambda e: self.actionFunc(action, e)
+                else:
+                    callback=lambda: self.actionFunc(action)
+
+                actionLabel = (text, callback,
                                ActionIcons.get(action, None),
                                ActionShortCuts.get(action,None))
             return actionLabel
