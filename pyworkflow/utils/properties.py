@@ -107,7 +107,7 @@ class Message:
     LABEL_LOGS = 'Output Logs'
     LABEL_LOGS_OUTPUT = 'Output Log'
     LABEL_LOGS_ERROR = 'Error Log'
-    LABEL_LOGS_SCIPION = 'Scipion Log'
+    LABEL_LOGS_SCIPION = 'Project Log'
     
     NO_INFO_SUMMARY = 'No summary information.'
     NO_INFO_METHODS = 'No methods information.'

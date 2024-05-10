@@ -263,7 +263,7 @@ class ProtocolsView(tk.Frame):
                                                       font=self.window.font)
         self.projLog.grid(row=0, column=0, sticky='news')
         self.projLog.windows = self.window
-        self.projLog.addFile(Config.SCIPION_LOG) # TODO: Have a project specific log
+        self.projLog.addFile(self.project.getProjectLog())
 
         self._updateSelection()
 
@@ -1759,17 +1759,18 @@ class ProtocolsView(tk.Frame):
                 return [], RESULT_RUN_SINGLE
 
     def _selectLabels(self):
+
+        dlg = self.window.manageLabels()
+
         selectedNodes = self._getSelectedNodes()
 
-        if selectedNodes:
-            dlg = self.window.manageLabels()
+        if dlg.resultYes() and selectedNodes:
 
-            if dlg.resultYes():
-                for node in selectedNodes:
-                    node.setLabels([label.getName() for label in dlg.values])
+            for node in selectedNodes:
+                node.setLabels([label.getName() for label in dlg.values])
 
-                # self.updateRunsGraph()
-                self.drawRunsGraph()
+            # self.updateRunsGraph()
+            self.drawRunsGraph()
 
             # Save settings in any case
             self.window.saveSettings()
@@ -1980,6 +1981,8 @@ class ProtocolsView(tk.Frame):
             self.switchRunsView()
         elif action == ACTION_NEW:
             self._findProtocol(event)
+        elif action == ACTION_LABELS:
+            self._selectLabels()
         else:
             prot = self.getSelectedProtocol()
             if prot:
@@ -2026,8 +2029,7 @@ class ProtocolsView(tk.Frame):
                         self.setVisibleNodes(node, visible=True)
                         self.updateRunsGraph(False)
                         self._updateActionToolbar()
-                    elif action == ACTION_LABELS:
-                        self._selectLabels()
+
                     elif action == ACTION_SELECT_FROM:
                         self._selectDescendants()
                     elif action == ACTION_SELECT_TO:

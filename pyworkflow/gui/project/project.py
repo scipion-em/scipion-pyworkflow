@@ -31,27 +31,21 @@ It is composed by three panels:
 """
 
 import logging
-
-from .variables import VariablesDialog
-
 logger = logging.getLogger(__name__)
+
 import os
 import threading
 import shlex
 import subprocess
 import socketserver
-import tempfile
 
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.gui.project.utils import OS
-from pyworkflow.project import MenuConfig, ProjectSettings
+from pyworkflow.project import MenuConfig
 from pyworkflow.gui import Message, Icon
 from pyworkflow.gui.browser import FileBrowserWindow
-# Usage commented.
-# from pyworkflow.em.viewers import EmPlotter
-# Moved to Scipion-app
-# from pyworkflow.gui.plugin_manager import PluginManager
+
 from pyworkflow.gui.plotter import Plotter
 from pyworkflow.gui.text import _open_cmd, openTextFileEditor
 from pyworkflow.webservices import ProjectWorkflowNotifier, WorkflowRepository
@@ -161,6 +155,7 @@ class ProjectWindow(ProjectBaseWindow):
      
     def loadProject(self):
         proj = pw.project.Project(pw.Config.getDomain(), self.projPath)
+        proj.configureLogging()
         proj.load()
 
         # Check if we have settings.sqlite, generate if not
