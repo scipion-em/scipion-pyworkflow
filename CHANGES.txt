@@ -1,8 +1,8 @@
 V3.6.0
-------
 users:
   - Window to see/edit config variables. Launched from Project menu in project window.
   - Fix installation error: matplotlib imported at installation time
+  - Fixing an error drawing the graph
 developers:
   - FileBrowser window tweaks: Can be called from a dialog.
   - Windows can be called as dialogs with show(modal=True)
