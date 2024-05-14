@@ -35,12 +35,12 @@ import tkinter as tk
 import operator
 
 from pyworkflow import Config
-from pyworkflow.gui import gui, getDefaultFont, cfgFontSize
+from pyworkflow.gui import gui, getDefaultFont
 from pyworkflow.gui.widgets import Scrollable
 
 DEFAULT_ZOOM = 100
 
-DEFAULT_FONT_SIZE = cfgFontSize
+DEFAULT_FONT_SIZE = Config.SCIPION_FONT_SIZE
 
 DEFAULT_CONNECTOR_FILL = "blue"
 DEFAULT_CONNECTOR_OUTLINE = "black"

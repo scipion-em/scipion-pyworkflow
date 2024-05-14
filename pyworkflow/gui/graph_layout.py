@@ -25,8 +25,6 @@
 # **************************************************************************
 import logging
 
-from pyworkflow.gui import cfgFontSize
-
 logger = logging.getLogger(__name__)
 
 from pyworkflow import Config, SCIPION_DEFAULT_FONT_SIZE
@@ -58,7 +56,7 @@ class GraphLayout(object):
         """
         if self._fontScaleFactor is None:
 
-            self._fontScaleFactor = cfgFontSize/SCIPION_DEFAULT_FONT_SIZE
+            self._fontScaleFactor = Config.SCIPION_FONT_SIZE/SCIPION_DEFAULT_FONT_SIZE
 
         return self._fontScaleFactor
 
@@ -91,7 +89,7 @@ class LevelTreeLayout(GraphLayout):
 
         visitDict = dict()
         # Do some level initialization on each node
-        self._setLayoutLevel(rootNode,  1, None, visitDict)
+        self._setLayoutLevel(rootNode,  1, visitDict)
         self._computeNodeOffsets(rootNode, 1)
         # Compute extreme left limit
         m = 9999
@@ -107,46 +105,40 @@ class LevelTreeLayout(GraphLayout):
     def _isNewNode(self, node):
         return node.x == 0 or node.y == 0 or node.isRoot()
         
-    def _setLayoutLevel(self, node, level, parent, visitDict=None, ancestors=[]):
+    def _setLayoutLevel(self, node, level, parent,  ancestors=[]):
         """ Iterate over all nodes and set _layout dict.
         Also set the node level, which is defined
         as the max level of a parent + 1
         """
-        if visitDict is None:
-            visitDict = {}
+        if level > self.maxLevel:
+            return
 
-        if node.getName() not in visitDict:
-            visitDict[node.getName()] = True
+        layout = node._layout
 
-            if level > self.maxLevel:
-                return
+        if level > layout.get('level', 0):
+            # Calculate the y-position depending on the level
+            # and the delta-Y (DY)
+            if not self.partial or self._isNewNode(node):
+                node.y = level * self.getY()
+            layout['level'] = level
+            layout['parent'] = parent
+            if hasattr(node, 'width'):
+                half = node.width / 2
+            else:
+                half = 50
+            layout['half'] = half
+            layout['hLimits'] = [[-half, half]]
+            layout['offset'] = 0
 
-            layout = node._layout
-
-            if level > layout.get('level', 0):
-                # Calculate the y-position depending on the level
-                # and the delta-Y (DY)
-                if not self.partial or self._isNewNode(node):
-                    node.y = level * self.getY()
-                layout['level'] = level
-                layout['parent'] = parent
-                if hasattr(node, 'width'):
-                    half = node.width / 2
-                else:
-                    half = 50
-                layout['half'] = half
-                layout['hLimits'] = [[-half, half]]
-                layout['offset'] = 0
-
-                if self.__isNodeExpanded(node):
-                    ancestors.append(node.getName())
-                    for child in node.getChilds():
-                        if child.getName() in ancestors:
-                            logger.warning("WARNING: There might be a cyclic redundancy error in this protocol: %s (%s)" %(child.getLabel(),
-                                                                                                                           child.getName()))
-                        if Config.debugOn():
-                            print("%s: Setting layout for child %s" % ("-" * level, child), flush=True)
-                        self._setLayoutLevel(child, level+1, node, visitDict, ancestors.copy())
+            if self.__isNodeExpanded(node):
+                ancestors.append(node.getName())
+                for child in node.getChilds():
+                    if child.getName() in ancestors:
+                        logger.warning("WARNING: There might be a cyclic redundancy error in this protocol: %s (%s)" %(child.getLabel(),
+                                                                                                                       child.getName()))
+                    if Config.debugOn():
+                        print("%s: Setting layout for child %s" % ("-" * level, child), flush=True)
+                    self._setLayoutLevel(child, level+1, node, ancestors.copy())
 
     def __isNodeExpanded(self, node):
         """ Check if the status of the node is expanded or collapsed. """

@@ -28,6 +28,7 @@
 Module to handling Dialogs
 some code was taken from tkSimpleDialog
 """
+import os.path
 import tkinter as tk
 import traceback
 from tkcolorpicker import askcolor as _askColor
@@ -89,6 +90,7 @@ class Dialog(tk.Toplevel):
             self.title(title)
 
         self.parent = parent
+
         # Default to CANCEL so if window is "Closed" behaves the same.
         self.result = RESULT_CANCEL
         self.initial_focus = None
@@ -144,6 +146,9 @@ class Dialog(tk.Toplevel):
         if lockGui:
             self.grab_set()
         self.wait_window(self)
+
+    def getRoot(self):
+        return self
 
     def destroy(self):
         """Destroy the window"""
@@ -258,6 +263,20 @@ class Dialog(tk.Toplevel):
     def info(self, message):
         """ Shows a info message for long running processes to inform the user GUI is not frozen"""
         self.floatingMessage.config(text=message)
+
+    ### Basic GUI helper methods
+    def _addButton(self, frame, callback, text="", icon=None, row=0, col=0, tooltip=None, shortcut=""):
+        """ Adds a label button"""
+        btn = tk.Label(frame, text=text,
+                       image=self.getImage(icon),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.grid(row=row, column=col, sticky='nw', padx=(5, 0), pady=(5, 0))
+        btn.bind('<Button-1>', callback)
+        if tooltip:
+            tooltip = tooltip + ' (%s)' % shortcut if shortcut else tooltip
+            ToolTip(btn, tooltip, delay=150)
+        if shortcut:
+            self.bind(shortcut, callback)
 
 
 def fillMessageText(text, message):
@@ -555,6 +574,18 @@ def askColor(parent, defaultColor='black'):
     return hexcolor
 
 
+def askPath(title="Browse files", msg="Select a file of a folder", path=".", onlyFolders=False, master=None, returnBaseName=False):
+    from pyworkflow.gui.browser import FileBrowserWindow
+
+    browserW = FileBrowserWindow(title, master=master, path=path, onlyFolders=onlyFolders)
+    browserW.show(modal=True)
+
+    result = browserW.getLastSelection()
+    if returnBaseName:
+        result=os.path.basename(result)
+
+    return result
+
 class ListDialog(Dialog):
     """
     Dialog to select an element from a list.
@@ -583,15 +614,16 @@ class ListDialog(Dialog):
         self._selectOnDoubleClick = kwargs.get('selectOnDoubleClick', False)
         self._allowsEmptySelection = kwargs.get('allowsEmptySelection', False)
 
-        buttons = []
-        if kwargs.get('allowSelect', True):
-            buttons.append(('Select', RESULT_YES))
-        if kwargs.get('cancelButton', False):
-            buttons.append(('Close', RESULT_CLOSE))
-        else:
-            buttons.append(('Cancel', RESULT_CANCEL))
-
-        Dialog.__init__(self, parent, title, buttons=buttons, **kwargs)
+        if "buttons" not in kwargs:
+            buttons=[]
+            if kwargs.get('allowSelect', True):
+                buttons.append(('Select', RESULT_YES))
+            if kwargs.get('cancelButton', False):
+                buttons.append(('Close', RESULT_CLOSE))
+            else:
+                buttons.append(('Cancel', RESULT_CANCEL))
+            kwargs['buttons'] = buttons
+        Dialog.__init__(self, parent, title, **kwargs)
 
     def body(self, bodyFrame):
         bodyFrame.config()
@@ -744,23 +776,14 @@ class ToolbarListDialog(ListDialog):
 
         if self.toolbarButtons:
             for i, b in enumerate(self.toolbarButtons):
-                self._addButton(b, i)
+                self.addButton(b, i)
 
         if self._itemDoubleClick:
             self.tree.itemDoubleClick = self._itemDoubleClick
 
-    def _addButton(self, button, col):
-        btn = tk.Label(self.toolbarFrame, text=button.text,
-                       image=self.getImage(button.icon),
-                       compound=tk.LEFT, cursor='hand2')
-        btn.grid(row=0, column=col, sticky='nw', padx=(5, 0), pady=(5, 0))
-        btn.bind('<Button-1>', button.command)
-        if button.tooltip:
-            tooltip = button.tooltip + ' (%s)' % button.shortcut if button.shortcut else button.tooltip
-            self.bind(button.shortcut, button.command)
-            ToolTip(btn, tooltip, delay=150)
-        if button.shortcut:
-            self.bind(button.shortcut, button.command)
+    def addButton(self, button, col):
+
+        self._addButton(self.toolbarFrame, button.command, icon=button.icon, col=col, tooltip=button.tooltip, shortcut=button.shortcut)
 
 
 class FlashMessage:
@@ -812,43 +835,6 @@ class FloatingMessage:
     def close(self):
         self.floatingMessage.destroy()
 
-
-class FileBrowseDialog(Dialog):
-    """Dialog to select files from the filesystem."""
-
-    def __init__(self, parent, title, provider, message=None, **args):
-        """ From args:
-                message: message tooltip to show when browsing.
-                selected: the item that should be selected.
-        """
-        self.value = None
-        self.provider = provider
-        self.message = args.get('message', None)
-        Dialog.__init__(self, parent, title,
-                        buttons=[('Select', RESULT_YES), ('Cancel', RESULT_CANCEL)])
-
-    def body(self, bodyFrame):
-        bodyFrame.config(bg=Config.SCIPION_BG_COLOR)
-        gui.configureWeigths(bodyFrame)
-        self._createTree(bodyFrame)
-        if self.message:
-            label = tk.Label(bodyFrame, text=self.message, bg=Config.SCIPION_BG_COLOR,
-                             image=self.getImage(Icon.LIGHTBULB), compound=tk.LEFT)
-            label.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
-        self.initial_focus = self.tree
-
-    def _createTree(self, parent):
-        self.tree = BoundTree(parent, self.provider)
-
-    def apply(self):
-        index = self.tree.index(self.tree.getFirst())
-        self.value = self.tree._objects[index]
-
-    def validate(self):
-        if self.tree.getFirst() is None:
-            showError("Validation error", "Please select an element", self)
-            return False
-        return True
 
 
 class SearchBaseWindow(Window):

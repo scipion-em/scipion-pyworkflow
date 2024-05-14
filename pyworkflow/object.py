@@ -585,14 +585,14 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = ''  # ' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            logger.info("%s %s %s" % (tab, self.getClassName(), idStr))
+            logger.info(f"{tab} {self.getClassName()} {idStr}")
         else:
             if name == 'submitTemplate':  # Skip this because very large value
                 value = '...'
             else:
                 value = self.getObjValue()
                 
-            logger.info(tab, '%s = %s' % (name, value), idStr)
+            logger.info(f"{tab} {name} = {value} {idStr}")
         for k, v in self.getAttributes():
             v.printAll(k, level + 1)
             
@@ -1163,7 +1163,7 @@ class Set(Object):
          GROUP BY clause to group values into subsets
         :param operations: list of aggregate function such as COUNT, MAX, MIN,...
         :param operationLabel: label to use by the aggregate function
-        :param groupByLabels: list of labels to group
+        :param groupByLabels: list of labels to group by
         :return: the aggregated value of each group
         """
         return self._getMapper().aggregate(operations, operationLabel, groupByLabels)

@@ -29,6 +29,7 @@
 import logging
 import sys
 
+from pyworkflow import Variable, VariablesRegistry, VarTypes
 from .protocol import Protocol
 from .viewer import Viewer
 from .wizard import Wizard
@@ -84,8 +85,13 @@ class Domain:
             m = importlib.import_module(name)
 
             # Define variables
-            m.Plugin._defineVariables()
             m._pluginInstance = m.Plugin()
+            # This needs an explanation. _defineVariables() are classmethods, therfore we need a class variable and thus .name can't be used.
+            # Ideally, since Plugin class is instantiated we could transform _defineVariables methods into instance methods and only then we
+            # could use .name.
+            Plugin._tmpName = name
+            m._pluginInstance.name = name
+            m._pluginInstance._defineVariables()
 
             m.Domain = cls  # Register the domain class for this module
             # TODO avoid loading bibtex here and make a lazy load like the rest.
@@ -539,6 +545,7 @@ class Plugin:
     _supportedVersions = []
     _url = ""  # For the plugin
     _condaActivationCmd = None
+    _tmpName = None # This would be temporary. It will hold the plugin name during the call to defineVariables
 
     def __init__(self):
         self._path = None
@@ -546,13 +553,16 @@ class Plugin:
         self._name = None
 
     @classmethod
-    def _defineVar(cls, varName, defaultValue):
+    def _defineVar(cls, varName, defaultValue, description="Missing", var_type:VarTypes=None):
         """ Internal method to define variables trying to get it from the environment first. """
-        cls._addVar(varName, os.environ.get(varName, defaultValue))
+        cls._addVar(varName, os.environ.get(varName, defaultValue), default=defaultValue, description=description, var_type=var_type)
 
     @classmethod
-    def _addVar(cls, varName, value):
+    def _addVar(cls, varName, value, default=None, description="Missing", var_type:VarTypes=None):
         """ Adds a variable to the local variable dictionary directly. Avoiding the environment"""
+
+        var = Variable(varName, description, cls._tmpName, value, default, var_type=var_type)
+        VariablesRegistry.register(var)
         cls._vars[varName] = value
 
     @classmethod
@@ -576,7 +586,6 @@ class Plugin:
 
         return cls._condaActivationCmd
 
-    @classmethod
     @abstractmethod
     def _defineVariables(cls):
         """ Method to define variables and their default values.

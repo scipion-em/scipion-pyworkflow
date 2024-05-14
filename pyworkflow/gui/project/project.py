@@ -31,6 +31,9 @@ It is composed by three panels:
 """
 
 import logging
+
+from .variables import VariablesDialog
+
 logger = logging.getLogger(__name__)
 import os
 import threading
@@ -96,8 +99,10 @@ class ProjectWindow(ProjectBaseWindow):
                             icon=Icon.DOWNLOAD)
         projMenu.addSubMenu('Search workflow', 'search_workflow',
                             icon=Icon.ACTION_SEARCH)
-        if pw.Config.debugOn():
-            projMenu.addSubMenu('Export tree graph', 'export_tree')
+
+        projMenu.addSubMenu('Configuration', 'configuration',
+                            icon=Icon.SETTINGS)
+
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Debug Mode', 'debug mode',
                             shortCut="Ctrl+D", icon=Icon.DEBUG)
@@ -246,20 +251,6 @@ class ProjectWindow(ProjectBaseWindow):
 
     def onSearchWorkflow(self):
         WorkflowRepository().search()
-
-    def onExportTreeGraph(self):
-        runsGraph = self.project.getRunsGraph()
-        useId = not pwutils.envVarOn('SCIPION_TREE_NAME')
-        dotStr = runsGraph.printDot(useId=useId)
-        with tempfile.NamedTemporaryFile(suffix='.gv', mode="w") as dotFile:
-            dotFile.write(dotStr)
-            dotFile.flush()
-            openTextFileEditor(dotFile.name)
-
-        if useId:
-            logger.info("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
-        else:
-            logger.info("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
 
     def onToggleColorMode(self):
         self.getViewWidget()._toggleColorScheme(None)
