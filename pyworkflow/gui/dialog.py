@@ -574,9 +574,11 @@ def askColor(parent, defaultColor='black'):
     return hexcolor
 
 
-def askPath(title="Browse files", msg="Select a file of a folder", path=".", onlyFolders=False, master=None, returnBaseName=False):
+def askPath(title=None, msg="Select a file of a folder", path=".", onlyFolders=False, master=None, returnBaseName=False):
     from pyworkflow.gui.browser import FileBrowserWindow
 
+    if title is None:
+        title = "Select a folder" if onlyFolders else "Select a file"
     browserW = FileBrowserWindow(title, master=master, path=path, onlyFolders=onlyFolders)
     browserW.show(modal=True)
 
