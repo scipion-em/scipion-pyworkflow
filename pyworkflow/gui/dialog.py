@@ -783,7 +783,7 @@ class ToolbarListDialog(ListDialog):
 
     def addButton(self, button, col):
 
-        self._addButton(self.toolbarFrame, button.command, icon=button.icon, col=col, tooltip=button.tooltip, shortcut=button.shortcut)
+        self._addButton(self.toolbarFrame, button.command, text=button.text, icon=button.icon, col=col, tooltip=button.tooltip, shortcut=button.shortcut)
 
 
 class FlashMessage:
