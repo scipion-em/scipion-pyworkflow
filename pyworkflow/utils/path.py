@@ -28,6 +28,8 @@ inside the utils module
 
 import logging
 
+from pyworkflow.utils import yellow
+
 logger = logging.getLogger(__name__)
 
 import os
@@ -499,3 +501,27 @@ def getFileLastModificationDate(fn):
     else:
         logger.info(fn + " does not exist!!. Can't check last modification date.")
         return None
+
+
+def backup(fpath):
+    """
+    Create directory "backup" if necessary and back up the file.
+
+    :param fpath:
+    :return: None
+
+    """
+    BACKUPS="backup"
+
+    dname = os.path.dirname(fpath)
+
+    if not os.path.exists(dname):
+        os.makedirs(dname)
+
+    elif os.path.exists(fpath):
+        if not os.path.exists(os.path.join(dname, BACKUPS)):
+            os.makedirs(os.path.join(dname, BACKUPS))
+        backupFn = os.path.join(dname, BACKUPS,
+                      '%s.%s' % (os.path.basename(fpath), datetime.datetime.now().strftime("%Y%m%d%H%M%S")))
+        logger.info(yellow("* Creating backup: %s" % backupFn))
+        os.rename(fpath, backupFn)

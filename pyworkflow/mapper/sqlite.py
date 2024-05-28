@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 import re
 from collections import OrderedDict
 
-from pyworkflow.utils import replaceExt, joinExt
+from pyworkflow.utils import replaceExt, joinExt, valueToList
 from .sqlite_db import SqliteDb, OperationalError
 from .mapper import Mapper
 
@@ -909,6 +909,10 @@ class SqliteFlatMapper(Mapper):
         # Create a template object for retrieving stored ones
         columnList = []
         rows = self.db.getClassRows()
+
+        # Adds common fields to the mapping
+        self.db.addCommonFieldsToMap()
+
         attrClasses = {}
         self._objBuildList = []
 
@@ -1049,15 +1053,18 @@ and restarting scipion. Export command:
             return result
 
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+
+        operations = valueToList(operations)
+        groupByLabels = valueToList(groupByLabels)
+
         rows = self.db.aggregate(operations, operationLabel, groupByLabels)
+
+        # Transform the sql row into a disconnected list of dictionaries
         results = []
         for row in rows:
             values = {}
-            for label in operations:
-                values[label] = row[label]
-            if groupByLabels is not None:
-                for label in groupByLabels:
-                    values[label] = row[label]
+            for key in row.keys():
+                values[key] = row[key]
             results.append(values)
 
         return results
@@ -1293,8 +1300,16 @@ class SqliteFlatDb(SqliteDb):
                 self.INSERT_OBJECT += ',%s' % colName
                 self.UPDATE_OBJECT += ', %s=?' % colName
 
+        self.addCommonFieldsToMap()
+
         self.INSERT_OBJECT += ") VALUES (?,?,?,?, datetime('now')" + ',?' * (c-1) + ')'
         self.UPDATE_OBJECT += ' WHERE id=?'
+
+    def addCommonFieldsToMap(self):
+
+        # Add common fields to the mapping
+        self._columnsMapping["id"] = "id"
+        self._columnsMapping["_objId"] = "id"
 
     def getClassRows(self):
         """ Create a dictionary with names of the attributes
@@ -1395,7 +1410,7 @@ class SqliteFlatDb(SqliteDb):
 
         whereStr = where
         # Split by valid where operators: =, <, >
-        result = re.split('<=|<=|=|<|>|AND|OR', where)
+        result = re.split('<=|>=|=|<|>|AND|OR', where)
         # For each item
         for term in result:
             # trim it
@@ -1432,17 +1447,37 @@ class SqliteFlatDb(SqliteDb):
         return self._results(iterate=False)
 
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+        """
+
+        :param operations: string or LIST of operations: MIN, MAX, AVG, COUNT, SUM, TOTAL, GROUP_CONCAT. Any single argument function
+        defined for sqlite at https://www.sqlite.org/lang_aggfunc.html
+        :param operationLabel: string or LIST of attributes to apply the functions on
+        :param groupByLabels: (Optional) attribute or list of attributes to group by the data
+        :return:
+        """
         # let us count for testing
         selectStr = 'SELECT '
         separator = ' '
+
+        operations = valueToList(operations)
+        operationLabel = valueToList(operationLabel)
+        groupByLabels = valueToList(groupByLabels)
+
         # This cannot be like the following line should be expressed in terms
         # of C1, C2 etc....
-        for operation in operations:
-            selectStr += "%s %s(%s) AS %s" % (separator, operation,
-                                              self._columnsMapping[operationLabel],
-                                              operation)
-            separator = ', '
-        if groupByLabels is not None:
+        for index,label in enumerate(operationLabel):
+            for operation in operations:
+
+                if index==0:
+                    alias = operation
+                else:
+                    alias = operation + label
+
+                selectStr += "%s %s(%s) AS %s" % (separator, operation,
+                                                  self._columnsMapping[label],
+                                                  alias)
+                separator = ', '
+        if groupByLabels:
             groupByStr = 'GROUP BY '
             separator = ' '
             for groupByLabel in groupByLabels:

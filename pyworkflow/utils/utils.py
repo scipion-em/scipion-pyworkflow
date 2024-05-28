@@ -572,7 +572,11 @@ def getListFromValues(valuesStr, length=None, caster=str):
     result = []
     valuesStr = valuesStr.replace(","," ")
     for chunk in valuesStr.split():
-        values = chunk.split('x')
+        if caster != str:
+            values = chunk.split('x')
+        else:
+            values=[chunk]
+
         n = len(values)
         if n == 1:  # 'x' is not present in the chunk, single value
             result += [caster(values[0])]
@@ -864,3 +868,13 @@ class OS:
         file = os.path.realpath(file).replace("/", "\\")
         file = ("\\\\wsl.localhost\\" + cls.getWLSNAME() + file)
         return file
+
+
+def valueToList(value):
+    """ Returns a list containing value, unless value is already a list. If value is None returns an empty list"""
+    if value is None:
+        return []
+    elif isinstance(value, list):
+        return value
+    else:
+        return [value]

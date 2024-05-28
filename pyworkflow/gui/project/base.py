@@ -31,6 +31,7 @@ import pyworkflow as pw
 from pyworkflow.gui import Window, Message, Color, getBigFont, defineStyle
 from pyworkflow.gui.widgets import GradientFrame
 from pyworkflow.utils.properties import Icon
+from pyworkflow.gui.project.variables import VariablesDialog
 
 from .viewprojects import ProjectsView
 from .viewprotocols import ProtocolsView
@@ -177,7 +178,6 @@ class ProjectBaseWindow(Window):
             "physicists, mathematicians, biologists and computer scientists. "
             "It is produced mainly by people at the "
             "[[http://biocomputingunit.es//][CNB Biocomputing Unit]], "
-            "[[https://www.scilifelab.se/][SciLifeLab]] and "
             "[[https://www2.mrc-lmb.cam.ac.uk/][MRC LMB]], "
             "but with many contributions across the globe.")
 
@@ -187,3 +187,6 @@ class ProjectBaseWindow(Window):
         self.showInfo("Please, do contact us at [[mailto:%s][%s]] for any "
                       "feedback, bug, idea, anything that will make Scipion "
                       "better.""" % (email, email))
+
+    def onConfiguration(self):
+        VariablesDialog(self.root)

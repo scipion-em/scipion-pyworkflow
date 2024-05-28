@@ -4,7 +4,7 @@ import glob
 import os
 import tempfile
 from datetime import datetime
-from pyworkflow import SCIPION_JSON_TEMPLATES, Config
+from pyworkflow import SCIPION_JSON_TEMPLATES, Config, VarTypes
 from pyworkflow.utils import greenStr
 
 
@@ -138,7 +138,7 @@ class TemplateParam(object):
         self._index = index
         self._title = title
         self._value = value
-        self._type = varType
+        self._type = int(varType)
         self._alias = alias
 
     def getTitle(self):
@@ -167,29 +167,21 @@ class Validations:
 
     """ FIELDS VALIDATION """
     """ FIELDS TYPES"""
-    FIELD_TYPE_STR = "0"
-    FIELD_TYPE_BOOLEAN = "1"
-    FIELD_TYPE_PATH = "2"
-    FIELD_TYPE_INTEGER = "3"
-    FIELD_TYPE_DECIMAL = "4"
-
     @classmethod
     def check(cls, value, fieldType):
-        if fieldType == cls.FIELD_TYPE_BOOLEAN:
+        if fieldType == VarTypes.BOOLEAN.value:
             return cls.validBoolean(value)
-        elif fieldType == cls.FIELD_TYPE_DECIMAL:
+        elif fieldType == VarTypes.DECIMAL.value:
             return cls.validDecimal(value)
-        elif fieldType == cls.FIELD_TYPE_INTEGER:
+        elif fieldType == VarTypes.INTEGER.value:
             return cls.validInteger(value)
-        elif fieldType == cls.FIELD_TYPE_PATH:
+        elif fieldType == VarTypes.PATH.value:
             return cls.validPath(value)
-        elif fieldType == cls.FIELD_TYPE_STR:
+        elif fieldType == VarTypes.STRING.value:
             return cls.validString(value)
 
         else:
-            print("Type %s for %s not recognized. Review the template."
-                  % (type, value))
-            return
+            return "Type %s for %s not recognized. Review the template." % (fieldType, value)
 
     @staticmethod
     def validString(value):
