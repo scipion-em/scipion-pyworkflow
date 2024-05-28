@@ -25,7 +25,8 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-import sys, os
+import sys
+import os
 import json
 import threading
 import time
@@ -41,17 +42,16 @@ from .params import Form
 from ..utils import getFileSize
 
 
-import  logging
+import logging
 # Get the root logger
 logger = logging.getLogger(__name__)
 
 
 class Step(Object):
     """ Basic execution unit.
-    It should defines its Input, Output
+    It should define its Input, Output
     and define a run method.
     """
-
     def __init__(self, **kwargs):
         Object.__init__(self, **kwargs)
         self._prerequisites = CsvList()  # which steps needs to be done first
@@ -424,6 +424,7 @@ class Protocol(Step):
         self._pid = Integer()
         self._stepsExecutor = None
         self._stepsDone = Integer(0)
+        self._stepStartIndex = Integer(-1)  # Allows to start at a given step
         self._cpuTime = Integer(0)
         self._numberOfSteps = Integer(0)
         # For visualization
@@ -1199,6 +1200,10 @@ class Protocol(Step):
         self._prevSteps = self.loadSteps()
 
         n = min(len(self._steps), len(self._prevSteps))
+
+        if self._stepStartIndex >= 0:
+            n = min(n, self._stepStartIndex.get())
+
         self.debug("len(steps) %s len(prevSteps) %s "
                    % (len(self._steps), len(self._prevSteps)))
 
@@ -1664,7 +1669,7 @@ class Protocol(Step):
         self._log.warning(message)
 
     def info(self, message, extra=None):
-        self._log.info(message, extra= extra)
+        self._log.info(message, extra=extra)
 
     def error(self, message, redirectStandard=True):
         self._log.error(message)
