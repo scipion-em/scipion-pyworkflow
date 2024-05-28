@@ -42,7 +42,8 @@ from pyworkflow import Config
 # The job should be launched from the working directory!
 def runJob(log, programname, params,           
            numberOfMpi=1, numberOfThreads=1, 
-           hostConfig=None, env=None, cwd=None, gpuList=None):
+           hostConfig=None, env=None, cwd=None, gpuList=None,
+           stdout=None, stderr=None):
 
     command = buildRunCommand(programname, params, numberOfMpi, hostConfig,
                               env, gpuList=gpuList)
@@ -56,8 +57,12 @@ def runJob(log, programname, params,
     return runCommand(command, env, cwd)
         
 
-def runCommand(command, env=None, cwd=None):
-    """ Execute command with given environment env and directory cwd """
+def runCommand(command, env=None, cwd=None,
+               stdout=None, stderr=None):
+    """ Execute command with given environment env and directory cwd.
+     Allows to redirect stdout and stderr to a separte file, that 
+     might be useful for verbose programs with a lot of output.
+     """
 
     # First let us create core dumps if in debug mode
     if Config.debugOn():
@@ -68,6 +73,9 @@ def runCommand(command, env=None, cwd=None):
 
     # TODO: maybe have to set PBS_NODEFILE in case it is used by "command"
     # (useful for example with gnu parallel)
+    stdout = sys.stdout if stdout is None else stdout
+    stderr = sys.stderr if stderr is None else stderr
+
     check_call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr,
                env=env, cwd=cwd)
     # It would be nice to avoid shell=True and calling buildRunCommand()...
