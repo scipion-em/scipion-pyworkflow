@@ -71,16 +71,16 @@ class HostConfig(Object):
         return self.hostPath.get()
 
     def getSubmitCommand(self):
-        return self.queueSystem.submitCommand.get()
+        return self.queueSystem.submitCommand.get(default='')
 
     def getSubmitPrefix(self):
-        return self.queueSystem.submitPrefix.get()
+        return self.queueSystem.submitPrefix.get(default='')
 
     def getCheckCommand(self):
-        return self.queueSystem.checkCommand.get()
+        return self.queueSystem.checkCommand.get(default='')
 
     def getCancelCommand(self):
-        return self.queueSystem.cancelCommand.get()
+        return self.queueSystem.cancelCommand.get(default='')
 
     def isQueueMandatory(self):
         return self.queueSystem.mandatory.get()
