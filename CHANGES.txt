@@ -1,3 +1,7 @@
+V3.6.1
+developers:
+  - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
+    Protocol._lock context, which causes a permanent lock.
 V3.6.0
 users:
   - Window to see/edit config variables. Launched from Project menu in project window.
