@@ -25,6 +25,7 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
+import contextlib
 import sys, os
 import json
 import threading
@@ -956,7 +957,9 @@ class Protocol(Step):
         If not objects are passed, the whole protocol is stored.
         """
         if self.mapper is not None:
-            with self._lock:
+
+            lock = contextlib.nullcontext() if self._lock.locked() else self._lock
+            with lock:
                 if len(objs) == 0:
                     self.mapper.store(self)
                 else:
