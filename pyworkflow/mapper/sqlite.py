@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 import re
 from collections import OrderedDict
 
+from pyworkflow import Config
 from pyworkflow.utils import replaceExt, joinExt, valueToList
 from .sqlite_db import SqliteDb, OperationalError
 from .mapper import Mapper
@@ -903,38 +904,70 @@ class SqliteFlatMapper(Mapper):
         return obj
 
     def __loadObjDict(self):
-        """ Load object properties and classes from db. """
+        """ Load object properties and classes from db.
+        Stores the _objTemplate for future reuse"""
         # Create a template object for retrieving stored ones
         columnList = []
         rows = self.db.getClassRows()
 
         # Adds common fields to the mapping
+        # Schema definition in classes table
         self.db.addCommonFieldsToMap()
 
         attrClasses = {}
         self._objBuildList = []
 
+        # For each row lin classes table (_samplinRate --> c01, Integer)
         for r in rows:
+
+            # Something like: _acquisition._doseInitial
             label = r['label_property']
 
+            # If the actual item class:  "Particle" in a SetOfParticles
+            # First loop.
             if label == SELF:
-                self._objClassName = r['class_name']
-                self._objTemplate = self._buildObjectFromClass(self._objClassName)
+                objClassName = r['class_name']
+
+                # Store the template to reuse it during iterations and avoid instantiation
+                self._objTemplate = self._buildObjectFromClass(objClassName)
+                self._objClass = self._objTemplate.__class__
             else:
-                # Lets update the database column mapping
+                # Update the database column mapping: c01 <-> _samplingRate
                 self.db._columnsMapping[label] = r['column_name']
+
+                # List for the latter _objColumns [(5,"_smplingRate"), ...]
+                # This latter will be used to take the value from the cursor's row using the index (row[5] => obj._samplingRate)
                 columnList.append(label)
+
+                # Annotate the class
                 attrClasses[label] = r['class_name']
+
+                # Split the label: _acquisition._doseInitial -> ["_acquisition", "_doseInitial"]
+                # For the loop
                 attrParts = label.split('.')
+
+                # Like a breadcrumb in websites... partial path to the attribute
                 attrJoin = ''
+
+                # Start from the template (root)
                 o = self._objTemplate
+
+                # for each part: ["_acquisition", "_doseInitial"]
                 for a in attrParts:
                     attrJoin += a
+
+                    # Try to get the attribute. Case of attributes defined in the model (init)
                     attr = getattr(o, a, None)
+
+                    # If the object does not have the attribute, then it might be an extra parameter or an optional like Transform.p+ç1
                     if attr is None:
                         className = attrClasses[attrJoin]
-                        self._objBuildList.append((className, attrJoin.split('.')))
+
+                        # Instantiate the class.
                         attr = self._buildObjectFromClass(className)
+
+                        # Get the class form the attr: it could come as a LegacyClass in case "className" is not found.
+                        self._objBuildList.append((attr.__class__, attrJoin.split('.')))
                         setattr(o, a, attr)
                     o = attr
                     attrJoin += '.'
@@ -943,23 +976,39 @@ class SqliteFlatMapper(Mapper):
         self._objColumns = list(zip(range(basicRows, n), columnList))
          
     def __buildAndFillObj(self):
-        obj = self._buildObjectFromClass(self._objClassName)
+        """ Instantiates the set item base on the _objBuildList.
+        _objBuildList has been populated when loading the classDictionary"""
+
+        obj = self._objClass()
         
-        for className, attrParts in self._objBuildList:
+        for clazz, attrParts in self._objBuildList:
             o = obj
             for a in attrParts:
                 attr = getattr(o, a, None)
                 if not attr:
-                    setattr(o, a, self._buildObjectFromClass(className))
+                    setattr(o, a, clazz())
                     break
                 o = attr
         return obj
-        
-    def __objFromRow(self, objRow):
+
+    def getInstance(self):
+
         if self._objTemplate is None:
             self.__loadObjDict()
+
+        # Difference in performance using scipion3 tests pwperformance.tests.test_set_performance.TestSetPerformanceSteps.testSuperExtendedCoordinatesSet
+        # A test that creates a 10**6 set of extended coordinates (coordinates with 20 extra attributes)
+        # With the template iteration takes 10 secs
+        # Building the object each time take 25 secs (15 seconds more)
+        if Config.SCIPION_MAPPER_USE_TEMPLATE:
+            return self._objTemplate
+        else:
+            return  self.__buildAndFillObj()
+
+    def __objFromRow(self, objRow):
+
             
-        obj = self._objTemplate  # self.__buildAndFillObj()
+        obj = self.getInstance()
         obj.setObjId(objRow[ID])
         obj.setObjLabel(self._getStrValue(objRow['label']))
         obj.setObjComment(self._getStrValue(objRow['comment']))
@@ -1009,9 +1058,10 @@ class SqliteFlatMapper(Mapper):
         # 'Properties' table
         if not self.db.hasTable('Properties'):
             return iter([]) if iterate else []
-            
-        if self._objTemplate is None:
-            self.__loadObjDict()
+
+        # Initialize the instance
+        self.getInstance()
+
         try:
             objRows = self.db.selectAll(orderBy=orderBy,
                                         direction=direction,

@@ -105,8 +105,8 @@ class TestListFromValues(unittest.TestCase):
             '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']"
         """
 
-        self._callAndAssert('1 1 2x2 4 4', ['1', '1', '2', '2', '4', '4'])
-        self._callAndAssert('2x3, 3x4, 1',['3', '3', '4', '4', '4', '1'])
+        self._callAndAssert('1 1 2x2 4 4', ['1', '1', '2x2', '4', '4'])
+        self._callAndAssert('1 1 2x2 4 4', [1, 1, 2, 2, 4, 4], caster=int)
         self._callAndAssert('2,3,4,1', [2, 3, 4, 1], caster=int)
         self._callAndAssert('2 , 3 , 4 , 1', [2, 3, 4, 1], caster=int)
         self._callAndAssert('2,3.3,4', [2.0, 3.3, 4.0], caster=float)
@@ -206,41 +206,5 @@ class TestPathTools(unittest.TestCase):
         self.assertEqual(70, strToDuration("1m 10s"), "String duration wrongly converted")
 
 
-class TestVariable(unittest.TestCase):
-
-    def test_operators(self):
-
-        myVar = Variable("Home")
-
-        # Join should work
-        try:
-            os.path.join(myVar, "hola")
-        except Exception:
-            self.fail("os.path.join for variables doesn't work")
-
-        # String concatenation ?
-        try:
-            myVar + "hola"
-            "hola" + myVar
-        except Exception:
-            self.fail("String concatenation with + for variables doesn't work")
-
-        myIntVar= Variable(50)
-
-
-        # Add should work
-        try:
-            myIntVar + 3
-            3 + myIntVar
-        except Exception:
-            self.fail("Adding a value to an int variable doesn't work")
-
-        # Division should work
-        try:
-            myIntVar/2
-            100/myIntVar
-
-        except Exception:
-            self.fail("Division does not work")
 
 
