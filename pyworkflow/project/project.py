@@ -26,6 +26,8 @@
 # **************************************************************************
 import logging
 
+from ..protocol.launch import _checkJobStatus
+
 ROOT_NODE_NAME = "PROJECT"
 logger = logging.getLogger(__name__)
 
@@ -45,8 +47,8 @@ import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_RESUME,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS,
-                                           UNKNOWN_JOBID, INITIAL_SLEEP_TIME)
-from pyworkflow.protocol.protocol import ProtImportBase
+                                           UNKNOWN_JOBID, INITIAL_SLEEP_TIME, STATUS_FINISHED)
+from pyworkflow.protocol.protocol import ProtImportBase, Protocol
 
 from . import config
 
@@ -657,7 +659,7 @@ class Project(object):
         self.mapper.store(protocol)
         self.mapper.commit()
 
-    def _updateProtocol(self, protocol, tries=0, checkPid=False,
+    def _updateProtocol(self, protocol: Protocol, tries=0, checkPid=False,
                         skipUpdatedProtocols=True):
 
         # If this is read only exit
@@ -717,8 +719,10 @@ class Project(object):
 
             # Check pid at the end, once updated
             if checkPid:
-                self.checkPid(protocol)
-
+                if protocol.getPid() == 0:
+                    self.checkJobId(protocol)
+                else:
+                    self.checkPid(protocol)
 
             self.mapper.store(protocol)
 
@@ -1590,13 +1594,38 @@ class Project(object):
         # NOTE: This may be happening even with successfully finished protocols
         # which PID is gone.
         if (protocol.isActive() and not protocol.isInteractive() and _runsLocally(protocol)
-            and not protocol.useQueue()
                 and not pwutils.isProcessAlive(pid)):
             protocol.setFailed("Process %s not found running on the machine. "
                                "It probably has died or been killed without "
                                "reporting the status to Scipion. Logs might "
                                "have information about what happened to this "
                                "process." % pid)
+
+    def checkJobId(self, protocol):
+        """ Check if a running protocol is still alive or not.
+        The check will only be done for protocols that have been sent
+        to a queue system.
+        """
+        jobid = protocol.getJobIds()[0]
+        hostConfig = protocol.getHostConfig()
+
+        if jobid == UNKNOWN_JOBID:
+            return
+
+        # Include running and scheduling ones
+        # Exclude interactive protocols
+        # NOTE: This may be happening even with successfully finished protocols
+        # which PID is gone.
+        if protocol.isActive() and not protocol.isInteractive():
+
+            jobStatus = _checkJobStatus(hostConfig, jobid)
+
+            if jobStatus == STATUS_FINISHED:
+                protocol.setFailed("Process %s not found running on the machine. "
+                                   "It probably has died or been killed without "
+                                   "reporting the status to Scipion. Logs might "
+                                   "have information about what happened to this "
+                                   "process." % jobid)
 
     def iterSubclasses(self, classesName, objectFilter=None):
         """ Retrieve all objects from the project that are instances
