@@ -64,10 +64,12 @@ class Mapper:
             print("WARNING: %s" % msg)
             self.__warnings.add(msg)
     
-    def _buildObjectFromClass(self, className, **kwargs):
+    def _buildObjectFromClass(self, className):
         """ Build an instance of an object
         given the class name, it should be in 
-        the classes dictionary.
+        the classes' dictionary.
+
+        If class is missing, then the default class is used ("LegacyProtocol") and warns about it
         """
         if className not in self.dictClasses:
             self.warning("Class '%s' not found in mapper dict. Ignored. "
@@ -81,11 +83,11 @@ class Mapper:
             return None
 
         try:
-            instance = self.dictClasses[className](**kwargs)
+            instance = self.dictClasses[className]()
         except Exception as e:
             clazz = self.dictClasses._default
             logger.error('Class %s could not be created. Replacing it with %s ' % (className, clazz.__name__), exc_info=e)
-            instance = clazz(**kwargs)
+            instance = clazz()
 
         # If it's the default class in the dictionary
         if objClass.__name__ != className:

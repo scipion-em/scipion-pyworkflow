@@ -30,6 +30,7 @@ import sys, os
 import json
 import threading
 import time
+from datetime import datetime
 
 import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
@@ -2511,7 +2512,12 @@ class ProtStreamingBase(Protocol):
         self.stepsExecutionMode = STEPS_PARALLEL
     def _insertAllSteps(self):
         # Insert the step that generates the steps
-        self._insertFunctionStep(self.stepsGeneratorStep)
+        self._insertFunctionStep(self.resumableStepGeneratorStep, str(datetime.now()))
+
+    def resumableStepGeneratorStep(self, ts):
+        """ This allow to resume protocols. ts is the time stamp so this stap is alway different form previous exceution"""
+        self.stepsGeneratorStep()
+
 
     def _stepsCheck(self):
 

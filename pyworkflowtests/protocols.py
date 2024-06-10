@@ -79,16 +79,18 @@ class ConcurrencyProtocol(SleepingProtocol):
     def _insertAllSteps(self):
         n = 2
         for i in range(n):
-            self._insertFunctionStep('sleepAndOutput', 1, prerequisites=[])
+            self._insertFunctionStep(self.sleepAndOutput, 1, prerequisites=[])
 
     def sleepAndOutput(self, secs):
         self.sleepStep(secs)
 
-        outputSet = self.getOutputSet("myOutput", MockSetOfImages)
-        newImage = MockImage()
         with self._lock:
+            outputSet = self.getOutputSet("myOutput", MockSetOfImages)
+            newImage = MockImage()
+            time.sleep(1)
             outputSet.append(newImage)
             outputSet.write()
+
         self._store()
 
 

@@ -1,7 +1,15 @@
 V3.6.1
+------
+user:
+  - Streaming protocols based on new streaming (generation steps) are resumable
+  - pyworkflowtest fixed
 developers:
   - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
     Protocol._lock context, which causes a permanent lock.
+  - XmlMapper removed.
+  - FlatMapper instanatiation centralized:
+     New variable: SCIPION_MAPPER_USE_TEMPLATE. By default uses the template as it was now. If deacivated, instantiation happens on each iteration (less performant) but dev friendly
+
 V3.6.0
 users:
   - Window to see/edit config variables. Launched from Project menu in project window.
