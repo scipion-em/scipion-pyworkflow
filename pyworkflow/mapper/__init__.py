@@ -24,4 +24,3 @@
 # **************************************************************************
 from .mapper import Mapper
 from .sqlite import SqliteMapper, SqliteDb, SqliteFlatMapper, SqliteFlatDb
-from .xmlmapper import XmlMapper

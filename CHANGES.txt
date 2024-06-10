@@ -3,10 +3,16 @@ users:
   - Queue interoperability review:
     - jobs cancelled in the queue are detected in scipion
     - job and pids handling improved, pids = 0 when use queue for protocol rely on jobid
-    - add information in the protocol log regarding execution type (pid or jobid)
+  - add information in the protocol log regarding execution type (pid or jobid)
+  - Streaming protocols based on new streaming (generation steps) are resumable
+  - pyworkflowtest tests fixed
+  - GUI will detect when protocols processes have been killed(cancelled) in all cases?.
 developers:
   - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
     Protocol._lock context, which causes a permanent lock.
+  - XmlMapper removed.
+  - FlatMapper instanatiation centralized:
+     New variable: SCIPION_MAPPER_USE_TEMPLATE. By default uses the template as it was now. If deacivated, instantiation happens on each iteration (less performant) but dev friendly
 
 V3.6.0
 users:

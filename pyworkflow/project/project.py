@@ -677,6 +677,9 @@ class Project(object):
             if skipUpdatedProtocols:
                 # If we are already updated, comparing timestamps
                 if pwprot.isProtocolUpToDate(protocol):
+
+                    # Always check for the status of the process (queue job or pid)
+                    self.checkIsAlive(protocol)
                     return pw.NOT_UPDATED_UNNECESSARY
 
 
@@ -719,10 +722,7 @@ class Project(object):
 
             # Check pid at the end, once updated
             if checkPid:
-                if protocol.getPid() == 0:
-                    self.checkJobId(protocol)
-                else:
-                    self.checkPid(protocol)
+                self.checkIsAlive(protocol)
 
             self.mapper.store(protocol)
 
@@ -748,6 +748,13 @@ class Project(object):
                 self._updateProtocol(protocol, tries + 1)
 
         return pw.PROTOCOL_UPDATED
+
+    def checkIsAlive(self, protocol):
+        """ Check if a protocol is alive based on its jobid or pid"""
+        if protocol.getPid() == 0:
+            self.checkJobId(protocol)
+        else:
+            self.checkPid(protocol)
 
     def stopProtocol(self, protocol):
         """ Stop a running protocol """
