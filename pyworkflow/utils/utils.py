@@ -593,13 +593,13 @@ def getListFromValues(valuesStr, length=None, caster=str):
 
 def getFloatListFromValues(valuesStr, length=None):
     """ Convert a string to a list of floats"""
-    return [float(v) for v in getListFromValues(valuesStr, length)]
+    return [v for v in getListFromValues(valuesStr, length, caster=float)]
 
 
 def getBoolListFromValues(valuesStr, length=None):
     """ Convert a string to a list of booleans"""
     from pyworkflow.object import Boolean
-    return [Boolean(value=v).get() for v in getListFromValues(valuesStr, length)]
+    return [v.get() for v in getListFromValues(valuesStr, length, caster=Boolean)]
 
 
 def getStringListFromValues(valuesStr, length=None):

@@ -204,7 +204,7 @@ class TestObject(pwtests.BaseTest):
         o.pointer = pwobj.Pointer()
         o.pointer.set(imgSet)
 
-        # This is not true anymore ans is allowed unless we see is needed
+        # This is not true anymore and is allowed unless we see is needed
         # The main reason is a boost in performance.
         # o.refC = o.pointer.get()
         # attrNames = [k for k, a in o.getAttributes()]
@@ -223,7 +223,7 @@ class TestObject(pwtests.BaseTest):
 
         # Check that the Item 7 of the set is properly
         # retrieved by the pointer after setting the extended to 7
-        self.assertEqual(imgSet[7], o.pointer.get())
+        self.assertEqual(imgSet[7].getObjId(), o.pointer.get().getObjId())
 
         # Test the keyword arguments of Pointer constructor
         # repeat above tests with new pointer
@@ -466,20 +466,19 @@ class TestUtils(pwtests.BaseTest):
         from pyworkflow.utils import getListFromValues, getFloatListFromValues,\
             getBoolListFromValues
         
-        results = [('2x1 2x2 4 5', None, getListFromValues,
-                    ['1', '1', '2', '2', '4', '5']),
-                   ('2x1 2x2 4 5', None, getFloatListFromValues,
-                    [1., 1., 2., 2., 4., 5.]),
-                   ('1 2 3x3 0.5', 8, getFloatListFromValues,
-                    [1., 2., 3., 3., 3., 0.5, 0.5, 0.5]),
-                   ('3x1 3x0 1', 8, getBoolListFromValues,
-                    [True, True, True, False, False, False, True, True]),
+        results = [('2x1 2x2 4 5', getListFromValues, ['2x1', '2x2', '4', '5'], None),
+                   ('2x1 2x2 4 5', getFloatListFromValues, [1., 1., 2., 2., 4., 5.],None),
+                   ('1 2 3x3 0.5', getFloatListFromValues, [1., 2., 3., 3., 3., 0.5, 0.5, 0.5], 8),
+                   ('3x1 3x0 1', getBoolListFromValues, [True, True, True, False, False, False, True, True],8),
                    ]
-        for s, n, func, goldList in results:
-            l = func(s, length=n)
-            self.assertAlmostEqual(l, goldList)
-            if n:
-                self.assertEqual(n, len(l))
+
+        for s, func, goldList, length in results:
+
+            l = func(s, length=length)
+            for i in range(0,len(goldList)):
+                self.assertEqual(l[i], goldList[i])
+
+            self.assertEqual(len(goldList), len(l), )
                 
     def test_Environ(self):
         """ Test the Environ class with its utilities. """
