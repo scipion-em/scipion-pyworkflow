@@ -1,8 +1,12 @@
-V3.6.1
-------
-user:
+V3.7.0
+users:
+  - Queue interoperability review:
+    - jobs cancelled in the queue are detected in scipion
+    - job and pids handling improved, pids = 0 when use queue for protocol rely on jobid
+  - add information in the protocol log regarding execution type (pid or jobid)
   - Streaming protocols based on new streaming (generation steps) are resumable
-  - pyworkflowtest fixed
+  - pyworkflowtest tests fixed
+  - GUI will detect when protocols processes have been killed(cancelled) in all cases?.
 developers:
   - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
     Protocol._lock context, which causes a permanent lock.

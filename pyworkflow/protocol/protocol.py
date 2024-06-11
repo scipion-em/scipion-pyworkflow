@@ -1528,16 +1528,22 @@ class Protocol(Step):
                                                                project_name=self.getProject().getName(),
                                                                prot_id=self.getObjId(),
                                                                prot_name=self.getClassName()))
+
+            self.setHostFullName(pwutils.getHostFullName())
+            self.info('Hostname: %s' % self.getHostFullName())
+
             # Store the full machine name where the protocol is running
             # and also its PID
-            self.setPid(os.getpid())
-            self.setHostFullName(pwutils.getHostFullName())
+            if not self.useQueueForProtocol():  # Take as reference the pID
+                self.setPid(os.getpid())
+                self.info('PID: %s' % self.getPid())
+            else:  # Take as reference the jobID
+                self.info('Executing through the queue system')
+                self.info('JOBID: %s' % self.getJobIds())
 
-            self.info('Hostname: %s' % self.getHostFullName())
-            self.info('PID: %s' % self.getPid())
             self.info('pyworkflow: %s' % pw.__version__)
             plugin = self.getPlugin()
-            self.info('plugin: %s' %  plugin.getName())
+            self.info('plugin: %s' % plugin.getName())
             package = self.getClassPackage()
             if hasattr(package, "__version__"):
                 self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
