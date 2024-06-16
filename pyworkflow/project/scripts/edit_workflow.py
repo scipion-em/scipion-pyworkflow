@@ -40,7 +40,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python -m pyworkflow.project.scripts.edit_workflow workflow.json
+    Usage: scipion3 python -m pyworkflow.project.scripts.edit_workflow workflow.json
         Edit the provide json file with scipion workflow.
         It will create a project, import the workflow and save
         the workflow back before closing the project.

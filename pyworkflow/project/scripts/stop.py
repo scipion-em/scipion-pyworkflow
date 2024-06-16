@@ -38,7 +38,7 @@ def usage(error):
     print("""
     ERROR: %s
 
-    Usage: scipion python -m pyworkflow.project.scripts.stop project_name
+    Usage: scipion3 python -m pyworkflow.project.scripts.stop project_name
         This script will stop all running protocols of the specified project.
     """ % error)
     sys.exit(1)
@@ -66,13 +66,13 @@ try:
 except:
     projectPath = manager.getProjectPath(projName)
 
-project = Project(path=projectPath)
+project = Project(pw.Config.getDomain(), projectPath)
 project.load()
 
 runs = project.getRuns()
 
 # Now assuming that there is no dependencies between runs
-# and the graph is lineal
+# and the graph is linear
 for prot in runs:
     if prot.isActive():
         try:

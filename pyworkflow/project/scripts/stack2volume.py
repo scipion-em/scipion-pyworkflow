@@ -12,7 +12,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python -m pyworkflow.project.scripts.stack2volume PATH
+    Usage: scipion3 python -m pyworkflow.project.scripts.stack2volume PATH
         PATH: path to look for stack files
     The script will swap the dimensions in the header of a stack to make them 
     volumes. Something like 10 x 1 x 10 x 10 will be changed to 1 x 10 x 10 x 10
@@ -38,4 +38,4 @@ for file in glob(path):
         header.writeHeader()
 
     except Exception as e:
-        print(pwutils.red("Failed to change header: % s" % e))
+        print(pwutils.red("Failed to change header: %s" % e))
