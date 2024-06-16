@@ -40,7 +40,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion3 python -m pyworkflow.project.scripts.schedule projectName 
+    Usage: scipion python -m pyworkflow.project.scripts.schedule projectName 
     
               options: --ignore ProtClassName1 ProtClassName2 ProtClassLabel1 ...
               

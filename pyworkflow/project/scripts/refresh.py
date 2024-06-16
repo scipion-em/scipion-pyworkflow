@@ -39,11 +39,11 @@ def usage(error):
     print("""
     ERROR: %s
 
-    Usage: scipion3 python -m pyworkflow.scripts.project.refresh project_name [refresh_period]
+    Usage: scipion python -m pyworkflow.scripts.project.refresh project_name [refresh_period]
         This script will refresh the project.sqlite file of the specified project.
         We can specify how often it will refresh in seconds (defaults 60).
         e.g.
-        scipion3 python -m pyworkflow.scripts.project.refresh TestExtractParticles 15
+        scipion python -m pyworkflow.scripts.project.refresh TestExtractParticles 15
     """ % error)
     sys.exit(1)
 
