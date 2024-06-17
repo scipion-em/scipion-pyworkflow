@@ -40,7 +40,7 @@ import pyworkflow as pw
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
-from pyworkflow.protocol.constants import UNKNOWN_JOBID, STATUS_FAILED
+from pyworkflow.protocol.constants import UNKNOWN_JOBID, STATUS_FAILED, STATUS_FINISHED, STATUS_RUNNING
 
 
 # ******************************************************************
@@ -149,6 +149,7 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
             protocol.setStatus(STATUS_FAILED)
         else:
             protocol.setJobId(jobId)
+            protocol.setPid(0)  # we go through the queue, so we rely on the jobId
     else:  # If not, retrieve and set the process ID (both for normal execution or when using the queue for steps)
         pId = _run(command, wait, stdin, stdout, stderr)
         protocol.setPid(pId)
@@ -225,14 +226,45 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
         logger.info("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
         return UNKNOWN_JOBID
 
+def _checkJobStatus(hostConfig, jobid):
+    """
+    General method to verify the job status in the queue based on the jobId and host.conf CHECK_COMMAND
+    returns: STATUS_FINISHED (finished) or STATUS_RUNNING (running)
+    """
+    command = hostConfig.getCheckCommand() % {"JOB_ID": jobid}
+    logger.debug("checking job status for %s: %s" % (jobid, command))
+
+    p = Popen(command, shell=True, stdout=PIPE, preexec_fn=os.setsid)
+
+    out = p.communicate()[0].decode(errors='backslashreplace')
+
+    jobDoneRegex = hostConfig.getJobDoneRegex()
+    logger.debug("Queue engine replied %s, variable JOB_DONE_REGEX has %s" % (out, jobDoneRegex))
+    # If nothing is returned we assume job is no longer in queue and thus finished
+    if out == "":
+        logger.warning("Empty response from queue system to job (%s)" % jobid)
+        return STATUS_FINISHED
+
+    # If some string is returned we use the JOB_DONE_REGEX variable (if present) to infer the status
+    elif jobDoneRegex is not None:
+        s = re.search(jobDoneRegex, out)
+        if s:
+            logger.debug("Job (%s) finished" % jobid)
+            return STATUS_FINISHED
+        else:
+            logger.debug("Job (%s) still running" % jobid)
+            return STATUS_RUNNING
+    # If JOB_DONE_REGEX is not defined and queue has returned something we assume that job is still running
+    else:
+        return STATUS_RUNNING
 
 def _run(command, wait, stdin=None, stdout=None, stderr=None):
     """ Execute a command in a subprocess and return the pid. """
     gcmd = greenStr(command)
     logger.info("** Running command: '%s'" % gcmd)
     p = Popen(command, shell=True, stdout=stdout, stderr=stderr)
-    jobId = p.pid
+    pid = p.pid
     if wait:
         p.wait()
 
-    return jobId
+    return pid
