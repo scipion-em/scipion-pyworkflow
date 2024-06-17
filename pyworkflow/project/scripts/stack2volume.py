@@ -38,4 +38,4 @@ for file in glob(path):
         header.writeHeader()
 
     except Exception as e:
-        print(pwutils.red("Failed to change header: % s" % e))
+        print(pwutils.red("Failed to change header: %s" % e))
