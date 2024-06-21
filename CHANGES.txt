@@ -7,7 +7,8 @@ users:
   - Streaming protocols based on new streaming (generation steps) are resumable
   - Avoiding a double process when launching a workflow using the protocol form
   - pyworkflowtest tests fixed
-  - GUI will detect when protocols processes have been killed(cancelled) in all cases?.
+  - GUI will detect when protocols processes have been killed(cancelled) in all cases?
+  - fix outdated pyworkflow scripts
 developers:
   - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
     Protocol._lock context, which causes a permanent lock.

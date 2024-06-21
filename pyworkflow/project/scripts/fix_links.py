@@ -17,27 +17,23 @@ def usage(error):
         PROJECT: provide the project name to fix broken links in the imports
         SEARCH_DIR: provide a directory where to look for the files and fix the links    
     """ % error)
-    os._exit(1)
+    sys.exit(1)
 
-def main():
-    if len(sys.argv) != 3:
-        usage("Incorrect number of input parameters")
 
-    projName = sys.argv[1]
-    searchDir = os.path.abspath(sys.argv[2])
+if len(sys.argv) != 3:
+    usage("Incorrect number of input parameters")
 
-    # Create a new project
-    manager = Manager()
+projName = sys.argv[1]
+searchDir = os.path.abspath(sys.argv[2])
 
-    if not manager.hasProject(projName):
-        usage("Nonexistent project: %s" % pwutils.red(projName))
+# Create a new project
+manager = Manager()
 
-    if not os.path.exists(searchDir):
-        usage("Nonexistent SEARCH_DIR: %s" % pwutils.red(searchDir))
+if not manager.hasProject(projName):
+    usage("Nonexistent project: %s" % pwutils.red(projName))
 
-    project = manager.loadProject(projName)
+if not os.path.exists(searchDir):
+    usage("Nonexistent SEARCH_DIR: %s" % pwutils.red(searchDir))
 
-    project.fixLinks(searchDir)
-
-if __name__ == '__main__':
-    main()
+project = manager.loadProject(projName)
+project.fixLinks(searchDir)

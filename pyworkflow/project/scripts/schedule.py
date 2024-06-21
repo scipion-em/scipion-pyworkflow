@@ -95,13 +95,13 @@ for root in roots:
     for child in root.getChilds():
         workflow, _ = project._getSubworkflow(child.run)
         for prot, level in workflow.values():
+            protLabelName = prot.getObjLabel()
             if prot.forceSchedule.get():
                 print(pwutils.blueStr("\nStopping scheduling at '%s'. Force scheduling found.\n"
                                       % protLabelName))
                 sys.exit()
 
             protClassName = prot.getClassName()
-            protLabelName = prot.getObjLabel()
             if (protClassName not in sys.argv[3:] and
                     protLabelName not in sys.argv[3:]):
                 project.scheduleProtocol(prot,
