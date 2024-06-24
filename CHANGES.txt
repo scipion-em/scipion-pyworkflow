@@ -1,5 +1,6 @@
 V3.7.0
 users:
+  - Variables window saves non default variables changed (bug)
   - Queue interoperability review:
     - jobs cancelled in the queue are detected in scipion
     - job and pids handling improved, pids = 0 when use queue for protocol rely on jobid
@@ -10,6 +11,7 @@ users:
   - GUI will detect when protocols processes have been killed(cancelled) in all cases?
   - fix outdated pyworkflow scripts
 developers:
+  - ListDialog has a refresh method to refresh the content taking into account the filter
   - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
     Protocol._lock context, which causes a permanent lock.
   - XmlMapper removed.
