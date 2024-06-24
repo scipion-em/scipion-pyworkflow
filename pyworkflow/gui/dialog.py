@@ -760,6 +760,7 @@ class ToolbarListDialog(ListDialog):
         """
         self.toolbarButtons = toolbarButtons
         self._itemDoubleClick = kwargs.get('itemDoubleClick', None)
+        self._itemOnClick = kwargs.get('itemOnClick', None)
         ListDialog.__init__(self, parent, title, provider, message, **kwargs)
 
     def body(self, bodyFrame):
@@ -780,6 +781,9 @@ class ToolbarListDialog(ListDialog):
 
         if self._itemDoubleClick:
             self.tree.itemDoubleClick = self._itemDoubleClick
+
+        if self._itemOnClick:
+            self.tree.itemOnClick = self._itemOnClick
 
     def addButton(self, button, col):
 

@@ -16,6 +16,7 @@ developers:
   - FlatMapper instanatiation centralized:
      New variable: SCIPION_MAPPER_USE_TEMPLATE. By default uses the template as it was now. If deacivated, instantiation happens on each iteration (less performant) but dev friendly
   - Adding a parameter to launch jobs (e.g: bash)
+  - Handling item-click event in the treeview dialog
 
 V3.6.0
 users:
