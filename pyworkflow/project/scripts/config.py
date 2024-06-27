@@ -38,7 +38,7 @@ def usage(error):
     print("""
     ERROR: %s
     
-    Usage: scipion python -m pyworkflow.project.scripts.config_projects ProjectName [readOnly=True|False] [lifeTime=X|None]
+    Usage: scipion python -m pyworkflow.project.scripts.config ProjectName [readOnly=True|False] [lifeTime=X|None]
         This script shows (or edits) some of the configuration of the project.
         Use readOnly=True (or False) to set/unset read-only property.
         Use lifeTime=X for setting X hours or None to unset lifetime of the project.

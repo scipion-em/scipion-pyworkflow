@@ -66,13 +66,13 @@ try:
 except:
     projectPath = manager.getProjectPath(projName)
 
-project = Project(path=projectPath)
+project = Project(pw.Config.getDomain(), projectPath)
 project.load()
 
 runs = project.getRuns()
 
 # Now assuming that there is no dependencies between runs
-# and the graph is lineal
+# and the graph is linear
 for prot in runs:
     if prot.isActive():
         try:

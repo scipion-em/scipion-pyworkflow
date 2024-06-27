@@ -663,36 +663,6 @@ class ListDialog(Dialog):
     def _createFilterBox(self, content):
         """ Create the Frame with Filter widgets """
 
-        def _onSearch(e=None):
-
-            def comparison():
-                pattern = self._searchVar.get().lower()
-                return [w[0] for w in self.lista.items()
-                        if pattern in self.lista.get(w[0]).lower()]
-
-            self.tree.update()
-            self.lista = {}
-
-            for item in self.tree.get_children():
-
-                itemStr = self.tree.item(item)['text']
-                for value in self.tree.item(item)['values']:
-                    if isinstance(value, int):
-                        itemStr = itemStr + ' ' + str(value)
-                    else:
-                        itemStr = itemStr + ' ' + value
-
-                self.lista[item] = itemStr
-
-            if self._searchVar.get() != '':
-                matchs = comparison()
-                if matchs:
-                    for item in self.tree.get_children():
-                        if item not in matchs:
-                            self.tree.delete(item)
-                else:
-                    self.tree.delete(*self.tree.get_children())
-
         self.searchBoxframe = tk.Frame(content)
         label = tk.Label(self.searchBoxframe, text="Filter")
         label.grid(row=0, column=0, sticky='nw')
@@ -701,11 +671,45 @@ class ListDialog(Dialog):
                               textvariable=self._searchVar, width=40,
                               font=gui.getDefaultFont())
 
-        self.entry.bind('<KeyRelease>', _onSearch)
+        self.entry.bind('<KeyRelease>', self._onSearch)
         self.entry.focus_set()
         self.entry.grid(row=0, column=1, sticky='news')
         self.searchBoxframe.grid(row=0, column=0, sticky='news', padx=5,
                                  pady=(10, 5))
+
+    def refresh(self):
+        """ Refreshes the list taking into account the filter"""
+        self._onSearch()
+
+    def _onSearch(self, e=None):
+
+        def comparison():
+            pattern = self._searchVar.get().lower()
+            return [w[0] for w in self.lista.items()
+                    if pattern in self.lista.get(w[0]).lower()]
+
+        self.tree.update()
+        self.lista = {}
+
+        for item in self.tree.get_children():
+
+            itemStr = self.tree.item(item)['text']
+            for value in self.tree.item(item)['values']:
+                if isinstance(value, int):
+                    itemStr = itemStr + ' ' + str(value)
+                else:
+                    itemStr = itemStr + ' ' + value
+
+            self.lista[item] = itemStr
+
+        if self._searchVar.get() != '':
+            matchs = comparison()
+            if matchs:
+                for item in self.tree.get_children():
+                    if item not in matchs:
+                        self.tree.delete(item)
+            else:
+                self.tree.delete(*self.tree.get_children())
 
     def apply(self):
         self.values = self.tree.getSelectedObjects()
@@ -760,6 +764,7 @@ class ToolbarListDialog(ListDialog):
         """
         self.toolbarButtons = toolbarButtons
         self._itemDoubleClick = kwargs.get('itemDoubleClick', None)
+        self._itemOnClick = kwargs.get('itemOnClick', None)
         ListDialog.__init__(self, parent, title, provider, message, **kwargs)
 
     def body(self, bodyFrame):
@@ -780,6 +785,9 @@ class ToolbarListDialog(ListDialog):
 
         if self._itemDoubleClick:
             self.tree.itemDoubleClick = self._itemDoubleClick
+
+        if self._itemOnClick:
+            self.tree.itemOnClick = self._itemOnClick
 
     def addButton(self, button, col):
 

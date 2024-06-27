@@ -122,12 +122,25 @@ class ImagePreview(Preview):
         self.ax = ax
         
     def _update(self, Z, *args):
-        self.figureimg.set_data(Z)
-        self.figureimg.autoscale()
-        self.figureimg.set(extent=[0, Z.shape[1], 0, Z.shape[0]])
-        self.canvas.draw()
-        
-        
+        # Adjust the Z shape according to the current data structure.
+        if Z.ndim == 4 and Z.shape[1] == 1:
+            # Assuming that the second dimension is redundant
+            ZAdjusted = Z[:, 0, :, :]
+        else:
+            ZAdjusted = Z
+
+        # If ZAdjusted is a grayscale image (it has only one layer)
+        if ZAdjusted.ndim == 3 and ZAdjusted.shape[0] == 1:
+            ZAdjusted = ZAdjusted[0, :, :]
+
+        # Checks if ZAdjusted has a form compatible with set_data
+        if ZAdjusted.ndim == 2 or (ZAdjusted.ndim == 3 and (ZAdjusted.shape[2] == 3 or ZAdjusted.shape[2] == 4)):
+            self.figureimg.set_data(ZAdjusted)
+            self.figureimg.autoscale()
+            self.figureimg.set(extent=[0, ZAdjusted.shape[1], 0, ZAdjusted.shape[0]])
+            self.canvas.draw()
+
+
 class PsdPreview(Preview):
     def __init__(self, master, dim, lf, hf, dpi=72, label="PSD", listenersDict=None):
         Preview.__init__(self, master, dim, dpi, label, listenersDict=listenersDict)

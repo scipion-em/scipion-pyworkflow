@@ -87,12 +87,17 @@ class Variable:
         self.source = source
         self.value = value
         self.default = default
+        self.isDefault = isDefault if isDefault is not None else self._isValueDefault()
         self.var_type = var_type
-        self.isDefault = isDefault if isDefault is not None else value==default
     def setToDefault(self):
         self.isDefault=True
         self.value=self.default
 
+    def setValue(self, new_value):
+        self.value = new_value
+        self.isDefault= self._isValueDefault()
+    def _isValueDefault(self):
+        return self.value==self.default
 class VariablesRegistry:
     _variables={}
 
