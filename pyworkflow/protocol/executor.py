@@ -311,9 +311,9 @@ class QueueStepExecutor(ThreadStepExecutor):
         submitDict['JOB_LOGS'] = os.path.join(getParentFolder(submitDict['JOB_SCRIPT']), submitDict['JOB_NAME'])
 
         jobid = _submit(self.hostConfig, submitDict, cwd, env)
-        # if self.protocol._lock: # Just in case we detect concurrency problem
-        self.protocol.appendJobId(jobid) # append active jobs
-        self.protocol._store(self.protocol._jobId)
+        with self.protocol._lock:  # Just in case we detect concurrency problem
+            self.protocol.appendJobId(jobid)  # append active jobs
+            self.protocol._store(self.protocol._jobId)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
             logger.info("jobId is none therefore we set it to fail")
@@ -329,8 +329,8 @@ class QueueStepExecutor(ThreadStepExecutor):
             if wait < 300:
                 wait += 3
 
-        # if self.protocol._lock: # Just in case we detect concurrency problem
-        self.protocol.removeJobId(jobid) # After completion, remove inactive jobs.
-        self.protocol._store(self.protocol._jobId)
+        with self.protocol._lock:  # Just in case we detect concurrency problem
+            self.protocol.removeJobId(jobid)  # After completion, remove inactive jobs.
+            self.protocol._store(self.protocol._jobId)
 
         return status
