@@ -1125,6 +1125,9 @@ class Set(Object):
         self._representative = None
         self._classesDict = classesDict
         self._indexes = kwargs.get('indexes', [])
+        # Dict that contains the attributes to be checked for compatibility in operations involving multiple sets,
+        # such us the union of sets
+        self._attrDictForSetsComp = {}
 
         # If filename is passed in the constructor, it means that
         # we want to create a new object, so we need to delete it if

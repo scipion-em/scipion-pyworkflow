@@ -10,6 +10,7 @@ users:
   - pyworkflowtest tests fixed
   - GUI will detect when protocols processes have been killed(cancelled) in all cases?
   - fix outdated pyworkflow scripts
+  - Join heterogeneous sets are possible for tomography objects TS and tomograms.
 developers:
   - ListDialog has a refresh method to refresh the content taking into account the filter
   - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
