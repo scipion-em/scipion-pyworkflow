@@ -782,12 +782,10 @@ class Project(object):
         finally:
             protocol.setSaved()
             protocol.runMode.set(MODE_RESTART)
-            protocol._store()
-            self._storeProtocol(protocol)
             protocol.makePathsAndClean()  # Create working dir if necessary
-            protocol.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
+            # Clean jobIds, Pid and StepsDone;
+            protocol.cleanExecutionAttributes()  # otherwise, this would retain old executions info
             protocol._store()
-            self._storeProtocol(protocol)
 
     def continueProtocol(self, protocol):
         """ This function should be called 
