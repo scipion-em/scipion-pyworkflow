@@ -258,7 +258,7 @@ class Text(tk.Text, Scrollable):
         else:
             path = os.path.join(dirname, fname)
 
-        if os.path.exists(path):
+        if os.path.exists(path) or path.startswith("http"):
             from pwem import emlib
             fn = emlib.FileName(path)
             if fn is not None and (fn.isImage() or fn.isMetaData()):

@@ -1543,7 +1543,7 @@ class Protocol(Step):
 
             self.info('pyworkflow: %s' % pw.__version__)
             plugin = self.getPlugin()
-            self.info('plugin: %s' % plugin.getName())
+            self.info('plugin: %s - %s' % (plugin.getName(), plugin.getUrl()))
             package = self.getClassPackage()
             if hasattr(package, "__version__"):
                 self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
