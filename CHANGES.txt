@@ -4,7 +4,7 @@ users:
   - Queue interoperability review:
     - jobs cancelled in the queue are detected in scipion
     - job and pids handling improved, pids = 0 when use queue for protocol rely on jobid
-    - locking the database to avoid concurrency when updating the protocols jobid
+    - Change Protocols Lock to Rlocks objects to avoid concurrency when updating the protocols jobid
   - add information in the protocol log regarding execution type (pid or jobid)f
   - Streaming protocols based on new streaming (generation steps) are resumable
   - Avoiding a double process when launching a workflow using the protocol form
