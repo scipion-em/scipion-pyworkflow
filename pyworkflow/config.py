@@ -277,6 +277,10 @@ class Config:
 
     SCIPION_NOTES_ARGS = _get(SCIPION_NOTES_ARGS, None)
 
+    # External text editor:
+    SCIPION_TEXT_EDITOR = _get(SCIPION_TEXT_EDITOR, '',
+    "Preferred text editor executable.", caster=str)
+
     # Aspect
     SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica",
     "Name of the font to use in Scipion GUI. Defaults to Helvetica.")
