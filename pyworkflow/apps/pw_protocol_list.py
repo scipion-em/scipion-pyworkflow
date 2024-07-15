@@ -63,15 +63,11 @@ def hasDoubleInheritance(classRef):
 if __name__ == '__main__':
     count = 0
     withDoc = '--with-doc' in sys.argv
-    asciidoc = '--asciidoc' in sys.argv
     extended = '--extended' in sys.argv
+    ai = '--ai' in sys.argv
 
     emProtocolsDict = Config.getDomain().getProtocols()
-    emCategories = [('Imports', ProtImport, []),
-                    ('Micrographs', ProtMicrographs, []),
-                    ('Particles', ProtParticles, []),
-                    ('2D', Prot2D, []),
-                    ('3D', Prot3D, [])]
+
     protDict = {}
 
     # Group protocols by package name
@@ -90,10 +86,6 @@ if __name__ == '__main__':
             else:
                 protTuple = (k, v)
             protDict[packageName].append(protTuple)
-            for c in emCategories:
-                if issubclass(v, c[1]):
-                    c[2].append(protTuple)
-
 
     def iterGroups(protDict):
         groups = list(protDict.keys())
@@ -111,20 +103,7 @@ if __name__ == '__main__':
             print("* link:%s[%s]: %s" % (k, l, doc))
 
 
-    if asciidoc:
-        print(":toc:\n:toc-placement!:\n\ntoc::[]\n")
-
-        print("\n== By Categories\n")
-        for c in emCategories:
-            print("\n=== %s\n" % c[0])
-            printProtocols(c[2])
-
-        print("\n== By Packages\n")
-        for group, prots in iterGroups(protDict):
-            print("\n=== ", group, "(%d protocols)\n" % len(prots))
-            printProtocols(prots)
-
-    elif withDoc:
+    if withDoc:
         for group, prots in iterGroups(protDict):
             print("Package: ", group, "(%d protocols)" % len(prots))
             for p in prots:
@@ -144,6 +123,18 @@ if __name__ == '__main__':
                 for p in prots:
                     print(formatStr.format(group, p[0],
                                            p[1].getClassLabel(), *p[2:]))
+        elif ai:
+            for group, prots in iterGroups(protDict):
+                for protClassName, protClass in prots:
+                    print("\nThe protocol named \"%s\" can be found in the %s plugin." %(protClass._label, group))
+                    print("\"%s\" protocol help is as follows:\n %s." % (protClass._label, protClass.__doc__))
+                    instance = protClass()
+
+                    for name, param in instance._definition.iterParams():
+                        print("\"%s\" has a \"%s\" parameter that is explained as: %s" % (protClass._label, param.label, param.help))
+
+
+
         else:
             formatStr = "{:<15}\t{:<35}\t{:<35}"
             print(formatStr.format("PACKAGE", "PROTOCOL", "LABEL"))

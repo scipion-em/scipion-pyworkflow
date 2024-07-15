@@ -202,7 +202,7 @@ class Validations:
             return cls.validDecimal(value)
         elif fieldType == VarTypes.INTEGER.value:
             return cls.validInteger(value)
-        elif fieldType == VarTypes.PATH.value:
+        elif fieldType in (VarTypes.PATH.value, VarTypes.FOLDER.value):
             return cls.validPath(value)
         elif fieldType == VarTypes.STRING.value:
             return cls.validString(value)

@@ -30,7 +30,7 @@ from ..protocol.launch import _checkJobStatus
 
 ROOT_NODE_NAME = "PROJECT"
 logger = logging.getLogger(__name__)
-
+from pyworkflow.utils.log import LoggingConfigurator
 import datetime as dt
 import json
 import os
@@ -125,7 +125,7 @@ class Project(object):
     def getPath(self, *paths):
         """Return path from the project root"""
         if paths:
-            return os.path.join(*paths)
+            return os.path.join(*paths) # Why this is relative!!
         else:
             return self.path
 
@@ -193,6 +193,9 @@ class Project(object):
 
     def getLogPath(self, *paths):
         return self.getPath(PROJECT_LOGS, *paths)
+
+    def getProjectLog(self):
+        return os.path.join(self.path,self.getLogPath("project.log")) # For some reason getLogsPath is relative!
 
     def getSettings(self):
         return self.settings
@@ -281,6 +284,8 @@ class Project(object):
         #     logger.info("ERROR: Project %s load failed.\n"
         #           "       Message: %s\n" % (self.path, e))
 
+    def configureLogging(self):
+        LoggingConfigurator.setUpGUILogging(self.getProjectLog())
     def _loadCreationTime(self):
         # Load creation time, it should be in project.sqlite or
         # in some old projects it is found in settings.sqlite

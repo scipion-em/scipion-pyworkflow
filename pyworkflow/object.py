@@ -35,7 +35,7 @@ from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
 
-from pyworkflow.utils import getListFromValues, getListFromRangeString
+from pyworkflow.utils import getListFromValues, getListFromRangeString, strToDuration
 from pyworkflow.utils.reflection import getSubclasses
 
 
@@ -780,6 +780,10 @@ class String(Scalar):
         """ Returns a list from a string with values as described at getListFromRangeString.
          Useful for NumericRangeParam params"""
         return getListFromRangeString(self._objValue)
+
+    def toSeconds(self):
+
+        return strToDuration(self.get())
 
 
 class Float(Scalar):
