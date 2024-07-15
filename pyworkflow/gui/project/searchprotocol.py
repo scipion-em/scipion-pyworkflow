@@ -69,14 +69,15 @@ class SearchProtocolWindow(SearchBaseWindow):
         'score': ('Score', {'width': 50, 'stretch': tk.FALSE}, 5, int)
     }
 
-    def __init__(self, parentWindow, **kwargs):
+    def __init__(self, parentWindow, position=None):
 
+        posStr = "" if position is None else " at (%s,%s)" % position
+        self.position = position
         super().__init__(parentWindow,
-                         title="Add a protocol",
-                         **kwargs)
+                         title="Add a protocol" + posStr)
 
     def _createResultsTree(self, frame, show, columns):
-        return self.master.getViewWidget()._createProtocolsTree(frame, show=show, columns=columns)
+        return self.master.getViewWidget()._createProtocolsTree(frame, show=show, columns=columns, position=self.position)
 
     def _onSearchClick(self, e=None):
 

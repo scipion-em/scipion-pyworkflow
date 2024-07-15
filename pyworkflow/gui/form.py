@@ -1537,13 +1537,16 @@ class FormWindow(Window):
         4. Buttons: buttons at bottom for close, save and execute.
     """
 
-    def __init__(self, title, protocol, callback, master=None, **kwargs):
+    def __init__(self, title, protocol, callback, master=None, position=None, **kwargs):
         """ Constructor of the Form window. 
         Params:
          title: title string of the windows.
          protocol: protocol from which the form will be generated.
          callback: callback function to call when Save or Execute are press.
         """
+
+        if position:
+            title = title + " at %s,%s" % position
         Window.__init__(self, title, master, icon=pwutils.Icon.SCIPION_ICON_PROT,
                         weight=False, minsize=(600, 450), **kwargs)
 
@@ -1554,6 +1557,7 @@ class FormWindow(Window):
         self.disableRunMode = kwargs.get('disableRunMode', False)
         self.bindings = []
         self.protocol = protocol
+        self.position = position
         # This control when to close or not after execute
         self.visualizeMode = kwargs.get('visualizeMode', False)
         self.headerBgColor = pw.Config.SCIPION_MAIN_COLOR
@@ -2188,7 +2192,7 @@ class FormWindow(Window):
             # to avoid ghost inputs
             self._checkAllChanges(toggleWidgetVisibility=False)
 
-            message = self.callback(self.protocol, onlySave, doSchedule)
+            message = self.callback(self.protocol, onlySave, doSchedule, position=self.position)
             if not self.visualizeMode:
                 if len(message):
                     self.showInfo(message, "Protocol action")

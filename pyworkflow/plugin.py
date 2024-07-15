@@ -145,7 +145,10 @@ class Domain:
     @classmethod
     def _discoverGUIPlugins(cls):
         for entry_point in importlib_metadata.entry_points(group='pyworkflow.guiplugin'):
-            entry_point.load()
+            try:
+                entry_point.load()
+            except Exception as e:
+                logger.warning("Can't import %s GUI plugin: %s" % (entry_point, e))
 
     @classmethod
     def getPluginModule(cls, name):
