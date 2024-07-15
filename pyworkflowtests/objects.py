@@ -48,6 +48,12 @@ class MockObject(pwobj.Object):
         """ Get all filePaths """
         return None
 
+    # Maybe something to be moved to Object?
+    def __eq__(self, other):
+        if self._objValue is None:
+            return self.__class__ == other.__class__ and self._objId == other._objId
+        return self._objValue == other._objValue
+
 
 class Complex(MockObject):
     """ Simple class used for tests here. """

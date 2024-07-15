@@ -362,36 +362,6 @@ class TestSqliteFlatMapper(pwtests.BaseTest):
         self.assertEqual(len(items), 0)
 
 
-class TestXmlMapper(pwtests.BaseTest):
-
-    @classmethod
-    def setUpClass(cls):
-        pwtests.setupTestOutput(cls)
-
-    def test_XMLMapper(self):
-        fn = self.getOutputPath("model.xml")
-        c = Complex.createComplex()
-        mapper = pwmapper.XmlMapper(fn)
-        mapper.insert(c)
-        # write file
-        mapper.commit()
-
-        # TODO: Following is the gold Xml
-        # now we can not parse it from StringIO
-        goldXml = """
-<?xml version='1.0' encoding='utf-8'?>
-<ALL>
-  <Complex>
-    <imag>1.0</imag>
-    <real>1.0</real>
-  </Complex>
-</ALL>
-        """
-        # mapper2 = XmlMapper(fnGold, mod.Domain.getMapperDict())
-        # c2 = mapper2.selectFirst()
-        # self.assertEquals(c.imag.get(), c2.imag.get())
-
-
 class TestDataSet(pwtests.BaseTest):
     """ Some tests for DataSet implementation. """
 

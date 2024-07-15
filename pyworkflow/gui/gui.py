@@ -228,7 +228,7 @@ def getImage(imageName, imgDict=None, tkImage=True, percent=100,
         elif maxheight and h > maxheight:
             newSize = int(w * float(maxheight) / h), maxheight
         if newSize:
-            image.thumbnail(newSize, Image.ANTIALIAS)
+            image.thumbnail(newSize, Image.LANCZOS)
         if tkImage:
             image = ImageTk.PhotoImage(image)
 

@@ -41,9 +41,6 @@ import importlib
 import inspect
 import traceback
 import types
-import pkg_resources
-from email import message_from_string
-from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
 import pyworkflow as pw
@@ -51,6 +48,12 @@ import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 from pyworkflow.template import Template
 from pyworkflow.utils import sortListByList
+
+try:
+    import importlib_metadata
+except ModuleNotFoundError:
+    raise ModuleNotFoundError('You are missing importlib-metadata package. '
+                              'Please run: scipion3 pip install importlib-metadata')
 
 from .constants import *
 
@@ -131,20 +134,21 @@ class Domain:
     @classmethod
     def _discoverPlugins(cls):
         # Get the list of plugins registered
-        plugin_modules = []
-        for entry_point in pkg_resources.iter_entry_points('pyworkflow.plugin'):
-            plugin_modules.append(entry_point.name)
+        plugin_modules = importlib_metadata.entry_points(group='pyworkflow.plugin')
 
         # Sort the list taking into account the priority
-        plugin_modules = sortListByList(plugin_modules, pw.Config.getPriorityPackageList())
+        plugin_modules = sortListByList(plugin_modules.names, pw.Config.getPriorityPackageList())
 
         for module in plugin_modules:
             cls.registerPlugin(module)
 
     @classmethod
     def _discoverGUIPlugins(cls):
-        for entry_point in pkg_resources.iter_entry_points('pyworkflow.guiplugin'):
-            entry_point.load()
+        for entry_point in importlib_metadata.entry_points(group='pyworkflow.guiplugin'):
+            try:
+                entry_point.load()
+            except Exception as e:
+                logger.warning("Can't import %s GUI plugin: %s" % (entry_point, e))
 
     @classmethod
     def getPluginModule(cls, name):
@@ -629,7 +633,7 @@ class Plugin:
     def getActiveVersion(cls, home=None, versions=None):
         """
         Returns the version of the binaries that are currently active.
-        In the current implementation it will be inferred from the \*_HOME
+        In the current implementation it will be inferred from the *_HOME
         variable, so it should contain the version number in it. """
 
         # FIXME: (JMRT) Use the basename might alleviate the issue with matching
@@ -706,39 +710,3 @@ class Plugin:
         if self._inDevelMode is None:
             self._inDevelMode = pwutils.getPythonPackagesFolder() not in self.getPath()
         return self._inDevelMode
-
-
-class PluginInfo:
-    """
-    Information related to a given plugin when it is installed via PIP
-    """
-    def __init__(self, name):
-        try:
-            dist = pkg_resources.get_distribution(name)
-            lines = [l for l in dist._get_metadata(dist.PKG_INFO)]
-            tuples = message_from_string('\n'.join(lines))
-
-        except Exception:
-            logger.info("Plugin %s seems is not a pip module yet. "
-                  "No metadata found" % name)
-            tuples = message_from_string('Author: plugin in development mode?')
-
-        self._name = name
-        self._metadata = OrderedDict()
-
-        for v in tuples.items():
-            if v[0] == 'Keywords':
-                break
-            self._metadata[v[0]] = v[1]
-
-    def getAuthor(self):
-        return self._metadata.get('Author', "")
-
-    def getAuthorEmail(self):
-        return self._metadata.get('Author-email', '')
-
-    def getHomePage(self):
-        return self._metadata.get('Home-page', '')
-
-    def getKeywords(self):
-        return self._metadata.get('Keywords', '')

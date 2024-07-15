@@ -1922,22 +1922,27 @@ class FormWindow(Window):
         # Grab the host config from the project, since it 
         # have not been set in the protocol
         hostConfig = self._getHostConfig()
-        queues = OrderedDict(sorted(hostConfig.queueSystem.queues.items()))
-        # If there is only one Queue and it has no parameters
-        # don't bother to showing the QueueDialog
-        noQueueChoices = len(queues) == 1 and len(list(queues.values())[0]) == 0
-        if noQueueChoices:
-            result = list(queues.keys())[0], {}
+        queues = hostConfig.queueSystem.queues
+        if not queues:
+            self.showError("No queues configured!")
+            return False
         else:
-            dlg = QueueDialog(self, queues)
+            queues = OrderedDict(sorted(queues.items()))
+            # If there is only one Queue and it has no parameters
+            # don't bother to showing the QueueDialog
+            noQueueChoices = len(queues) == 1 and len(list(queues.values())[0]) == 0
+            if noQueueChoices:
+                result = list(queues.keys())[0], {}
+            else:
+                dlg = QueueDialog(self, queues)
 
-            if not dlg.resultYes():
-                return False
-            result = dlg.value
+                if not dlg.resultYes():
+                    return False
+                result = dlg.value
 
-        self.protocol.setQueueParams(result)
-        self.protocol.queueShown = True
-        return True
+            self.protocol.setQueueParams(result)
+            self.protocol.queueShown = True
+            return True
 
     def _createParams(self, parent):
         paramsFrame = tk.Frame(parent, name="params")
@@ -2163,7 +2168,7 @@ class FormWindow(Window):
         elif resultAction == RESULT_RUN_ALL:
             if errors:
                 self.showInfo(errors)
-            self._close()
+            self.close()
             return
 
         # This code will happen when protocol is executed alone

@@ -25,10 +25,12 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
+import contextlib
 import sys, os
 import json
 import threading
 import time
+from datetime import datetime
 
 import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
@@ -956,7 +958,9 @@ class Protocol(Step):
         If not objects are passed, the whole protocol is stored.
         """
         if self.mapper is not None:
-            with self._lock:
+
+            lock = contextlib.nullcontext() if self._lock.locked() else self._lock
+            with lock:
                 if len(objs) == 0:
                     self.mapper.store(self)
                 else:
@@ -1524,16 +1528,22 @@ class Protocol(Step):
                                                                project_name=self.getProject().getName(),
                                                                prot_id=self.getObjId(),
                                                                prot_name=self.getClassName()))
+
+            self.setHostFullName(pwutils.getHostFullName())
+            self.info('Hostname: %s' % self.getHostFullName())
+
             # Store the full machine name where the protocol is running
             # and also its PID
-            self.setPid(os.getpid())
-            self.setHostFullName(pwutils.getHostFullName())
+            if not self.useQueueForProtocol():  # Take as reference the pID
+                self.setPid(os.getpid())
+                self.info('PID: %s' % self.getPid())
+            else:  # Take as reference the jobID
+                self.info('Executing through the queue system')
+                self.info('JOBID: %s' % self.getJobIds())
 
-            self.info('Hostname: %s' % self.getHostFullName())
-            self.info('PID: %s' % self.getPid())
             self.info('pyworkflow: %s' % pw.__version__)
             plugin = self.getPlugin()
-            self.info('plugin: %s' %  plugin.getName())
+            self.info('plugin: %s' % plugin.getName())
             package = self.getClassPackage()
             if hasattr(package, "__version__"):
                 self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
@@ -2508,7 +2518,12 @@ class ProtStreamingBase(Protocol):
         self.stepsExecutionMode = STEPS_PARALLEL
     def _insertAllSteps(self):
         # Insert the step that generates the steps
-        self._insertFunctionStep(self.stepsGeneratorStep)
+        self._insertFunctionStep(self.resumableStepGeneratorStep, str(datetime.now()))
+
+    def resumableStepGeneratorStep(self, ts):
+        """ This allow to resume protocols. ts is the time stamp so this stap is alway different form previous exceution"""
+        self.stepsGeneratorStep()
+
 
     def _stepsCheck(self):
 

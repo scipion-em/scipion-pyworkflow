@@ -62,7 +62,9 @@ elif os.name == 'posix':  # linux systems and so on
         return None
 
     x_open = find_prog('xdg-open', 'gnome-open', 'kde-open', 'gvfs-open')
-    editor = find_prog('pluma', 'gedit', 'kwrite', 'geany', 'kate',
+    editor = pw.Config.SCIPION_TEXT_EDITOR
+    if not editor:
+        editor = find_prog('pluma', 'gedit', 'kwrite', 'geany', 'kate',
                        'emacs', 'nedit', 'mousepad', 'code')
 
     def _open_cmd(path, tkParent=None):

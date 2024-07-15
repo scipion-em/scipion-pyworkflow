@@ -3,9 +3,28 @@ users:
   - Add protocol is an icon.
   - Right clik on canvas offers to add a protocol on the clicked location.
   - Scipion log is a project.log (only for project events)
+  - Variables window saves non default variables changed (bug)
+  - Queue interoperability review:
+    - jobs cancelled in the queue are detected in scipion
+    - job and pids handling improved, pids = 0 when use queue for protocol rely on jobid
+  - add information in the protocol log regarding execution type (pid or jobid)
+  - Streaming protocols based on new streaming (generation steps) are resumable
+  - Avoiding a double process when launching a workflow using the protocol form
+  - pyworkflowtest tests fixed
+  - GUI will detect when protocols processes have been killed(cancelled) in all cases?
+  - fix outdated pyworkflow scripts
 developers:
   - Canvas has a testing method: _drawGrid to draw a grid on the canvas (unused now)
   - String.toSeconds:converts to seconds any "duration" string like "1h 4m 34s" -> 3600 + 240 + 34.
+  - ListDialog has a refresh method to refresh the content taking into account the filter
+  - Improve the DDBB lock in the method "_store". If Protocol._lock is locked, a nullcontext is used instead of another
+    Protocol._lock context, which causes a permanent lock.
+  - XmlMapper removed.
+  - FlatMapper instanatiation centralized:
+     New variable: SCIPION_MAPPER_USE_TEMPLATE. By default uses the template as it was now. If deacivated, instantiation happens on each iteration (less performant) but dev friendly
+  - Adding a parameter to launch jobs (e.g: bash)
+  - Handling item-click event in the treeview dialog
+
 V3.6.0
 users:
   - Window to see/edit config variables. Launched from Project menu in project window.

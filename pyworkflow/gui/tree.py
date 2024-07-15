@@ -304,6 +304,8 @@ class BoundTree(Tree):
 
     def _onClick(self, e=None):
         self._unpostMenu()
+        if hasattr(self, 'itemOnClick'):
+            self.itemOnClick(e)
 
     def _onKeyPress(self, e=None):
         self._unpostMenu()
