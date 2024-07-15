@@ -299,7 +299,7 @@ class TemplateList:
 
             self.templates.extend(templates)
         except Exception as e:
-            logger.warning("Can't get templates from workflow hub: %e" % e)
+            logger.warning("Can't get templates from workflow hub: %s" % e)
 
     def addPluginTemplates(self, tempId=None):
         """
