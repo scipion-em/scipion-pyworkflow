@@ -1109,6 +1109,9 @@ class Set(Object):
     STREAM_CLOSED = 2
 
     indexes = ['_index']
+    # Dict that contains the attributes to be checked for compatibility in operations involving multiple sets,
+    # such us the union of sets. Example: {'sampling rates': 'getSamplingRate', 'dimensions': 'getDimensions'}
+    _compatibilityDict = {}
     
     def __init__(self, filename=None, prefix='', 
                  mapperClass=None, classesDict=None, **kwargs):
@@ -1125,16 +1128,16 @@ class Set(Object):
         self._representative = None
         self._classesDict = classesDict
         self._indexes = kwargs.get('indexes', [])
-        # Dict that contains the attributes to be checked for compatibility in operations involving multiple sets,
-        # such us the union of sets
-        self._attrDictForSetsComp = {}
-
         # If filename is passed in the constructor, it means that
         # we want to create a new object, so we need to delete it if
         # the file exists
         if filename:
             self._mapperPath.set('%s, %s' % (filename, prefix))
             self.load()
+
+    @classmethod
+    def getCompatibilityDict(cls):
+        return cls._compatibilityDict
 
     def copy(self, other, copyId=True, ignoreAttrs=['_mapperPath', '_size', '_streamState']):
         """ Copies the attributes of the set
