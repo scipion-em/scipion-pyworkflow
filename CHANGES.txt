@@ -14,6 +14,7 @@ users:
   - pyworkflowtest tests fixed
   - GUI will detect when protocols processes have been killed(cancelled) in all cases?
   - fix outdated pyworkflow scripts
+  - Join heterogeneous sets are possible for tomography objects TS and tomograms.
 developers:
   - Canvas has a testing method: _drawGrid to draw a grid on the canvas (unused now)
   - String.toSeconds:converts to seconds any "duration" string like "1h 4m 34s" -> 3600 + 240 + 34.
