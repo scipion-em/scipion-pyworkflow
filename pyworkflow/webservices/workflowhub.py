@@ -61,9 +61,7 @@ def get_wh_templates(template_id=None, organization="Scipion%20CNB"):
         template_url = get_workflow_file_url(workflow_id, version_id)
 
         new_template = WHTemplate("Workflow hub", name, description, template_url)
-        if template_id is None:
-            template_list.append(new_template)
-        elif new_template.getObjId() == template_id:
+        if template_id is None or new_template.getObjId() == template_id:
             template_list.append(new_template)
 
     return template_list
