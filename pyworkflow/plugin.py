@@ -46,7 +46,7 @@ from abc import ABCMeta, abstractmethod
 import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
-from pyworkflow.template import Template
+from pyworkflow.template import LocalTemplate
 from pyworkflow.utils import sortListByList
 
 try:
@@ -695,7 +695,7 @@ class Plugin:
         tDir = self.getPluginTemplateDir()
         if os.path.exists(tDir):
             for file in glob.glob1(tDir, "*" + SCIPION_JSON_TEMPLATES):
-                t = Template(pluginName, os.path.join(tDir, file))
+                t = LocalTemplate(pluginName, os.path.join(tDir, file))
                 tempList.append(t)
 
         return tempList

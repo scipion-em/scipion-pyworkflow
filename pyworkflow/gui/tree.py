@@ -650,7 +650,7 @@ class ListTreeProviderTemplate(ListTreeProviderString):
         return info
 
     def getText(self, obj):
-        return obj.pluginName + '-' + obj.templateName
+        return obj.source + '-' + obj.name
 
     def getValues(self, obj):
         return (obj.description,)

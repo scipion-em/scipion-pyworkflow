@@ -265,14 +265,13 @@ class ProtocolsView(tk.Frame):
         self.projLog.windows = self.window
         self.projLog.addFile(self.project.getProjectLog())
 
-        self._updateSelection()
-
         # Move to the selected protocol
         if self._isSingleSelection():
             prot = self.getSelectedProtocol()
             node = self.runsGraph.getNode(str(prot.getObjId()))
             self._selectNode(node)
-
+        else:
+            self._updateSelection()
 
         # Add all tabs
 
@@ -1221,7 +1220,7 @@ class ProtocolsView(tk.Frame):
 
             # Only select item with right-click if there is a single
             # item selection, not for multiple selection
-            if len(self._selection):
+            if len(self._selection) == 1:
                 self._deselectItems(item)
                 self._selectItemProtocol(prot)
                 self._lastRightClickPos = self.runsGraphCanvas.eventPos
