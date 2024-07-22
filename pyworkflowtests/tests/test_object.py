@@ -35,6 +35,8 @@ from pyworkflow.mapper.sqlite import ID, CREATION
 from ..objects import (Complex, MockSetOfImages, MockImage, MockObject,
                        MockAcquisition, MockMicrograph)
 
+IMAGES_STK = "images.stk"
+
 NUMERIC_ATRIBUTE_NAME = "1"
 
 NUMERIC_ATTRIBUTE_VALUE = "numeric_attribute"
@@ -54,7 +56,7 @@ class TestObject(pwtests.BaseTest):
     def test_ObjectsDict(self):
         # Validate that the object dict is populated correctly
         basicObjNames = [
-            'Object', 'Scalar', 'Integer', 'Float', 'String', 'Pointer',
+            'Scalar', 'Integer', 'Float', 'String', 'Pointer', 'Boolean',
             'OrderedObject', 'List', 'CsvList', 'PointerList', 'Set'
         ]
         self.assertTrue(all(name in pwobj.OBJECTS_DICT
@@ -139,6 +141,22 @@ class TestObject(pwtests.BaseTest):
         s.set(now)
         self.assertEqual(now, s.datetime())
 
+        # Ranges and values
+        s2.set("1 2 3 4")
+        self.assertEqual(s2.getListFromValues(caster=float), [1.,2.,3.,4.])
+        self.assertEqual(s2.getListFromRange(), [1, 2, 3, 4])
+
+        # Values ...
+        s2.set("2x4, 4, 7")
+        self.assertEqual(s2.getListFromValues(), [4, 4, 4, 7])
+
+        # Values ...
+        self.assertEqual(s2.getListFromValues(caster=str), ["2x4", "4", "7"])
+
+        # Ranges
+        s2.set("2-8, 1-2, 7")
+        self.assertEqual(s2.getListFromRange(), [2, 3, 4, 5, 6, 7, 8, 1, 2, 7])
+
     def test_Pointer(self):
         c = Complex.createComplex()
         p = pwobj.Pointer()
@@ -147,7 +165,7 @@ class TestObject(pwtests.BaseTest):
         c.Name = pwobj.String('Paquito')
 
         self.assertEqual(p.get(), 'Paquito')
-        stackFn = "images.stk"
+        stackFn = IMAGES_STK
         mrcsFn = "images.mrcs"
         fn = self.getOutputPath('test_images.sqlite')
         imgSet = MockSetOfImages(filename=fn)
@@ -238,11 +256,8 @@ class TestObject(pwtests.BaseTest):
         ptr5 = pwobj.Pointer(value=o2, extended=NUMERIC_ATRIBUTE_NAME)
         self.assertEqual(NUMERIC_ATTRIBUTE_VALUE, ptr5.get())
 
-
-
-
     def test_Sets(self):
-        stackFn = "images.stk"
+        stackFn = IMAGES_STK
         fn = self.getOutputPath('test_images2.sqlite')
 
         imgSet = MockSetOfImages(filename=fn)
@@ -318,7 +333,7 @@ class TestObject(pwtests.BaseTest):
 
         # Use creation timestamp
         # Request id list
-        result = imgSet.getUniqueValues(ID, where="%s>=%s" % (CREATION , imgSet.fmtDate(halfTimeStamp)))
+        result = imgSet.getUniqueValues(ID, where="%s>=%s" % (CREATION, imgSet.fmtDate(halfTimeStamp)))
         self.assertEqual(len(result), 5, "Unique values after a time stamp does not work")
 
         # Test getIdSet
@@ -327,12 +342,24 @@ class TestObject(pwtests.BaseTest):
         self.assertIsInstance(next(iter(ids)), int, "getIdSet items are not integer")
         self.assertEqual(len(ids), 10, "getIdSet does not return 10 items")
 
+        # Request item by id
+        item = imgSet[1]
+        self.assertEqual(item.getObjId(), 1, "Item accessed by [] and id does not work")
+
+        # Request item by field
+        item = imgSet.getItem("id", 2)
+        self.assertEqual(item.getObjId(), 2, "Item accessed field id does not work")
+
         # Test load properties queries
         from pyworkflow.mapper.sqlite_db import logger
         logger.setLevel(DEBUG)
         lastResort.setLevel(DEBUG)
         imgSetVerbose = MockSetOfImages(filename=fn)
         imgSetVerbose.loadAllProperties()
+
+        # Compare sets are "equal"
+        self.compareSetProperties(imgSet, imgSetVerbose, ignore=[])
+
 
     def test_copyAttributes(self):
         """ Check that after copyAttributes, the values

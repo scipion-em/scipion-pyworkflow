@@ -95,26 +95,39 @@ class StepsWindow(pwgui.browser.BrowserWindow):
 
         # Tree button
         btn = tk.Label(toolbar, text="Tree",
-                       image=self.getImage(Icon.RUNS_TREE),
+                       image=self.getImage(Icon.CODE_BRANCH),
                        compound=tk.LEFT, cursor='hand2')
         btn.bind(TK.LEFT_CLICK, self._showTree)
         btn.grid(row=0, column=0, sticky='nw')
 
         # Reset status
         btn = tk.Label(toolbar, text="Reset",
-                       image=self.getImage(Icon.ACTION_REFRESH),
+                       image=self.getImage(Icon.BROOM),
                        compound=tk.LEFT, cursor='hand2')
         btn.bind('<Button-1>', self._resetStep)
         btn.grid(row=0, column=1, sticky='nw')
 
-    def _resetStep(self, e=None):
+        # Finish status
+        btn = tk.Label(toolbar, text="Finish",
+                       image=self.getImage(Icon.CHECKED),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.bind('<Button-1>', self._finishStep)
+        btn.grid(row=0, column=2, sticky='nw')
+
+    def _setStepStatus(self, status):
 
         item = self.browser._lastSelected
         if item is not None:
             objId = item.getObjId()
-            self._protocol._updateSteps(lambda step: step.setStatus(pwprot.STATUS_NEW), where="id='%s'" % objId)
-            item.setStatus(pwprot.STATUS_NEW)
+            self._protocol._updateSteps(lambda step: step.setStatus(status), where="id='%s'" % objId)
+            item.setStatus(status)
             self.browser.tree.update()
+    def _resetStep(self, e=None):
+        self._setStepStatus(pwprot.STATUS_NEW)
+
+    def _finishStep(self, e=None):
+        self._setStepStatus(pwprot.STATUS_FINISHED)
+
     # noinspection PyUnusedLocal
     def _showTree(self, e=None):
         g = self._protocol.getStepsGraph()
@@ -145,7 +158,7 @@ class StepsWindow(pwgui.browser.BrowserWindow):
             frame = tk.Frame(tw)
             frame.grid(row=0, column=0)
             tw.tooltipText = pwgui.dialog.createMessageBody(
-                frame, tm, None, textPad=0, textBg=pwutils.Color.LIGHT_GREY_COLOR_2)
+                frame, tm, None, textPad=0, textBg=pwutils.Color.ALT_COLOR_2)
             tw.tooltipText.config(bd=1, relief=tk.RAISED)
         else:
             pwgui.dialog.fillMessageText(tw.tooltipText, tm)

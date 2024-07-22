@@ -31,8 +31,8 @@ import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.font as tkFont
 
+from pyworkflow import Config
 import pyworkflow.utils as pwutils
-import pyworkflow.protocol as pwprot
 import pyworkflow.viewer as pwviewer
 
 import pyworkflow.gui as gui
@@ -44,44 +44,7 @@ from pyworkflow.gui.graph import LevelTree
 from pyworkflow.gui.form import getObjectLabel
 from pyworkflow.constants import DATA_TAG
 
-ACTION_EDIT = pwutils.Message.LABEL_EDIT
-ACTION_COPY = pwutils.Message.LABEL_COPY
-ACTION_DELETE = pwutils.Message.LABEL_DELETE
-ACTION_REFRESH = pwutils.Message.LABEL_REFRESH
-ACTION_STEPS = pwutils.Message.LABEL_BROWSE
-ACTION_TREE = pwutils.Message.LABEL_TREE
-ACTION_LIST = pwutils.Message.LABEL_LIST
-ACTION_STOP = pwutils.Message.LABEL_STOP
-ACTION_DEFAULT = pwutils.Message.LABEL_DEFAULT
-ACTION_CONTINUE = pwutils.Message.LABEL_CONTINUE
-ACTION_RESULTS = pwutils.Message.LABEL_ANALYZE
 
-RUNS_TREE = pwutils.Icon.RUNS_TREE
-RUNS_LIST = pwutils.Icon.RUNS_LIST
- 
-ActionIcons = {
-    ACTION_EDIT: pwutils.Icon.ACTION_EDIT,
-    ACTION_COPY: pwutils.Icon.ACTION_COPY,
-    ACTION_DELETE:  pwutils.Icon.ACTION_DELETE,
-    ACTION_REFRESH:  pwutils.Icon.ACTION_REFRESH,
-    ACTION_STEPS:  pwutils.Icon.ACTION_STEPS,
-    ACTION_TREE:  None,  # should be set
-    ACTION_LIST:  pwutils.Icon.ACTION_LIST,
-    ACTION_STOP: pwutils.Icon.ACTION_STOP,
-    ACTION_CONTINUE: pwutils.Icon.ACTION_CONTINUE,
-    ACTION_RESULTS: pwutils.Icon.ACTION_RESULTS,
-}
-
-STATUS_COLORS = {
-    pwprot.STATUS_SAVED: '#D9F1FA',
-    pwprot.STATUS_LAUNCHED: '#D9F1FA',
-    pwprot.STATUS_RUNNING: '#FCCE62',
-    pwprot.STATUS_FINISHED: '#D2F5CB',
-    pwprot.STATUS_FAILED: '#F5CCCB',
-    pwprot.STATUS_INTERACTIVE: '#F3F5CB',
-    pwprot.STATUS_ABORTED: '#F5CCCB',
-    # pwprot.STATUS_SAVED: '#124EB0',
-}
 
 
 def populateTree(tree, elements, parentId=''):
@@ -127,16 +90,16 @@ class ProjectDataView(tk.Frame):
             Left: containing the Protocol classes tree
             Right: containing the Data list
         """
-        p = tk.PanedWindow(self, orient=tk.HORIZONTAL, bg='white')
+        p = tk.PanedWindow(self, orient=tk.HORIZONTAL, bg=Config.SCIPION_BG_COLOR)
         
         # Left pane, contains Data tree
-        leftFrame = tk.Frame(p, bg='white')
+        leftFrame = tk.Frame(p, bg=Config.SCIPION_BG_COLOR)
         bgColor = '#eaebec'
         self._createDataTree(leftFrame, bgColor)
         gui.configureWeigths(leftFrame)
         
         # Right pane
-        rightFrame = tk.Frame(p, bg='white')
+        rightFrame = tk.Frame(p, bg=Config.SCIPION_BG_COLOR)
         rightFrame.columnconfigure(0, weight=1)
         rightFrame.rowconfigure(1, weight=1)
         # rightFrame.rowconfigure(0, minsize=label.winfo_reqheight())
@@ -156,15 +119,15 @@ class ProjectDataView(tk.Frame):
         """
         defaultFont = gui.getDefaultFont()
         self.style.configure("W.Treeview",
-                             background=pwutils.Color.LIGHT_GREY_COLOR,
+                             background=pwutils.Color.ALT_COLOR,
                              borderwidth=0,
                              rowheight=defaultFont.metrics()['linespace'])
         self.dataTree = Tree(parent, show='tree', style='W.Treeview')
         self.dataTree.column('#0', minwidth=300)
         self.dataTree.tag_configure('protocol',
-                                    image=self.getImage('python_file.gif'))
+                                    image=self.getImage(pwutils.Icon.PRODUCTION))
         self.dataTree.tag_configure('protocol_base',
-                                    image=self.getImage('class_obj.gif'))
+                                    image=self.getImage(pwutils.Icon.GROUP))
         f = tkFont.Font(family='helvetica', size='10', weight='bold')
         self.dataTree.tag_configure('non-empty', font=f)
         self.dataTree.grid(row=0, column=0, sticky='news')
@@ -220,31 +183,31 @@ class ProjectDataView(tk.Frame):
         # Selected run info (at Bottom)
         """
         # Create the Action Buttons TOOLBAR
-        toolbar = tk.Frame(parent, bg='white')
+        toolbar = tk.Frame(parent, bg=Config.SCIPION_BG_COLOR)
         toolbar.grid(row=0, column=0, sticky='news')
         gui.configureWeigths(toolbar)
         # toolbar.columnconfigure(0, weight=1)
         toolbar.columnconfigure(1, weight=1)
         
-        self.runsToolbar = tk.Frame(toolbar, bg='white')
+        self.runsToolbar = tk.Frame(toolbar, bg=Config.SCIPION_BG_COLOR)
         self.runsToolbar.grid(row=0, column=0, sticky='sw')
         # On the left of the toolbar will be other
         # actions that can be applied to all runs (refresh, graph view...)
-        self.allToolbar = tk.Frame(toolbar, bg='white')
+        self.allToolbar = tk.Frame(toolbar, bg=Config.SCIPION_BG_COLOR)
         self.allToolbar.grid(row=0, column=10, sticky='se')
         # self.createActionToolbar()
 
         # Create the Run History tree
         v = ttk.PanedWindow(parent, orient=tk.VERTICAL)
         # runsFrame = ttk.Labelframe(v, text=' History ', width=500, height=500)
-        runsFrame = tk.Frame(v, bg='white')
+        runsFrame = tk.Frame(v, bg=Config.SCIPION_BG_COLOR)
         self._createDataGraph(runsFrame)
         gui.configureWeigths(runsFrame)
         
         # Create the Selected Run Info
         infoFrame = tk.Frame(v)
         gui.configureWeigths(infoFrame)
-        self._infoText = TaggedText(infoFrame, bg='white',
+        self._infoText = TaggedText(infoFrame, bg=Config.SCIPION_BG_COLOR,
                                     handlers={'sci-open': self._openProtocolFormFromId})
         self._infoText.grid(row=0, column=0, sticky='news')
         
@@ -438,8 +401,7 @@ class ProjectDataView(tk.Frame):
         """Open the Protocol GUI Form given a Protocol instance"""
         title = pwutils.Message.TITLE_NAME_RUN + prot.getClassName()
         w = gui.form.FormWindow(title, prot, self._executeSaveProtocol,
-                                self.windows,
-                                hostList=self.project.getHostNames())
+                                self.windows)
         w.adjustSize()
         w.show(center=True)
 

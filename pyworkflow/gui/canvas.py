@@ -34,12 +34,13 @@ import math
 import tkinter as tk
 import operator
 
-from pyworkflow.gui import gui, getDefaultFont, cfgFontSize
+from pyworkflow import Config
+from pyworkflow.gui import gui, getDefaultFont
 from pyworkflow.gui.widgets import Scrollable
 
 DEFAULT_ZOOM = 100
 
-DEFAULT_FONT_SIZE = cfgFontSize
+DEFAULT_FONT_SIZE = Config.SCIPION_FONT_SIZE
 
 DEFAULT_CONNECTOR_FILL = "blue"
 DEFAULT_CONNECTOR_OUTLINE = "black"
@@ -51,7 +52,7 @@ class Canvas(tk.Canvas, Scrollable):
     _images = {}
 
     def __init__(self, parent, tooltipCallback=None, tooltipDelay=1500, **kwargs):
-        defaults = {'bg': 'white'}
+        defaults = {'bg': Config.SCIPION_BG_COLOR}
         defaults.update(kwargs)
         Scrollable.__init__(self, parent, tk.Canvas, **defaults)
 
@@ -133,7 +134,7 @@ class Canvas(tk.Canvas, Scrollable):
         return self._runsFont
 
     def getImage(self, img):
-        return gui.getImage(img, self._images)
+        return gui.getImage(img)
 
     def _unpostMenu(self, e=None):
         self._menu.unpost()
@@ -220,9 +221,19 @@ class Canvas(tk.Canvas, Scrollable):
                     self._menu.add_separator()
                 else:
                     img = ''
-                    if len(a) > 2:  # image for the action
+                    label= a[0]
+                    size = len(a)
+
+                    if size > 2:  # image for the action
                         img = self.getImage(a[2])
-                    self._menu.add_command(label=a[0], command=a[1],
+
+                        # Shortcuts
+                        if size > 3:
+                            shortCut = a[3]
+                            if shortCut:
+                                label= "%s (%s)" % (label, shortCut)
+
+                    self._menu.add_command(label=label, command=a[1],
                                            image=img, compound=tk.LEFT,
                                            font=gui.getDefaultFont())
             self._menu.post(e.x_root, e.y_root)

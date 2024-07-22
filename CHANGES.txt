@@ -1,3 +1,206 @@
+V3.6.0
+users:
+  - Window to see/edit config variables. Launched from Project menu in project window.
+  - Fix installation error: matplotlib imported at installation time
+  - Fixing an error drawing the graph
+developers:
+  - FileBrowser window tweaks: Can be called from a dialog.
+  - Windows can be called as dialogs with show(modal=True)
+  - askPath: Method to ask for a path (PATH, FOLDER or BASENAME)
+  - backup: Method in pyworkflow.utils.path to backup files
+  - All variables are centralized and Plugin._defineVar or _defineEmVar accept variable description, and type (VarTypes enum) to better describe the variable.
+  - ProgressBar handles the step in combination with increase method call
+  - Set.aggregate more flexible and versatile.
+        Accepts strings or lists in operations, labels or groupby args.
+        Accepts id or _objId ar fields
+  - String.getListFromValues: works now with strings with an x inside (e.g.: _x _y)
+  - New utils method: valueToList (converts the argument into a list if is not a list): Useful for "dual type arguments) that can be a list or not
+
+V3.5.0
+------
+users:
+  - New Icons.
+  - Icons based on sprites, easier to resize or customized
+  - New variable: SCIPION_SPRITES_FILE to point to a custom sprite. It should be compatible with sprites.png at pyworkflow/resources.
+  - Scipion GUI log moved to the log tabs and removed from menu
+  - New variable: SCIPION_SHOW_TEXT_IN_TOOLBAR, set it to anything to show the text of the icons below
+  - New variable: SCIPION_ICON_ZOOM, defaults to 50 (percent) to show icons at 16x16. 100 will set them to 32 or 75 to 24.
+  - Icons in toolbar grouped. Better row height adjustment in trees.
+  - Improved handling of the case where protocols steps are send to the queue, fix stop protocol functionality
+developers:
+  - ProjectConfig class removed
+  - New methods in path: hasChangedSince and isFileFinished
+  - New method in utils: strToDuration (useful to translate "1h 35m" to seconds). For duration parameters.
+  - New class Variable to be tested in Config class. A step towards a Config editing GUI.
+  - SCIPION_DEBUG_SQLITE rescued to activate SQL clauses in debug.
+  - Active jobs are stored in the 'jobIds' protocol variable. Iteration through these job IDs allows for canceling each active job sent to the queue.
+  - Implemented cleaning of old protocol job IDs and PIDs.
+  - Extending the ToolbarDialog buttons. Now is possible to define a tooltip and a shortcut
+  - Viewers has getName class method.
+  - Object.getClassName is now a class method
+  - Validating the Close method in the Dialog class. Now we can to reimplement de validateClose method.
+  - Better case-specific implementation of pID and jobID. Three scenarios: normal execution, sending the entire protocol to the queue, or sending individual steps.
+  - Object.clone a copy optionally clones the enable flag
+  - Set.getItem: returns the first item with a value in the fields passed. Useful for querying by TsId in tomo.
+  - Correctly update the protocols in streaming workflows when the input pointer points to a protocol, the protocol points to a set (i.e., classes), and this set points to another set (i.e., particles).
+
+V3.4.0
+------
+users:
+  - Prevent cyclic loops in protocols. Cannot chose as input, as output that is derived or will be derived from the current protocol.
+  - Tolerate cyclic loops saved projects projects, disconnecting the "problematic" protocol.
+developers:
+  - Dialog class: add lockGui input to allow the viewers to prevent getting the screen focus if desired.
+
+V3.3.1
+------
+users:
+  - Steps window can force finish steps too. Useful for some CS cases.
+  - "Continue workflow" from improved. Works with more cases.
+  - Fix output deletion when right-clicking on an output compatible with this option.
+developers:
+  - Set class has isItemEnabled to be used as callback based on item.isEnabled()
+  - config.py.OS class (not for GUI): to return distro info (isCentos or isUbuntu) or isWSL (--> new dependency "distro")"...
+
+V3.3.0
+------
+users:
+  - Boxes from Plugins in devel mode are prefixed with * now (not delta anymore)
+  - Partial exporting/copying will carry also the input of those protocols not being exported
+  - Partial importing/pasting will be linked to existing protocols in the project with the same id.
+  - Fix: Scheduling failed with direct pointers (impossible to get form GUI but programming or tests)
+  - tests: possible to use " tomo." (e.g.) to test just a plugin. Unfortunately needs adaptation in the launcher
+  - "Return" keypress "clicks" the active button in a window
+  - Avoid adding the same viewer twice
+
+developers:
+  - Control and Shift keypress are captured when clicking in analyze result button and passed to the viewer.
+  - Project.getProtocol() has a fromRuns mode to prevent going to the db. Used in a couple of calls.(performance)
+  - Plotter.createSubPlot: allow plots without axis passing xlabel and ylabel as None
+  - Tolerate type change in attributes in protocol execution processes.
+  - Fixing an error when loading a project where it is not possible to retrieve the current version of an installed plugin
+
+V3.2.0
+------
+users:
+  - Templates validate booleans properly (false, true, 0 or 1)
+  - Labels and box positions are saved after Labels being edited.
+  - scipion3 project list (or without list) should list existing projects.
+  - Windows are grouped by project under the project name.
+  - Do not allow empty Config variables unless is the default value
+  - SCIPION_MAIN_COLOR: If not valid, fallsback to Firebrick
+  - Project names: Only accepts digits, "letters", - or _. Rest are turned into -
+  - Fix wrong PARALLEL_COMMAND in hosts.conf created during tests.
+  - SCIPION_USE_QUEUE: New variable (default=False). If defined to anything else than False, new protocols will be sent to queue by default.
+
+developers:
+  - Tolerate loading of extra set properties but WARN the developer.
+  - ListDialog: allows for a preview panel on the right if previewCallback is passed.
+  - SQL DEBUG deprecated: active when regular debug is on.
+  - Boolean Config variables refactored to be "reversible".
+  - Show info id debug mode (print) when an infinite loop happens in the protocols graph
+V3.1.1
+------
+  - Hotfix: Fix resume single. Protocol was reset.
+
+V3.1.0
+------
+users:
+  - New optional config variable: SCIPION_MAIN_COLOR. Any medium tone color name or hexadecimal should work(like in CSS)
+  - New optional config variable: SCIPION_BG_COLOR. Any light tone color name or hexadecimal should work(like in CSS)
+  - Control + Plus (numpad) will increase the font of the logs. Control + subtract will restore it.
+  - Toolbar and actions refactored: Most of them have shortcuts and appear in the toolbar without text, but have tooltips showing the shortcut
+  - Plugins in devel mode are shown with a delta suffix after the package name.
+  - Green lines in log are lighter, colored lines are back in the log.
+  - Commands in the log are "announced" by "** Running command: **"
+  - Project list window: F5 on the filter box will refresh the list.
+  - Project list window: Auto refresh on window activate when data is older than 60 seconds
+  - New actions: Copy (Control+c) and Paste (Control +v) will allow to copy the selection to and from the clipboard.
+  - File browser thumbnail: Writes if the file is a link
+  - Protocol in devel mode is shown prefixing the protocol in the box and shown in log
+  - Unused graphical gui nodes are cleaned up upon protocols deletion and graph painting (to clean up old projects)
+  - Error in host.conf for clusters better described.
+  - Fixed a bug related to organizing the workflow when importing a template(Import workflow template option)
+  - Terminal where Scipion is being launched only shows ERROR level info. Rest goes to scipion.log shown by the Scipion log menu.
+  - Scipion windows of the same process are now grouped under the same icon. Window Tooltip says Scipion framework instead of Toplevel
+  - Refactoring Restart & Continue workflow option. Allowing to continue and restart a workflow from a protocol
+
+  
+ developers:
+  - Plugin.inDevelMode(): returns true is plugin installed in devel mode.
+  - Shortcut for devel mode is now Control+D since Control+d is for duplicate (old copy)
+  - Protocol.getClassPlugin deprecated. Use instead getPlugin()
+  - Protocol._cleanExtraFiles(): optional method to clean files other than tmp folder.
+  - Config.isScipionRunning(): To distinguish from just importing or running.
+  - Set implements copy() leaving mapper_path out.
+  - TaseCase: compareSetProperties() added to compare 2 set's properties.
+  - Add debugging messages to check the job status and add renameGpuIds method in the StepQueueExecutor
+
+V3.0.32
+-------
+  - Hotfix: fix links more versatile.
+V3.0.31
+-------
+  - Hotfix: Fixed updated protocol icon
+
+V3.0.30
+-------
+users:
+  - File browser: error while getting the preview thumbnail are reported as the preview string and logged.
+  - Wrong status when updating: When scheduling protocols, they were wrongly showed as failure temporarily.
+
+
+developers:
+  - Using logger in executor.py
+  - Fix: --overwrite problem. CONDA_ACTIVATION_CMD was disappearing form the config
+  - Fix: plugin manager error. wait.png renamed to wait.gif
+  - Improvement: Tolerate protocol loading when attribute type is changed by developers.
+  - CONDA_ACTIVATION_CMD is now a Config variable.
+  - Flag to indicate if steps list has new steps. Useful for new streaming approach.
+  - Base streaming protocol: ProtStreamingBase.
+
+V3.0.29
+-------
+users:
+  - Fix: with some host.conf, where current working dir is not "transferred" to the node, execution failed when
+    creating the logs cause they where relative. Now they (log paths) are passed to pw_protocol_run as absolute paths
+
+V3.0.28
+-------
+users:
+  - Fix: rare error making subsets of self referencing output.
+  - Schedule process: Logging starts from the very beginning. Better feedback when there is an error.
+  - Message is shown in project's info log when discovering viewers for the firs time.
+  - Fix: Expert level pointers not clearer anymore after copying or deacivating expert level.
+  - Protocol list output improved --> scipion3 protocols --with-doc
+  - Scheduling: more informative log lines.
+  - Exporting a workflow does not show the final confirmation dialog (just a log line)
+  - Font size responsive in file browser text box.
+developers:
+  - Fix: rare error when loading pointers with extended from the database
+  - More modules using logging: gui/project.py, mapper/sqlite.py
+  - Pointer.set: optional parameter to cancel extended reset. Used from mapper.
+  - Pyworkflow Domain now is operational. Still ED plugins needs adaptation.
+  - String class offers getListFromRange and getListFromValues for convenience when param any ot the Ranges
+  - getListFromValues, returns str list as before, but optionally you can pass a caster (int, float,..)
+  - GE validator: tolerates None values.
+  - Form.addBoolean() helper added to facilitate Boolean param definitions. TODO: Do it with the rest?
+  - dependencies updated
+  - icons changed to png 32, so transparency is understood by pillow latest version
+  - unused icons removed
+  - icon names all centralized in Icon class
+  - getImage: caches the images, rename gif to png.
+
+V3.0.27
+-------
+Users:
+ - Fixing an error refreshing the workflow:
+     * the protocol status changed intermittently
+ - "Use queue?" label and help reworded and linked to documentation site
+ - "Wait for" label and help reworded and linked to documentation site
+ - Fix: New protocols, without sibilings were wrongly located at the top.
+
+
 V3.0.26 (hotfix)
 -------
  - Reporting url is now pointing to https.

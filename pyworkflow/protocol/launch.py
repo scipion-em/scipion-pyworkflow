@@ -24,20 +24,11 @@
 # *
 # **************************************************************************
 """
-This module is responsible for launching protocol executions.
-There are two main scenarios: local execution and remote execution.
+This module is responsible for launching local protocol executions:
 
-A. Local execution: 
-This will depend on the 'localhost' configuration
-1- Check if the protocol will be launched with MPI or not (using MPI template from config)
-2- Check if the protocol will be submitted to a queue (using Queue template from config)
-3- Build the command that will be launched.
+1- Check if the protocol will be submitted to a queue (using Queue template from config)
+2- Build the command that will be launched.
 
-B. Remote execution:
-1- Establish a connection with remote host for protocol execution
-2- Copy necessary files to remote host.
-3- Run a local process (for local execution, see case A) in the remote host
-4- Get the result back after launching remotely
 """
 
 import os
@@ -49,9 +40,7 @@ import pyworkflow as pw
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import (redStr, greenStr, makeFilePath, join, process,
                               getHostFullName)
-from pyworkflow.protocol.constants import UNKNOWN_JOBID
-
-LOCALHOST = 'localhost'
+from pyworkflow.protocol.constants import UNKNOWN_JOBID, STATUS_FAILED
 
 
 # ******************************************************************
@@ -59,26 +48,31 @@ LOCALHOST = 'localhost'
 # ******************************************************************
 
 def launch(protocol, wait=False, stdin=None, stdout=None, stderr=None):
-    """ This function should be used to launch a protocol
-    This function will decide which case, A or B will be used.
-    """
-    if _isLocal(protocol):
-        jobId = _launchLocal(protocol, wait, stdin, stdout, stderr)
-    else:
-        jobId = _launchRemote(protocol, wait)
-
-    protocol.setJobId(jobId)
-
-    return jobId
+    """ This function should be used to launch a protocol. """
+    _launchLocal(protocol, wait, stdin, stdout, stderr)
 
 
 def stop(protocol):
-    """ 
     """
-    if _isLocal(protocol):
-        return _stopLocal(protocol)
+    Stop function for three scenarios:
+    - If the queue is not used, kill the main protocol process and its child processes.
+    - If the queue is used and the entire protocol is sent to the queue, cancel the job running the protocol using
+    scancel.
+    - If the queue is used and individual steps are sent to the queue, cancel all active jobs and kill the main protocol
+    process and its child processes.
+    """
+    if protocol.useQueue() and not protocol.isScheduled():
+        jobIds = protocol.getJobIds()
+        for jobId in jobIds: # Iter even though it contains only one jobId
+            host = protocol.getHostConfig()
+            cancelCmd = host.getCancelCommand() % {'JOB_ID': jobId}
+            logger.info(cancelCmd)
+            _run(cancelCmd, wait=True)
+
+        if protocol.useQueueForSteps():
+            process.killWithChilds(protocol.getPid())
     else:
-        return _stopRemote(protocol)
+        process.killWithChilds(protocol.getPid())
 
 
 def schedule(protocol, initialSleepTime=0, wait=False):
@@ -86,22 +80,18 @@ def schedule(protocol, initialSleepTime=0, wait=False):
     run yet. Right now it only make sense to schedule jobs locally.
     """
     cmd = '%s %s' % (pw.PYTHON, pw.getScheduleScript())
-    cmd += ' "%s" "%s" %s --initial_sleep %s' % (protocol.getProject().path,
+    cmd += ' "%s" "%s" %s "%s" --initial_sleep %s' % (protocol.getProject().path,
                               protocol.getDbPath(),
-                              protocol.strId(), initialSleepTime)
-    jobId = _run(cmd, wait)
-    protocol.setJobId(jobId)
-
-    return jobId
+                              protocol.strId(),
+                              protocol.getScheduleLog(),
+                              initialSleepTime)
+    pid = _run(cmd, wait)
+    protocol.setPid(pid)  # Set correctly the pid
 
 
 # ******************************************************************
 # *         Internal utility functions
 # ******************************************************************
-def _isLocal(protocol):
-    return protocol.getHostName() == LOCALHOST
-
-
 def _runsLocally(protocol):
     """ Return True if this protocol is running in this machine,
     where the PID makes sense.
@@ -119,89 +109,49 @@ def _getAppsProgram(prog):
 
 
 def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
-    # Check first if we need to launch with MPI or not
-    command = ('%s %s "%s" "%s" %s'
-               % (pw.PYTHON, pw.join(pw.APPS, 'pw_protocol_run.py'),
-                  protocol.getProject().path, protocol.getDbPath(),
-                  protocol.strId()))
+    """
+
+    :param protocol: Protocol to launch
+    :param wait: Pass true if you want to wait for the process to finish
+    :param stdin: stdin object to direct stdin to
+    :param stdout: stdout object to send process stdout
+    :param stderr: stderr object to send process stderr
+    """
+
+    command = '{python} {prot_run} "{project_path}" "{db_path}" {prot_id} "{stdout_log}" "{stderr_log}"'.format(
+        python=pw.PYTHON,
+        prot_run=pw.join(pw.APPS, 'pw_protocol_run.py'),
+        project_path=protocol.getProject().path,
+        db_path=protocol.getDbPath(),
+        prot_id=protocol.strId(),
+        # We make them absolute in case working dir is not passed to the node when running through a queue.
+        # The reason is that since 3.0.27, the first thing that is affected by the current working dir is the
+        # creation of the logs. Before event than loading the project, which was and is setting the working dir to
+        # the project path. IMPORTANT: This assumes the paths before the queue and after the queue (nodes) are the same
+        # Which I think is safe since we are passing here "project_path" that is absolute.
+        stdout_log=os.path.abspath(protocol.getStdoutLog()),
+        stderr_log=os.path.abspath(protocol.getStderrLog())
+    )
+
     hostConfig = protocol.getHostConfig()
-    useQueue = protocol.useQueue()
-    # Check if need to submit to queue    
-    if useQueue and (protocol.getSubmitDict()["QUEUE_FOR_JOBS"] == "N"):
+
+    # Clean Pid and JobIds
+    protocol.cleanExecutionAttributes()
+    protocol._store(protocol._jobId)
+
+    # Handle three use cases: one will use the job ID, and the other two will use the process ID.
+    if protocol.useQueueForProtocol():  # Retrieve the job ID and set it; this will be used to control the protocol.
         submitDict = dict(hostConfig.getQueuesDefault())
         submitDict.update(protocol.getSubmitDict())
         submitDict['JOB_COMMAND'] = command
         jobId = _submit(hostConfig, submitDict)
-    else:
-        jobId = _run(command, wait, stdin, stdout, stderr)
-
-    return jobId
-
-
-def _runRemote(protocol, mode):
-    """ Launch remotely 'pw_protocol_remote.py' script to run or stop a protocol. 
-    Params:
-        protocol: the protocol to be ran or stopped.
-        mode: should be either 'run' or 'stop'
-    """
-    host = protocol.getHostConfig()
-    tpl = "ssh %(address)s '%(scipion)s/scipion "
-
-    if host.getScipionConfig() is not None:
-        tpl += "--config %(config)s "
-
-    tpl += "runprotocol pw_protocol_remote.py %(mode)s "
-    tpl += "%(project)s %(protDb)s %(protId)s' "
-
-    # Use project base name,
-    # in remote SCIPION_USER_DATA/projects should be prepended
-    projectPath = os.path.basename(protocol.getProject().path)
-
-    args = {'address': host.getAddress(),
-            'mode': mode,
-            'scipion': host.getScipionHome(),
-            'config': host.getScipionConfig(),
-            'project': projectPath,
-            'protDb': protocol.getDbPath(),
-            'protId': protocol.getObjId()
-            }
-    cmd = tpl % args
-    logger.info("** Running remote: %s" % greenStr(cmd))
-    p = Popen(cmd, shell=True, stdout=PIPE)
-
-    return p
-
-
-def _launchRemote(protocol, wait):
-    p = _runRemote(protocol, 'run')
-    jobId = UNKNOWN_JOBID
-    out, err = p.communicate()
-    if err:
-        raise Exception(err)
-    s = re.search('Scipion remote jobid: (\d+)', out)
-    if s:
-        jobId = int(s.group(1))
-    else:
-        raise Exception("** Couldn't parse ouput: %s" % redStr(out))
-
-    return jobId
-
-
-def _copyFiles(protocol, rpath):
-    """ Copy all required files for protocol to run
-    in a remote execution host.
-    NOTE: this function should always be execute with 
-    the current working dir pointing to the project dir.
-    And the remotePath is assumed to be in protocol.getHostConfig().getHostPath()
-    Params:
-        protocol: protocol to copy files
-        ssh: an ssh connection to copy the files.
-    """
-    remotePath = protocol.getHostConfig().getHostPath()
-
-    for f in protocol.getFiles():
-        remoteFile = join(remotePath, f)
-        rpath.putFile(f, remoteFile)
+        if jobId is None or jobId == UNKNOWN_JOBID:
+            protocol.setStatus(STATUS_FAILED)
+        else:
+            protocol.setJobId(jobId)
+    else:  # If not, retrieve and set the process ID (both for normal execution or when using the queue for steps)
+        pId = _run(command, wait, stdin, stdout, stderr)
+        protocol.setPid(pId)
 
 
 def analyzeFormattingTypeError(string, dictionary):
@@ -209,7 +159,7 @@ def analyzeFormattingTypeError(string, dictionary):
      it splits te string by \n and test the formatting per line. Raises an exception if any line fails
      with all problems found"""
 
-    # Do the replace line by line
+    # Do the replacement line by line
     lines = string.split("\n")
 
     problematicLines = []
@@ -222,9 +172,11 @@ def analyzeFormattingTypeError(string, dictionary):
             problematicLines.append(line + " --> " + str(e))
 
     if problematicLines:
-        return PyworkflowException('Following lines in %s seems to be problematic. '
-                                   'Please review its format or content.\n%s' % (pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
+        return PyworkflowException('Following lines in %s seems to be problematic.\n'
+                                   'Values known in this context are: \n%s'
+                                   'Please review its format or content.\n%s' % (dictionary, pw.Config.SCIPION_HOSTS, "\n".join(problematicLines)),
                                    url=pw.DOCSITEURLS.HOST_CONFIG)
+
 
 def _submit(hostConfig, submitDict, cwd=None, env=None):
     """ Submit a protocol to a queue system. Return its job id.
@@ -284,22 +236,3 @@ def _run(command, wait, stdin=None, stdout=None, stderr=None):
         p.wait()
 
     return jobId
-
-
-# ******************************************************************
-# *                 Function related to STOP
-# ******************************************************************
-
-
-def _stopLocal(protocol):
-    if protocol.useQueue() and not protocol.isScheduled():
-        jobId = protocol.getJobId()
-        host = protocol.getHostConfig()
-        cancelCmd = host.getCancelCommand() % {'JOB_ID': jobId}
-        _run(cancelCmd, wait=True)
-    else:
-        process.killWithChilds(protocol.getPid())
-
-
-def _stopRemote(protocol):
-    _runRemote(protocol, 'stop')

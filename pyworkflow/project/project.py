@@ -25,6 +25,8 @@
 # *
 # **************************************************************************
 import logging
+
+ROOT_NODE_NAME = "PROJECT"
 logger = logging.getLogger(__name__)
 
 import datetime as dt
@@ -99,7 +101,7 @@ class Project(object):
         self.address = ''
         self.port = pwutils.getFreePort()
         self.mapper = None
-        self.settings = None
+        self.settings:config.ProjectSettings = None
         # Host configuration
         self._hosts = None
         #  Creation time should be stored in project.sqlite when the project
@@ -389,7 +391,7 @@ class Project(object):
         """Clean all project data"""
         pwutils.path.cleanPath(*self.pathList)
 
-    def _continueWorkflow(self, continuedProtList=None, errorsList=None):
+    def _continueWorkflow(self, errorsList, continuedProtList=None):
         """
         This function continue a workflow from a selected protocol.
         The previous results are preserved.
@@ -412,11 +414,16 @@ class Project(object):
         if continuedProtList is not None:
             for protocol, level in continuedProtList.values():
                 if not protocol.isInteractive():
-                    if protocol.worksInStreaming():
+                    if protocol.isScheduled():
+                        continue
+
+                    # streaming ...
+                    if protocol.worksInStreaming() and not protocol.isSaved():
                         attrSet = [attr for name, attr in
                                    protocol.iterOutputAttributes(pwprot.Set)]
                         try:
                             if attrSet:
+                                # Open output sets..
                                 for attr in attrSet:
                                     attr.setStreamState(attr.STREAM_OPEN)
                                     attr.write()
@@ -435,19 +442,18 @@ class Project(object):
                             break
                     else:
                         if level != 0:
-                            # we make sure that at least one protocol in streaming
-                            # has been launched
-                            self._restartWorkflow({protocol.getObjId(): (protocol, level)},
-                                                  errorsList)
+                            # Not in streaming and not the first protocol.
+                            if protocol.isActive():
+                                self.stopProtocol(protocol)
+                            self._restartWorkflow(errorsList,{protocol.getObjId(): (protocol, level)})
 
-                        else:
-                            errorsList.append(("Error trying to launch the "
-                                               "protocol: %s\nERROR: The protocol is "
-                                               "not in streaming" %
-                                               (protocol.getObjLabel())))
-                            break
+                        else: # First protocol not in streaming
+                            if not protocol.isActive():
+                               self.scheduleProtocol(protocol)
 
-    def _restartWorkflow(self, restartedProtList=None, errorsList=None):
+
+
+    def _restartWorkflow(self, errorsList, restartedProtList=None):
         """
         This function restart a workflow from a selected protocol.
         All previous results will be deleted
@@ -461,6 +467,10 @@ class Project(object):
             for protocol, level in restartedProtList.values():
                 if not protocol.isInteractive():
                     try:
+                        if protocol.isScheduled():
+                            continue
+                        elif protocol.isActive():
+                            self.stopProtocol(protocol)
                         protocol.runMode.set(MODE_RESTART)
                         self.scheduleProtocol(protocol,
                                               initialSleepTime=level*INITIAL_SLEEP_TIME)
@@ -510,7 +520,7 @@ class Project(object):
         :param initialProtocol: selected protocol
         """
         errorProtList = []
-        for protocol in activeProtList:
+        for protocol in activeProtList.values():
             try:
                 self.stopProtocol(protocol)
             except Exception:
@@ -546,9 +556,9 @@ class Project(object):
         """
         errorsList = []
         if mode == MODE_RESTART:
-            self._restartWorkflow(workflowProtocolList, errorsList)
+            self._restartWorkflow(errorsList, workflowProtocolList)
         else:
-            self._continueWorkflow(workflowProtocolList, errorsList)
+            self._continueWorkflow(errorsList,workflowProtocolList)
         return errorsList
 
     def launchProtocol(self, protocol, wait=False, scheduled=False,
@@ -559,8 +569,7 @@ class Project(object):
         1. Store the protocol and assign name and working dir
         2. Create the working dir and also the protocol independent db
         3. Call the launch method in protocol.job to handle submission:
-            mpi, thread, queue,
-            and also take care if the execution is remotely.
+            mpi, thread, queue.
 
         If the protocol has some prerequisites (other protocols that
         needs to be finished first), it will be scheduled.
@@ -596,16 +605,18 @@ class Project(object):
             # Delete the relations created by this protocol
             if isRestart:
                 self.mapper.deleteRelations(self)
+                # Clean and persist execution attributes; otherwise, this would retain old job IDs and PIDs.
+                protocol.cleanExecutionAttributes()
+                protocol._store(protocol._jobId)
+
             self.mapper.commit()
 
             # NOTE: now we are simply copying the entire project db, this can be
             # changed later to only create a subset of the db need for the run
             pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
 
-        # Launch the protocol, the jobId should be set after this call
-        jobId = pwprot.launch(protocol, wait)
-        if jobId is None or jobId == UNKNOWN_JOBID:
-            protocol.setStatus(pwprot.STATUS_FAILED)
+        # Launch the protocol; depending on the case, either the pId or the jobId will be set in this call
+        pwprot.launch(protocol, wait)
 
         # Commit changes
         if wait:  # This is only useful for launching tests...
@@ -657,12 +668,9 @@ class Project(object):
 
             # Backup the values of 'jobId', 'label' and 'comment'
             # to be restored after the .copy
-            jobId = protocol.getJobId()
+            jobId = protocol.getJobIds().clone()  # Use clone to prevent this variable from being overwritten or cleared in the latter .copy() call
             label = protocol.getObjLabel()
             comment = protocol.getObjComment()
-
-            if checkPid:
-                self.checkPid(protocol)
 
             if skipUpdatedProtocols:
                 # If we are already updated, comparing timestamps
@@ -673,8 +681,6 @@ class Project(object):
             # If the protocol database has ....
             #  Comparing date will not work unless we have a reliable
             # lastModificationDate of a protocol in the project.sqlite
-            # TODO: when launching remote protocols, the db should be
-            # TODO: retrieved in a different way.
             prot2 = pwprot.getProtocolFromDb(self.path,
                                              protocol.getDbPath(),
                                              protocol.getObjId())
@@ -695,13 +701,24 @@ class Project(object):
                     protocol._outputs.append(attr)
 
             # Restore backup values
-            protocol.setJobId(jobId)
+            if protocol.useQueueForProtocol() and jobId:  # If jobId not empty then restore value as the db is empty
+                # Case for direct protocol launch from the GUI. Without passing through a scheduling process.
+                # In this case the jobid is obtained by the GUI and the job id should be preserved.
+                protocol.setJobIds(jobId)
+
+            # In case of scheduling a protocol, the jobid is obtained during the "scheduling job"
+            # and it is written in the rub.db. Therefore, it should be taken from there.
+
             protocol.setObjLabel(label)
             protocol.setObjComment(comment)
             # Use the run.db timestamp instead of the system TS to prevent
-            # possible inconsistencies
-            # protocol.lastUpdateTimeStamp.set(datetime.datetime.now())
+            # possible inconsistencies.
             protocol.lastUpdateTimeStamp.set(lastUpdateTime)
+
+            # Check pid at the end, once updated
+            if checkPid:
+                self.checkPid(protocol)
+
 
             self.mapper.store(protocol)
 
@@ -726,13 +743,13 @@ class Project(object):
                 time.sleep(0.5)
                 self._updateProtocol(protocol, tries + 1)
 
-
         return pw.PROTOCOL_UPDATED
 
     def stopProtocol(self, protocol):
         """ Stop a running protocol """
         try:
             if protocol.getStatus() in ACTIVE_STATUS:
+                self._updateProtocol(protocol) # update protocol to have the latest rub.db values
                 pwprot.stop(protocol)
         except Exception as e:
             logger.error("Couldn't stop the protocol: %s" % e)
@@ -757,6 +774,7 @@ class Project(object):
             protocol._store()
             self._storeProtocol(protocol)
             protocol.makePathsAndClean()  # Create working dir if necessary
+            protocol.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
             protocol._store()
             self._storeProtocol(protocol)
 
@@ -796,6 +814,120 @@ class Project(object):
                     error += '\n   - '.join(deps)
         return error
 
+    def _getProtocolDescendents(self, protocol):
+        """Getting the descendents protocols from a given one"""
+        runsGraph = self.getRunsGraph()
+        visitedNodes = dict()
+        node = runsGraph.getNode(protocol.strId())
+        if node is None:
+            return visitedNodes
+
+        visitedNodes[int(node.getName())] = node
+
+        def getDescendents(rootNode):
+            for child in rootNode.getChilds():
+                if int(child.getName()) not in visitedNodes:
+                    visitedNodes[int(child.getName())] = child
+                    getDescendents(child)
+
+        getDescendents(node)
+        return visitedNodes
+
+    def getProtocolCompatibleOutputs(self, protocol, classes, condition):
+        """Getting the outputs compatible with an object type. The outputs of the child protocols are excluded. """
+        objects = []
+        maxNum = 200
+        protocolDescendents = self._getProtocolDescendents(protocol)
+        runs = self.getRuns(refresh=False)
+
+        for prot in runs:
+            # Make sure we don't include previous output of the same
+            # and other descendent protocols
+            if prot.getObjId() not in protocolDescendents:
+                # Check if the protocol itself is one of the desired classes
+                if any(issubclass(prot.getClass(), c) for c in classes):
+                    p = pwobj.Pointer(prot)
+                    objects.append(p)
+
+                try:
+                    # paramName and attr must be set to None
+                    # Otherwise, if a protocol has failed and the corresponding output object of type XX does not exist
+                    # any other protocol that uses objects of type XX as input will not be able to choose then using
+                    # the magnifier glass (object selector of type XX)
+                    paramName = None
+                    attr = None
+                    for paramName, attr in prot.iterOutputAttributes(includePossible=True):
+                        def _checkParam(paramName, attr):
+                            # If attr is a subclasses of any desired one, add it to the list
+                            # we should also check if there is a condition, the object
+                            # must comply with the condition
+                            p = None
+
+                            match = False
+                            cancelConditionEval = False
+                            possibleOutput = isinstance(attr, type)
+
+                            # Go through all compatible Classes coming from in pointerClass string
+                            for c in classes:
+                                # If attr is an instance
+                                if isinstance(attr, c):
+                                    match = True
+                                    break
+                                # If it is a class already: "possibleOutput" case. In this case attr is the class and not
+                                # an instance of c. In this special case
+                                elif possibleOutput and attr == c:
+                                    match = True
+                                    cancelConditionEval = True
+
+                            # If attr matches the class
+                            if match:
+                                if cancelConditionEval or not condition or attr.evalCondition(condition):
+                                    p = pwobj.Pointer(prot, extended=paramName)
+                                    p._allowsSelection = True
+                                    objects.append(p)
+                                    return
+
+                            # JMRT: For all sets, we don't want to include the
+                            # subitems here for performance reasons (e.g. SetOfParticles)
+                            # Thus, a Set class can define EXPOSE_ITEMS = True
+                            # to enable the inclusion of its items here
+                            if getattr(attr, 'EXPOSE_ITEMS', False) and not possibleOutput:
+                                # If the ITEM type match any of the desired classes
+                                # we will add some elements from the set
+                                if (attr.ITEM_TYPE is not None and
+                                        any(issubclass(attr.ITEM_TYPE, c) for c in classes)):
+                                    if p is None:  # This means the set have not be added
+                                        p = pwobj.Pointer(prot, extended=paramName)
+                                        p._allowsSelection = False
+                                        objects.append(p)
+                                    # Add each item on the set to the list of objects
+                                    try:
+                                        for i, item in enumerate(attr):
+                                            if i == maxNum:  # Only load up to NUM particles
+                                                break
+                                            pi = pwobj.Pointer(prot, extended=paramName)
+                                            pi.addExtended(item.getObjId())
+                                            pi._parentObject = p
+                                            objects.append(pi)
+                                    except Exception as ex:
+                                        print("Error loading items from:")
+                                        print("  protocol: %s, attribute: %s" % (prot.getRunName(), paramName))
+                                        print("  dbfile: ", os.path.join(self.getPath(), attr.getFileName()))
+                                        print(ex)
+
+                        _checkParam(paramName, attr)
+                        # The following is a dirty fix for the RCT case where there
+                        # are inner output, maybe we should consider extend this for
+                        # in a more general manner
+                        for subParam in ['_untilted', '_tilted']:
+                            if hasattr(attr, subParam):
+                                _checkParam('%s.%s' % (paramName, subParam),
+                                            getattr(attr, subParam))
+                except Exception as e:
+                    print("Cannot read attributes for %s (%s)" % (prot.getClass(), e))
+
+        return objects
+
     def _checkProtocolsDependencies(self, protocols, msg):
         """ Check if the protocols have dependencies.
         This method is used before delete or save protocols to be sure
@@ -818,38 +950,51 @@ class Project(object):
 
         self._checkProtocolsDependencies(protocols, msg)
 
-    def _getWorkflowFromProtocol(self, protocol, fixProtParam=True):
+    def _getSubworkflow(self, protocol, fixProtParam=True, getStopped=True):
         """
         This function get the workflow from "protocol" and determine the
         protocol level into the graph. Also, checks if there are active
         protocols excluding interactive protocols.
+        :param protocol from where to start the subworkflow (included)
+        :param fixProtParam fix the old parameters configuration in the protocols
+        :param getStopped takes into account protocols that aren't stopped
         """
-        activeProtList = []
-        configuredProtList = {}
+        affectedProtocols = {}
+        affectedProtocolsActive = {}
         auxProtList = []
         # store the protocol and your level into the workflow
-        configuredProtList[protocol.getObjId()] = [protocol, 0]
-        auxProtList.append(protocol.getObjId())
+        affectedProtocols[protocol.getObjId()] = [protocol, 0]
+        auxProtList.append([protocol.getObjId(), 0])
         runGraph = self.getRunsGraph()
 
         while auxProtList:
-            protocol = runGraph.getNode(str(auxProtList.pop(0))).run
-            level = configuredProtList[protocol.getObjId()][1] + 1
+            protId, level = auxProtList.pop(0)
+            protocol = runGraph.getNode(str(protId)).run
+
+            # Increase the level for the children
+            level = level + 1
+
             if fixProtParam:
                 self._fixProtParamsConfiguration(protocol)
-            if protocol.isActive() and protocol.getStatus() != STATUS_INTERACTIVE:
-                activeProtList.append(protocol)
+
+            if not getStopped and protocol.isActive():
+                affectedProtocolsActive[protocol.getObjId()] = protocol
+            elif not protocol.getObjId() in affectedProtocolsActive.keys() and getStopped and \
+                    not protocol.isSaved() and protocol.getStatus() != STATUS_INTERACTIVE:
+                affectedProtocolsActive[protocol.getObjId()] = protocol
+
             node = runGraph.getNode(protocol.strId())
             dependencies = [node.run for node in node.getChilds()]
             for dep in dependencies:
                 if not dep.getObjId() in auxProtList:
-                    auxProtList.append(dep.getObjId())
-                if not dep.getObjId() in configuredProtList.keys():
-                    configuredProtList[dep.getObjId()] = [dep, level]
-                elif level > configuredProtList[dep.getObjId()][1]:
-                    configuredProtList[dep.getObjId()][1] = level
+                    auxProtList.append([dep.getObjId(), level])
 
-        return configuredProtList, activeProtList
+                if not dep.getObjId() in affectedProtocols.keys():
+                    affectedProtocols[dep.getObjId()] = [dep, level]
+                elif level > affectedProtocols[dep.getObjId()][1]:
+                    affectedProtocols[dep.getObjId()][1] = level
+
+        return affectedProtocols, affectedProtocolsActive
 
     def deleteProtocol(self, *protocols):
         self._checkModificationAllowed(protocols, 'Cannot DELETE protocols')
@@ -1000,6 +1145,7 @@ class Project(object):
         newProt.copyDefinitionAttributes(protocol)
         newProt.copyAttributes(protocol, 'hostName', '_useQueue', '_queueParams')
         newProt.runMode.set(MODE_RESTART)
+        newProt.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
 
         return newProt
 
@@ -1135,14 +1281,22 @@ class Project(object):
         """ Load protocols generated in the same format as self.exportProtocols.
 
         :param filename: the path of the file where to read the workflow.
-        :param jsonStr: Not used.
+        :param jsonStr:
 
         Note: either filename or jsonStr should be not None.
 
         """
-        f = open(filename)
-        importDir = os.path.dirname(filename)
-        protocolsList = json.load(f)
+        importDir = None
+        if filename:
+            with open(filename) as f:
+                importDir = os.path.dirname(filename)
+                protocolsList = json.load(f)
+
+        elif jsonStr:
+            protocolsList = json.loads(jsonStr)
+        else:
+            logger.error("Invalid call to loadProtocols. Either filename or jsonStr has to be passed.")
+            return
 
         emProtocols = self._domain.getProtocols()
         newDict = OrderedDict()
@@ -1154,19 +1308,21 @@ class Project(object):
             protClass = emProtocols.get(protClassName, None)
 
             if protClass is None:
-                logger.error("Protocol with class name '%s' not found. Are you missing it's plugin?." % protClassName)
+                logger.error("Protocol with class name '%s' not found. Are you missing its plugin?." % protClassName)
             else:
                 protLabel = protDict.get('object.label', None)
                 prot = self.newProtocol(protClass,
                                         objLabel=protLabel,
                                         objComment=protDict.get('object.comment', None))
-                protocolsList[i] = prot.processImportDict(protDict, importDir)
+                protocolsList[i] = prot.processImportDict(protDict, importDir) if importDir else protDict
 
-                prot._useQueue.set(protDict.get('_useQueue', False))
+                prot._useQueue.set(protDict.get('_useQueue', pw.Config.SCIPION_USE_QUEUE))
                 prot._queueParams.set(protDict.get('_queueParams', None))
                 prot._prerequisites.set(protDict.get('_prerequisites', None))
                 prot.forceSchedule.set(protDict.get('forceSchedule', False))
                 newDict[protId] = prot
+                # This saves the protocol JUST with the common attributes. Is it necessary?
+                # Actually, if after this the is an error, the protocol appears.
                 self.saveProtocol(prot)
 
         # Second iteration: update pointers values
@@ -1176,7 +1332,24 @@ class Project(object):
             # Value to pointers could be None: Partial workflows
             if value:
                 parts = value.split('.')
-                target = newDict.get(parts[0], None)
+
+                protId = parts[0]
+                # Try to get the protocol holding the input form the dictionary
+                target = newDict.get(protId, None)
+
+                if target is None:
+                    # Try to use existing protocol in the project
+                    logger.info("Protocol identifier (%s) not self contained. Looking for it in the project." % protId)
+
+                    try:
+                        target = self.getProtocol(int(protId), fromRuns=True)
+                    except:
+                        # Not a protocol..
+                        logger.info("%s is not a protocol identifier. Probably a direct pointer created by tests. This case is not considered." % protId)
+
+                    if target:
+                        logger.info("Linking %s to existing protocol in the project: %s" % (prot, target))
+
                 pointer.set(target)
                 if not pointer.pointsNone():
                     pointer.setExtendedParts(parts[1:])
@@ -1229,7 +1402,6 @@ class Project(object):
 
                 self.mapper.store(prot)
 
-        f.close()
         self.mapper.commit()
 
         return newDict
@@ -1248,8 +1420,25 @@ class Project(object):
         else:
             self._setupProtocol(protocol)
 
-    def getProtocol(self, protId):
-        protocol = self.mapper.selectById(protId)
+    def getProtocolFromRuns(self, protId):
+        """ Returns the protocol with the id=protId from the runs list (memory) or None"""
+        if self.runs:
+            for run in self.runs:
+                if run.getObjId() == protId:
+                    return run
+
+        return None
+
+    def getProtocol(self, protId, fromRuns=False):
+        """ Returns the protocol with the id=protId or raises an Exception
+
+        :param protId: integer with an existing protocol identifier
+        :param fromRuns: If true, it tries to get it from the runs list (memory) avoiding querying the db."""
+
+        protocol = self.getProtocolFromRuns(protId) if fromRuns else None
+
+        if protocol is None:
+            protocol = self.mapper.selectById(protId)
 
         if not isinstance(protocol, pwprot.Protocol):
             raise Exception('>>> ERROR: Invalid protocol id: %d' % protId)
@@ -1393,10 +1582,14 @@ class Project(object):
         from pyworkflow.protocol.launch import _runsLocally
         pid = protocol.getPid()
 
+        if pid == 0:
+            return
+
         # Include running and scheduling ones
+        # Exclude interactive protocols
         # NOTE: This may be happening even with successfully finished protocols
         # which PID is gone.
-        if (protocol.isActive() and _runsLocally(protocol)
+        if (protocol.isActive() and not protocol.isInteractive() and _runsLocally(protocol)
             and not protocol.useQueue()
                 and not pwutils.isProcessAlive(pid)):
             protocol.setFailed("Process %s not found running on the machine. "
@@ -1439,16 +1632,26 @@ class Project(object):
 
         """
         outputDict = {}  # Store the output dict
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
 
         for r in runs:
             n = g.createNode(r.strId())
             n.run = r
-            n.setLabel(r.getRunName())
+
+            # Legacy protocols do not have a plugin!!
+            develTxt = ''
+            plugin = r.getPlugin()
+            if plugin and plugin.inDevelMode():
+                develTxt = '* '
+
+            n.setLabel('%s%s' % (develTxt, r.getRunName()))
             outputDict[r.getObjId()] = n
             for _, attr in r.iterOutputAttributes():
                 # mark this output as produced by r
-                outputDict[attr.getObjId()] = n
+                if attr is None:
+                    logger.warning("Output attribute %s of %s is None" % (_, r))
+                else:
+                    outputDict[attr.getObjId()] = n
 
         def _checkInputAttr(node, pointed):
             """ Check if an attr is registered as output"""
@@ -1458,10 +1661,23 @@ class Project(object):
                 if pointedId in outputDict:
                     parentNode = outputDict[pointedId]
                     if parentNode is node:
-                        logger.warning("WARNING: Found a cyclic dependence from node "
-                              "%s to itself, probably a bug. " % pointedId)
+                        logger.warning("WARNING: Found a cyclic dependence from node %s to itself, probably a bug. " % pointedId)
                     else:
                         parentNode.addChild(node)
+                        if os.environ.get('CHECK_CYCLIC_REDUNDANCY') and self._checkCyclicRedundancy(parentNode, node):
+                            conflictiveNodes = set()
+                            for child in node.getChilds():
+                                if node in child._parents:
+                                    child._parents.remove(node)
+                                    conflictiveNodes.add(child)
+                                    logger.warning("WARNING: Found a cyclic dependence from node %s to %s, probably a bug. "
+                                                   % (node.getLabel() + '(' + node.getName() + ')',
+                                                      child.getLabel() + '(' + child.getName() + ')'))
+
+                            for conflictNode in conflictiveNodes:
+                                node._childs.remove(conflictNode)
+
+                            return False
                         return True
             return False
 
@@ -1477,18 +1693,39 @@ class Project(object):
                         _checkInputAttr(node, parent)
         rootNode = g.getRoot()
         rootNode.run = None
-        rootNode.label = "PROJECT"
+        rootNode.label = ROOT_NODE_NAME
 
         for n in g.getNodes():
             if n.isRoot() and n is not rootNode:
                 rootNode.addChild(n)
         return g
 
+    @staticmethod
+    def _checkCyclicRedundancy(parent, child):
+        visitedNodes = set()
+        recursionStack = set()
+
+        def depthFirstSearch(node):
+            visitedNodes.add(node)
+            recursionStack.add(node)
+            for child in node.getChilds():
+                if child not in visitedNodes:
+                    if depthFirstSearch(child):
+                        return True
+                elif child in recursionStack and child != parent:
+                    return True
+
+            recursionStack.remove(node)
+            return False
+
+        return depthFirstSearch(child)
+
+
     def _getRelationGraph(self, relation=pwobj.RELATION_SOURCE, refresh=False):
         """ Retrieve objects produced as outputs and
         make a graph taking into account the SOURCE relation. """
         relations = self.mapper.getRelationsByName(relation)
-        g = pwutils.Graph(rootName='PROJECT')
+        g = pwutils.Graph(rootName=ROOT_NODE_NAME)
         root = g.getRoot()
         root.pointer = None
         runs = self.getRuns(refresh=refresh)
@@ -1674,7 +1911,6 @@ class Project(object):
             if isinstance(prot, ProtImportBase) or prot.getClassName() == "ProtImportMovies":
                 logger.info("Import detected")
                 for _, attr in prot.iterOutputAttributes():
-                    fn = attr.getFiles()
                     for f in attr.getFiles():
                         if ':' in f:
                             f = f.split(':')[0]
@@ -1685,22 +1921,26 @@ class Project(object):
                                 logger.info("Found broken links in run: %s" %
                                       pwutils.magenta(prot.getRunName()))
                             logger.info("  Missing: %s" % pwutils.magenta(f))
+
                             if os.path.islink(f):
-                                logger.info("    -> %s" % pwutils.red(os.path.realpath(f)))
-                            newFile = pwutils.findFile(os.path.basename(f),
+                                sourceFile = os.path.realpath(f)
+                                logger.info("    -> %s" % pwutils.red(sourceFile))
+
+                                newFile = pwutils.findFile(os.path.basename(sourceFile),
                                                        searchDir,
                                                        recursive=True)
-                            if newFile:
-                                logger.info("  Found file %s, creating link... %s" % (newFile,
-                                    pwutils.green("   %s -> %s" % (f, newFile))))
-                                pwutils.createAbsLink(newFile, f)
+                                if newFile:
+                                    logger.info("  Found file %s, creating link... %s" % (newFile,
+                                        pwutils.green("   %s -> %s" % (f, newFile))))
+                                    pwutils.createAbsLink(newFile, f)
 
     @staticmethod
     def cleanProjectName(projectName):
         """ Cleans a project name to avoid common errors
-        Use it whenever you want to get the final project name pyworkflow will endup.
+        Use it whenever you want to get the final project name pyworkflow will end up.
         Spaces will be replaced by _ """
-        return projectName.replace(" ", "_")
+
+        return re.sub("[^\w\d\-\_]", "-", projectName)
 
 
 class MissingProjectDbException(Exception):

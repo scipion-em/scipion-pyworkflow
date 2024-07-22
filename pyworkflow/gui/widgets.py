@@ -32,7 +32,9 @@ import tkinter.ttk as ttk
 
 from math import ceil
 
-from pyworkflow import TK_GRAY_DEFAULT
+import pyworkflow
+from pyworkflow import TK_GRAY_DEFAULT, Config
+
 from . import gui
 from .tooltip import ToolTip
 
@@ -50,7 +52,7 @@ class Button(tk.Button):
             del defaults['bg']
 
         if imagePath is not None:
-            btnImage = gui.getImage(imagePath, Button._images)
+            btnImage = gui.getImage(imagePath)
         else:
             btnImage = None
 
@@ -85,7 +87,7 @@ class IconButton(HotButton):
     """ Hot button, but only with image and no border """
 
     def __init__(self, master, text, imagePath, tooltip=None, **opts):
-        defaults = {'bd': 0, 'bg': 'white', 'compound': tk.NONE}
+        defaults = {'bd': 0, 'bg': Config.SCIPION_BG_COLOR, 'compound': tk.NONE}
         defaults.update(opts)
         HotButton.__init__(self, master, text, imagePath, tooltip, **defaults)
 
@@ -279,8 +281,8 @@ class GradientFrame(tk.Canvas):
 
     def __init__(self, parent, **args):
         tk.Canvas.__init__(self, parent, **args)
-        self._color1 = "#d2a7a7"
-        self._color2 = "#820808"
+        self._color1 = Config.SCIPION_BG_COLOR #"#d2a7a7"
+        self._color2 = Config.SCIPION_MAIN_COLOR #"#820808"
         self.bind("<Configure>", self._draw_gradient)
 
     def _draw_gradient(self, event=None):

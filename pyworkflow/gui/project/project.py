@@ -30,7 +30,11 @@ It is composed by three panels:
 3. Summary/Details
 """
 
+import logging
 
+from .variables import VariablesDialog
+
+logger = logging.getLogger(__name__)
 import os
 import threading
 import shlex
@@ -79,45 +83,41 @@ class ProjectWindow(ProjectBaseWindow):
 
         projMenu = menu.addSubMenu('Project')
         projMenu.addSubMenu('Browse files', 'browse',
-                            icon='fa-folder-open.gif')
+                            icon=Icon.FOLDER_OPEN)
         projMenu.addSubMenu('Remove temporary files', 'delete',
-                            icon='fa-trash-o.gif')
-        projMenu.addSubMenu('Manage project labels', 'labels',
-                            icon=Icon.TAGS)
+                            icon=Icon.ACTION_DELETE)
         projMenu.addSubMenu('Toggle color mode', 'color_mode',
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
-                            shortCut="Ctrl+a", icon='workflow.gif')
-        projMenu.addSubMenu('Find protocol to add', 'find protocol',
-                            shortCut="Ctrl+f", icon='binoculares.gif')
-        projMenu.addSubMenu('Scipion log', 'scipion log',
-                            icon='fa-file-o.gif')
+                            shortCut="Ctrl+a", icon=Icon.SELECT_ALL)
+        projMenu.addSubMenu('Add a protocol', 'find protocol',
+                            shortCut="Ctrl+f", icon=Icon.FIND)
         projMenu.addSubMenu('Locate a protocol', 'locate protocol',
                             shortCut="Ctrl+l")
-        projMenu.addSubMenu('Add a protocol', 'find protocol',
-                            shortCut="Ctrl+f")
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
-                            icon='fa-download.gif')
+                            icon=Icon.DOWNLOAD)
         projMenu.addSubMenu('Search workflow', 'search_workflow',
-                            icon='fa-search.gif')
-        if pw.Config.debugOn():
-            projMenu.addSubMenu('Export tree graph', 'export_tree')
+                            icon=Icon.ACTION_SEARCH)
+
+        projMenu.addSubMenu('Configuration', 'configuration',
+                            icon=Icon.SETTINGS)
+
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Debug Mode', 'debug mode',
-                            shortCut="Ctrl+d", icon='debug.gif')
+                            shortCut="Ctrl+D", icon=Icon.DEBUG)
         projMenu.addSubMenu('', '')  # add separator
-        projMenu.addSubMenu('Notes', 'notes', icon='fa-pencil.gif')
+        projMenu.addSubMenu('Notes', 'notes', icon=Icon.ACTION_EDIT)
         projMenu.addSubMenu('', '')  # add separator
-        projMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
+        projMenu.addSubMenu('Exit', 'exit', icon=Icon.ACTION_OUT)
 
         helpMenu = menu.addSubMenu('Help')
         helpMenu.addSubMenu('Online help', 'online_help',
-                            icon='fa-external-link.gif')
+                            icon=Icon.ACTION_EXPORT)
         helpMenu.addSubMenu('About', 'about',
-                            icon='fa-question-circle.gif')
+                            icon=Icon.ACTION_HELP)
         helpMenu.addSubMenu('Contact support', 'contact_us',
-                            icon='fa-question-circle.gif')
+                            icon=Icon.ACTION_HELP)
 
         self.menuCfg = menu
 
@@ -129,7 +129,7 @@ class ProjectWindow(ProjectBaseWindow):
         self.showGraph = False
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
-                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ)
+                                   minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ, _class=self.projName)
 
         OS.handler().maximizeWindow(self.root)
 
@@ -149,14 +149,16 @@ class ProjectWindow(ProjectBaseWindow):
         return self.settings
     
     def saveSettings(self):
-        self.settings.write()
-        
-    def _onClosing(self):
+
         try:
-            if not self.project.openedAsReadOnly():
-                self.saveSettings()
+            self.settings.write()
         except Exception as ex:
-            print("%s %s" % (Message.NO_SAVE_SETTINGS, str(ex)))
+            logger.error(Message.NO_SAVE_SETTINGS, exc_info=ex)
+
+    def _onClosing(self):
+        if not self.project.openedAsReadOnly():
+            self.saveSettings()
+
         ProjectBaseWindow._onClosing(self)
      
     def loadProject(self):
@@ -168,11 +170,9 @@ class ProjectWindow(ProjectBaseWindow):
         if os.path.exists(settingsPath):
             self.settings = proj.getSettings()
         else:
-            print('Warning: settings.sqlite not found! '
+            logger.info('Warning: settings.sqlite not found! '
                   'Creating default settings..')
             self.settings = proj.createSettings()
-
-        self.generalCfg = self.settings.getConfig()
 
         return proj
 
@@ -235,9 +235,9 @@ class ProjectWindow(ProjectBaseWindow):
         
     def _loadWorkflow(self, obj):
         try:
-            self.getViewWidget().info('Importing the workflow...')
+            self.getViewWidget().info('Importing workflow %s' % obj.getPath())
             self.project.loadProtocols(obj.getPath())
-            self.getViewWidget().updateRunsGraph(True, reorganize=False)
+            self.getViewWidget().updateRunsGraph(True)
             self.getViewWidget().cleanInfo()
         except Exception as ex:
             self.showError(str(ex), exception=ex)
@@ -252,23 +252,6 @@ class ProjectWindow(ProjectBaseWindow):
     def onSearchWorkflow(self):
         WorkflowRepository().search()
 
-    def onExportTreeGraph(self):
-        runsGraph = self.project.getRunsGraph()
-        useId = not pwutils.envVarOn('SCIPION_TREE_NAME')
-        dotStr = runsGraph.printDot(useId=useId)
-        with tempfile.NamedTemporaryFile(suffix='.gv', mode="w") as dotFile:
-            dotFile.write(dotStr)
-            dotFile.flush()
-            openTextFileEditor(dotFile.name)
-
-        if useId:
-            print("\nexport SCIPION_TREE_NAME=1 # to use names instead of ids")
-        else:
-            print("\nexport SCIPION_TREE_NAME=0 # to use ids instead of names")
-
-    def onManageProjectLabels(self):
-        self.manageLabels()
-
     def onToggleColorMode(self):
         self.getViewWidget()._toggleColorScheme(None)
 
@@ -281,13 +264,38 @@ class ProjectWindow(ProjectBaseWindow):
     def onLocateAProtocol(self):
         self.getViewWidget()._locateProtocol(None)
 
-    def onScipionLog(self):
-        self.getViewWidget()._scipionLog(None)
-
     def manageLabels(self):
-        return LabelsDialog(self.root,
-                            self.project.settings.getLabels(),
+
+        labels = self.project.settings.getLabels()
+        dialog = LabelsDialog(self.root,
+                            labels,
                             allowSelect=True)
+
+        # Scan for renamed labels to update node info...
+        labelsRenamed = dict()
+        for label in labels:
+            if label.hasOldName():
+                oldName = label.getOldName()
+                newName = label.getName()
+                logger.info("Label %s renamed to %s" % (oldName, newName))
+                labelsRenamed[oldName] = newName
+                label.clearOldName()
+
+        # If there are labels renamed
+        if labelsRenamed:
+            logger.info("Updating labels of protocols after renaming.")
+            labels.updateDict()
+
+            for node in self.project.settings.getNodes():
+                nodeLabels = node.getLabels()
+                for index, nodeLabel in enumerate(nodeLabels):
+
+                    newLabel = labelsRenamed.get(nodeLabel, None)
+                    if newLabel is not None:
+                        logger.info("Label %s found in %s. Updating it to %s" % (nodeLabel,node, newLabel))
+                        nodeLabels[index] = newLabel
+
+        return dialog
 
     def initProjectTCPServer(self):
         server = ProjectTCPServer((self.project.address, self.project.port),
@@ -327,7 +335,7 @@ class ProjectWindow(ProjectBaseWindow):
             func = self._OBJECT_COMMANDS.get(cmd, None)
 
             if func is None:
-                print("Error, command '%s' not found. " % cmd)
+                logger.info("Error, command '%s' not found. " % cmd)
             else:
                 def myfunc():
                     func(inputObj, objId)
@@ -335,8 +343,7 @@ class ProjectWindow(ProjectBaseWindow):
                 self.enqueue(myfunc)
 
         except Exception as ex:
-            print("There was an error executing object command !!!:")
-            print(ex)
+            logger.error("There was an error executing object command !!!:", exc_info=ex)
     
     def recalculateCTF(self, inputObjId, sqliteFile):
         """ Load the project and launch the protocol to
@@ -368,30 +375,28 @@ class ProjectManagerWindow(ProjectBaseWindow):
     _pluginMenus = dict()
 
     def __init__(self, **kwargs):
-        # Load global configuration
-        settings = ProjectSettings()
 
         # TODO: put the menu part more nicely. From here:
         menu = MenuConfig()
 
         fileMenu = menu.addSubMenu('File')
-        fileMenu.addSubMenu('Browse files', 'browse', icon='fa-folder-open.gif')
-        fileMenu.addSubMenu('Exit', 'exit', icon='fa-sign-out.gif')
+        fileMenu.addSubMenu('Browse files', 'browse', icon=Icon.FOLDER_OPEN)
+        fileMenu.addSubMenu('Exit', 'exit', icon=Icon.ACTION_OUT)
 
         confMenu = menu.addSubMenu('Configuration')
         if os.path.exists(pw.Config.SCIPION_CONFIG):
             confMenu.addSubMenu('General', 'general')
         confMenu.addSubMenu('Hosts', 'hosts')
-        confMenu.addSubMenu('Protocols', 'protocols')
+        if os.path.exists(pw.Config.SCIPION_PROTOCOLS):
+            confMenu.addSubMenu('Protocols', 'protocols')
         if os.path.exists(pw.Config.SCIPION_LOCAL_CONFIG):
             confMenu.addSubMenu('User', 'user')
 
         helpMenu = menu.addSubMenu('Help')
-        helpMenu.addSubMenu('Online help', 'online_help', icon='fa-external-link.gif')
-        helpMenu.addSubMenu('About', 'about', icon='fa-question-circle.gif')
+        helpMenu.addSubMenu('Online help', 'online_help', icon=Icon.ACTION_EXPORT)
+        helpMenu.addSubMenu('About', 'about', icon=Icon.ACTION_HELP)
 
         self.menuCfg = menu
-        self.generalCfg = settings.getConfig()
 
         try:
             title = '%s (%s on %s)' % (Message.LABEL_PROJECTS, 
@@ -439,12 +444,6 @@ class ProjectManagerWindow(ProjectBaseWindow):
     def onUser():
         ProjectManagerWindow._openConfigFile(pw.Config.SCIPION_LOCAL_CONFIG)
 
-    # Moved to scipion-app
-    # def onPlugins(self):
-    #     # Config -> Plugins
-    #     PluginManager("Plugin Manager", self, pw.Config.SCIPION_USER_DATA,
-    #                   selectButton=None).show()
-
 
 class ProjectTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
@@ -460,6 +459,8 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
             msg = msg.decode()
             tokens = shlex.split(msg)
             if msg.startswith('run protocol'):
+                
+                logger.debug("run protocol messaged arrived: %s" % msg)
                 protocolName = tokens[2]
                 protocolClass = pw.Config.getDomain().getProtocols()[protocolName]
                 # Create the new protocol instance and set the input values

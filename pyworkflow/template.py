@@ -4,7 +4,7 @@ import glob
 import os
 import tempfile
 from datetime import datetime
-from pyworkflow import SCIPION_JSON_TEMPLATES, Config
+from pyworkflow import SCIPION_JSON_TEMPLATES, Config, VarTypes
 from pyworkflow.utils import greenStr
 
 
@@ -121,7 +121,7 @@ class Template:
             if field.getAlias() == alias:
                 oldValue = field.getValue()
                 field.setValue(newValue)
-                if field.validate():
+                if field.validate() is None:
                     paramsSetted += 1
                     print(greenStr("%s set to %s") %
                           (field.getTitle(), str(newValue)))
@@ -138,7 +138,7 @@ class TemplateParam(object):
         self._index = index
         self._title = title
         self._value = value
-        self._type = varType
+        self._type = int(varType)
         self._alias = alias
 
     def getTitle(self):
@@ -167,54 +167,54 @@ class Validations:
 
     """ FIELDS VALIDATION """
     """ FIELDS TYPES"""
-    FIELD_TYPE_STR = "0"
-    FIELD_TYPE_BOOLEAN = "1"
-    FIELD_TYPE_PATH = "2"
-    FIELD_TYPE_INTEGER = "3"
-    FIELD_TYPE_DECIMAL = "4"
-
     @classmethod
     def check(cls, value, fieldType):
-        if fieldType == cls.FIELD_TYPE_BOOLEAN:
+        if fieldType == VarTypes.BOOLEAN.value:
             return cls.validBoolean(value)
-        elif fieldType == cls.FIELD_TYPE_DECIMAL:
+        elif fieldType == VarTypes.DECIMAL.value:
             return cls.validDecimal(value)
-        elif fieldType == cls.FIELD_TYPE_INTEGER:
+        elif fieldType == VarTypes.INTEGER.value:
             return cls.validInteger(value)
-        elif fieldType == cls.FIELD_TYPE_PATH:
+        elif fieldType == VarTypes.PATH.value:
             return cls.validPath(value)
-        elif fieldType == cls.FIELD_TYPE_STR:
+        elif fieldType == VarTypes.STRING.value:
             return cls.validString(value)
 
         else:
-            print("Type %s for %s not recognized. Review the template."
-                  % (type, value))
-            return
+            return "Type %s for %s not recognized. Review the template." % (fieldType, value)
 
     @staticmethod
     def validString(value):
-        return value is not None
+        if value is None:
+            return "String does not accept None/empty values."
 
     @staticmethod
     def validInteger(value):
-        return value.isdigit()
+        if not value.isdigit():
+            return "Value does not seem to be an integer number."
 
     @staticmethod
     def validPath(value):
-        return os.path.exists(value)
+        if not os.path.exists(value):
+            return "Path does not exists."
 
     @staticmethod
     def validDecimal(value):
 
         try:
             float(value)
-            return True
+            return None
         except Exception as e:
-            return False
+            return "Value can't be converted to a float (%s)" % str(e)
 
     @staticmethod
     def validBoolean(value):
-        return value is True or value is False
+        validValues = ["true", "1", "false", "0"]
+
+        valueL = value.lower()
+
+        if valueL not in validValues:
+            return "Only valid values for a boolean type are: %s" % validValues
 
 
 class TemplateList:
@@ -261,7 +261,7 @@ class TemplateList:
         # Check if there is any .json.template in the template folder
         # get the template folder (we only want it to be included once)
         for pluginName, pluginModule in domain.getPlugins().items():
-            tempListPlugin = pluginModule.Plugin.getTemplates()
+            tempListPlugin = pluginModule._pluginInstance.getTemplates()
             for t in tempListPlugin:
                 if tempId is not None:
                     if t.getObjId() == tempId:

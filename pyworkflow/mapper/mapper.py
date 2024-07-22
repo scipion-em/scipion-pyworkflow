@@ -23,7 +23,8 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-
+import logging
+logger = logging.getLogger(__name__)
 
 import pyworkflow.object as obj
 
@@ -76,11 +77,15 @@ class Mapper:
         objClass = self.dictClasses[className]
         
         if not issubclass(objClass, obj.Object):
-            print("WARNING: Class '%s' is not a subclass of Object. Ignored. "
-                  % className)
+            logger.warning("WARNING: Class '%s' is not a subclass of Object. Ignored. " % className)
             return None
 
-        instance = self.dictClasses[className](**kwargs)
+        try:
+            instance = self.dictClasses[className](**kwargs)
+        except Exception as e:
+            clazz = self.dictClasses._default
+            logger.error('Class %s could not be created. Replacing it with %s ' % (className, clazz.__name__), exc_info=e)
+            instance = clazz(**kwargs)
 
         # If it's the default class in the dictionary
         if objClass.__name__ != className:

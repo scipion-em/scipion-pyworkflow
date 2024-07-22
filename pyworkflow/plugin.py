@@ -26,6 +26,15 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+import sys
+
+from pyworkflow import Variable, VariablesRegistry, VarTypes
+from .protocol import Protocol
+from .viewer import Viewer
+from .wizard import Wizard
+
+logger = logging.getLogger(__name__)
 import glob
 import os
 import importlib
@@ -41,6 +50,7 @@ import pyworkflow as pw
 import pyworkflow.utils as pwutils
 import pyworkflow.object as pwobj
 from pyworkflow.template import Template
+from pyworkflow.utils import sortListByList
 
 from .constants import *
 
@@ -52,11 +62,11 @@ class Domain:
     """
 
     # The following classes should be defined in subclasses of Domain
-    _name = None
-    _protocolClass = None
+    _name = __name__
+    _protocolClass = Protocol
     _objectClass = pwobj.Object
-    _viewerClass = None
-    _wizardClass = None
+    _viewerClass = Viewer
+    _wizardClass = Wizard
     _baseClasses = {}  # Update this with the base classes of the Domain
 
     # Dictionaries to store different type of objects
@@ -75,7 +85,14 @@ class Domain:
             m = importlib.import_module(name)
 
             # Define variables
-            m.Plugin._defineVariables()
+            m._pluginInstance = m.Plugin()
+            # This needs an explanation. _defineVariables() are classmethods, therfore we need a class variable and thus .name can't be used.
+            # Ideally, since Plugin class is instantiated we could transform _defineVariables methods into instance methods and only then we
+            # could use .name.
+            Plugin._tmpName = name
+            m._pluginInstance.name = name
+            m._pluginInstance._defineVariables()
+
             m.Domain = cls  # Register the domain class for this module
             # TODO avoid loading bibtex here and make a lazy load like the rest.
             # Load bibtex
@@ -83,7 +100,7 @@ class Domain:
             bib = cls.__getSubmodule(name, 'bibtex')
             if bib is not None:
                 if hasattr(bib, "_bibtex"):
-                    print("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
+                    logger.info("WARNING FOR DEVELOPERS:  %s/%s._bibtex unnecessarily declared. Just the doc string is enough." % (name, "bibtex"))
                 else:
                     try:
                         m._bibtex = pwutils.LazyDict(lambda: pwutils.parseBibTex(bib.__doc__))
@@ -92,11 +109,15 @@ class Domain:
             cls._plugins[name] = m  # Register the name to as a plugin
 
         # Catch any import exception, warn about it but continue.
+        except ModuleNotFoundError:
+            # This is probably due to a priority package like pwchem not being installed
+            pass
         except Exception as e:
-            print(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
+
+            (pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
-            print("Please, contact developers at %s and send this ugly information bellow. They'll understand it!." % DOCSITEURLS.CONTACTUS)
-            print(pwutils.yellow(traceback.format_exc()))
+            logger.info("Please, contact developers at %s and send this ugly information below. They'll understand it!." % DOCSITEURLS.CONTACTUS)
+            logger.info(pwutils.yellow(traceback.format_exc()))
 
     @classmethod
     def getPlugins(cls):
@@ -109,8 +130,16 @@ class Domain:
 
     @classmethod
     def _discoverPlugins(cls):
+        # Get the list of plugins registered
+        plugin_modules = []
         for entry_point in pkg_resources.iter_entry_points('pyworkflow.plugin'):
-            cls.registerPlugin(entry_point.name)
+            plugin_modules.append(entry_point.name)
+
+        # Sort the list taking into account the priority
+        plugin_modules = sortListByList(plugin_modules, pw.Config.getPriorityPackageList())
+
+        for module in plugin_modules:
+            cls.registerPlugin(module)
 
     @classmethod
     def _discoverGUIPlugins(cls):
@@ -118,15 +147,16 @@ class Domain:
             entry_point.load()
 
     @classmethod
-    def getPlugin(cls, name):
-        """ Load a given plugin name. """
-        m = importlib.import_module(name)
+    def getPluginModule(cls, name):
+        """ Return the root of a plugin module initialized properly """
+        cls.registerPlugin(name)
 
-        # if not cls.__isPlugin(m):
-        #     raise Exception("Invalid plugin '%s'. "
-        #                     "Class Plugin with __metaclass__=PluginMeta "
-        #                     "not found" % name)
-        return m
+        return cls._plugins[name]
+
+    @classmethod
+    def getPlugin(cls, name):
+        logger.warning("This method will return the plugin class in the future. Please use getPluginModule instead")
+        return cls.getPluginModule(name)
 
     @classmethod
     def refreshPlugin(cls, name):
@@ -165,7 +195,7 @@ class Domain:
 
     @classmethod
     def __getSubclasses(cls, submoduleName, BaseClass,
-                        updateBaseClasses=False):
+                        updateBaseClasses=False, setPackage=False):
         """ Load all detected subclasses of a given BaseClass.
         Params:
             updateBaseClasses: if True, it will try to load classes from the
@@ -182,7 +212,7 @@ class Domain:
                         if inspect.isclass(attr) and issubclass(attr, BaseClass):
                             cls._baseClasses[name] = attr
 
-            for pluginName, plugin in cls.getPlugins().items():
+            for pluginName, module in cls.getPlugins().items():
                 sub = cls.__getSubmodule(pluginName, submoduleName)
                 if sub is not None:
                     for name in cls.getModuleClasses(sub):
@@ -194,14 +224,19 @@ class Domain:
                             if name in subclasses:
                                 # Get already added class plugin
                                 pluginCollision = subclasses[name]._package.__name__
-                                print("ERROR: Name collision (%s) detected "
+                                logger.info("ERROR: Name collision (%s) detected "
                                       "while discovering %s.%s.\n"
                                       " It conflicts with %s" %
                                       (name, pluginName, submoduleName,
                                        pluginCollision))
                             else:
                                 # Set this special property used by Scipion
-                                attr._package = plugin
+                                # Protocols need the package to be set
+                                if setPackage:
+
+                                    attr._plugin = getattr(module, "_pluginInstance", None)
+                                    attr._package = module
+
                                 subclasses[name] = attr
             subclasses.update(
                 pwutils.getSubclasses(BaseClass, cls._baseClasses))
@@ -225,7 +260,7 @@ class Domain:
     @classmethod
     def getProtocols(cls):
         """ Return all Protocol subclasses from all plugins for this domain."""
-        return cls.__getSubclasses('protocols', cls._protocolClass)
+        return cls.__getSubclasses('protocols', cls._protocolClass, setPackage=True)
 
     @classmethod
     def getObjects(cls):
@@ -233,10 +268,15 @@ class Domain:
         return cls.__getSubclasses('objects', cls._objectClass)
 
     @classmethod
+    def viewersLoaded(cls):
+        """ Returns true if viewers have been already discovered"""
+        return len(cls._viewers) != 0
+
+    @classmethod
     def getViewers(cls):
         """ Return all Viewer subclasses from all plugins for this domain."""
         return cls.__getSubclasses('viewers', cls._viewerClass,
-                                   updateBaseClasses=True)
+                                   updateBaseClasses=True, setPackage=True)
 
     @classmethod
     def getWizards(cls):
@@ -353,11 +393,10 @@ class Domain:
                                                   doRaise=True)
                 viewers.append(prefViewer)
             except Exception as e:
-                print("Couldn't load \"%s\" as preferred viewer for %s.\n"
+                logger.error("Couldn't load \"%s\" as preferred viewer for %s.\n"
                       "There might be a typo in your VIEWERS variable "
                       "or an error in the viewer's plugin installation"
-                      % (prefViewerStr, className))
-                print(e)
+                      % (prefViewerStr, className), exc_info=e)
         return viewers
 
     @classmethod
@@ -371,20 +410,28 @@ class Domain:
             preferedFlag = 0
 
             for viewer in cls.getViewers().values():
+                viewerAdded=False
                 if environment in viewer._environments:
                     for t in viewer._targets:
                         if t in baseClasses:
                             for prefViewer in preferredViewers:
                                 if viewer is prefViewer:
                                     viewers.insert(0, viewer)
+                                    viewerAdded=True
                                     preferedFlag = 1
                                     break
                             else:
                                 if t == clazz:
                                     viewers.insert(preferedFlag, viewer)
+                                    viewerAdded = True
                                 else:
                                     viewers.append(viewer)
+                                    viewerAdded = True
                                 break
+
+                        if viewerAdded:
+                            break
+
         except Exception as e:
             # Catch if there is a missing plugin, we will get Legacy which triggers and Exception
             pass
@@ -407,11 +454,11 @@ class Domain:
     def printInfo(cls):
         """ Simple function (mainly for debugging) that prints basic
         information about this Domain. """
-        print("Domain: %s" % cls._name)
-        print("     objects: %s" % len(cls._objects))
-        print("   protocols: %s" % len(cls._protocols))
-        print("     viewers: %s" % len(cls._viewers))
-        print("     wizards: %s" % len(cls._wizards))
+        logger.info("Domain: %s" % cls._name)
+        logger.info("     objects: %s" % len(cls._objects))
+        logger.info("   protocols: %s" % len(cls._protocols))
+        logger.info("     viewers: %s" % len(cls._viewers))
+        logger.info("     wizards: %s" % len(cls._wizards))
 
     # ---------- Private methods of Domain class ------------------------------
     @staticmethod
@@ -454,7 +501,7 @@ class Domain:
         if doRaise:
             raise Exception("\n\n" + raiseMsg)
         else:
-            print(raiseMsg)
+            logger.info(raiseMsg)
 
     @staticmethod
     def __getSubmodule(name, subname):
@@ -496,32 +543,41 @@ class Plugin:
     _homeVar = ''  # Change in subclasses to define the "home" variable
     _pathVars = []
     _supportedVersions = []
-    _name = ""
     _url = ""  # For the plugin
     _condaActivationCmd = None
+    _tmpName = None # This would be temporary. It will hold the plugin name during the call to defineVariables
+
+    def __init__(self):
+        self._path = None
+        self._inDevelMode = None
+        self._name = None
 
     @classmethod
-    def _defineVar(cls, varName, defaultValue):
+    def _defineVar(cls, varName, defaultValue, description="Missing", var_type:VarTypes=None):
         """ Internal method to define variables trying to get it from the environment first. """
-        cls._addVar(varName, os.environ.get(varName, defaultValue))
+        cls._addVar(varName, os.environ.get(varName, defaultValue), default=defaultValue, description=description, var_type=var_type)
 
     @classmethod
-    def _addVar(cls, varName, value):
+    def _addVar(cls, varName, value, default=None, description="Missing", var_type:VarTypes=None):
         """ Adds a variable to the local variable dictionary directly. Avoiding the environment"""
+
+        var = Variable(varName, description, cls._tmpName, value, default, var_type=var_type)
+        VariablesRegistry.register(var)
         cls._vars[varName] = value
 
     @classmethod
     @abstractmethod
     def getEnviron(cls):
-        """ Setup the environment variables needed to launch programs. """
+        """ Set up the environment variables needed to launch programs. """
         pass
 
     @classmethod
     def getCondaActivationCmd(cls):
+        """ Returns the conda activation command with && at the end if defined otherwise empty"""
         if cls._condaActivationCmd is None:
-            condaActivationCmd = os.environ.get(CONDA_ACTIVATION_CMD_VAR, "")
+            condaActivationCmd = pw.Config.CONDA_ACTIVATION_CMD
             if not condaActivationCmd:
-                print("WARNING!!_condaActivationCmd: %s variable not defined. "
+                logger.info("WARNING!!_condaActivationCmd: %s variable not defined. "
                       "Relying on conda being in the PATH" % CONDA_ACTIVATION_CMD_VAR)
             elif condaActivationCmd[-1] not in [";", "&"]:
                 condaActivationCmd += "&&"
@@ -530,7 +586,6 @@ class Plugin:
 
         return cls._condaActivationCmd
 
-    @classmethod
     @abstractmethod
     def _defineVariables(cls):
         """ Method to define variables and their default values.
@@ -589,10 +644,6 @@ class Plugin:
         return ''
 
     @classmethod
-    def getName(cls):
-        return cls.__module__
-
-    @classmethod
     def validateInstallation(cls):
         """
         Check if the binaries are properly installed and if not, return
@@ -604,7 +655,7 @@ class Plugin:
             missing = ["%s: %s" % (var, cls.getVar(var))
                        for var in cls._pathVars if not os.path.exists(cls.getVar(var))]
 
-            return (["Missing paths: the variables bellow point to non existing paths."]
+            return (["Missing paths: the variables below point to non existing paths."]
                     + missing + [
                      "Either install the software ( %s )" % DOCSITEURLS.PLUGIN_MANAGER,
                     "or edit the config file ( %s )" % DOCSITEURLS.CONFIG]) if missing else []
@@ -612,23 +663,32 @@ class Plugin:
             return ["validateInstallation fails: %s" % e]
 
     @classmethod
-    def getPluginDir(cls):
-        return os.path.join(pw.getModuleFolder(cls.getName()))
+    def getUrl(cls, protClass=None):
+        """ Url for the plugin to point users to it"""
+        return cls._url
 
-    @classmethod
-    def getPluginTemplateDir(cls):
-        return os.path.join(cls.getPluginDir(), 'templates')
+    # -------------- Instance methods ----------------
+    def getName(self):
+        if self._name is None:
+            self._name=  self.__class__.__module__
+
+        return self._name
+
+    def getPluginDir(self):
+        return self.getPath()
+
+    def getPluginTemplateDir(self):
+        return os.path.join(self.getPath(), 'templates')
 
 
-    @classmethod
-    def getTemplates(cls):
+    def getTemplates(self):
         """ Get the plugin templates from the templates directory.
             If more than one template is found or passed, a dialog is raised
             to choose one.
         """
         tempList = []
-        pluginName = cls.getName()
-        tDir = cls.getPluginTemplateDir()
+        pluginName = self.getName()
+        tDir = self.getPluginTemplateDir()
         if os.path.exists(tDir):
             for file in glob.glob1(tDir, "*" + SCIPION_JSON_TEMPLATES):
                 t = Template(pluginName, os.path.join(tDir, file))
@@ -636,10 +696,16 @@ class Plugin:
 
         return tempList
 
-    @classmethod
-    def getUrl(cls, protClass=None):
-        """ Url for the plugin to point users to it"""
-        return cls._url
+    def getPath(self):
+        if self._path is None:
+            self._path = sys.modules[self.__class__.__module__].__path__[0]
+
+        return self._path
+    def inDevelMode(self)-> bool:
+        """ Returns true if code is not in python's site-packages folder"""
+        if self._inDevelMode is None:
+            self._inDevelMode = pwutils.getPythonPackagesFolder() not in self.getPath()
+        return self._inDevelMode
 
 
 class PluginInfo:
@@ -653,7 +719,7 @@ class PluginInfo:
             tuples = message_from_string('\n'.join(lines))
 
         except Exception:
-            print("Plugin %s seems is not a pip module yet. "
+            logger.info("Plugin %s seems is not a pip module yet. "
                   "No metadata found" % name)
             tuples = message_from_string('Author: plugin in development mode?')
 

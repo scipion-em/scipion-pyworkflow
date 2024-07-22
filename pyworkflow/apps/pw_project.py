@@ -36,13 +36,14 @@ from pyworkflow.project import Manager
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
 
-import logging
-logger = logging.getLogger(__name__)
+HERE = 'here'
+LAST = 'last'
+LIST = 'list'
 
 def openProject(projectName):
     """ Opens a scipion project:
 
-    :param projectName: Name of a existing project to open,
+    :param projectName: Name of an existing project to open,
             or "here" to create a project in the current working dir,
             or "last" to open the most recent project
 
@@ -50,9 +51,13 @@ def openProject(projectName):
     manager = Manager()
     projName = os.path.basename(projectName)
 
+
+    if projName == LIST:
+        showProjectList(manager)
+        return
     # Handle special name 'here' to create a project
     # from the current directory
-    if projName == 'here':
+    elif projName == HERE:
         cwd = Config.SCIPION_CWD
 
         if " " in cwd:
@@ -75,7 +80,7 @@ def openProject(projectName):
             projDir = os.path.dirname(cwd)
             manager.createProject(projName, location=projDir)
 
-    elif projName == 'last':  # Get last project
+    elif projName == LAST:  # Get last project
         projects = manager.listProjects()
         if not projects:
             sys.exit("No projects yet, cannot open the last one.")
@@ -87,11 +92,22 @@ def openProject(projectName):
         projWindow = ProjectWindow(projPath)
         projWindow.show()
     else:
-        logger.error("Can't open project %s. It does not exist" % projPath)
+        print("Can't open project %s. It does not exist" % projPath)
 
+        #Show the list of projects
+        showProjectList(manager)
+
+def showProjectList(manager):
+
+    projects = manager.listProjects()
+
+    print("\n******** LIST OF PROJECTS *******\n")
+    for project in projects:
+        print(project.projName)
+    print("\n")
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
         openProject(sys.argv[1])
     else:
-        logger.info("usage: pw_project.py PROJECT_NAME or here or last")
+        print("usage: pw_project.py PROJECT_NAME or %s or %s or %s" % (HERE, LAST, LIST))

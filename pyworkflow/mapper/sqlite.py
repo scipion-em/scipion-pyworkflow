@@ -22,10 +22,12 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
+import logging
+logger = logging.getLogger(__name__)
 import re
 from collections import OrderedDict
 
-from pyworkflow.utils import replaceExt, joinExt
+from pyworkflow.utils import replaceExt, joinExt, valueToList
 from .sqlite_db import SqliteDb, OperationalError
 from .mapper import Mapper
 
@@ -72,7 +74,7 @@ class SqliteMapper(Mapper):
         
     def __insert(self, obj, namePrefix=None):
         if not hasattr(obj, '_objDoStore'):
-            print("MAPPER: object '%s' doesn't seem to be an Object subclass,"
+            logger.info("MAPPER: object '%s' doesn't seem to be an Object subclass,"
                   "       it does not have attribute '_objDoStore'. "
                   "Insert skipped." % obj)
             return
@@ -94,7 +96,7 @@ class SqliteMapper(Mapper):
         
     def insertChild(self, obj, key, attr, namePrefix=None):
         if not hasattr(attr, '_objDoStore'):
-            print("MAPPER: object '%s' doesn't seem to be an Object subclass,"
+            logger.info("MAPPER: object '%s' doesn't seem to be an Object subclass,"
                   "       it does not have attribute '_objDoStore'. \n"
                   "Insert skipped." % attr)
             return 
@@ -134,10 +136,10 @@ class SqliteMapper(Mapper):
         return obj.strId()
     
     def __printObj(self, obj):
-        print("obj._objId", obj._objId)
-        print("obj._objParentId", obj._objParentId)
-        print("obj._objName", obj._objName)
-        print("obj.getObjValue()", obj.getObjValue())
+        logger.info("obj._objId: %s" % obj._objId)
+        logger.info("obj._objParentId: %s" % obj._objParentId)
+        logger.info("obj._objName: %s"% obj._objName)
+        logger.info("obj.getObjValue(): %s" % obj.getObjValue())
 
     def updateTo(self, obj, level=1):
         self.__initUpdateDict()
@@ -203,15 +205,20 @@ class SqliteMapper(Mapper):
         
     def fillObjectWithRow(self, obj, objRow):
         """ Fill the object with row data. """
+
+        rowId = objRow[ID]
+        rowName = self._getStrValue(objRow['name'])
+
         if not hasattr(obj, '_objId'):
             raise Exception("Entry '%s' (id=%s) in the database, stored as '%s'"
                             ", is being mapped to %s object. " %
-                            (self._getStrValue(objRow['name']), objRow[ID],
+                            (rowName, rowId,
                              objRow['classname'], type(obj)))
 
-        obj._objId = objRow[ID]
-        self.objDict[obj._objId] = obj
-        obj._objName = self._getStrValue(objRow['name'])
+        obj._objId = rowId
+
+        self.objDict[rowId] = obj
+        obj._objName = rowName
         obj._objLabel = self._getStrValue(objRow['label'])
         obj._objComment = self._getStrValue(objRow['comment'])
         obj._objCreation = self._getStrValue(objRow[CREATION])
@@ -221,11 +228,44 @@ class SqliteMapper(Mapper):
         if obj.isPointer():
             if objValue is not None:
                 objValue = self.selectById(int(objValue))
-            else:
-                objValue = None
-        obj.set(objValue)
+            # This is necessary in some specific cases. E.g.:
+            # CTF consensus creating:
+            #   A.- Micrographs
+            #   B.- CTFs --> pointing to micrographs in this same protocol(#1)
+            # When loading this kind of protocol the sequence is as follows:
+            #  1 Loading of protocol consuming consensus CTF output ..
+            #    ...
+            #    finds inputCtf (DIRECT pointer to B)
+            #    2 loads set properties
+            #      ...
+            #      2.4 pointer to micrographs (Pointer to Consensus + extended)
+            #        2.4.1 pointee loads (Consensus protocol)
+            #        ...
+            #        ...
+            #        2.4.n _extended of 2.4 is loaded since is a child of consensus
+            #      2.4 obj.set() for 2.4 pointer --> will reset the extended to None.
+            obj.set(objValue, cleanExtended=False)
+        else:
+            try:
+                obj.set(objValue)
+            except Exception as e:
+                # Case for parameter type change. Loading the project tolerates type changes like Float to Int.
+                # But when running a protocol loads happens differently (maybe something to look at) and comes here.
+                logger.error("Can't set %s to %s. Maybe its type has changed!. Continues with default value %s." %
+                             (objValue, rowName, obj.get()))
         
     def fillObject(self, obj, objRow, includeChildren=True):
+        """ Fills an already instantiated object the data in a row, including children
+
+        NOTE: This, incase children are included, makes a query to the db with all its children 'like 2.*'.
+        At some point it calls selectById triggering the loading of other protocols and ancestors.
+
+        :param obj: Object to fill
+        :param objRow: row with the values
+        :param includeChildren: (True). If true children are also populated
+
+        """
+
         self.fillObjectWithRow(obj, objRow)
         namePrefix = self.__getNamePrefix(obj)
 
@@ -233,19 +273,33 @@ class SqliteMapper(Mapper):
             childs = self.db.selectObjectsByAncestor(namePrefix)
 
             for childRow in childs:
+
                 childParts = childRow[NAME].split('.')
                 childName = childParts[-1]
+                childId = childRow[ID]
                 parentId = int(childParts[-2])
                 # Here we are assuming that always the parent have
                 # been processed first, so it will be in the dictionary
                 parentObj = self.objDict.get(parentId, None)
                 if parentObj is None:  # Something went wrong
                     continue
+
+                # If id already in the objDict skip all this
+                if childId in self.objDict.keys():
+                    setattr(parentObj, childName, self.objDict[childId])
+                    continue
+
+                # Try to get the instance from the parent
                 childObj = getattr(parentObj, childName, None)
+
+                # If parent does not have that attribute...
                 if childObj is None:
+                    # Instantiate it based on the class Name
                     childObj = self._buildObjectFromClass(childRow[CLASSNAME])
+
                     # If we have any problem building the object, just ignore it
                     if childObj is None:
+                        # This is the case for deprecated types.
                         continue
                     setattr(parentObj, childName, childObj)
 
@@ -268,7 +322,7 @@ class SqliteMapper(Mapper):
             # Get the parent, we should have it cached
             parentObj = self.objDict.get(parentId, None)
             if parentObj is None:  # Something went wrong
-                print("WARNING: Parent object (id=%d) was not found, "
+                logger.warning("Parent object (id=%d) was not found, "
                       "object: %s. Ignored." % (parentId, name))
                 return None
 
@@ -384,20 +438,38 @@ class SqliteMapper(Mapper):
         return objs
 
     def _getObjectFromRow(self, row):
+        """ Creates and fills and object described iin row
+
+        :param row: A row with the Class to instantiate, and value to set."""
+
+        # Get the ID first
+        identifier = row[ID]
+
+        # If already in the dictionary we skipp al this
+        if identifier in self.objDict.keys():
+            return self.objDict[identifier]
 
         # Build the object without children
         obj = self.__buildObject(row)
 
         # If an object was created
         if obj is not None:
-            # Fill object attributes with row values
-            self.fillObjectWithRow(obj, row)
+            try:
+                # Fill object attributes with row values
+                self.fillObjectWithRow(obj, row)
 
-            # Add it to the obj cache, we might need it latter to assign
-            # attributes
-            self.objDict[obj._objId] = obj
+                # Add it to the obj cache, we might need it later to assign
+                # attributes
+                self.objDict[obj._objId] = obj
 
-            return obj
+                return obj
+
+            except Exception as e:
+                # Tolerate errors when loading attributes.
+                # This could happen then a protocol has change a param to a new type not compatible
+                # with previous values. Warn properly about it.
+                logger.warning("Can't load the row (%s, %s, %s) form the database to memory. This could cause future error." %
+                             (identifier, row[NAME], row[PARENT_ID]))
 
     def _getObjectFromDictionary(self, objId):
         return self.objDict[objId]
@@ -585,10 +657,10 @@ class SqliteObjectsDb(SqliteDb):
                 (parent_id, name, classname, value, label, comment))
             return self.cursor.lastrowid
         except Exception as ex:
-            print("insertObject: ERROR")
-            print('INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation)' +
+            logger.error("insertObject: ERROR")
+            logger.error('INSERT INTO Objects (parent_id, name, classname, value, label, comment, creation)' +
                   ' VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))')
-            print((parent_id, name, classname, value, label, comment))
+            logger.error((parent_id, name, classname, value, label, comment))
             raise ex
         
     def insertRelation(self, relName, parent_id, object_parent_id, object_child_id, 
@@ -835,6 +907,10 @@ class SqliteFlatMapper(Mapper):
         # Create a template object for retrieving stored ones
         columnList = []
         rows = self.db.getClassRows()
+
+        # Adds common fields to the mapping
+        self.db.addCommonFieldsToMap()
+
         attrClasses = {}
         self._objBuildList = []
 
@@ -892,10 +968,10 @@ class SqliteFlatMapper(Mapper):
             obj.setEnabled(objRow['enabled'])
             obj.setObjCreation(self._getStrValue(objRow[CREATION]))
         except Exception:
-            # THIS SHOULD NOT HAPPENS
-            print("WARNING: 'creation' column not found in object: %s" % obj.getObjId())
-            print("         db: %s" % self.db.getDbName())
-            print("         objRow: ", dict(objRow))
+            # THIS SHOULD NOT HAPPEN
+            logger.warning("'creation' column not found in object: %s" % obj.getObjId())
+            logger.warning("         db: %s" % self.db.getDbName())
+            logger.warning("         objRow: %s." % dict(objRow))
 
         for c, attrName in self._objColumns:
             obj.setAttributeValue(attrName, objRow[c])
@@ -975,15 +1051,18 @@ and restarting scipion. Export command:
             return result
 
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+
+        operations = valueToList(operations)
+        groupByLabels = valueToList(groupByLabels)
+
         rows = self.db.aggregate(operations, operationLabel, groupByLabels)
+
+        # Transform the sql row into a disconnected list of dictionaries
         results = []
         for row in rows:
             values = {}
-            for label in operations:
-                values[label] = row[label]
-            if groupByLabels is not None:
-                for label in groupByLabels:
-                    values[label] = row[label]
+            for key in row.keys():
+                values[key] = row[key]
             results.append(values)
 
         return results
@@ -1159,7 +1238,7 @@ class SqliteFlatDb(SqliteDb):
         """
         self.setVersion(self.VERSION)
         for pragma in self._pragmas.items():
-            print("executing pragma", pragma)
+            logger.debug("Executing pragma: %s" % pragma)
             self.executeCommand("PRAGMA %s = %s;" % pragma)
         # Create a general Properties table to store some needed values
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Properties
@@ -1219,8 +1298,16 @@ class SqliteFlatDb(SqliteDb):
                 self.INSERT_OBJECT += ',%s' % colName
                 self.UPDATE_OBJECT += ', %s=?' % colName
 
+        self.addCommonFieldsToMap()
+
         self.INSERT_OBJECT += ") VALUES (?,?,?,?, datetime('now')" + ',?' * (c-1) + ')'
         self.UPDATE_OBJECT += ' WHERE id=?'
+
+    def addCommonFieldsToMap(self):
+
+        # Add common fields to the mapping
+        self._columnsMapping["id"] = "id"
+        self._columnsMapping["_objId"] = "id"
 
     def getClassRows(self):
         """ Create a dictionary with names of the attributes
@@ -1321,7 +1408,7 @@ class SqliteFlatDb(SqliteDb):
 
         whereStr = where
         # Split by valid where operators: =, <, >
-        result = re.split('<=|<=|=|<|>|AND|OR', where)
+        result = re.split('<=|>=|=|<|>|AND|OR', where)
         # For each item
         for term in result:
             # trim it
@@ -1358,17 +1445,37 @@ class SqliteFlatDb(SqliteDb):
         return self._results(iterate=False)
 
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+        """
+
+        :param operations: string or LIST of operations: MIN, MAX, AVG, COUNT, SUM, TOTAL, GROUP_CONCAT. Any single argument function
+        defined for sqlite at https://www.sqlite.org/lang_aggfunc.html
+        :param operationLabel: string or LIST of attributes to apply the functions on
+        :param groupByLabels: (Optional) attribute or list of attributes to group by the data
+        :return:
+        """
         # let us count for testing
         selectStr = 'SELECT '
         separator = ' '
+
+        operations = valueToList(operations)
+        operationLabel = valueToList(operationLabel)
+        groupByLabels = valueToList(groupByLabels)
+
         # This cannot be like the following line should be expressed in terms
         # of C1, C2 etc....
-        for operation in operations:
-            selectStr += "%s %s(%s) AS %s" % (separator, operation,
-                                              self._columnsMapping[operationLabel],
-                                              operation)
-            separator = ', '
-        if groupByLabels is not None:
+        for index,label in enumerate(operationLabel):
+            for operation in operations:
+
+                if index==0:
+                    alias = operation
+                else:
+                    alias = operation + label
+
+                selectStr += "%s %s(%s) AS %s" % (separator, operation,
+                                                  self._columnsMapping[label],
+                                                  alias)
+                separator = ', '
+        if groupByLabels:
             groupByStr = 'GROUP BY '
             separator = ' '
             for groupByLabel in groupByLabels:

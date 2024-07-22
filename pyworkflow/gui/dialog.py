@@ -28,13 +28,14 @@
 Module to handling Dialogs
 some code was taken from tkSimpleDialog
 """
+import os.path
 import tkinter as tk
 import traceback
 from tkcolorpicker import askcolor as _askColor
-
+from pyworkflow import Config
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon, Color
-from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle
+from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle, ToolTip
 from .tree import BoundTree, Tree
 from .text import Text, TaggedText
 
@@ -58,7 +59,7 @@ class Dialog(tk.Toplevel):
     An image name can be passed to display left to the message.
     """
 
-    def __init__(self, parent, title, **kwargs):
+    def __init__(self, parent, title, lockGui=True, **kwargs):
         """Initialize a dialog.
         Arguments:
             parent -- a parent window (the application window)
@@ -71,6 +72,8 @@ class Dialog(tk.Toplevel):
             parent = tk.Tk()
             parent.withdraw()
             gui.setCommonFonts()
+            # invoke the button on the return key
+            parent.bind_class("Button", "<Key-Return>", lambda event: event.widget.invoke())
 
         tk.Toplevel.__init__(self, parent)
 
@@ -80,13 +83,14 @@ class Dialog(tk.Toplevel):
         # If the master is not viewable, don't
         # make the child transient, or else it
         # would be opened withdrawn
-        if parent.winfo_viewable():
+        if parent.winfo_viewable() and lockGui:
             self.transient(parent)
 
         if title:
             self.title(title)
 
         self.parent = parent
+
         # Default to CANCEL so if window is "Closed" behaves the same.
         self.result = RESULT_CANCEL
         self.initial_focus = None
@@ -97,6 +101,14 @@ class Dialog(tk.Toplevel):
         bodyFrame.grid(row=0, column=0, sticky='news',
                        padx=5, pady=5)
 
+        # Frame for the info/message label
+        infoFrame = tk.Frame(self)
+        infoFrame.grid(row=1, column=0, sticky='sew',
+                       padx=5, pady=(0, 5))
+        self.floatingMessage = tk.Label(infoFrame, text="", fg=Config.SCIPION_MAIN_COLOR)
+        self.floatingMessage.grid(row=0, column=0, sticky='news')
+
+        # Create buttons
         self.icons = kwargs.get('icons',
                                 {RESULT_YES: Icon.BUTTON_SELECT,
                                  RESULT_NO: Icon.BUTTON_CLOSE,
@@ -106,10 +118,11 @@ class Dialog(tk.Toplevel):
         self.buttons = kwargs.get('buttons', [('OK', RESULT_YES),
                                               ('Cancel', RESULT_CANCEL)])
         self.defaultButton = kwargs.get('default', 'OK')
+
+        # Frame for buttons
         btnFrame = tk.Frame(self)
-        # Create buttons 
         self.buttonbox(btnFrame)
-        btnFrame.grid(row=1, column=0, sticky='sew',
+        btnFrame.grid(row=2, column=0, sticky='sew',
                       padx=5, pady=(0, 5))
 
         gui.configureWeigths(self)
@@ -130,8 +143,12 @@ class Dialog(tk.Toplevel):
         # window ".139897767953072.139897384058440" was deleted before its visibility changed
         # wait for window to appear on screen before calling grab_set
         self.wait_visibility()
-        self.grab_set()
+        if lockGui:
+            self.grab_set()
         self.wait_window(self)
+
+    def getRoot(self):
+        return self
 
     def destroy(self):
         """Destroy the window"""
@@ -180,7 +197,8 @@ class Dialog(tk.Toplevel):
         self.result = resultValue
         noCancel = self.result != RESULT_CANCEL and self.result != RESULT_CLOSE
 
-        if noCancel and not self.validate():
+        callBack = self.validate if noCancel else self.validateClose
+        if not callBack():
             self.initial_focus.focus_set()  # put focus back
             return
 
@@ -216,6 +234,9 @@ class Dialog(tk.Toplevel):
         """
         return 1  # override
 
+    def validateClose(self):
+        return True
+
     def apply(self):
         """process the data
         This method is called automatically to process the data, *after*
@@ -225,7 +246,7 @@ class Dialog(tk.Toplevel):
 
     def getImage(self, imgName):
         """A shortcut to get an image from its name"""
-        return gui.getImage(imgName, self._images)
+        return gui.getImage(imgName)
 
     def getResult(self):
         return self.result
@@ -238,6 +259,24 @@ class Dialog(tk.Toplevel):
 
     def resultCancel(self):
         return self.result == RESULT_CANCEL
+
+    def info(self, message):
+        """ Shows a info message for long running processes to inform the user GUI is not frozen"""
+        self.floatingMessage.config(text=message)
+
+    ### Basic GUI helper methods
+    def _addButton(self, frame, callback, text="", icon=None, row=0, col=0, tooltip=None, shortcut=""):
+        """ Adds a label button"""
+        btn = tk.Label(frame, text=text,
+                       image=self.getImage(icon),
+                       compound=tk.LEFT, cursor='hand2')
+        btn.grid(row=row, column=col, sticky='nw', padx=(5, 0), pady=(5, 0))
+        btn.bind('<Button-1>', callback)
+        if tooltip:
+            tooltip = tooltip + ' (%s)' % shortcut if shortcut else tooltip
+            ToolTip(btn, tooltip, delay=150)
+        if shortcut:
+            self.bind(shortcut, callback)
 
 
 def fillMessageText(text, message):
@@ -260,8 +299,8 @@ def fillMessageText(text, message):
 
 
 def createMessageBody(bodyFrame, message, image,
-                      frameBg='white',
-                      textBg='white',
+                      frameBg=Config.SCIPION_BG_COLOR,
+                      textBg=Config.SCIPION_BG_COLOR,
                       textPad=5):
     """ Create a Text containing the message.
     Params:
@@ -310,10 +349,10 @@ class ExceptionDialog(MessageDialog):
         super().body(bodyFrame)
 
         def addTraceback(event):
-            detailsText = TaggedText(bodyFrame, bg='white', bd=0, highlightthickness=0)
+            detailsText = TaggedText(bodyFrame, bg=Config.SCIPION_BG_COLOR, bd=0, highlightthickness=0)
             traceStr = traceback.format_exc()
             fillMessageText(detailsText, traceStr)
-            detailsText.frame.grid(row=row+1, column=0, columnspan=2, sticky='news', padx=5, pady=5)
+            detailsText.frame.grid(row=row + 1, column=0, columnspan=2, sticky='news', padx=5, pady=5)
             event.widget.grid_forget()
 
         row = 1
@@ -321,12 +360,12 @@ class ExceptionDialog(MessageDialog):
 
             if isinstance(self._exception, PyworkflowException):
                 helpUrl = self._exception.getUrl()
-                labelUrl = TaggedText(bodyFrame, bg='white', bd=0, highlightthickness=0)
-                fillMessageText(labelUrl,"Please go here for more details: %s" % helpUrl)
+                labelUrl = TaggedText(bodyFrame, bg=Config.SCIPION_BG_COLOR, bd=0, highlightthickness=0)
+                fillMessageText(labelUrl, "Please go here for more details: %s" % helpUrl)
                 labelUrl.grid(row=row, column=0, columnspan=2, sticky='news')
                 row += 1
 
-            label = tk.Label(bodyFrame, text="Show details...", bg='white', bd=0)
+            label = tk.Label(bodyFrame, text="Show details...", bg=Config.SCIPION_BG_COLOR, bd=0)
             label.grid(row=row, column=0, columnspan=2, sticky='news')
             label.bind("<Button-1>", addTraceback)
 
@@ -341,7 +380,7 @@ class YesNoDialog(MessageDialog):
             buttonList.append(('Cancel', RESULT_CANCEL))
 
         MessageDialog.__init__(self, master, title, msg,
-                               'fa-exclamation-triangle_alert.gif', default='No',
+                               Icon.ALERT, default='No',
                                buttons=buttonList)
 
 
@@ -393,15 +432,15 @@ class EntryDialog(Dialog):
         Dialog.__init__(self, parent, title)
 
     def body(self, bodyFrame):
-        bodyFrame.config(bg='white')
-        frame = tk.Frame(bodyFrame, bg='white')
+        bodyFrame.config(bg=Config.SCIPION_BG_COLOR)
+        frame = tk.Frame(bodyFrame, bg=Config.SCIPION_BG_COLOR)
         frame.grid(row=0, column=0, padx=20, pady=20)
         row = 0
         if self.headerLabel:
-            label = tk.Label(bodyFrame, text=self.headerLabel, bg='white', bd=0)
+            label = tk.Label(bodyFrame, text=self.headerLabel, bg=Config.SCIPION_BG_COLOR, bd=0)
             label.grid(row=row, column=0, columnspan=2, sticky='nw', padx=(15, 10), pady=15)
             row += 1
-        label = tk.Label(bodyFrame, text=self.entryLabel, bg='white', bd=0)
+        label = tk.Label(bodyFrame, text=self.entryLabel, bg=Config.SCIPION_BG_COLOR, bd=0)
         label.grid(row=row, column=0, sticky='nw', padx=(15, 10), pady=15)
         self.entry = tk.Entry(bodyFrame, bg=gui.cfgEntryBgColor,
                               width=self.entryWidth, textvariable=self.tkvalue)
@@ -438,12 +477,12 @@ class EditObjectDialog(Dialog):
         Dialog.__init__(self, parent, title, **kwargs)
 
     def body(self, bodyFrame):
-        bodyFrame.config(bg='white')
-        frame = tk.Frame(bodyFrame, bg='white')
+        bodyFrame.config(bg=Config.SCIPION_BG_COLOR)
+        frame = tk.Frame(bodyFrame, bg=Config.SCIPION_BG_COLOR)
         frame.grid(row=0, column=0, padx=20, pady=20)
 
         # Label
-        label_text = tk.Label(bodyFrame, text=self.labelText, bg='white', bd=0)
+        label_text = tk.Label(bodyFrame, text=self.labelText, bg=Config.SCIPION_BG_COLOR, bd=0)
         label_text.grid(row=0, column=0, sticky='nw', padx=(15, 10), pady=15)
         # Label box
         var = tk.StringVar()
@@ -452,7 +491,7 @@ class EditObjectDialog(Dialog):
         self.textLabel.grid(row=0, column=1, sticky='news', padx=5, pady=5)
 
         # Comment
-        label_comment = tk.Label(bodyFrame, text=self.commentLabel, bg='white', bd=0)
+        label_comment = tk.Label(bodyFrame, text=self.commentLabel, bg=Config.SCIPION_BG_COLOR, bd=0)
         label_comment.grid(row=1, column=0, sticky='nw', padx=(15, 10), pady=15)
         # Comment box
         self.textComment = Text(bodyFrame, height=self.commentHeight,
@@ -501,7 +540,7 @@ def askYesNoCancel(title, msg, parent):
 
 def askSingleAllCancel(title, msg, parent):
     d = GenericDialog(parent, title, msg,
-                      'fa-exclamation-triangle_alert.gif',
+                      Icon.ALERT,
                       buttons=[('Single', RESULT_RUN_SINGLE),
                                ('All', RESULT_RUN_ALL),
                                ('Cancel', RESULT_CANCEL)],
@@ -514,15 +553,15 @@ def askSingleAllCancel(title, msg, parent):
 
 
 def showInfo(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-info-circle_alert.gif')
+    MessageDialog(parent, title, msg, Icon.INFO)
 
 
 def showWarning(title, msg, parent):
-    MessageDialog(parent, title, msg, 'fa-exclamation-triangle_alert.gif')
+    MessageDialog(parent, title, msg, Icon.ALERT)
 
 
 def showError(title, msg, parent, exception=None):
-    ExceptionDialog(parent, title, msg, 'fa-times-circle_alert.gif', exception=exception)
+    ExceptionDialog(parent, title, msg, Icon.ERROR, exception=exception)
 
 
 def askString(title, label, parent, entryWidth=20, defaultValue='', headerLabel=None):
@@ -535,6 +574,18 @@ def askColor(parent, defaultColor='black'):
     return hexcolor
 
 
+def askPath(title="Browse files", msg="Select a file of a folder", path=".", onlyFolders=False, master=None, returnBaseName=False):
+    from pyworkflow.gui.browser import FileBrowserWindow
+
+    browserW = FileBrowserWindow(title, master=master, path=path, onlyFolders=onlyFolders)
+    browserW.show(modal=True)
+
+    result = browserW.getLastSelection()
+    if returnBaseName:
+        result=os.path.basename(result)
+
+    return result
+
 class ListDialog(Dialog):
     """
     Dialog to select an element from a list.
@@ -543,33 +594,36 @@ class ListDialog(Dialog):
 
     def __init__(self, parent, title, provider, message=None, **kwargs):
         """ From kwargs:
-                message: message tooltip to show when browsing.
-                selected: the item that should be selected.
-                validateSelectionCallback:
-                    a callback function to validate selected items.
-                allowSelect: if set to False, the 'Select' button will not
-                    be shown.
-                allowsEmptySelection: if set to True, it will not validate
-                    that at least one element was selected.
+
+        :param message: message tooltip to show when browsing.
+        :param validateSelectionCallback: a callback function to validate selected items.
+        :param previewCallback: method to be called on item click to fill the callback frame.
+        :param selectmode: 'extended' by default. Selection mode of the tk.Tree
+        :param selectOnDoubleClick: (False). If True, double click will trigger "Select" button click
+        :param allowsEmptySelection: (False). Allows empty selection
+        :param allowSelect: if set to False, the 'Select' button will not be shown.
+        :param allowsEmptySelection: if set to True, it will not validate that at least one element was selected.
         """
         self.values = []
         self.provider = provider
         self.message = message
-        self.validateSelectionCallback = kwargs.get('validateSelectionCallback',
-                                                    None)
+        self.validateSelectionCallback = kwargs.get('validateSelectionCallback', None)
+        self.previewCallBack = kwargs.get('previewCallback', None)
+
         self._selectmode = kwargs.get('selectmode', 'extended')
         self._selectOnDoubleClick = kwargs.get('selectOnDoubleClick', False)
         self._allowsEmptySelection = kwargs.get('allowsEmptySelection', False)
 
-        buttons = []
-        if kwargs.get('allowSelect', True):
-            buttons.append(('Select', RESULT_YES))
-        if kwargs.get('cancelButton', False):
-            buttons.append(('Close', RESULT_CLOSE))
-        else:
-            buttons.append(('Cancel', RESULT_CANCEL))
-
-        Dialog.__init__(self, parent, title, buttons=buttons, **kwargs)
+        if "buttons" not in kwargs:
+            buttons=[]
+            if kwargs.get('allowSelect', True):
+                buttons.append(('Select', RESULT_YES))
+            if kwargs.get('cancelButton', False):
+                buttons.append(('Close', RESULT_CLOSE))
+            else:
+                buttons.append(('Cancel', RESULT_CANCEL))
+            kwargs['buttons'] = buttons
+        Dialog.__init__(self, parent, title, **kwargs)
 
     def body(self, bodyFrame):
         bodyFrame.config()
@@ -580,6 +634,9 @@ class ListDialog(Dialog):
         gui.configureWeigths(dialogFrame, row=1)
         self._createFilterBox(dialogFrame)
         self._createTree(dialogFrame)
+        if self.previewCallBack:
+            self._createPreviewPanel(dialogFrame)
+
         if self.message:
             label = tk.Label(bodyFrame, text=self.message, compound=tk.LEFT,
                              image=self.getImage(Icon.LIGHTBULB))
@@ -590,7 +647,18 @@ class ListDialog(Dialog):
         self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode, style=LIST_TREEVIEW)
         if self._selectOnDoubleClick:
             self.tree.itemDoubleClick = lambda obj: self._handleResult(RESULT_YES)
+
+        if self.previewCallBack:
+            self.tree.itemClick = self._itemClick
+
         self.tree.grid(row=1, column=0)
+
+    def _itemClick(self, obj):
+        self.previewCallBack(obj, self.previewFrame)
+
+    def _createPreviewPanel(self, parent):
+        self.previewFrame = tk.Frame(parent)
+        self.previewFrame.grid(row=1, column=1)
 
     def _createFilterBox(self, content):
         """ Create the Frame with Filter widgets """
@@ -629,7 +697,7 @@ class ListDialog(Dialog):
         label = tk.Label(self.searchBoxframe, text="Filter")
         label.grid(row=0, column=0, sticky='nw')
         self._searchVar = tk.StringVar(value='')
-        self.entry = tk.Entry(self.searchBoxframe, bg='white',
+        self.entry = tk.Entry(self.searchBoxframe, bg=Config.SCIPION_BG_COLOR,
                               textvariable=self._searchVar, width=40,
                               font=gui.getDefaultFont())
 
@@ -665,11 +733,12 @@ class ToolbarButton:
     Store information about the buttons that will be added to the toolbar.
     """
 
-    def __init__(self, text, command, icon=None, tooltip=None):
+    def __init__(self, text, command, icon=None, tooltip=None, shortcut=None):
         self.text = text
         self.command = command
         self.icon = icon
         self.tooltip = tooltip
+        self.shortcut = shortcut
 
 
 class ToolbarListDialog(ListDialog):
@@ -694,29 +763,27 @@ class ToolbarListDialog(ListDialog):
         ListDialog.__init__(self, parent, title, provider, message, **kwargs)
 
     def body(self, bodyFrame):
-        bodyFrame.config(bg='white')
         gui.configureWeigths(bodyFrame, 1, 0)
 
         # Add an extra frame to insert the Toolbar
         # and another one for the ListDialog's body
-        self.toolbarFrame = tk.Frame(bodyFrame, bg='white')
+        self.toolbarFrame = tk.Frame(bodyFrame)
         self.toolbarFrame.grid(row=0, column=0, sticky='new')
-        if self.toolbarButtons:
-            for i, b in enumerate(self.toolbarButtons):
-                self._addButton(b, i)
 
         subBody = tk.Frame(bodyFrame)
         subBody.grid(row=1, column=0, sticky='news', padx=5, pady=5)
         ListDialog.body(self, subBody)
+
+        if self.toolbarButtons:
+            for i, b in enumerate(self.toolbarButtons):
+                self.addButton(b, i)
+
         if self._itemDoubleClick:
             self.tree.itemDoubleClick = self._itemDoubleClick
 
-    def _addButton(self, button, col):
-        btn = tk.Label(self.toolbarFrame, text=button.text,
-                       image=self.getImage(button.icon),
-                       compound=tk.LEFT, cursor='hand2', bg='white')
-        btn.grid(row=0, column=col, sticky='nw', padx=(5, 0), pady=(5, 0))
-        btn.bind('<Button-1>', button.command)
+    def addButton(self, button, col):
+
+        self._addButton(self.toolbarFrame, button.command, icon=button.icon, col=col, tooltip=button.tooltip, shortcut=button.shortcut)
 
 
 class FlashMessage:
@@ -748,58 +815,25 @@ class FlashMessage:
 
 
 class FloatingMessage:
-    def __init__(self, master, msg, xPos=750, yPos=80, textWidth=280,
-                 font='Helvetica', size=12, bd=1, bg='#6E6E6E', fg='white'):
+    def __init__(self, master, msg, xPos=None, yPos=None, textWidth=280,
+                 font='Helvetica', size=12, bd=1, bg=Config.SCIPION_MAIN_COLOR, fg='white'):
+        if xPos is None:
+            xPos = (master.winfo_width() - textWidth) / 2
+            yPos = master.winfo_height() / 2
+
         self.floatingMessage = tk.Label(master, text="   %s   " % msg,
                                         bd=bd, bg=bg, fg=fg)
         self.floatingMessage.place(x=xPos, y=yPos, width=textWidth)
         self.floatingMessage.config(font=(font, size))
+
+    def setMessage(self, msg):
+        self.floatingMessage.config(text=msg)
 
     def show(self):
         self.floatingMessage.update_idletasks()
 
     def close(self):
         self.floatingMessage.destroy()
-
-
-class FileBrowseDialog(Dialog):
-    """Dialog to select files from the filesystem."""
-
-    def __init__(self, parent, title, provider, message=None, **args):
-        """ From args:
-                message: message tooltip to show when browsing.
-                selected: the item that should be selected.
-        """
-        self.value = None
-        self.provider = provider
-        self.message = args.get('message', None)
-        Dialog.__init__(self, parent, title,
-                        buttons=[('Select', RESULT_YES), ('Cancel', RESULT_CANCEL)])
-
-    def body(self, bodyFrame):
-        bodyFrame.config(bg='white')
-        gui.configureWeigths(bodyFrame)
-        self._createTree(bodyFrame)
-        if self.message:
-            label = tk.Label(bodyFrame, text=self.message, bg='white',
-                             image=self.getImage('fa-lightbulb-o.gif'), compound=tk.LEFT)
-            label.grid(row=1, column=0, sticky='nw', padx=5, pady=5)
-        self.initial_focus = self.tree
-
-    def _createTree(self, parent):
-        self.tree = BoundTree(parent, self.provider)
-
-    def apply(self):
-        index = self.tree.index(self.tree.getFirst())
-        self.value = self.tree._objects[index]
-
-    def validate(self):
-        if self.tree.getFirst() is None:
-            showError("Validation error", "Please select an element", self)
-            return False
-        return True
-
-
 
 
 
@@ -835,12 +869,12 @@ class SearchBaseWindow(Window):
 
     def __init__(self, parentWindow, title="Search element", onClick=None, onDoubleClick=None, **kwargs):
         super().__init__(title=title,
-                              masterWindow=parentWindow)
+                         masterWindow=parentWindow)
 
         self.onClick = self._click if onClick is None else onClick
         self.onDoubleClick = self._double_click if onDoubleClick is None else onDoubleClick
 
-        content = tk.Frame(self.root, bg='white')
+        content = tk.Frame(self.root, bg=Config.SCIPION_BG_COLOR)
         self._createContent(content)
         content.grid(row=0, column=0, sticky='news')
         content.columnconfigure(0, weight=1)
@@ -855,9 +889,9 @@ class SearchBaseWindow(Window):
 
     def _createSearchBox(self, content):
         """ Create the Frame with Search widgets """
-        frame = tk.Frame(content, bg='white')
+        frame = tk.Frame(content, bg=Config.SCIPION_BG_COLOR)
 
-        label = tk.Label(frame, text="Search", bg='white')
+        label = tk.Label(frame, text="Search", bg=Config.SCIPION_BG_COLOR)
         label.grid(row=0, column=0, sticky='nw')
         self._searchVar = tk.StringVar()
         entry = tk.Entry(frame, bg='white', textvariable=self._searchVar, font=gui.getDefaultFont())
@@ -866,14 +900,14 @@ class SearchBaseWindow(Window):
         entry.focus_set()
         entry.grid(row=0, column=1, sticky='nw')
         btn = widgets.IconButton(frame, "Search",
-                                       imagePath=Icon.ACTION_SEARCH,
-                                       command=self._onSearchClick)
+                                 imagePath=Icon.ACTION_SEARCH,
+                                 command=self._onSearchClick)
         btn.grid(row=0, column=2, sticky='nw')
 
         frame.grid(row=0, column=0, sticky='new', padx=5, pady=(10, 5))
 
     def _createResultsBox(self, content):
-        frame = tk.Frame(content, bg=Color.LIGHT_GREY_COLOR, padx=5, pady=5)
+        frame = tk.Frame(content, bg=Color.ALT_COLOR, padx=5, pady=5)
         configureWeigths(frame)
         self._resultsTree = self._createResultsTree(frame,
                                                     show=None,
@@ -908,7 +942,7 @@ class SearchBaseWindow(Window):
 
             if searchtext in linelower[index]:
                 # prioritize findings in label
-                weight += column[self.WEIGHT_INDEX]*2
+                weight += column[self.WEIGHT_INDEX] * 2
 
             elif " " in searchtext:
                 for word in searchtext.split():

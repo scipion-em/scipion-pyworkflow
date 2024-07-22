@@ -28,12 +28,14 @@ This modules holds the base classes for the ORM implementation.
 The Object class is the root in the hierarchy and some other
 basic classes.
 """
-import os
+import logging
+logger = logging.getLogger(__name__)
+
 from collections import OrderedDict
 import datetime as dt
 from os.path import getmtime
 
-from pyworkflow import utils
+from pyworkflow.utils import getListFromValues, getListFromRangeString
 from pyworkflow.utils.reflection import getSubclasses
 
 
@@ -55,7 +57,7 @@ OBJECT_PARENT_ID = 'object_parent_id'
 
 class Object(object):
     """ All objects in our Domain should inherit from this class
-    that will contains all base properties"""
+    that will contain all base properties"""
 
     def __init__(self, value=None, **kwargs):
         object.__init__(self)
@@ -84,8 +86,9 @@ class Object(object):
         self._objEnabled = True
         self.set(value)
 
-    def getClassName(self):
-        return self.__class__.__name__
+    @classmethod
+    def getClassName(cls):
+        return cls.__name__
     
     def getClass(self):
         return type(self)
@@ -124,7 +127,7 @@ class Object(object):
             value = attr  # behave well for non-Object attributes
         return value
     
-    def setAttributeValue(self, attrName, value, ignoreMissing=False):
+    def setAttributeValue(self, attrName, value, ignoreMissing=True):
         """ Set the attribute value given its name.
         Equivalent to setattr(self, name).set(value) 
         If the attrName contains dot: x.y
@@ -139,8 +142,8 @@ class Object(object):
             if obj is None:
                 if ignoreMissing:
                     return
-                raise Exception("Object.setAttributeValue: obj is None! attrName: "
-                                "%s, part: %s" % (attrName, partName))
+                raise Exception("Object.setAttributeValue: %s has no attribute %s."
+                                % (self.__class__.__name__, attrName))
         obj.set(value)
         
     def getAttributes(self):
@@ -158,11 +161,10 @@ class Object(object):
             try:
                 if attr is not None and attr._objDoStore:
                     yield key, attr
-            except:
-                print("Object.getAttributesToStore: attribute '%s' seems to "
-                      "be overwritten," % key)
-                print("   since '_objDoStore' was not found. "
-                      "Ignoring attribute. ")
+            except Exception as e:
+                logger.info("Object.getAttributesToStore: attribute '%s' (%s) seems to "
+                      "be overwritten, since '_objDoStore' was not found. Ignoring attribute." % (key, type(attr)))
+                logger.debug("Exception: %s" % e)
 
     def isPointer(self):
         """If this is true, the value field is a pointer 
@@ -342,9 +344,7 @@ class Object(object):
                 comp = v1 == v2
             if not comp:
                 if verbose:
-                    print("Different attributes: ")
-                    print("self.%s = %s" % (k, v1))
-                    print("other.%s = %s" % (k, v2))
+                    logger.info("Different attributes: self.%s = %s, other.%s = %s" % (k, v1, k, v2))
                 return False
         return True
             
@@ -371,14 +371,14 @@ class Object(object):
             else:
                 attr.set(otherAttr.get())
             
-    def __getObjDict(self, prefix, objDict, includeClass):
+    def __getObjDict(self, prefix, objDict, includeClass, includePointers=True):
         if prefix:
             prefix += '.'
         for k, v in self.getAttributesToStore():
-            self.fillObjDict(prefix, objDict, includeClass, k, v)
+            self.fillObjDict(prefix, objDict, includeClass, k, v, includePointers=includePointers)
 
     @staticmethod
-    def fillObjDict(prefix, objDict, includeClass, k, v):
+    def fillObjDict(prefix, objDict, includeClass, k, v, includePointers=False):
 
         if not v.isPointer():
             kPrefix = prefix + k
@@ -388,8 +388,13 @@ class Object(object):
                 objDict[kPrefix] = v.getObjValue()
             if not isinstance(v, Scalar):
                 v.__getObjDict(kPrefix, objDict, includeClass)
+        # Is a pointer ...
+        elif includePointers and not v.pointsNone():
+            # Should we take into account the prefix??
+            objDict[k]=v.getUniqueId()
 
-    def getObjDict(self, includeClass=False, includeBasic=False):
+
+    def getObjDict(self, includeClass=False, includeBasic=False, includePointers=False):
         """
         Return all attributes and values in a dictionary.
         Nested attributes will be separated with a dot in the dict key.
@@ -397,6 +402,9 @@ class Object(object):
         :param includeClass: if True, the values will be a tuple (ClassName, value)
             otherwise only the values of the attributes
         :param includeBasic: if True include the id, label and comment.
+        :param includePointers: If true pointer are also added using Pointer.getUniqueId --> "2.outputTomograms"
+
+        :return a dictionary
 
         includeBasic example::
 
@@ -415,7 +423,7 @@ class Object(object):
             d['object.label'] = self.getObjLabel()
             d['object.comment'] = self.getObjComment()
 
-        self.__getObjDict('', d, includeClass)
+        self.__getObjDict('', d, includeClass, includePointers=includePointers )
 
         return d
 
@@ -464,18 +472,19 @@ class Object(object):
     def getValuesFromMappedDict(self, mappedDict):
         return [v.getObjValue() for v in mappedDict.values()]
     
-    def copy(self, other, copyId=True, ignoreAttrs=[]):
+    def copy(self, other, copyId=True, ignoreAttrs=[], copyEnable=False):
         """
         Copy all attributes values from one object to the other.
         The attributes will be created if needed with the corresponding type.
 
         :param other: the other object from which to make the copy.
         :param copyId: if true, the _objId will be also copied.
-            ignoreAttrs: pass a list with attributes names to ignore.
+        :param ignoreAttrs: pass a list with attributes names to ignore.
+        :param copyEnable: Pass true if you want enabled flag to be copied
 
         """
         copyDict = {'internalPointers': []} 
-        self._copy(other, copyDict, copyId, ignoreAttrs=ignoreAttrs)
+        self._copy(other, copyDict, copyId, ignoreAttrs=ignoreAttrs, copyEnable=copyEnable)
         self._updatePointers(copyDict)
         return copyDict
         
@@ -489,14 +498,19 @@ class Object(object):
             if pointedId in copyDict:
                 ptr.set(copyDict[pointedId])
         
-    def _copy(self, other, copyDict, copyId, level=1, ignoreAttrs=[]):
+    def _copy(self, other, copyDict, copyId, level=1, ignoreAttrs=[], copyEnable=False):
         """ Recursively clone all attributes from one object to the other.
         (Currently, we are not deleting attributes missing in the 'other' object.)
         Params:
-        copyDict: this dict is used to store the ids map between 'other' and
+
+        :param copyDict: this dict is used to store the ids map between 'other' and
             'self' attributes. It is used for update pointers and relations
             later on. This will only work if the ids of 'other' attributes
             has been properly set.
+        :param copyId: Pass true to copy the id
+        :param level: (1), depth to the copy
+        :param ignoreAttrs: List with attributes to ignore
+        :param copyEnable: (False) pass true to copy the enable flag
         """
         # Copy basic object data
         # self._objName = other._objName
@@ -505,6 +519,10 @@ class Object(object):
         self._objValue = other._objValue
         self._objLabel = other._objLabel
         self._objComment = other._objComment
+
+        if copyEnable:
+            self._objEnabled = other._objEnabled
+
         # Copy attributes recursively
         for name, attr in other.getAttributes():
             if name not in ignoreAttrs:
@@ -524,9 +542,16 @@ class Object(object):
                 if myAttr.isPointer() and myAttr.hasValue():
                     copyDict['internalPointers'].append(myAttr)
     
-    def clone(self):
+    def clone(self, copyEnable=False):
+        """ Clones the object
+
+        :param copyEnable (False): clone also the enable flag"""
+
+        #NOTE: Maybe be, as default, we should be cloning the enable, but we found it is not doing so.
+        # So for now it is not cloned, probably to void carying out the enable which may be a decision by one method that should not be
+        # tranferred to the next method. Only Subsetting protocols should respect this.
         clone = self.getClass()()
-        clone.copy(self)        
+        clone.copy(self, copyEnable=copyEnable)
         return clone    
     
     def evalCondition(self, condition):
@@ -560,14 +585,14 @@ class Object(object):
         tab = ' ' * (level*3)
         idStr = ''  # ' (id = %s, pid = %s)' % (self.getObjId(), self._objParentId)
         if name is None:
-            print(tab, self.getClassName(), idStr)
+            logger.info(f"{tab} {self.getClassName()} {idStr}")
         else:
             if name == 'submitTemplate':  # Skip this because very large value
                 value = '...'
             else:
                 value = self.getObjValue()
                 
-            print(tab, '%s = %s' % (name, value), idStr)
+            logger.info(f"{tab} {name} = {value} {idStr}")
         for k, v in self.getAttributes():
             v.printAll(k, level + 1)
             
@@ -747,6 +772,15 @@ class String(Scalar):
         """ Get the datetime from this object string value. """
         return String.getDatetime(self._objValue, formatStr, fs)
 
+    def getListFromValues(self, length=None, caster=int):
+        """ Returns a list from a string with values as described at getListFromValues. Useful for """
+        return getListFromValues(self._objValue, length, caster)
+
+    def getListFromRange(self):
+        """ Returns a list from a string with values as described at getListFromRangeString.
+         Useful for NumericRangeParam params"""
+        return getListFromRangeString(self._objValue)
+
 
 class Float(Scalar):
     """Float object"""
@@ -798,9 +832,9 @@ class Boolean(Scalar):
         return self.get() 
     
     def __bool__(self):
-        return self.get()  
-    
-    
+        return self.get()
+
+
 class Pointer(Object):
     """Reference object to other one"""
     EXTENDED_ATTR = '__attribute__'
@@ -838,7 +872,7 @@ class Pointer(Object):
     
     def get(self, default=None):
         """ Get the pointed object. 
-        By default all pointers store a "pointed object" value.
+        By default, all pointers store a "pointed object" value.
         The _extended attribute allows to also point to internal
         attributes or items (in case of sets) of the pointed object.
         """
@@ -859,12 +893,12 @@ class Pointer(Object):
             
         return value
     
-    def set(self, other):
+    def set(self, other, cleanExtended=True):
         """ Set the pointer value but cleaning the extended property. """
         Object.set(self, other)
         # This check is needed because set is call from the Object constructor
         # when this attribute is not setup yet (a dirty patch, I know)
-        if hasattr(self, '_extended'):
+        if cleanExtended and hasattr(self, '_extended'):
             self._extended.set(None)
         
     def hasExtended(self):
@@ -914,7 +948,7 @@ class Pointer(Object):
         return self.get() is None
     
     def getUniqueId(self):
-        """ Return an unique id concatenating the id
+        """ Return the unique id concatenating the id
         of the direct pointed object plus the extended 
         attribute.
         """
@@ -1034,7 +1068,12 @@ class CsvList(Scalar, list):
             else:
                 raise Exception("CsvList.set: Invalid value type: ",
                                 type(value))
-            
+
+    def equalAttributes(self, other, ignore=[], verbose=False):
+        """Compare that all attributes are equal"""
+
+        return self == other
+
     def getObjValue(self):
         self._objValue = ','.join(map(str, self))
         return self._objValue
@@ -1061,7 +1100,7 @@ class CsvList(Scalar, list):
 class Set(Object):
     """ This class will be a container implementation for elements.
     It will use an extra sqlite file to store the elements.
-    All items will have an unique id that identifies each element in the set.
+    All items will have a unique id that identifies each element in the set.
     """
     ITEM_TYPE = None  # This property should be defined to know the item type
     
@@ -1093,7 +1132,22 @@ class Set(Object):
         if filename:
             self._mapperPath.set('%s, %s' % (filename, prefix))
             self.load()
-            
+
+    def copy(self, other, copyId=True, ignoreAttrs=['_mapperPath', '_size', '_streamState']):
+        """ Copies the attributes of the set
+
+        :param other: Set to copy attributes from
+        :param copyId: True. Copies the objId.
+        :param ignoreAttrs: Attributes list to ignore while copying. _mapperPath, _size and _streamState
+        are ignored by default.
+        
+        """
+        
+        # Note: By default this behaves properly for cloning non identical objects. 
+        # This is to clone a set from another new set that is based on "other".
+        # For exact clone, we need to pass empty ignoreAttrs. This case happens in Protocol.__tryUpdateOutputSet
+        super().copy(other, copyId, ignoreAttrs)
+
     def _getMapper(self):
         """ This method will open the connection to the items
         database on demand. That's why this method should 
@@ -1104,6 +1158,14 @@ class Set(Object):
         return self._mapper
             
     def aggregate(self, operations, operationLabel, groupByLabels=None):
+        """
+         This method operate on sets of values. They are used with a
+         GROUP BY clause to group values into subsets
+        :param operations: list of aggregate function such as COUNT, MAX, MIN,...
+        :param operationLabel: label to use by the aggregate function
+        :param groupByLabels: list of labels to group by
+        :return: the aggregated value of each group
+        """
         return self._getMapper().aggregate(operations, operationLabel, groupByLabels)
 
     def setMapperClass(self, MapperClass):
@@ -1113,8 +1175,28 @@ class Set(Object):
             MapperClass = SqliteFlatMapper
         Object.__setattr__(self, '_MapperClass', MapperClass)
         
+    def getItem(self, field, value):
+        """ Alternative to [] to get a single item form the set.
+
+        :param field: attribute of the item to look up for. Should be a unique identifier
+        :param value: value to look for"""
+
+        return self.__getitem__({field:value})
+
     def __getitem__(self, itemId):
-        """ Get the image with the given id. """
+        """ Get the image with the given id.
+
+        NOTE: Performance warning: this method is expensive in terms of performance use of
+        iterItems is preferred. Use this one only for a single item retrieval.
+
+        :param itemId: the objId (integer) of the item. Alternatively itemId could be a dictionary like
+
+            {_alternative_identifier: 'RG-1234'}
+
+            where '_alternative_identifier' is an attribute of the item and 'RG-1234' the value to look for
+            only the first matching item is returned in case there are more
+
+        """
         closedMapper = self._mapper is None
 
         if isinstance(itemId, dict):
@@ -1143,8 +1225,8 @@ class Set(Object):
     def getFirstItem(self):
         """ Return the first item in the Set. """
         # This function is used in many contexts where the mapper can be
-        # left open and could be problematic locking other db
-        # So, we looking if the mapper was closed before, in which case
+        # left open and could be problematic locking the db for other processes
+        # So, we look if the mapper was closed before, in which case
         # we will close it after that
         closedMapper = self._mapper is None
         firstItem = self._getMapper().selectFirst()
@@ -1296,8 +1378,13 @@ class Set(Object):
         """ Get the value of a property and
         set its value as an object attribute.
         """
-        self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue))
-        
+        try:
+            self.setAttributeValue(propertyName, self.getProperty(propertyName, defaultValue))
+        except Exception as e:
+            # There could be an exception with "extra" set properties. We tolerate it but warn the developers
+            # This happens in streaming scenarios where properties are only coming from the set sqlite.
+            logger.warning("DEVELOPERS: %s property could not be loaded from the disk. "
+                           "Is the property an extended property?. It is lost from now on." % propertyName)
     def loadAllProperties(self):
         """ Retrieve all properties stored by the mapper. """
         for key in self._getMapper().getPropertyKeys():
@@ -1339,8 +1426,8 @@ class Set(Object):
 
     # ******* Streaming helpers to deal with sets **********
     def hasChangedSince(self, time):
-        """ Returns if the set has changed since the timestamp passed as parameter. It will check the
-        the last modified time of the file this set uses to persists.
+        """ Returns if the set has changed since the timestamp passed as parameter. It will check
+                the last modified time of the file this set uses to persists.
 
         :parameter time: timestamp to compare to the last modification time  """
 
@@ -1367,6 +1454,13 @@ class Set(Object):
     def fmtDate(self, date):
         """ Formats a python date to a valid string for the mapper"""
         return self._getMapper().fmtDate(date)
+
+    @staticmethod
+    def isItemEnabled(item):
+        """ Returns if the item is enabled...to be used as a callback. In some other cases (new user subsets)
+         this method will be replaced"""
+
+        return item.isEnabled()
 
 def ObjectWrap(value):
     """This function will act as a simple Factory

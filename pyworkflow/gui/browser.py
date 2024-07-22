@@ -34,6 +34,7 @@ import stat
 import tkinter as tk
 import time
 import logging
+
 logger = logging.getLogger(__name__)
 
 import pyworkflow.utils as pwutils
@@ -110,12 +111,12 @@ class ObjectBrowser(tk.Frame):
         self._fillRightBottom(bottom)
 
     def _fillRightTop(self, top):
-        self.noImage = self.getImage('no-image128.gif')
+        self.noImage = self.getImage(pwutils.Icon.NO_IMAGE_128)
         self.label = tk.Label(top, image=self.noImage)
         self.label.grid(row=0, column=0, sticky='news')
 
     def _fillRightBottom(self, bottom):
-        self.text = TaggedText(bottom, width=40, height=15, bg='white',
+        self.text = TaggedText(bottom, width=40, height=15, bg=Config.SCIPION_BG_COLOR,
                                takefocus=0)
         self.text.grid(row=0, column=0, sticky='news')
 
@@ -124,14 +125,16 @@ class ObjectBrowser(tk.Frame):
         img, desc = self.treeProvider.getObjectPreview(obj)
         # Update image preview
         if self.showPreviewTop:
-            if isinstance(img, str):
+            if isinstance(img, (str, pwutils.SpriteImage)):
                 img = self.getImage(img)
             if img is None:
                 img = self.noImage
             self.label.config(image=img)
+
         # Update text preview
         self.text.setReadOnly(False)
         self.text.clear()
+
         if desc is not None:
             self.text.addText(desc)
         self.text.setReadOnly(True)
@@ -194,16 +197,16 @@ class FileHandler(object):
     def getFileIcon(self, objFile):
         """ Return the icon name for a given file. """
         if objFile.isDir():
-            icon = 'file_folder.gif' if not objFile.isLink() else 'file_folder_link.gif'
+            icon = pwutils.Icon.FOLDER if not objFile.isLink() else pwutils.Icon.FOLDER_LINK
         else:
-            icon = 'file_generic.gif' if not objFile.isLink() else 'file_generic_link.gif'
+            icon = pwutils.Icon.FILE if not objFile.isLink() else pwutils.Icon.FILE_LINK
 
         return icon
 
     def getFilePreview(self, objFile):
         """ Return the preview image and description for the specific object."""
         if objFile.isDir():
-            return 'fa-folder-open.gif', None
+            return pwutils.Icon.FOLDER_OPEN, None
         return None, None
 
     def getFileActions(self, objFile):
@@ -225,7 +228,7 @@ class TextFileHandler(FileHandler):
 
 class SqlFileHandler(FileHandler):
     def getFileIcon(self, objFile):
-        return 'file_sqlite.gif'
+        return pwutils.Icon.DB
 
 
 class FileTreeProvider(TreeProvider):
@@ -274,13 +277,23 @@ class FileTreeProvider(TreeProvider):
         return info
 
     def getObjectPreview(self, obj):
-        # Look for any preview available
-        fileHandlers = self.getFileHandlers(obj)
 
-        for fileHandler in fileHandlers:
-            preview = fileHandler.getFilePreview(obj)
-            if preview:
-                return preview
+        try:
+            # Look for any preview available
+            fileHandlers = self.getFileHandlers(obj)
+
+            for fileHandler in fileHandlers:
+                preview = fileHandler.getFilePreview(obj)
+                if preview:
+                    img, desc = preview
+                    if obj.isLink():
+                        desc = "Is a link" if desc is None else desc + "\nIs a link."
+                    return img, desc
+
+        except Exception as e:
+            msg = "Couldn't get preview for %s" % obj
+            logger.error(msg, exc_info=e)
+            return None, msg + " See scipion GUI log window for more details."
 
     def getObjectActions(self, obj):
         fileHandlers = self.getFileHandlers(obj)
@@ -319,7 +332,7 @@ class FileTreeProvider(TreeProvider):
                 # All ok...add item.
                 fileInfoList.append(FileInfo(self._currentDir, f))
         except Exception as e:
-            logger.error("Can't list files at " + self._currentDir, e)
+            logger.info("Can't list files at " + self._currentDir, e)
 
         # Sort objects
         fileInfoList.sort(key=self.fileKey, reverse=not self.isSortingAscending())
@@ -348,7 +361,7 @@ SELECT_PATH = 3  # Can be either file or folder
 
 
 class FileBrowser(ObjectBrowser):
-    """ The FileBrowser is a particular class of ObjectBrowser
+    """ The FileBrowser is a particular class of ObjectBrowser (Tk.Frame)
     where the "objects" are just files and directories.
     """
 
@@ -404,12 +417,12 @@ class FileBrowser(ObjectBrowser):
         # focuses on the browser in order to allow to move with the keyboard
         self._goDir(os.path.abspath(initialDir))
 
-        if selectionType == SELECT_NONE:
-            selectButton = None
-
         buttonsFrame = tk.Frame(self)
         self._fillButtonsFrame(buttonsFrame)
         buttonsFrame.grid(row=1, column=0)
+
+        # Callback to be called "on Select" button key press
+        self.onSelect=None
 
     def _showInfo(self, msg):
         """ Default way (logger.info to console) to show a message with a given info.
@@ -456,8 +469,9 @@ class FileBrowser(ObjectBrowser):
                                                             sticky='nw', pady=3)
             tk.Entry(entryFrame,
                      textvariable=self.entryVar,
-                     bg='white',
-                     width=65).grid(row=0, column=1, sticky='nw', pady=3)
+                     bg=Config.SCIPION_BG_COLOR,
+                     width=65,
+                     font=gui.getDefaultFont()).grid(row=0, column=1, sticky='nw', pady=3)
 
         frame.rowconfigure(treeRow, weight=1)
 
@@ -621,7 +635,10 @@ class FileBrowser(ObjectBrowser):
         self._lastSelected = self.getSelected()
 
         if self._lastSelected is not None:
-            self.onSelect(self._lastSelected)
+            if self.onSelect:
+                self.onSelect(self._lastSelected)
+            else:
+                self.onClose()
         else:
             self.showInfo('Select a valid file/folder')
 
@@ -673,6 +690,7 @@ def isStandardImage(filename):
 class FileBrowserWindow(BrowserWindow):
     """ Windows to hold a file browser frame inside. """
 
+    lastValue=None
     def __init__(self, title, master=None, path=None,
                  onSelect=None, shortCuts=None, **kwargs):
         BrowserWindow.__init__(self, title, master, **kwargs)
@@ -693,23 +711,16 @@ class FileBrowserWindow(BrowserWindow):
     def getEntryValue(self):
         return self.browser.getEntryValue()
 
+    def getLastSelection(self):
+        return self.browser._lastSelected.getPath()
     def getCurrentDir(self):
         return self.browser.getCurrentDir()
 
     def registerHandlers(self):
         register = FileTreeProvider.registerFileHandler  # shortcut
 
-        register(TextFileHandler('file_text.gif'),
+        register(TextFileHandler(pwutils.Icon.TXT_FILE),
                  '.txt', '.log', '.out', '.err', '.stdout', '.stderr', '.emx',
                  '.json', '.xml', '.pam')
-        register(TextFileHandler('file_python.gif'), '.py')
-        register(TextFileHandler('file_java.gif'), '.java')
+        register(TextFileHandler(pwutils.Icon.PYTHON_FILE), '.py')
         register(SqlFileHandler(), '.sqlite', '.db')
-        # register(MdFileHandler(), '.xmd', '.star', '.pos', '.ctfparam', '.doc')
-        # register(ParticleFileHandler(),
-        #          '.xmp', '.tif', '.tiff', '.spi', '.mrc', '.map', '.raw',
-        #          '.inf', '.dm3', '.em', '.pif', '.psd', '.spe', '.ser', '.img',
-        #          '.hed', *STANDARD_IMAGE_EXTENSIONS)
-        # register(VolFileHandler(), '.vol')
-        # register(StackHandler(), '.stk', '.mrcs', '.st', '.pif', '.dm4')
-        # register(ChimeraHandler(), '.bild')

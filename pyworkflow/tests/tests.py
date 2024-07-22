@@ -12,12 +12,16 @@ import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.project import Manager
 from pyworkflow.protocol import MODE_RESTART, getProtocolFromDb
+from pyworkflow.object import Set
 
 SMALL = 'small'
 PULL_REQUEST = 'pull'
 DAILY = 'daily'
 WEEKLY = 'weekly'
 
+# Type hint when creating protocols
+from typing import TypeVar
+T = TypeVar('T')
 
 # Procedure to check if a test class has an attribute called _labels and if so
 # then it checks if the class test matches any of the labels in input label parameter.
@@ -63,7 +67,7 @@ class DataSet:
         folder = ds.folder
         url = '' if ds.url is None else ' -u ' + ds.url
 
-        if not pwutils.strToBoolean(pw.Config.SCIPION_TEST_NOSYNC):
+        if not pw.Config.SCIPION_TEST_NOSYNC:
             command = ("%s %s --download %s %s"
                        % (pw.PYTHON, pw.getSyncDataScript(), folder, url))
             logger.info(">>>> %s" % command)
@@ -180,7 +184,7 @@ class BaseTest(unittest.TestCase):
         cls.proj._updateProtocol(prot)
 
     @classmethod
-    def newProtocol(cls, protocolClass, **kwargs):
+    def newProtocol(cls, protocolClass:T, **kwargs)->T:
         """ Create new protocols instances through the project
         and return a newly created protocol of the given class
         """
@@ -208,6 +212,12 @@ class BaseTest(unittest.TestCase):
                 item2.printAll()
             test.assertTrue(areEqual)
 
+    def compareSetProperties(self, set1:Set, set2:Set, ignore = ["_size", "_mapperPath"]):
+        """ Compares 2 sets' properties"""
+
+        self.assertTrue(set1.equalAttributes(set2, ignore=ignore, verbose=True), "Set1 (%s) properties differs from set2 (%s)." % (set1, set2))
+        self.assertTrue(set2.equalAttributes(set1, ignore=ignore, verbose=True), 'Set2 (%s) has properties that set1 (%s) does not have.' % (set2, set1))
+
     def assertSetSize(self, setObject, size=None, msg=None, diffDelta=None):
         """ Check if a pyworkflow Set is not None nor is empty, or of a determined size or
         of a determined size with a percentage (base 1) of difference"""
@@ -221,7 +231,7 @@ class BaseTest(unittest.TestCase):
             if diffDelta:
                 self.assertLessEqual(abs(setObjSize - size), round(diffDelta * size), msg)
             else:
-                self.assertEqual(setObjSize, size)
+                self.assertEqual(setObjSize, size, msg)
 
     def assertIsNotEmpty(self, setObject, msg=None):
         """ Check if the pyworkflow object is not None nor is empty"""

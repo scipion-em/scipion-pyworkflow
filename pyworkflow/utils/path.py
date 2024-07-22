@@ -26,6 +26,11 @@ This module contains the PATH related utilities
 inside the utils module
 """
 
+import logging
+
+from pyworkflow.utils import yellow
+
+logger = logging.getLogger(__name__)
 
 import os
 import shutil
@@ -33,7 +38,7 @@ import sys
 from glob import glob
 import datetime
 
-from pyworkflow import SCIPION_SCRATCH, DOCSITEURLS
+from pyworkflow import SCIPION_SCRATCH, DOCSITEURLS, ASCII_COLOR_2_TKINTER
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.config import Config
 
@@ -101,7 +106,7 @@ def getParentFolder(path):
 
 def replaceExt(filename, newExt):
     """ Replace the current path extension(from last .)
-    with a new one. The new one should not contains the ."""
+    with a new one. The new one should not contain the ."""
     return os.path.splitext(filename)[0] + '.' + newExt
 
 
@@ -312,18 +317,6 @@ def commonPath(*paths):
     return os.path.dirname(os.path.commonprefix(*paths))
 
 
-# Console (and XMIPP) escaped colors, and the related tags that we create
-# with Text.tag_config(). This dict is used in OutputText:addLine()
-# See also http://www.termsys.demon.co.uk/vtansi.htm#colors
-colorName = {'30': 'gray',
-             '31': 'red',
-             '32': 'green',
-             '33': 'yellow',
-             '34': 'blue',
-             '35': 'magenta',
-             '36': 'cyan',
-             '37': 'white'}
-
 
 def renderTextFile(fname, add, offset=0, lineNo=0, numberLines=True,
                    maxSize=400, headSize=40, tailSize=None, notifyLine=None, errors='strict'):
@@ -400,7 +393,7 @@ def renderLine(line, add, lineNo=1, numberLines=True):
         if code == '0':
             attribute = None
         else:
-            attribute = colorName.get(code[-2:], None)
+            attribute = ASCII_COLOR_2_TKINTER.get(code[-2:], None)
         pos = end + 1  # go to the character next to "m", the closing char
 
 
@@ -476,6 +469,29 @@ def getFileSize(fn):
         return os.path.getsize(fn)
 
 
+def hasChangedSince(fn, time):
+    """ Returns if the file has changed since the timestamp passed as parameter. It will check
+            the last modified time of the file this set uses to persists.
+
+    :parameter time: timestamp to compare to the last modification time  """
+
+    if time is None:
+        return True
+
+    # Get the last time it was modified
+    modTime = getFileLastModificationDate(fn)
+
+    return time < modTime
+
+def isFileFinished(fn , duration=60):
+    """ Returns True if the file (fn) last modification has not changed for 60 seconds (default duration)"""
+
+    modTime = getFileLastModificationDate(fn)
+    fileAge = datetime.datetime.now()-modTime
+
+    return fileAge.seconds > duration
+
+
 def getFileLastModificationDate(fn):
     """ Returns the last modification date of a file or None
     if it doesn't exist. """
@@ -483,5 +499,29 @@ def getFileLastModificationDate(fn):
         ts = os.path.getmtime(fn)
         return datetime.datetime.fromtimestamp(ts)
     else:
-        print(fn + " does not exist!!. Can't check last modification date.")
+        logger.info(fn + " does not exist!!. Can't check last modification date.")
         return None
+
+
+def backup(fpath):
+    """
+    Create directory "backup" if necessary and back up the file.
+
+    :param fpath:
+    :return: None
+
+    """
+    BACKUPS="backup"
+
+    dname = os.path.dirname(fpath)
+
+    if not os.path.exists(dname):
+        os.makedirs(dname)
+
+    elif os.path.exists(fpath):
+        if not os.path.exists(os.path.join(dname, BACKUPS)):
+            os.makedirs(os.path.join(dname, BACKUPS))
+        backupFn = os.path.join(dname, BACKUPS,
+                      '%s.%s' % (os.path.basename(fpath), datetime.datetime.now().strftime("%Y%m%d%H%M%S")))
+        logger.info(yellow("* Creating backup: %s" % backupFn))
+        os.rename(fpath, backupFn)

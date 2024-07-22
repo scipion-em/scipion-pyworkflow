@@ -26,16 +26,17 @@ logger = logging.getLogger(__name__)
 
 import contextlib
 import sys
+import platform
 import os
 import re
 from datetime import datetime
 import traceback
-from enum import Enum
+import sysconfig
 
 import bibtexparser
 import numpy as np
 import math
-
+from pyworkflow.constants import StrColors
 from pyworkflow import Config
 
 
@@ -248,72 +249,14 @@ def getUniqueItems(originalList):
     resultList = [auxDict.setdefault(x, x) for x in originalList if x not in auxDict]
     return resultList
 
-
-def executeRemoteX(command, hostName, userName, password):
-    """
-    Execute a remote command with X11 forwarding. Currently not used.
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard output and error output.
-    """
-    scriptPath = os.path.abspath(os.path.join(os.path.dirname(__file__), "sshAskPass.sh"))
-    pswCommand = "echo '" + password + "' | " + scriptPath + " ssh -X " + userName + "@" + hostName + " " + command
-    import subprocess
-    p = subprocess.Popen(pswCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    return stdout, stderr
-
-
-def executeRemote(command, hostName, userName, password):
-    """ Execute a remote command. Currently not used
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard input, standard output and error output.
-    """
-    import paramiko
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostName, 22, userName, password)
-    stdin, stdout, stderr = ssh.exec_command(command)
-    ssh.close()
-    return stdin, stdout, stderr
-
-
-def executeLongRemote(command, hostName, userName, password):
-    """ Execute a remote command.
-
-    :param command: Command to execute.
-    :param hostName: Remote host name.
-    :param userName: User name.
-    :param password: Password.
-
-    :returns Tuple with standard input, standard output and error output.
-
-    """
-    import paramiko
-    import select
-    ssh = paramiko.SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(hostName, 22, userName, password)
-    transport = ssh.get_transport()
-    channel = transport.open_session()
-    channel.exec_command(command)
-    while True:
-        if channel.exit_status_ready():
-            break
-        rl, wl, xl = select.select([channel], [], [], 0.0)
-        if len(rl) > 0:
-            print(channel.recv(1024))
+def sortListByList(inList, priorityList):
+    """ Returns a list sorted by some elements in a second priorityList"""
+    if priorityList:
+        sortedList = priorityList + [item for item in inList
+                                                     if item not in priorityList]
+        return sortedList
+    else:
+        return inList
 
 
 def getLocalUserName():
@@ -338,6 +281,16 @@ def getHostFullName():
     """ Return the fully-qualified name of the local machine. """
     import socket
     return socket.getfqdn()
+
+def getPython():
+    return sys.executable
+
+def getPythonPackagesFolder():
+    # This does not work on MAC virtual envs
+    # import site
+    # return site.getsitepackages()[0]
+
+    return sysconfig.get_path("platlib")
 
 
 # ******************************File utils *******************************
@@ -386,15 +339,6 @@ def hasFileChangedSince(file, time):
 
 
 # ------------- Colored message strings -----------------------------
-
-class StrColors(Enum):
-    gray = 30
-    red = 31
-    green = 32
-    yellow = 33
-    blue = 34
-    magenta = 35
-    cyan = 36
 
 
 def getColorStr(text, color, bold=False):
@@ -523,10 +467,10 @@ def parseHyperText(text, matchCallback):
 #    return text
 
 class LazyDict(object):
-    """ Dictionary to be initialized in the moment it is accessed for the first time.
+    """ Dictionary to be initialized at the moment it is accessed for the first time.
     Initialization is done by a callback passed at instantiation"""
     def __init__(self, callback=dict):
-        """ :param callback: method to initialize the dictionary. SHould return a dictionary"""
+        """ :param callback: method to initialize the dictionary. Should return a dictionary"""
         self.data = None
         self.callback = callback
 
@@ -614,24 +558,30 @@ def getRangeStringFromList(list):
     return ','.join(ranges)
 
 
-def getListFromValues(valuesStr, length=None):
+def getListFromValues(valuesStr, length=None, caster=str):
     """ Convert a string representing list items into a list.
-    The items should be separated by spaces and a multiplier 'x' can be used.
+    The items should be separated by spaces or commas and a multiplier 'x' can be used.
     If length is not None, then the last element will be repeated
     until the desired length is reached.
+
     Examples:
     '1 1 2x2 4 4' -> ['1', '1', '2', '2', '4', '4']
     '2x3, 3x4, 1' -> ['3', '3', '4', '4', '4', '1']
+
     """
     result = []
-
+    valuesStr = valuesStr.replace(","," ")
     for chunk in valuesStr.split():
-        values = chunk.split('x')
+        if caster != str:
+            values = chunk.split('x')
+        else:
+            values=[chunk]
+
         n = len(values)
         if n == 1:  # 'x' is not present in the chunk, single value
-            result += values
+            result += [caster(values[0])]
         elif n == 2:  # multiple the values by the number after 'x'
-            result += [values[1]] * int(values[0])
+            result += [caster(values[1])] * int(values[0])
         else:
             raise Exception("More than one 'x' is not allowed in list string value.")
 
@@ -639,7 +589,7 @@ def getListFromValues(valuesStr, length=None):
     # the last element until length is reached
     if length is not None and length > len(result):
         item = result[-1]
-        result += [item] * (length - len(result))
+        result += [caster(item)] * (length - len(result))
 
     return result
 
@@ -758,6 +708,16 @@ def strToBoolean(string):
     """ Converts a string into a Boolean if the string is on of true, yes, on, 1. Case insensitive."""
     return string is not None and string.lower() in ['true', 'yes', 'on', '1']
 
+def strToDuration(durationStr):
+    """ Converts a string representing an elapsed time to seconds
+    E.g.: for "1m 10s" it'll return  70 """
+
+    toEval = durationStr.replace("d", "*3600*24")\
+        .replace("h", "*3600")\
+        .replace("m", "*60") \
+        .replace("s", "") \
+        .replace(" ", "+")
+    return eval(toEval)
 
 def getMemoryAvailable():
     """ Return the total memory of the system in MB """
@@ -847,7 +807,7 @@ def getEnvVariable(variableName, default=None, exceptionMsg=None):
 
 
 @contextlib.contextmanager
-def weakImport(package):
+def weakImport(package, msg=None):
     """
     This method can be used to tolerate imports that may fail.
 
@@ -868,3 +828,53 @@ def weakImport(package):
     except ImportError as e:
         if "'%s'" % package not in str(e):
             raise e
+        elif msg is not None:
+            logger.warning(msg)
+# To be removed once developers have installed distro. 20-Nov-2023.
+with weakImport("distro", msg='You are missing distro package. '
+            'Did you "git pulled"?. Please run "scipion3 pip install distro==1.8".'):
+    import distro
+
+class OS:
+    @staticmethod
+    def getPlatform():
+        return platform.system()
+
+    @classmethod
+    def getDistro(cls):
+        return distro
+
+    @classmethod
+    def isWSL(cls):
+
+        # For now lets assume that if WSL_DISTRO_NAME exists is a WLS
+        return cls.getWLSNAME() is not None
+
+    @classmethod
+    def getWLSNAME(cls):
+        return os.environ.get("WSL_DISTRO_NAME", None)
+
+    @classmethod
+    def isUbuntu(cls):
+        return distro.id() == "ubuntu"
+
+    @classmethod
+    def isCentos(cls):
+        return distro.id() == "centos"
+
+    @classmethod
+    def WLSfile2Windows(cls, file):
+        # Links in WSL are not valid in windows
+        file = os.path.realpath(file).replace("/", "\\")
+        file = ("\\\\wsl.localhost\\" + cls.getWLSNAME() + file)
+        return file
+
+
+def valueToList(value):
+    """ Returns a list containing value, unless value is already a list. If value is None returns an empty list"""
+    if value is None:
+        return []
+    elif isinstance(value, list):
+        return value
+    else:
+        return [value]

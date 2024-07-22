@@ -30,7 +30,6 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from pyworkflow.object import Scalar
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.utils import prettyDelta
 from . import gui
@@ -49,7 +48,7 @@ class Tree(ttk.Treeview, Scrollable):
         Scrollable.__init__(self, master, ttk.Treeview, frame, **opts)
 
     def getImage(self, img):
-        return gui.getImage(img, Tree._images)
+        return gui.getImage(img)
 
     def getFirst(self):
         """ Return first selected item or None if selection empty"""
@@ -270,7 +269,7 @@ class BoundTree(Tree):
 
     def __init__(self, master, provider, frame=True, **opts):
         """Create a new Tree, if frame=True, a container
-        frame will be created and an scrollbar will be added"""
+        frame will be created and a scrollbar will be added"""
         # Get columns to display and width
         cols = provider.getColumns()
         colsTuple = tuple([c[0] for c in cols[1:]])
@@ -499,8 +498,9 @@ class ObjectTreeProvider(TreeProvider):
         info = {'key': obj.getObjId(),
                 'parent': self._parentDict.get(obj.getObjId(), None),
                 'text': t, 'values': (obj.strId(), cls)}
-        if issubclass(obj.__class__, Scalar):
-            info['image'] = 'step.gif'
+        # This image step.gif is missing, I guess we are not showing Scalars
+        # if issubclass(obj.__class__, Scalar):
+        #     info['image'] = 'step.gif'
 
         return info
 

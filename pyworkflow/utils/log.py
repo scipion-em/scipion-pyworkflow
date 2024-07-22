@@ -147,7 +147,7 @@ class LoggingConfigurator:
 
         if console:
             config["handlers"][CONSOLE_HANDLER] = {
-                        'level': Config.SCIPION_LOG_LEVEL,
+                        'level': 'ERROR', #Config.SCIPION_LOG_LEVEL,
                         'class': 'logging.StreamHandler',
                         'formatter': 'standard',
                         }
@@ -160,14 +160,43 @@ class LoggingConfigurator:
         logging.config.dictConfig(config)
 
     @classmethod
-    def setUpGUILogging(cls):
+    def setUpGUILogging(cls, logFile=None):
         """Sets up the logging library for the GUI processes: By default all goes to SCIPION_LOG file and console."""
-        cls.setupLogging()
+        cls.setupLogging(logFile=logFile)
+
+    @classmethod
+    def setUpProtocolSchedulingLog(cls, scheduleLogFile):
+        """ Sets up the logging for the scheduling process"""
+
+        # Load custom logging
+        cls.loadCustomLoggingConfig()
+
+        # File handler to the scheduling log file
+        scheduleHandler = FileHandler(scheduleLogFile)
+
+        # Get the root logger
+        rootLogger = logging.getLogger()
+
+        # If there wasn't any custom logging
+        if not cls.customLoggingActive:
+            # Remove the default handler that goes to the terminal
+            rootLogger.handlers.clear()
+
+        # Add the handler
+        rootLogger.addHandler(scheduleHandler)
+        rootLogger.setLevel(Config.SCIPION_LOG_LEVEL)
+
+        # create formatter and add it to the handlers
+        formatter = logging.Formatter(Config.SCIPION_LOG_FORMAT)
+        scheduleHandler.setFormatter(formatter)
+
 
     @classmethod
     def setUpProtocolRunLogging(cls, stdoutLogFile, stderrLogFile):
         """ Sets up the logging library for the protocols run processes, loads the custom configuration plus
         2 FileHandlers for stdout and stderr"""
+
+        cls.loadCustomLoggingConfig()
 
         # std out: Only warning, info and debug. Error and critical should go exclusively to stderr handler
         stdoutHandler = FileHandler(stdoutLogFile)
@@ -177,7 +206,7 @@ class LoggingConfigurator:
         stderrHandler = FileHandler(stderrLogFile)
         stderrHandler.setLevel(logging.ERROR)
 
-        # Get the roo logger
+        # Get the root logger
         rootLogger = logging.getLogger()
 
         # If there wasn't any custom logging

@@ -29,11 +29,7 @@ from pyworkflow import Config
 import pyworkflow.protocol as pwprot
 
 from pyworkflow.gui import SearchBaseWindow
-from pyworkflow.gui.project.constants import ACTION_COPY, ACTION_EDIT, ACTION_RENAME, ACTION_DELETE, ACTION_STEPS, \
-    ACTION_BROWSE, ACTION_DB, ACTION_STOP, ACTION_EXPORT, ACTION_EXPORT_UPLOAD, ACTION_COLLAPSE, ACTION_EXPAND, \
-    ACTION_LABELS, ACTION_SELECT_FROM, ACTION_SELECT_TO, ACTION_RESTART_WORKFLOW, ACTION_CONTINUE_WORKFLOW, \
-    ACTION_STOP_WORKFLOW, ACTION_RESET_WORKFLOW, ActionIcons
-
+from pyworkflow.gui.project.constants import *
 from pyworkflow.gui.tree import ProjectRunsTreeProvider
 
 class RunsTreeProvider(ProjectRunsTreeProvider):
@@ -50,7 +46,7 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
         n = len(self._selection)
         single = n == 1
         if n:
-            prot = self.project.getProtocol(self._selection[0])
+            prot = self.project.getProtocol(self._selection[0], fromRuns=True)
             status = prot.getStatus()
             nodeInfo = self.project.getSettings().getNodeById(prot.getObjId())
             expanded = nodeInfo.isExpanded() if nodeInfo else True
@@ -60,25 +56,34 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
         stoppable = status in [pwprot.STATUS_RUNNING, pwprot.STATUS_SCHEDULED,
                                pwprot.STATUS_LAUNCHED]
 
-        return [(ACTION_EDIT, single and status and expanded),
-                (ACTION_RENAME, single and status and expanded),
-                (ACTION_COPY, status and expanded),
-                (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
-                (ACTION_STEPS, single and Config.debugOn() and status and expanded),
+        # This list defines the order the icons are shown
+        return [
+                (ACTION_EDIT, single and status and expanded),
                 (ACTION_BROWSE, single and status and expanded),
-                (ACTION_DB, single and Config.debugOn() and status and expanded),
-                (ACTION_STOP, stoppable and single),
-                (ACTION_EXPORT, not single),
-                (ACTION_EXPORT_UPLOAD, not single),
-                (ACTION_COLLAPSE, single and status and expanded),
-                (ACTION_EXPAND, single and status and not expanded),
+                (ACTION_RENAME, single and status and expanded),
                 (ACTION_LABELS, True),
+
+                (ACTION_DUPLICATE, status and expanded),
+                (ACTION_COPY, status and expanded),
+                (ACTION_PASTE, status and expanded),
+                (ACTION_DELETE, status != pwprot.STATUS_RUNNING and status and expanded),
+
                 (ACTION_SELECT_FROM, True),
                 (ACTION_SELECT_TO, True),
+                (ACTION_COLLAPSE, single and status and expanded),
+                (ACTION_EXPAND, single and status and not expanded),
+
+                (ACTION_STOP, stoppable and single),
+                (ACTION_STOP_WORKFLOW, single),
                 (ACTION_RESTART_WORKFLOW, single),
                 (ACTION_CONTINUE_WORKFLOW, single),
-                (ACTION_STOP_WORKFLOW, single),
-                (ACTION_RESET_WORKFLOW, single)
+                (ACTION_RESET_WORKFLOW, single),
+
+                (ACTION_EXPORT, not single),
+                (ACTION_EXPORT_UPLOAD, not single),
+
+                (ACTION_STEPS, single and Config.debugOn() and status and expanded),
+                (ACTION_DB, single and Config.debugOn() and status and expanded),
                 ]
 
     def getObjectActions(self, obj):
@@ -88,7 +93,8 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                 text = actionLabel
                 action = actionLabel
                 actionLabel = (text, lambda: self.actionFunc(action),
-                               ActionIcons.get(action, None))
+                               ActionIcons.get(action, None),
+                               ActionShortCuts.get(action,None))
             return actionLabel
 
         actions = [addAction(a)
