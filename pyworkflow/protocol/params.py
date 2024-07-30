@@ -244,7 +244,7 @@ class Form(object):
     def _analizeCondition(self, paramName, param):
         if param.hasCondition():
             param._conditionParams = []
-            tokens = re.split('\W+', param.condition.get())
+            tokens = re.split(r'\W+', param.condition.get())
             for t in tokens:
                 if self.hasParam(t):
                     self.getParam(t)._dependants.append(paramName)

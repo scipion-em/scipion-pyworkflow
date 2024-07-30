@@ -106,7 +106,6 @@ class ProtocolsView(tk.Frame):
         self._lastRightClickPos = None  # Keep last right-clicked position
 
         self.style = ttk.Style()
-        self.root.bind("<Control-f>", self._findProtocol)
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
         self.root.bind("<Control-D>", self._toggleDebug)
@@ -264,16 +263,15 @@ class ProtocolsView(tk.Frame):
                                                       font=self.window.font)
         self.projLog.grid(row=0, column=0, sticky='news')
         self.projLog.windows = self.window
-        self.projLog.addFile(Config.SCIPION_LOG) # TODO: Have a project specific log
-
-        self._updateSelection()
+        self.projLog.addFile(self.project.getProjectLog())
 
         # Move to the selected protocol
         if self._isSingleSelection():
             prot = self.getSelectedProtocol()
             node = self.runsGraph.getNode(str(prot.getObjId()))
             self._selectNode(node)
-
+        else:
+            self._updateSelection()
 
         # Add all tabs
 
@@ -331,7 +329,7 @@ class ProtocolsView(tk.Frame):
     def cleanInfo(self):
         self.info("")
 
-    def refreshRuns(self, e=None, initRefreshCounter=True, checkPids=False):
+    def refreshRuns(self, e=None, initRefreshCounter=True, checkPids=False, position=None):
         """
         Refresh the protocol runs workflow. If the variable REFRESH_WITH_THREADS
         exits, then use a threads to refresh, i.o.c use normal behavior
@@ -350,10 +348,10 @@ class ProtocolsView(tk.Frame):
             else:
                 self.repeatRefresh = True
         else:
-            self.refreshDisplayedRuns(e, initRefreshCounter, checkPids)
+            self.refreshDisplayedRuns(e, initRefreshCounter, checkPids, position=position)
 
     # noinspection PyUnusedLocal
-    def refreshDisplayedRuns(self, e=None, initRefreshCounter=True, checkPids=False):
+    def refreshDisplayedRuns(self, e=None, initRefreshCounter=True, checkPids=False, position=None):
         """ Refresh the status of displayed runs.
          Params:
             e: Tk event input
@@ -364,21 +362,11 @@ class ProtocolsView(tk.Frame):
         self.viewButtons[ACTION_REFRESH]['state'] = tk.DISABLED
         self.info('Refreshing...')
         self.refreshSemaphore = False
-        if Config.debugOn():
-            import psutil
-            proc = psutil.Process(os.getpid())
-            mem = psutil.virtual_memory()
-            logger.debug("------------- refreshing ---------- ")
-            files = proc.open_files()
-            logger.debug("  open files: %s" % len(files))
-            for f in files:
-                logger.debug("    - %s, %s" % (f.path, f.fd))
-            logger.debug("  memory percent: %s" % proc.memory_percent())
 
         if self.runsView == VIEW_LIST:
             self.updateRunsTree(True)
         else:
-            self.updateRunsGraph(True, checkPids=checkPids)
+            self.updateRunsGraph(True, checkPids=checkPids, position=position)
             self._updateSelection()
 
         if initRefreshCounter:
@@ -410,9 +398,15 @@ class ProtocolsView(tk.Frame):
                                                  self._automaticRefreshRuns)
 
     # noinspection PyUnusedLocal
-    def _findProtocol(self, e=None):
+    def _findProtocol(self, event=None):
         """ Find a desired protocol by typing some keyword. """
-        window = SearchProtocolWindow(self.window)
+
+        if event is not None and event.widget.widgetName=="canvas":
+            position = self.runsGraphCanvas.getCoordinates(event)
+        else:
+            position = None
+
+        window = SearchProtocolWindow(self.window, position=position)
         window.show()
 
     def _locateProtocol(self, e=None):
@@ -449,7 +443,7 @@ class ProtocolsView(tk.Frame):
 
         self.actionButtons = {}
         actionList = [
-            ACTION_EDIT, ACTION_RENAME, ACTION_DUPLICATE, ACTION_COPY, ACTION_PASTE,  ACTION_DELETE,
+            ACTION_NEW, ACTION_EDIT, ACTION_RENAME, ACTION_DUPLICATE, ACTION_COPY, ACTION_PASTE,  ACTION_DELETE,
             ACTION_BROWSE,
             ACTION_STOP, ACTION_STOP_WORKFLOW, ACTION_CONTINUE, ACTION_CONTINUE_WORKFLOW, ACTION_RESTART_WORKFLOW, ACTION_RESET_WORKFLOW,
             ACTION_RESULTS,
@@ -476,7 +470,7 @@ class ProtocolsView(tk.Frame):
                 text += " (%s)" % shortCut
                 self.root.bind(shortCut, callback)
 
-            ToolTip(btn,text , 500)
+            ToolTip(btn, text, 500)
 
             return btn
 
@@ -540,7 +534,7 @@ class ProtocolsView(tk.Frame):
             displayAction(action, i, cond)
 
     def _createProtocolsTree(self, parent,
-                             show='tree', columns=None):
+                             show='tree', columns=None, position=None):
 
         t = pwgui.tree.Tree(parent, show=show, style=LIST_TREEVIEW,
                             columns=columns)
@@ -549,9 +543,9 @@ class ProtocolsView(tk.Frame):
         def configureTag(tag, img):
             # Protocol nodes
             t.tag_configure(tag, image=self.getImage(img))
-            t.tag_bind(tag, TK.LEFT_DOUBLE_CLICK, self._protocolItemClick)
-            t.tag_bind(tag, TK.RETURN, self._protocolItemClick)
-            t.tag_bind(tag, TK.ENTER, self._protocolItemClick)
+            t.tag_bind(tag, TK.LEFT_DOUBLE_CLICK, lambda e: self._protocolItemClick(e, position))
+            t.tag_bind(tag, TK.RETURN, lambda e: self._protocolItemClick(e, position))
+            t.tag_bind(tag, TK.ENTER, lambda e: self._protocolItemClick(e, position))
 
         # Protocol nodes
         configureTag(ProtocolTreeConfig.TAG_PROTOCOL, Icon.PRODUCTION)
@@ -751,13 +745,13 @@ class ProtocolsView(tk.Frame):
 
         self.updateRunsGraph()
 
-    def updateRunsGraph(self, refresh=False, checkPids=False):
+    def updateRunsGraph(self, refresh=False, checkPids=False, position=None):
 
         self.runsGraph = self.project.getRunsGraph(refresh=refresh,
                                                    checkPids=checkPids)
-        self.drawRunsGraph()
+        self.drawRunsGraph(position=position)
 
-    def drawRunsGraph(self, reorganize=False):
+    def drawRunsGraph(self, reorganize=False, position=None):
 
         # Check if there are positions stored
         if reorganize:
@@ -773,7 +767,9 @@ class ProtocolsView(tk.Frame):
                 nodeId = node.run.getObjId() if node.run else 0
                 nodeInfo = self.settings.getNodeById(nodeId)
                 if nodeInfo is None:
-                    self.settings.addNode(nodeId, x=0, y=0, expanded=True,
+                    if position is None:
+                        position = (0,0)
+                    self.settings.addNode(nodeId, x=position[0], y=position[1], expanded=True,
                                           visible=True)
 
             self.runsGraphCanvas.drawGraph(self.runsGraph, layout,
@@ -1038,7 +1034,9 @@ class ProtocolsView(tk.Frame):
             self.runsGraphCanvas.frame.grid(row=0, column=0, sticky='news')
             self.viewButtons[ACTION_TREE].grid(row=0, column=1)
 
-    def _protocolItemClick(self, e=None):
+    def _protocolItemClick(self, e=None, position=None):
+        """ Callback for the window to add a new protocol."""
+
         # Get the tree widget that originated the event
         # it could be the left panel protocols tree or just
         # the search protocol dialog tree
@@ -1046,7 +1044,7 @@ class ProtocolsView(tk.Frame):
         protClassName = tree.getFirst().split('.')[-1]
         protClass = self.domain.getProtocols().get(protClassName)
         prot = self.project.newProtocol(protClass)
-        self._openProtocolForm(prot, disableRunMode=True)
+        self._openProtocolForm(prot, disableRunMode=True, position=position)
 
     def _toggleColorScheme(self, e=None):
 
@@ -1163,8 +1161,8 @@ class ProtocolsView(tk.Frame):
         self._updateSelection()
         self.runsGraphCanvas.update_idletasks()
 
-    def _deselectItems(self, item):
-        """ Deselect all items except the item one
+    def _deselectItems(self, exception):
+        """ Deselect all items except the item one. Pass item=None to deselect all
         """
         g = self.project.getRunsGraph()
 
@@ -1173,9 +1171,14 @@ class ProtocolsView(tk.Frame):
                 # This option is only for compatibility with all projects
                 if hasattr(node, 'item'):
                     node.item.setSelected(False)
-        item.setSelected(True)
 
-    def _runItemClick(self, item=None):
+        # clear the selection
+        self._selection.clear()
+
+        if exception:
+            exception.setSelected(True)
+            self._selection.append(exception.id)
+    def _runItemClick(self, item=None, event=None):
 
         # If click is in a empty area....start panning
         if item is None:
@@ -1193,28 +1196,41 @@ class ProtocolsView(tk.Frame):
             self._deselectItems(item)
         self._selectItemProtocol(prot)
 
-    def _runItemDoubleClick(self, e=None):
-        if e.nodeInfo.isExpanded():
+    def _runItemDoubleClick(self, item=None, e=None):
+        if item.nodeInfo.isExpanded():
             self._runActionClicked(ACTION_EDIT)
 
     def _runItemMiddleClick(self, e=None):
         self._runActionClicked(ACTION_SELECT_TO)
 
-    def _runItemRightClick(self, item=None):
-        prot = item.node.run
-        if prot is None:  # in case it is the main "Project" node
-            return
-        n = len(self._selection)
-        # Only select item with right-click if there is a single
-        # item selection, not for multiple selection
-        if n <= 1:
-            self._deselectItems(item)
-            self._selectItemProtocol(prot)
-            self._lastRightClickPos = self.runsGraphCanvas.eventPos
+    def _runItemRightClick(self, item=None, e=None):
+        """ Right click on the canvas callback
 
-        return self.provider.getObjectActions(prot)
+        :param item: item right-clicked. None if clicked in the void
+        :param e: event object with context information"""
+        prot = None
+        # If there's been a click in a box
+        if item is not None:
 
-    def _runItemControlClick(self, item=None):
+            # Get the protocol associated
+            prot = item.node.run
+
+            if prot is None:  # in case it is the main "Project" node
+                return
+
+            # Only select item with right-click if there is a single
+            # item selection, not for multiple selection
+            if len(self._selection) == 1:
+                self._deselectItems(item)
+                self._selectItemProtocol(prot)
+                self._lastRightClickPos = self.runsGraphCanvas.eventPos
+        else:  # Click on empty area
+            self._deselectItems(None)
+            self._updateSelection()
+
+        return self.provider.getObjectActions(prot,withEvent=True)
+
+    def _runItemControlClick(self, item=None, event=None):
         # Get last selected item for tree or graph
         if self.runsView == VIEW_LIST:
             # TODO: Prot is not used!!
@@ -1316,13 +1332,13 @@ class ProtocolsView(tk.Frame):
         #
         # if update is not None: self._updateSelection()
 
-    def _openProtocolForm(self, prot, disableRunMode=False):
+    def _openProtocolForm(self, prot, disableRunMode=False, position=None):
         """Open the Protocol GUI Form given a Protocol instance"""
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.window,
                        updateProtocolCallback=self._updateProtocol,
-                       disableRunMode=disableRunMode)
+                       disableRunMode=disableRunMode, position=position)
         w.adjustSize()
         w.show(center=True)
 
@@ -1477,9 +1493,9 @@ class ProtocolsView(tk.Frame):
             import traceback
             traceback.print_exc()
 
-    def _scheduleRunsUpdate(self, secs=1):
+    def _scheduleRunsUpdate(self, secs=1, position=None):
         # self.runsTree.after(secs*1000, self.refreshRuns)
-        self.window.enqueue(self.refreshRuns)
+        self.window.enqueue(lambda : self.refreshRuns(position=position))
 
     def executeProtocol(self, prot):
         """ Function to execute a protocol called not
@@ -1489,7 +1505,7 @@ class ProtocolsView(tk.Frame):
         # to be executed in the same thread
         self.window.enqueue(lambda: self._executeSaveProtocol(prot))
 
-    def _executeSaveProtocol(self, prot, onlySave=False, doSchedule=False):
+    def _executeSaveProtocol(self, prot, onlySave=False, doSchedule=False, position=None):
         if onlySave:
             self.project.saveProtocol(prot)
             msg = Message.LABEL_SAVED_FORM
@@ -1509,7 +1525,7 @@ class ProtocolsView(tk.Frame):
 
         # Update runs list display, even in save we
         # need to get the updated copy of the protocol
-        self._scheduleRunsUpdate()
+        self._scheduleRunsUpdate(position=position)
         self._selectItemProtocol(prot)
 
         return msg
@@ -1742,17 +1758,18 @@ class ProtocolsView(tk.Frame):
                 return [], RESULT_RUN_SINGLE
 
     def _selectLabels(self):
+
+        dlg = self.window.manageLabels()
+
         selectedNodes = self._getSelectedNodes()
 
-        if selectedNodes:
-            dlg = self.window.manageLabels()
+        if dlg.resultYes() and selectedNodes:
 
-            if dlg.resultYes():
-                for node in selectedNodes:
-                    node.setLabels([label.getName() for label in dlg.values])
+            for node in selectedNodes:
+                node.setLabels([label.getName() for label in dlg.values])
 
-                # self.updateRunsGraph()
-                self.drawRunsGraph()
+            # self.updateRunsGraph()
+            self.drawRunsGraph()
 
             # Save settings in any case
             self.window.saveSettings()
@@ -1917,7 +1934,7 @@ class ProtocolsView(tk.Frame):
                             jsonStr = json.dumps(refDict, indent=4,
                                                  ensure_ascii=False)[1:]
                             jsonStr = jsonStr.replace('": "', '"= "')
-                            jsonStr = re.sub('(?<!= )"(\S*?)"', '\\1', jsonStr)
+                            jsonStr = re.sub(r'(?<!= )"(\S*?)"', '\\1', jsonStr)
                             jsonStr = jsonStr.replace('= "', ' = "')
                             refStr = '@%s{%s,%s\n\n' % (refType, refId, jsonStr)
                             bibFile.write(refStr.encode('utf-8'))
@@ -1961,6 +1978,10 @@ class ProtocolsView(tk.Frame):
 
         elif action == ACTION_SWITCH_VIEW:
             self.switchRunsView()
+        elif action == ACTION_NEW:
+            self._findProtocol(event)
+        elif action == ACTION_LABELS:
+            self._selectLabels()
         else:
             prot = self.getSelectedProtocol()
             if prot:
@@ -2007,8 +2028,7 @@ class ProtocolsView(tk.Frame):
                         self.setVisibleNodes(node, visible=True)
                         self.updateRunsGraph(False)
                         self._updateActionToolbar()
-                    elif action == ACTION_LABELS:
-                        self._selectLabels()
+
                     elif action == ACTION_SELECT_FROM:
                         self._selectDescendants()
                     elif action == ACTION_SELECT_TO:

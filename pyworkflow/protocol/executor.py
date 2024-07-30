@@ -36,14 +36,12 @@ import time
 import datetime
 import threading
 import os
-import re
-from subprocess import Popen, PIPE
 
 import pyworkflow.utils.process as process
 from pyworkflow.utils.path import getParentFolder, removeExt
 from . import constants as cts
 
-from .launch import _submit, UNKNOWN_JOBID
+from .launch import _submit, UNKNOWN_JOBID, _checkJobStatus
 
 
 class StepExecutor:
@@ -63,14 +61,14 @@ class StepExecutor:
 
     def runJob(self, log, programName, params,           
                numberOfMpi=1, numberOfThreads=1,
-               env=None, cwd=None):
+               env=None, cwd=None, executable=None):
         """ This function is a wrapper around runJob, 
         providing the host configuration. 
         """
         process.runJob(log, programName, params,
                        numberOfMpi, numberOfThreads, 
                        self.hostConfig,
-                       env=env, cwd=cwd, gpuList=self.getGpuList())
+                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable)
         
     def _getRunnable(self, steps, n=1):
         """ Return the n steps that are 'new' and all its
@@ -191,7 +189,7 @@ class ThreadStepExecutor(StepExecutor):
     def getGpuList(self):
         """ Return the GPU list assigned to current thread
         or empty list if not using GPUs. """
-        return self.gpuDict.get(threading.currentThread().thId, [])
+        return self.gpuDict.get(threading.current_thread().thId, [])
         
     def runSteps(self, steps, 
                  stepStartedCallback, 
@@ -299,7 +297,7 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         logger.debug("Updated gpus ids rebase starting from 0: %s per thread" %self.gpuDict)
 
-    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None):
+    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None, executable=None):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
         submitDict.update(self.submitDict)
@@ -313,8 +311,7 @@ class QueueStepExecutor(ThreadStepExecutor):
         submitDict['JOB_LOGS'] = os.path.join(getParentFolder(submitDict['JOB_SCRIPT']), submitDict['JOB_NAME'])
 
         jobid = _submit(self.hostConfig, submitDict, cwd, env)
-        # if self.protocol._lock: # Just in case we detect concurrency problem
-        self.protocol.appendJobId(jobid) # append active jobs
+        self.protocol.appendJobId(jobid)  # append active jobs
         self.protocol._store(self.protocol._jobId)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
@@ -326,39 +323,12 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         # Check status while job running
         # REVIEW this to minimize the overhead in time put by this delay check
-        while self._checkJobStatus(self.hostConfig, jobid) == cts.STATUS_RUNNING:
+        while _checkJobStatus(self.hostConfig, jobid) == cts.STATUS_RUNNING:
             time.sleep(wait)
             if wait < 300:
                 wait += 3
 
-        # if self.protocol._lock: # Just in case we detect concurrency problem
-        self.protocol.removeJobId(jobid) # After completion, remove inactive jobs.
+        self.protocol.removeJobId(jobid)  # After completion, remove inactive jobs.
         self.protocol._store(self.protocol._jobId)
 
         return status
-
-    def _checkJobStatus(self, hostConfig, jobid):
-        command = hostConfig.getCheckCommand() % {"JOB_ID": jobid}
-        logger.debug("checking job status for %s: %s" %(jobid, command))
-        p = Popen(command, shell=True, stdout=PIPE, preexec_fn=os.setsid)
-
-        out = p.communicate()[0].decode(errors='backslashreplace')
-
-        jobDoneRegex = hostConfig.getJobDoneRegex()
-        logger.debug("Queue engine replied %s, variable JOB_DONE_REGEX has %s" %(out, jobDoneRegex))
-        # If nothing is returned we assume job is no longer in queue and thus finished
-        if out == "":
-            logger.warning("Empty response from queue system to job (%s)" %jobid)
-            return cts.STATUS_FINISHED
-        # If some string is returned we use the JOB_DONE_REGEX variable (if present) to infer the status
-        elif jobDoneRegex is not None:
-            s = re.search(jobDoneRegex, out)
-            if s:
-                logger.debug("Job (%s) finished" %jobid)
-                return cts.STATUS_FINISHED
-            else:
-                logger.debug("Job (%s) still running" %jobid)
-                return cts.STATUS_RUNNING
-        # If JOB_DONE_REGEX is not defined and queue has returned something we assume that job is still running
-        else:
-            return cts.STATUS_RUNNING

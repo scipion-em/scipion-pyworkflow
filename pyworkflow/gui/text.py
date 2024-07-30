@@ -62,7 +62,9 @@ elif os.name == 'posix':  # linux systems and so on
         return None
 
     x_open = find_prog('xdg-open', 'gnome-open', 'kde-open', 'gvfs-open')
-    editor = find_prog('pluma', 'gedit', 'kwrite', 'geany', 'kate',
+    editor = pw.Config.SCIPION_TEXT_EDITOR
+    if not editor:
+        editor = find_prog('pluma', 'gedit', 'kwrite', 'geany', 'kate',
                        'emacs', 'nedit', 'mousepad', 'code')
 
     def _open_cmd(path, tkParent=None):
@@ -256,7 +258,7 @@ class Text(tk.Text, Scrollable):
         else:
             path = os.path.join(dirname, fname)
 
-        if os.path.exists(path):
+        if os.path.exists(path) or path.startswith("http"):
             from pwem import emlib
             fn = emlib.FileName(path)
             if fn is not None and (fn.isImage() or fn.isMetaData()):

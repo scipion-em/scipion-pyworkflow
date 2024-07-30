@@ -367,8 +367,8 @@ class ProjectDataView(tk.Frame):
 
         return results
 
-    def _onDoubleClick(self, e=None):
-        if e.node.pointer:
+    def _onDoubleClick(self, item=None, e=None):
+        if item.node.pointer:
             self._selectObject(e.node.pointer)
             self._viewObject(e.node.pointer.get().getObjId())
             return
@@ -422,15 +422,14 @@ class ProjectDataView(tk.Frame):
 
         return msg
 
-    def _onRightClick(self, e=None):
-        return [
-            (pwutils.Message.LABEL_EDIT, self._editObject,
-             pwutils.Icon.ACTION_EDIT),
-            ('Go to protocol', self._goToProtocol,
-             pwutils.Icon.ACTION_SEARCH)
-        ]
+    def _onRightClick(self, item=None, e=None):
+        return []
+        #
+        #     (pwutils.Message.LABEL_EDIT, self._editObject, pwutils.Icon.ACTION_EDIT),
+        #     ('Go to protocol', self._goToProtocol, pwutils.Icon.ACTION_SEARCH)
+        # ]
     
-    def _editObject(self):
+    def _editObject(self, e=None):
         """Open the Edit GUI Form given an instance"""
         EditObjectDialog(self, pwutils.Message.TITLE_EDIT_OBJECT,
                          self._selected, self.project.mapper)

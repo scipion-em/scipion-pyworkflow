@@ -26,9 +26,11 @@
 # **************************************************************************
 import logging
 
+from ..protocol.launch import _checkJobStatus
+
 ROOT_NODE_NAME = "PROJECT"
 logger = logging.getLogger(__name__)
-
+from pyworkflow.utils.log import LoggingConfigurator
 import datetime as dt
 import json
 import os
@@ -45,8 +47,8 @@ import pyworkflow.utils as pwutils
 from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_RESUME,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS,
-                                           UNKNOWN_JOBID, INITIAL_SLEEP_TIME)
-from pyworkflow.protocol.protocol import ProtImportBase
+                                           UNKNOWN_JOBID, INITIAL_SLEEP_TIME, STATUS_FINISHED)
+from pyworkflow.protocol.protocol import ProtImportBase, Protocol
 
 from . import config
 
@@ -60,8 +62,8 @@ PROJECT_CONFIG = '.config'
 PROJECT_CREATION_TIME = 'CreationTime'
 
 # Regex to get numbering suffix and automatically propose runName
-REGEX_NUMBER_ENDING = re.compile('(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
-REGEX_NUMBER_ENDING_CP = re.compile('(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
+REGEX_NUMBER_ENDING = re.compile(r'(?P<prefix>.+)(?P<number>\(\d*\))\s*$')
+REGEX_NUMBER_ENDING_CP = re.compile(r'(?P<prefix>.+\s\(copy)(?P<number>.*)\)\s*$')
 
 
 class Project(object):
@@ -123,7 +125,7 @@ class Project(object):
     def getPath(self, *paths):
         """Return path from the project root"""
         if paths:
-            return os.path.join(*paths)
+            return os.path.join(*paths) # Why this is relative!!
         else:
             return self.path
 
@@ -191,6 +193,9 @@ class Project(object):
 
     def getLogPath(self, *paths):
         return self.getPath(PROJECT_LOGS, *paths)
+
+    def getProjectLog(self):
+        return os.path.join(self.path,self.getLogPath("project.log")) # For some reason getLogsPath is relative!
 
     def getSettings(self):
         return self.settings
@@ -279,6 +284,8 @@ class Project(object):
         #     logger.info("ERROR: Project %s load failed.\n"
         #           "       Message: %s\n" % (self.path, e))
 
+    def configureLogging(self):
+        LoggingConfigurator.setUpGUILogging(self.getProjectLog())
     def _loadCreationTime(self):
         # Load creation time, it should be in project.sqlite or
         # in some old projects it is found in settings.sqlite
@@ -657,7 +664,7 @@ class Project(object):
         self.mapper.store(protocol)
         self.mapper.commit()
 
-    def _updateProtocol(self, protocol, tries=0, checkPid=False,
+    def _updateProtocol(self, protocol: Protocol, tries=0, checkPid=False,
                         skipUpdatedProtocols=True):
 
         # If this is read only exit
@@ -675,6 +682,9 @@ class Project(object):
             if skipUpdatedProtocols:
                 # If we are already updated, comparing timestamps
                 if pwprot.isProtocolUpToDate(protocol):
+
+                    # Always check for the status of the process (queue job or pid)
+                    self.checkIsAlive(protocol)
                     return pw.NOT_UPDATED_UNNECESSARY
 
 
@@ -717,8 +727,7 @@ class Project(object):
 
             # Check pid at the end, once updated
             if checkPid:
-                self.checkPid(protocol)
-
+                self.checkIsAlive(protocol)
 
             self.mapper.store(protocol)
 
@@ -744,6 +753,13 @@ class Project(object):
                 self._updateProtocol(protocol, tries + 1)
 
         return pw.PROTOCOL_UPDATED
+
+    def checkIsAlive(self, protocol):
+        """ Check if a protocol is alive based on its jobid or pid"""
+        if protocol.getPid() == 0:
+            self.checkJobId(protocol)
+        else:
+            self.checkPid(protocol)
 
     def stopProtocol(self, protocol):
         """ Stop a running protocol """
@@ -771,12 +787,10 @@ class Project(object):
         finally:
             protocol.setSaved()
             protocol.runMode.set(MODE_RESTART)
-            protocol._store()
-            self._storeProtocol(protocol)
             protocol.makePathsAndClean()  # Create working dir if necessary
-            protocol.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
+            # Clean jobIds, Pid and StepsDone;
+            protocol.cleanExecutionAttributes()  # otherwise, this would retain old executions info
             protocol._store()
-            self._storeProtocol(protocol)
 
     def continueProtocol(self, protocol):
         """ This function should be called 
@@ -1590,13 +1604,38 @@ class Project(object):
         # NOTE: This may be happening even with successfully finished protocols
         # which PID is gone.
         if (protocol.isActive() and not protocol.isInteractive() and _runsLocally(protocol)
-            and not protocol.useQueue()
                 and not pwutils.isProcessAlive(pid)):
             protocol.setFailed("Process %s not found running on the machine. "
                                "It probably has died or been killed without "
                                "reporting the status to Scipion. Logs might "
                                "have information about what happened to this "
                                "process." % pid)
+
+    def checkJobId(self, protocol):
+        """ Check if a running protocol is still alive or not.
+        The check will only be done for protocols that have been sent
+        to a queue system.
+        """
+        jobid = protocol.getJobIds()[0]
+        hostConfig = protocol.getHostConfig()
+
+        if jobid == UNKNOWN_JOBID:
+            return
+
+        # Include running and scheduling ones
+        # Exclude interactive protocols
+        # NOTE: This may be happening even with successfully finished protocols
+        # which PID is gone.
+        if protocol.isActive() and not protocol.isInteractive():
+
+            jobStatus = _checkJobStatus(hostConfig, jobid)
+
+            if jobStatus == STATUS_FINISHED:
+                protocol.setFailed("Process %s not found running on the machine. "
+                                   "It probably has died or been killed without "
+                                   "reporting the status to Scipion. Logs might "
+                                   "have information about what happened to this "
+                                   "process." % jobid)
 
     def iterSubclasses(self, classesName, objectFilter=None):
         """ Retrieve all objects from the project that are instances
@@ -1940,7 +1979,7 @@ class Project(object):
         Use it whenever you want to get the final project name pyworkflow will end up.
         Spaces will be replaced by _ """
 
-        return re.sub("[^\w\d\-\_]", "-", projectName)
+        return re.sub(r"[^\w\d\-\_]", "-", projectName)
 
 
 class MissingProjectDbException(Exception):

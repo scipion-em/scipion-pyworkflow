@@ -99,7 +99,7 @@ class VariablesDialog(dialog.ToolbarListDialog):
             variable = selection[0]
             dlg = EditVariableDialog(self, "Edit variable", variable)
             if dlg.resultYes():
-                self.tree.update()
+                self.refresh()
 
     def _setToDefault(self, e=None):
         selection = self.tree.getSelectedObjects()
@@ -163,7 +163,7 @@ class EditVariableDialog(dialog.Dialog):
             value =askPath(path=path, master=self, onlyFolders=onlyFolders, returnBaseName=returnBaseName)
             self.valueVar.set(value)
     def apply(self):
-        self.variable.value = self.valueVar.get()
+        self.variable.setValue(self.valueVar.get())
 
     def validate(self):
 

@@ -42,7 +42,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.6.0'
+VERSION_3_0 = '3.7.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -97,6 +97,9 @@ SCIPION_NOTES_HEADING_MSG = \
                             SCIPION_NOTES_PROGRAM)
 
 SCIPION_DOMAIN = 'SCIPION_DOMAIN'
+
+# Text editor:
+SCIPION_TEXT_EDITOR = 'SCIPION_TEXT_EDITOR'
 
 # Debug constants
 SCIPION_DEBUG = 'SCIPION_DEBUG'

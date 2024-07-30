@@ -29,7 +29,7 @@ import sys
 import platform
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 import traceback
 import sysconfig
 
@@ -136,14 +136,11 @@ def prettyDelta(timedelta):
     """ Remove the milliseconds of the timedelta. """
     return str(timedelta).split('.')[0]
 
-class UtcConverter:
-    """ Class to make date conversions to utc"""
-    utc_delta = datetime.utcnow() - datetime.now()
 
-    def __call__(cls, t):
-        return t + cls.utc_delta
-# Use to_utc like a function: to_utc(date)
-to_utc = UtcConverter()
+def to_utc(t):
+    """ Make date conversions to utc"""
+    return datetime.fromtimestamp(t, tz=timezone.utc)
+
 
 def prettyLog(msg):
     logger.info(cyanStr(msg))
@@ -334,7 +331,7 @@ def hasAnyFileChanged(files, time):
 
 def hasFileChangedSince(file, time):
     """ Returns true if the file has changed after 'time'"""
-    modTime = datetime.datetime.fromtimestamp(getmtime(file))
+    modTime = datetime.fromtimestamp(os.path.getmtime(file))
     return time < modTime
 
 
@@ -414,12 +411,12 @@ HYPER_LINK2 = 'link2'
 HYPER_ALL = 'all'
 
 # Associated regular expressions
-PATTERN_BOLD = "(^|[\s])[*](?P<bold>[^\s*][^*]*[^\s*]|[^\s*])[*]"
+PATTERN_BOLD = r"(^|[\s])[*](?P<bold>[^\s*][^*]*[^\s*]|[^\s*])[*]"
 # PATTERN_BOLD = r"[\s]+[*]([^\s][^*]+[^\s])[*][\s]+"
-PATTERN_ITALIC = "(^|[\s])[_](?P<italic>[^\s_][^_]*[^\s_]|[^\s_])[_]"
+PATTERN_ITALIC = r"(^|[\s])[_](?P<italic>[^\s_][^_]*[^\s_]|[^\s_])[_]"
 # PATTERN_ITALIC = r"[\s]+[_]([^\s][^_]+[^\s])[_][\s]+"
-PATTERN_LINK1 = '(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+#]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
-PATTERN_LINK2 = "[\[]{2}(?P<link2>[^\s][^\]]+[^\s])[\]][\[](?P<link2_label>[^\s][^\]]+[^\s])[\]]{2}"
+PATTERN_LINK1 = r'(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+#]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
+PATTERN_LINK2 = r"[\[]{2}(?P<link2>[^\s][^\]]+[^\s])[\]][\[](?P<link2_label>[^\s][^\]]+[^\s])[\]]{2}"
 # __PATTERN_LINK2 should be first since it could contain __PATTERN_LINK1
 PATTERN_ALL = '|'.join([PATTERN_BOLD, PATTERN_ITALIC, PATTERN_LINK2, PATTERN_LINK1])
 
@@ -522,7 +519,7 @@ def getListFromRangeString(rangeStr):
     "2 5, 6-8" -> [2,5,6,7,8]
     """
     # Split elements by command or space
-    elements = re.split(',|\s', rangeStr)
+    elements = re.split(r',|\s', rangeStr)
     values = []
     for e in elements:
         if '-' in e:
@@ -596,13 +593,13 @@ def getListFromValues(valuesStr, length=None, caster=str):
 
 def getFloatListFromValues(valuesStr, length=None):
     """ Convert a string to a list of floats"""
-    return [float(v) for v in getListFromValues(valuesStr, length)]
+    return [v for v in getListFromValues(valuesStr, length, caster=float)]
 
 
 def getBoolListFromValues(valuesStr, length=None):
     """ Convert a string to a list of booleans"""
     from pyworkflow.object import Boolean
-    return [Boolean(value=v).get() for v in getListFromValues(valuesStr, length)]
+    return [v.get() for v in getListFromValues(valuesStr, length, caster=Boolean)]
 
 
 def getStringListFromValues(valuesStr, length=None):

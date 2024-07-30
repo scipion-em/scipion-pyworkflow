@@ -87,12 +87,17 @@ class Variable:
         self.source = source
         self.value = value
         self.default = default
+        self.isDefault = isDefault if isDefault is not None else self._isValueDefault()
         self.var_type = var_type
-        self.isDefault = isDefault if isDefault is not None else value==default
     def setToDefault(self):
         self.isDefault=True
         self.value=self.default
 
+    def setValue(self, new_value):
+        self.value = new_value
+        self.isDefault= self._isValueDefault()
+    def _isValueDefault(self):
+        return self.value==self.default
 class VariablesRegistry:
     _variables={}
 
@@ -272,6 +277,10 @@ class Config:
 
     SCIPION_NOTES_ARGS = _get(SCIPION_NOTES_ARGS, None)
 
+    # External text editor:
+    SCIPION_TEXT_EDITOR = _get(SCIPION_TEXT_EDITOR, '',
+    "Preferred text editor executable.", caster=str)
+
     # Aspect
     SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica",
     "Name of the font to use in Scipion GUI. Defaults to Helvetica.")
@@ -345,6 +354,10 @@ class Config:
        1: Scipion always ask
        2: Run a single protocol
        3: Run a sub-workflow """, caster=int)
+
+    SCIPION_MAPPER_USE_TEMPLATE = _get('SCIPION_MAPPER_USE_TEMPLATE', TRUE_STR,
+    "Set it to False to force instantiation for each item during sets iterations. Experimental. This penalize the iteration but avoids"
+    "the use of .clone() ot the items.") == TRUE_STR
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}", "Json string to define which viewer are the default ones per output type."))

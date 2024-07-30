@@ -18,17 +18,17 @@ jobs:
         shell: bash -el {0}
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 5
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: 3.x
     - name: Create a conda env called test with a specific python version
-      uses: conda-incubator/setup-miniconda@v2
+      uses: conda-incubator/setup-miniconda@v3
       with:
         miniconda-version: "latest"
         activate-environment: test
@@ -41,4 +41,4 @@ jobs:
         export PACKAGE_VERSION=$(python -c "import $FOLDER_WITH_VERSION; print('v'+$FOLDER_WITH_VERSION.__version__);")
         echo Built $FOLDER_WITH_VERSION version $PACKAGE_VERSION
         pip install git+https://github.com/scipion-em/scipion-em@devel#egg=scipion-em
-        pip install git+https://github.com/scipion-em/scipion-app@devel#egg=scipion-app
+        pip install git+https://github.com/scipion-em/scipion-app@update-req#egg=scipion-app
