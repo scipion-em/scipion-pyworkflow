@@ -27,6 +27,7 @@ developers:
      New variable: SCIPION_MAPPER_USE_TEMPLATE. By default uses the template as it was now. If deacivated, instantiation happens on each iteration (less performant) but dev friendly
   - Adding a parameter to launch jobs (e.g: bash)
   - Handling item-click event in the treeview dialog
+  - Method copyAttributes expanded to manage the complex sets properly
 
 V3.6.0
 users:

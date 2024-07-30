@@ -366,10 +366,18 @@ class Object(object):
             elif isinstance(attr, PointerList):
                 for pointer in otherAttr:
                     attr.append(pointer)
-            elif isinstance(attr, Scalar) and otherAttr.hasPointer():
-                attr.copy(otherAttr)
+            elif isinstance(attr, Scalar):
+                if otherAttr.hasPointer():
+                    attr.copy(otherAttr)
+                else:
+                    attr.set(otherAttr.get())
             else:
-                attr.set(otherAttr.get())
+                # Necessary for the correct storage of complex attributes (such as Acquisition or Transform) in
+                # heterogeneous sets of sets, like the sets of tilt-series. Those sets imply append to the intermediate
+                # level + append to the upper level + update the upper level, passing in the previous method version
+                # through the line attr.set(otherAttr.get()), resulting in a None and copying the acquisition of the
+                # set to all the elements of the set and losing the transformation info
+                setattr(self, name, otherAttr.clone())
             
     def __getObjDict(self, prefix, objDict, includeClass, includePointers=True):
         if prefix:
