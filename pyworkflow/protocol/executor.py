@@ -299,7 +299,8 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         logger.debug("Updated gpus ids rebase starting from 0: %s per thread" %self.gpuDict)
 
-    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None, executable=None):
+    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None,
+               executable=None, allowFault=False):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
         submitDict.update(self.submitDict)
