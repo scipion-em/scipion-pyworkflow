@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import sys
-from subprocess import check_call
+from subprocess import check_call, call
 import psutil
 
 from .utils import greenStr
@@ -56,7 +56,7 @@ def runJob(log, programname, params,
     return runCommand(command, env=env, cwd=cwd, executable=executable)
         
 
-def runCommand(command, env=None, cwd=None, executable=None):
+def runCommand(command, env=None, cwd=None, executable=None, allowFault=False):
     """ Execute command with given environment env and directory cwd """
 
     # First let us create core dumps if in debug mode
@@ -68,8 +68,13 @@ def runCommand(command, env=None, cwd=None, executable=None):
 
     # TODO: maybe have to set PBS_NODEFILE in case it is used by "command"
     # (useful for example with gnu parallel)
-    check_call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr,
-               env=env, cwd=cwd, executable=executable)
+    if not allowFault:
+        # normal behaviour
+        check_call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr,
+                   env=env, cwd=cwd, executable=executable)
+    else:
+        call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr,
+             env=env, cwd=cwd, executable=executable)        
     # It would be nice to avoid shell=True and calling buildRunCommand()...
 
     
