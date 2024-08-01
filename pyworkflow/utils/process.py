@@ -42,7 +42,8 @@ from pyworkflow import Config
 # The job should be launched from the working directory!
 def runJob(log, programname, params,           
            numberOfMpi=1, numberOfThreads=1, 
-           hostConfig=None, env=None, cwd=None, gpuList=None, executable=None):
+           hostConfig=None, env=None, cwd=None, gpuList=None, 
+           executable=None, allowFault=False):
 
     command = buildRunCommand(programname, params, numberOfMpi, hostConfig,
                               env, gpuList=gpuList)
@@ -53,8 +54,9 @@ def runJob(log, programname, params,
     log.info("** Running command: **")
     log.info(greenStr(command))
 
-    return runCommand(command, env=env, cwd=cwd, executable=executable)
-        
+    return runCommand(command, env=env, cwd=cwd, executable=executable, 
+                      allowFault=allowFault)
+
 
 def runCommand(command, env=None, cwd=None, executable=None, allowFault=False):
     """ Execute command with given environment env and directory cwd """

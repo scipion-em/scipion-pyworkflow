@@ -61,14 +61,16 @@ class StepExecutor:
 
     def runJob(self, log, programName, params,           
                numberOfMpi=1, numberOfThreads=1,
-               env=None, cwd=None, executable=None):
+               env=None, cwd=None, executable=None,
+               allowFault=False):
         """ This function is a wrapper around runJob, 
         providing the host configuration. 
         """
         process.runJob(log, programName, params,
                        numberOfMpi, numberOfThreads, 
                        self.hostConfig,
-                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable)
+                       env=env, cwd=cwd, gpuList=self.getGpuList(), 
+                       executable=executable, allowFault=allowFault)
         
     def _getRunnable(self, steps, n=1):
         """ Return the n steps that are 'new' and all its
