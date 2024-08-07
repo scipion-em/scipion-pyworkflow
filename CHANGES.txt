@@ -1,3 +1,7 @@
+
+V3.8.0
+users:
+  - Inform when a plugin does not import properly
 V3.7.0
 users:
   - Add protocol is an icon.
