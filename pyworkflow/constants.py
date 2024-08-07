@@ -43,8 +43,6 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-
-
 VERSION_3_0 = '3.8.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
