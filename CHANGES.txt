@@ -1,3 +1,7 @@
+V3.7.1:
+developers:
+  - Handling the name and the suffix to be used for a new output
+
 V3.7.0
 users:
   - Add protocol is an icon.
