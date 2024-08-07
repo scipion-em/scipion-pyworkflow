@@ -916,6 +916,27 @@ class Protocol(Step):
 
         return s
 
+    def getOutputSuffix(self, outputPrefix):
+        """ Return the suffix to be used for a new output.
+        For example: output3DCoordinates7.
+        It should take into account previous outputs
+        and number with a higher value.
+        """
+        maxCounter = -1
+        for attrName, _ in self.iterOutputAttributes():
+            suffix = attrName.replace(outputPrefix, '')
+            try:
+                counter = int(suffix)
+            except:
+                counter = 1  # when there is not number assume 1
+            maxCounter = max(counter, maxCounter)
+
+        return str(maxCounter + 1) if maxCounter > 0 else ''  # empty if not output
+
+    def getNextOutputName(self, outputPrefix):
+        """Return the name to be used for a new output."""
+        return outputPrefix + self.getOutputSuffix(outputPrefix)
+
     def copyDefinitionAttributes(self, other):
         """ Copy definition attributes to other protocol. """
         for paramName, _ in self.iterDefinitionAttributes():
