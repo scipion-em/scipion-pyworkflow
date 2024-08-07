@@ -37,12 +37,13 @@ from enum import Enum
 # will break existing plugins, this number needs to be incremented.
 CORE_VERSION = '3.0.0'
 
+# To be removed once consumers (app, some plugins) do not make use of them
 # Versions
 VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.7.1'
+VERSION_3_0 = '3.8.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.

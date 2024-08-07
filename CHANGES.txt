@@ -1,4 +1,6 @@
-V3.7.1:
+V3.8.0
+users:
+  - Inform when a plugin does not import properly
 developers:
   - Handling the name and the suffix to be used for a new output
 

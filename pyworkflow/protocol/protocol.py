@@ -328,7 +328,6 @@ class Protocol(Step):
     """
 
     # Version where protocol appeared first time
-    _lastUpdateVersion = pw.VERSION_1
     _stepsCheckSecs = pw.Config.getStepsCheckSeconds()
     # Protocol develop status: PROD, BETA, NEW
     _devStatus = pw.PROD
