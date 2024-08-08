@@ -32,7 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import sys
-from subprocess import check_call
+from subprocess import check_call, call
 import psutil
 
 from .utils import greenStr
@@ -42,7 +42,8 @@ from pyworkflow import Config
 # The job should be launched from the working directory!
 def runJob(log, programname, params,           
            numberOfMpi=1, numberOfThreads=1, 
-           hostConfig=None, env=None, cwd=None, gpuList=None, executable=None):
+           hostConfig=None, env=None, cwd=None, gpuList=None, 
+           executable=None, allowFault=False):
 
     command = buildRunCommand(programname, params, numberOfMpi, hostConfig,
                               env, gpuList=gpuList)
@@ -53,10 +54,11 @@ def runJob(log, programname, params,
     log.info("** Running command: **")
     log.info(greenStr(command))
 
-    return runCommand(command, env=env, cwd=cwd, executable=executable)
-        
+    return runCommand(command, env=env, cwd=cwd, executable=executable, 
+                      allowFault=allowFault)
 
-def runCommand(command, env=None, cwd=None, executable=None):
+
+def runCommand(command, env=None, cwd=None, executable=None, allowFault=False):
     """ Execute command with given environment env and directory cwd """
 
     # First let us create core dumps if in debug mode
@@ -68,8 +70,13 @@ def runCommand(command, env=None, cwd=None, executable=None):
 
     # TODO: maybe have to set PBS_NODEFILE in case it is used by "command"
     # (useful for example with gnu parallel)
-    check_call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr,
-               env=env, cwd=cwd, executable=executable)
+    if not allowFault:
+        # normal behaviour
+        check_call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr,
+                   env=env, cwd=cwd, executable=executable)
+    else:
+        call(command, shell=True, stdout=sys.stdout, stderr=sys.stderr,
+             env=env, cwd=cwd, executable=executable)        
     # It would be nice to avoid shell=True and calling buildRunCommand()...
 
     

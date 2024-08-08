@@ -1534,6 +1534,8 @@ class Protocol(Step):
         if 'env' not in kwargs:
             kwargs['env'] = self._getEnviron()
 
+        kwargs['allowFault'] = kwargs.get('allowFault', False)
+
         self._stepsExecutor.runJob(self._log, program, arguments, **kwargs)
 
     def run(self):
