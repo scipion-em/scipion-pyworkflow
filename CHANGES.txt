@@ -3,6 +3,7 @@ users:
   - Inform when a plugin does not import properly
 developers:
   - Handling the name and the suffix to be used for a new output
+  - New method: Config.isCondaInstallation
 
 V3.7.0
 users:
