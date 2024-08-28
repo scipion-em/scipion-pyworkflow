@@ -1,3 +1,10 @@
+V3.8.0
+users:
+  - Inform when a plugin does not import properly
+developers:
+  - Handling the name and the suffix to be used for a new output
+  - New method: Config.isCondaInstallation
+
 V3.7.0
 users:
   - Add protocol is an icon.
@@ -27,6 +34,7 @@ developers:
      New variable: SCIPION_MAPPER_USE_TEMPLATE. By default uses the template as it was now. If deacivated, instantiation happens on each iteration (less performant) but dev friendly
   - Adding a parameter to launch jobs (e.g: bash)
   - Handling item-click event in the treeview dialog
+  - Method copyAttributes expanded to manage the complex sets properly
 
 V3.6.0
 users:

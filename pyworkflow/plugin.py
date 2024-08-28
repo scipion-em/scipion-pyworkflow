@@ -112,9 +112,13 @@ class Domain:
             cls._plugins[name] = m  # Register the name to as a plugin
 
         # Catch any import exception, warn about it but continue.
-        except ModuleNotFoundError:
-            # This is probably due to a priority package like pwchem not being installed
-            pass
+        except ModuleNotFoundError as e:
+            if e.name == name:
+                # This is probably due to a priority package like pwchem not being installed
+                pass
+            else:
+                logger.warning("Plugin '%s' has import errors: %s. Maybe a missing dependency?. "
+                               "Is it devel mode and need to be reinstalled?. Ignoring it and continuing." % (name, str(e)))
         except Exception as e:
 
             (pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "

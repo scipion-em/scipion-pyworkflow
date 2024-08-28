@@ -527,6 +527,25 @@ class Config:
         like registering FileHandlers or other stuff not needed when just importing modules."""
         return cls.SCIPION_HOME_DEFINED != False
 
+    @classmethod
+    def isCondaInstallation(cls):
+        """ Returns true if the scipion installation is done using conda"""
+
+        # Get the CONDA_PYTHON_EXE
+        # NOTE: This will not work when calling scipion python directly! But should works using the launcher.
+        envFolder = os.environ.get("CONDA_PREFIX", None)
+
+        # No conda variable... virtualenv installation!!
+        if envFolder is None:
+            return False
+        else:
+            from pyworkflow.utils import getPython
+            # Conda available.... let's check if it is active the same scipion env
+            condaExe = os.path.join(envFolder, "bin", "python")
+            return condaExe == getPython()
+
+
+
 
 # Add bindings folder to sys.path
 sys.path.append(Config.getBindingsFolder())
