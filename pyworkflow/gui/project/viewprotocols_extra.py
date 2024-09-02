@@ -504,7 +504,7 @@ class ProtocolTreeConfig:
 
             except Exception as e:
                 print('Failed to read settings. The reported error was:\n  %s\n'
-                      'To solve it, fix %s and run again.' % e)
+                      'To solve it, fix %s and run again.' % (e, pluginName))
 
         # Clean empty sections
         cls._hideEmptySections(protocols)
