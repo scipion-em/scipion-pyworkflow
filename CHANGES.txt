@@ -1,5 +1,6 @@
 V3.9.0
   - Project can have a comment (tooltip over the project name and click will edit it). Will be populated with templates description.
+  - Project size color mode removed: Problematic in slow setups or huge projects.
 
 developers:
   - New constants for "id" and "_objId": ID_COLUMN='id', ID_ATTRIBUTE='_objId'
