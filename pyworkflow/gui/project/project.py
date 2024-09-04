@@ -467,6 +467,13 @@ class ProjectTCPRequestHandler(socketserver.BaseRequestHandler):
                         attr.set(obj)
                     elif value:
                         attr.set(value)
+
+                if protocol.useQueue():
+                    # Do not use the queue in this case otherwise we need to ask for queue parameters.
+                    # Maybe something to do in the future. But now this logic is in form.py.
+                    logger.warning('Cancelling launching protocol "%s" to the queue.' % protocol)
+                    protocol._useQueue.set(False)
+
                 # project.launchProtocol(protocol)
                 # We need to enqueue the action of execute a new protocol
                 # to be run in the same GUI thread and avoid concurrent
