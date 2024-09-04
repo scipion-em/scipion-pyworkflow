@@ -28,7 +28,7 @@ import webbrowser
 import tkinter as tk
 
 import pyworkflow as pw
-from pyworkflow.gui import Window, Message, Color, getBigFont, defineStyle
+from pyworkflow.gui import Window, Message, Color, getBigFont, defineStyle, ToolTip
 from pyworkflow.gui.widgets import GradientFrame
 from pyworkflow.utils.properties import Icon
 from pyworkflow.gui.project.variables import VariablesDialog
@@ -98,17 +98,17 @@ class ProjectBaseWindow(Window):
                                 bg=pw.Config.SCIPION_BG_COLOR)
         versionLabel.grid(row=0, column=1, sticky='sw', pady=20)
         
-        # Create the Project Name label
-        projName = getattr(self, 'projName', '')
-        projLabel = tk.Label(header, text=projName, font=getBigFont(),
-                             borderwidth=0, anchor='nw', bg=pw.Config.SCIPION_BG_COLOR,
-                             fg=Color.ALT_COLOR_DARK)
-        projLabel.grid(row=0, column=2, sticky='sw', padx=(20, 5), pady=10)
+        self.custimizeheader(header)
+
         # Create gradient
         GradientFrame(header, height=8, borderwidth=0).grid(row=1, column=0,
                                                             columnspan=3,
                                                             sticky='new')
         return header
+
+    def custimizeheader(self, headerFrame):
+        """ Implement in children classes to customize it: e.g.: Project name in project window"""
+        pass
 
     def addViewList(self, header):
         """Create the view selection frame (Protocols|Data) in the header.

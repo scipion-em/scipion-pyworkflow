@@ -31,6 +31,10 @@ It is composed by three panels:
 """
 
 import logging
+from tkinter import Label
+
+from .. import askString
+
 logger = logging.getLogger(__name__)
 
 import os
@@ -43,7 +47,7 @@ import pyworkflow as pw
 import pyworkflow.utils as pwutils
 from pyworkflow.gui.project.utils import OS
 from pyworkflow.project import MenuConfig
-from pyworkflow.gui import Message, Icon
+from pyworkflow.gui import Message, Icon, getBigFont, ToolTip
 from pyworkflow.gui.browser import FileBrowserWindow
 
 from pyworkflow.gui.plotter import Plotter
@@ -61,7 +65,10 @@ class ProjectWindow(ProjectBaseWindow):
 
     def __init__(self, path, master=None):
         # Load global configuration
-        self.projName = os.path.basename(path)
+        self.projPath = path
+        self.project = self.loadProject()
+        self.projName = self.project.getShortName()
+
         try:
             projTitle = '%s (%s on %s)' % (self.projName,
                                            pwutils.getLocalUserName(),
@@ -69,8 +76,6 @@ class ProjectWindow(ProjectBaseWindow):
         except Exception:
             projTitle = self.projName 
 
-        self.projPath = path
-        self.project = self.loadProject()
 
         # TODO: put the menu part more nicely. From here:
         menu = MenuConfig()
@@ -119,6 +124,8 @@ class ProjectWindow(ProjectBaseWindow):
         # Notify about the workflow in this project
         self.selectedProtocol = None
         self.showGraph = False
+        self.commentTT = None  # Tooltip to store the project description
+
         Plotter.setBackend('TkAgg')
         ProjectBaseWindow.__init__(self, projTitle, master,
                                    minsize=(90, 50), icon=Icon.SCIPION_ICON_PROJ, _class=self.projName)
@@ -131,12 +138,30 @@ class ProjectWindow(ProjectBaseWindow):
 
         ProjectWorkflowNotifier(self.project).notifyWorkflow()
 
+
     def createHeaderFrame(self, parent):
         """Create the header and add the view selection frame at the right."""
         header = ProjectBaseWindow.createHeaderFrame(self, parent)
         self.addViewList(header)
         return header
 
+    def custimizeheader(self, headerFrame):
+        """ Adds the Project name in the header frame"""
+        # Create the Project Name label
+
+        projLabel = Label(headerFrame, text=self.projName, font=getBigFont(),
+                             borderwidth=0, anchor='nw', bg=pw.Config.SCIPION_BG_COLOR,
+                             fg=pw.Color.ALT_COLOR_DARK)
+        projLabel.bind("<Button-1>", self.setComment)
+        projLabel.grid(row=0, column=2, sticky='sw', padx=(20, 5), pady=10)
+
+        self.commentTT = ToolTip(projLabel, self.project.getComment(), 200)
+    def setComment(self, e):
+
+        newComment = askString("Change project description", "Description", self.root, defaultValue=self.project.getComment())
+        self.commentTT.configure(text=newComment)
+        self.project.setComment(newComment)
+        self.project._storeCreationTime() # Comment is stored as creation time comment for now
     def getSettings(self):
         return self.settings
     
@@ -334,30 +359,6 @@ class ProjectWindow(ProjectBaseWindow):
 
         except Exception as ex:
             logger.error("There was an error executing object command !!!:", exc_info=ex)
-    
-    def recalculateCTF(self, inputObjId, sqliteFile):
-        """ Load the project and launch the protocol to
-        create the subset.
-        """
-        # Retrieve project, input protocol and object from db
-        project = self.project
-        inputObj = project.mapper.selectById(int(inputObjId))
-        parentProtId = inputObj.getObjParentId()
-        parentProt = project.mapper.selectById(parentProtId)
-        protDep = project._getProtocolsDependencies([parentProt])
-        if protDep:
-            prot = project.copyProtocol(parentProt)
-            prot.continueRun.set(parentProt)
-        else:
-            prot = parentProt
-            prot.isFirstTime.set(True)
-        
-        # Define the input params of the new protocol
-        prot.recalculate.set(True)
-        prot.sqliteFile.set(sqliteFile)
-        # Launch the protocol
-        self.getViewWidget().executeProtocol(prot)
-
 
 class ProjectManagerWindow(ProjectBaseWindow):
     """ Windows to manage all projects. """

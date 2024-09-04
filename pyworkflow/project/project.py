@@ -106,9 +106,11 @@ class Project(object):
         self.settings:config.ProjectSettings = None
         # Host configuration
         self._hosts = None
+
         #  Creation time should be stored in project.sqlite when the project
         # is created and then loaded with other properties from the database
         self._creationTime = None
+
         # Time stamp with the last run has been updated
         self._lastRunTime = None
 
@@ -145,7 +147,16 @@ class Project(object):
         """ Return the time when the project was created. """
         # In project.create method, the first object inserted
         # in the mapper should be the creation time
-        return self._creationTime
+        return self._creationTime.datetime()
+
+
+    def getComment(self):
+        """ Returns the project comment. Stored as CreationTime comment."""
+        return self._creationTime.getObjComment()
+
+    def setComment(self, newComment):
+        """ Sets the project comment """
+        self._creationTime.setObjComment(newComment)
 
     def getSettingsCreationTime(self):
         return self.settings.getCreationTime()
@@ -154,7 +165,7 @@ class Project(object):
         """ Returns the time elapsed from the creation to the last
         execution time. """
         if self._creationTime and self._lastRunTime:
-            creationTs = self._creationTime
+            creationTs = self.getCreationTime()
             lastRunTs = self._lastRunTime.datetime()
             return lastRunTs - creationTs
         return None
@@ -293,12 +304,16 @@ class Project(object):
         creationTime = self.mapper.selectBy(name=PROJECT_CREATION_TIME)
 
         if creationTime:  # CreationTime was found in project.sqlite
-            self._creationTime = creationTime[0].datetime()
+            ctStr = creationTime[0] # This is our String type instance
+
+            # We store it in mem as dateime
+            self._creationTime = ctStr
+
         else:
             # We should read the creation time from settings.sqlite and
             # update the CreationTime in the project.sqlite
-            self._creationTime = self.getSettingsCreationTime()
-            self._storeCreationTime(self._creationTime)
+            self._creationTime = pwobj.String(self.getSettingsCreationTime())
+            self._storeCreationTime()
 
     # ---- Helper functions to load different pieces of a project
     def _loadDb(self, dbPath):
@@ -376,7 +391,8 @@ class Project(object):
         # Create db through the mapper
         self.mapper = self.createMapper(self.dbPath)
         # Store creation time
-        self._storeCreationTime(dt.datetime.now())
+        self._creationTime = pwobj.String(dt.datetime.now())
+        self._storeCreationTime()
         # Load settings from .conf files and write .sqlite
         self.settings = self.createSettings(runsView=runsView,
                                             readOnly=readOnly)
@@ -386,12 +402,11 @@ class Project(object):
 
         self._loadHosts(hostsConf)
 
-    def _storeCreationTime(self, creationTime):
+    def _storeCreationTime(self, new=True):
         """ Store the creation time in the project db. """
         # Store creation time
-        creation = pwobj.String(objName=PROJECT_CREATION_TIME)
-        creation.set(creationTime)
-        self.mapper.insert(creation)
+        self._creationTime.setName(PROJECT_CREATION_TIME)
+        self.mapper.store(self._creationTime)
         self.mapper.commit()
 
     def _cleanData(self):
