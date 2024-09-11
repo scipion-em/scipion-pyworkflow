@@ -40,7 +40,7 @@ class ProjectSettings(pwobj.Object):
     COLOR_MODE_LABELS = 1
     COLOR_MODE_AGE = 2
     COLOR_MODE_SIZE = 3
-    COLOR_MODES = (COLOR_MODE_STATUS, COLOR_MODE_LABELS, COLOR_MODE_AGE, COLOR_MODE_SIZE)
+    COLOR_MODES = (COLOR_MODE_STATUS, COLOR_MODE_LABELS, COLOR_MODE_AGE)  # This has poor performance many cases, COLOR_MODE_SIZE)
 
     def __init__(self, confs={}, **kwargs):
         super().__init__(**kwargs)

@@ -35,7 +35,7 @@ from tkcolorpicker import askcolor as _askColor
 from pyworkflow import Config
 from pyworkflow.exceptions import PyworkflowException
 from pyworkflow.utils import Message, Icon, Color
-from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle, ToolTip
+from . import gui, Window, widgets, configureWeigths, LIST_TREEVIEW, defineStyle, ToolTip, getDefaultFont
 from .tree import BoundTree, Tree
 from .text import Text, TaggedText
 
@@ -443,7 +443,8 @@ class EntryDialog(Dialog):
         label = tk.Label(bodyFrame, text=self.entryLabel, bg=Config.SCIPION_BG_COLOR, bd=0)
         label.grid(row=row, column=0, sticky='nw', padx=(15, 10), pady=15)
         self.entry = tk.Entry(bodyFrame, bg=gui.cfgEntryBgColor,
-                              width=self.entryWidth, textvariable=self.tkvalue)
+                              width=self.entryWidth, textvariable=self.tkvalue,
+                              font=getDefaultFont())
         self.entry.grid(row=row, column=1, sticky='new', padx=(0, 15), pady=15)
         self.initial_focus = self.entry
 

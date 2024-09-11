@@ -43,7 +43,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.8.0'
+VERSION_3_0 = '3.9.0'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -210,4 +210,8 @@ HELP_DURATION_FORMAT = "Duration format example: 1d 20h 30m 30s --> 1 day 20 hou
 DEFAULT_EXECUTION_ACTION_ASK = 1
 DEFAULT_EXECUTION_ACTION_SINGLE = 2
 DEFAULT_EXECUTION_ACTION_ALL = 3
+
+# Id field/attribute constants
+ID_COLUMN='id'
+ID_ATTRIBUTE='_objId'
 
