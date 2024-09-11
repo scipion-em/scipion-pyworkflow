@@ -98,7 +98,7 @@ class ProjectBaseWindow(Window):
                                 bg=pw.Config.SCIPION_BG_COLOR)
         versionLabel.grid(row=0, column=1, sticky='sw', pady=20)
         
-        self.custimizeheader(header)
+        self.customizeheader(header)
 
         # Create gradient
         GradientFrame(header, height=8, borderwidth=0).grid(row=1, column=0,
@@ -106,7 +106,7 @@ class ProjectBaseWindow(Window):
                                                             sticky='new')
         return header
 
-    def custimizeheader(self, headerFrame):
+    def customizeheader(self, headerFrame):
         """ Implement in children classes to customize it: e.g.: Project name in project window"""
         pass
 

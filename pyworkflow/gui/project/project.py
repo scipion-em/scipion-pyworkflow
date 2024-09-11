@@ -145,7 +145,7 @@ class ProjectWindow(ProjectBaseWindow):
         self.addViewList(header)
         return header
 
-    def custimizeheader(self, headerFrame):
+    def customizeheader(self, headerFrame):
         """ Adds the Project name in the header frame"""
         # Create the Project Name label
 
