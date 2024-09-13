@@ -245,7 +245,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         if obj is None or not obj.hasValue():
             return None
 
-        if isinstance(obj, pwobj.String):
+        if isinstance(obj, pwobj.String) and not obj.getName():
             info = stringToInfo()
         else:
             # All attributes are considered output, unless they are pointers
