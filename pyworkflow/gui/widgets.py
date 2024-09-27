@@ -161,8 +161,8 @@ class Scrollable(object):
         widget.bind("<Button-4>", self.scrollV)
         widget.bind("<Button-5>", self.scrollV)
 
-        widget.bind("<Control-Button-4>", self.scrollH)
-        widget.bind("<Control-Button-5>", self.scrollH)
+        widget.bind("<Shift-Button-4>", self.scrollH)
+        widget.bind("<Shift-Button-5>", self.scrollH)
 
 
     def getVScroll(self):
