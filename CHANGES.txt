@@ -11,6 +11,7 @@ V3.9.0
   - GPU "queue":
       Basic GPU queue implemented for a more robust GPU specification in combination with threads. See threadmpigpu help page in the doc. Linked in the help.
       Tests added
+  - Tolerate non exisiting SCIPION_SPRITES_FILE falling back to default value.
 
 developers:
   - New constants for "id" and "_objId": ID_COLUMN='id', ID_ATTRIBUTE='_objId'

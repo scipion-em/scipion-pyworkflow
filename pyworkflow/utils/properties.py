@@ -450,7 +450,7 @@ class Sprite:
     @classmethod
     def getSpritesFile(cls):
         from pyworkflow import Config
-        return Config.SCIPION_SPRITES_FILE
+        return Config.getSpritesFile()
     @classmethod
     def loadSprites(cls):
         """ Loads the image of the sprite"""

@@ -198,6 +198,7 @@ class Config:
 
     # Internal cached variables, use __ so they are not returned in getVars
     __activeColor = None
+    __defaultSpritesFile = _join(getResourcesPath(),'sprites.png')
 
     CONDA_ACTIVATION_CMD = _get(CONDA_ACTIVATION_CMD_VAR,'',
     "str: Command to activate/initialize conda itself. Do not confuse it with 'conda activate'. It should be defined at installation time. It looks like this: eval \"$(/extra/miniconda3/bin/conda shell.bash hook)\"")
@@ -299,7 +300,7 @@ class Config:
     SCIPION_CONTRAST_COLOR = _get('SCIPION_CONTRAST_COLOR', 'cyan',
     "Color used to highlight features over grayscaled images.", caster=validColor)
 
-    SCIPION_SPRITES_FILE = _get('SCIPION_SPRITES_FILE', _join(getResourcesPath(),'sprites.png'),
+    SCIPION_SPRITES_FILE = _get('SCIPION_SPRITES_FILE', __defaultSpritesFile,
     "File (png) with the icons in a collage. Default is found at pyworkflow/resources/sprites.png. And a GIMP file could be found at the same folder in the github repo.")
 
     SCIPION_SHOW_TEXT_IN_TOOLBAR = _get('SCIPION_SHOW_TEXT_IN_TOOLBAR', TRUE_STR,
@@ -544,7 +545,12 @@ class Config:
             condaExe = os.path.join(envFolder, "bin", "python")
             return condaExe == getPython()
 
-
+    @classmethod
+    def getSpritesFile(cls):
+        if not os.path.exists(Config.SCIPION_SPRITES_FILE):
+            return cls.__defaultSpritesFile
+        else:
+            return Config.SCIPION_SPRITES_FILE
 
 
 # Add bindings folder to sys.path
