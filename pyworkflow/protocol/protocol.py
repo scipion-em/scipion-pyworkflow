@@ -1017,7 +1017,7 @@ class Protocol(Step):
         """
         pass
 
-    def __insertStep(self, step, prerequisites):
+    def __insertStep(self, step, prerequisites=None):
         """ Insert a new step in the list.
 
         :param prerequisites: a single integer or a list with the steps index that need to be done
@@ -1216,7 +1216,7 @@ class Protocol(Step):
         protocol that allow some kind of continue (such as ctf estimation).
         """
         for step in self.loadSteps():
-            self.__insertStep(step)
+            self.__insertStep(step, )
 
     def __findStartingStep(self):
         """ From a previous run, compare self._steps and self._prevSteps
