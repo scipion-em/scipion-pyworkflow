@@ -46,6 +46,7 @@ class Node(object):
         if label is None:
             label = name
         self._label = label
+        self._fixed = False
 
     def getName(self):
         return self._name
