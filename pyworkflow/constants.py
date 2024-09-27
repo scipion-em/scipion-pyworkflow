@@ -192,6 +192,7 @@ class DOCSITEURLS:
     WAIT_FOR = GUI + '#waiting-for-other-protocols'
     PLUGIN_MANAGER = USER + 'plugin-manager.html'
     HOST_CONFIG = DOCS + "scipion-modes/host-configuration.html"
+    THREADS_MPIS_AND_GPUS = USER + 'threads-mpi-gpus.html'
 
 
 # tkinter bind constants

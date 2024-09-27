@@ -967,7 +967,7 @@ class ProtocolsView(tk.Frame):
             nodeText = nodeText[:37] + "..."
 
         if node.run:
-            expandedStr = '' if node.expanded else '\n ➕ %s more' % str(node.countChilds({}))
+            expandedStr = '' if node.expanded else '\n ➕ %s more' % str(node.countChildren({}))
             if self.runsView == VIEW_TREE_SMALL:
                 nodeText = node.getName() + expandedStr
             else:
@@ -1283,7 +1283,7 @@ class ProtocolsView(tk.Frame):
             tm += 'Status: %s\n' % prot.getStatusMessage()
             tm += 'Wall time: %s\n' % pwutils.prettyDelta(prot.getElapsedTime())
             tm += 'CPU time: %s\n' % pwutils.prettyDelta(dt.timedelta(seconds=prot.cpuTime))
-            tm += 'Folder size: %s\n' % pwutils.prettySize(prot.getSize())
+            # tm += 'Folder size: %s\n' % pwutils.prettySize(prot.getSize())
 
             if not hasattr(tw, 'tooltipText'):
                 frame = tk.Frame(tw)
@@ -1805,7 +1805,7 @@ class ProtocolsView(tk.Frame):
         # Go in the direction .
         for run in nodesToSelect:
             # Choose the direction: down or up.
-            direction = run.getChilds if down else run.getParents
+            direction = run.getChildren if down else run.getParents
 
             # Select himself plus ancestors
             for parent in direction():
@@ -2054,7 +2054,7 @@ class ProtocolsView(tk.Frame):
 
     def setVisibleNodes(self, node, visible=True):
         hasParentHidden = False
-        for child in node.getChilds():
+        for child in node.getChildren():
             prot = child.run
             nodeInfo = self.settings.getNodeById(prot.getObjId())
             if visible:

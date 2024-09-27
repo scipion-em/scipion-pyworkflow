@@ -475,7 +475,7 @@ class Canvas(tk.Canvas, Scrollable):
             self.addItem(item)
 
             if getattr(node, 'expanded', True):
-                for child in node.getChilds():
+                for child in node.getChildren():
                     if self.nodeList is None:
                         self._drawNodes(child, visitedDict)
                     elif self.nodeList.getNode(child.run.getObjId()).isVisible():
@@ -512,7 +512,7 @@ class Canvas(tk.Canvas, Scrollable):
         """
         Return a list with the visible parents of the node's children
         """
-        for child in node.getChilds():
+        for child in node.getChildren():
             parents = child.getParents()
             for parent in parents:
                 parentNode = self.nodeList.getNode(parent.run.getObjId())
@@ -525,7 +525,7 @@ class Canvas(tk.Canvas, Scrollable):
         the properties (width, height, x and y) is propagated
         to the hidden childs.
         """
-        for child in node.getChilds():
+        for child in node.getChildren():
             if child.getName() not in visitedDict:
                 child.width = node.width
                 child.height = node.height
@@ -544,7 +544,7 @@ class Canvas(tk.Canvas, Scrollable):
             item.moveTo(node.x, node.y)
 
             if getattr(node, 'expanded', True):
-                for child in node.getChilds():
+                for child in node.getChildren():
                     if self.nodeList is None:
                         self.createEdge(item, child.item)
                         self._updatePositions(child, visitedDict, createEdges)

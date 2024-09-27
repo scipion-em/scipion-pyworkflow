@@ -1698,14 +1698,19 @@ class FormWindow(Window):
                 c2 = 0
                 sticky = 'e'
 
+                helpMessage = pwutils.Message.HELP_PARALLEL_HEADER
+
                 if mode == pwprot.STEPS_PARALLEL:
                     if allowThreads and numberOfThreads > 0:
                         prot.numberOfMpi.set(1)
-                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_THREADS,
+                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_SCIPION_THREADS,
                                                 sticky=sticky, row=r2, column=c2,
                                                 pady=0)
                         entry = self._createBoundEntry(procFrame,
                                                        pwutils.Message.VAR_THREADS)
+
+                        helpMessage += pwutils.Message.HELP_SCIPION_THREADS
+
                         entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
                     elif allowMpi and numberOfMpi > 1:
                         self.showError("MPI parameter is deprecated for protocols "
@@ -1728,6 +1733,8 @@ class FormWindow(Window):
                         # Modify values to be used in MPI entry
                         c2 += 2
                         sticky = 'w'
+
+                        helpMessage += pwutils.Message.HELP_PARALLEL_THREADS
                     # ---- MPI ----
                     if allowMpi:
                         self._createHeaderLabel(procFrame, pwutils.Message.LABEL_MPI,
@@ -1736,11 +1743,14 @@ class FormWindow(Window):
                         entry = self._createBoundEntry(procFrame, pwutils.Message.VAR_MPI)
                         entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
 
+                        helpMessage += pwutils.Message.HELP_PARALLEL_MPI
+
+
                 btnHelp = IconButton(procFrame, pwutils.Message.TITLE_COMMENT,
                                      pwutils.Icon.ACTION_HELP,
                                      highlightthickness=0,
                                      command=self._createHelpCommand(
-                                         pwutils.Message.HELP_MPI_THREADS))
+                                         helpMessage))
                 btnHelp.grid(row=0, column=4, padx=(5, 0), pady=2, sticky='e')
 
                 procFrame.columnconfigure(0, minsize=60)

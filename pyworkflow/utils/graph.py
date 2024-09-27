@@ -26,6 +26,8 @@
 """
 This module define a Graph class and some utilities 
 """
+import logging
+logger = logging.getLogger(__name__)
 
 
 class Node(object):
@@ -33,7 +35,7 @@ class Node(object):
     _count = 1
 
     def __init__(self, name=None, label=None):
-        self._childs = []
+        self._children = []
         self._parents = []
 
         if name is None:
@@ -57,13 +59,13 @@ class Node(object):
     def isRoot(self):
         return len(self._parents) == 0
 
-    def getChilds(self):
-        return self._childs
+    def getChildren(self):
+        return self._children
 
     def addChild(self, *nodes):
         for n in nodes:
-            if n not in self._childs:
-                self._childs.append(n)
+            if n not in self._children:
+                self._children.append(n)
                 n._parents.append(self)
 
     def getParent(self):
@@ -78,36 +80,36 @@ class Node(object):
     def getParents(self):
         return self._parents
 
-    def iterChilds(self):
-        """ Iterate over all childs and subchilds. 
-        Nodes can be visited more than once if have
+    def iterChildren(self):
+        """ Iterate over all children and sub-children.
+        Nodes can be visited more than once if it has
         more than one parent.
         """
-        for child in self._childs:
-            for c in child.iterChilds():
+        for child in self._children:
+            for c in child.iterChildren():
                 yield c
 
         yield self
 
-    def countChilds(self, visitedNode=None, count=0):
+    def countChildren(self, visitedNode=None, count=0):
         """ Iterate over all childs and subchilds.
         Nodes can be visited once
         """
-        for child in self._childs:
+        for child in self._children:
             if child._name not in visitedNode:
                 visitedNode[child._name] = True
-            child.countChilds(visitedNode)
+            child.countChildren(visitedNode)
         return len(visitedNode)
 
 
-    def iterChildsBreadth(self):
+    def iterChildrenBreadth(self):
         """ Iter child nodes in a breadth-first order
         """
-        for child in self._childs:
+        for child in self._children:
             yield child
 
-        for child in self._childs:
-            for child2 in child.iterChildsBreadth():
+        for child in self._children:
+            for child2 in child.iterChildrenBreadth():
                 yield child2
 
     def __str__(self):
@@ -133,13 +135,13 @@ class Graph(object):
     def _registerNode(self, node):
         self._nodes.append(node)
         self._nodesDict[node.getName()] = node
-        for child in node.getChilds():
+        for child in node.getChildren():
             self._registerNode(child)
 
-    def getRoot(self):
+    def getRoot(self) -> Node:
         return self._root
 
-    def createNode(self, nodeName, nodeLabel=None):
+    def createNode(self, nodeName, nodeLabel=None) -> Node:
         """ Add a node to the graph """
         node = Node(nodeName, nodeLabel)
         self._registerNode(node)
@@ -150,7 +152,7 @@ class Graph(object):
         """ Register an alias name for the node. """
         self._nodesDict[aliasName] = node
 
-    def getNode(self, nodeName):
+    def getNode(self, nodeName) -> Node:
         return self._nodesDict.get(nodeName, None)
 
     def getNodeNames(self):
@@ -164,33 +166,3 @@ class Graph(object):
         """ Return all nodes that have no parent. """
         return [n for n in self._nodes if n.isRoot()]
 
-    def printNodes(self):
-        for node in self.getNodes():
-            print("Node: ", node)
-            print(" Childs: ", ','.join([c.getLabel()
-                                         for c in node.getChilds()]))
-
-    def _escape(self, label):
-        return label.replace('.', '_').replace(' ', '_').replace('-', '_').replace('___', '_')
-
-    def printDot(self, useId=True):
-        """ If useId is True, use the node id for label the graph.
-         If not, use the run name.
-        """
-
-        def getLabel(node):
-            if useId:
-                return node.getName()
-            else:
-                return node.getLabel()
-
-        dotStr = "\ndigraph {\n"
-
-        for node in self.getNodes():
-            for child in node.getChilds():
-                nodeLabel = self._escape(getLabel(node))
-                childLabel = self._escape(getLabel(child))
-                dotStr += "   %s -> %s;\n" % (nodeLabel, childLabel)
-        dotStr += "}"
-        print(dotStr)
-        return dotStr

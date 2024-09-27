@@ -375,7 +375,7 @@ class Project(object):
         return self.settings.getProtocolView()
 
     def create(self, runsView=1, readOnly=False, hostsConf=None,
-               protocolsConf=None):
+               protocolsConf=None, comment=None):
         """Prepare all required paths and files to create a new project.
 
         :param runsView: default view to associate the project with
@@ -392,6 +392,7 @@ class Project(object):
         self.mapper = self.createMapper(self.dbPath)
         # Store creation time
         self._creationTime = pwobj.String(dt.datetime.now())
+        self.setComment(comment)
         self._storeCreationTime()
         # Load settings from .conf files and write .sqlite
         self.settings = self.createSettings(runsView=runsView,
@@ -835,7 +836,7 @@ class Project(object):
         for prot in protocols:
             node = runsGraph.getNode(prot.strId())
             if node:
-                childs = [node.run for node in node.getChilds() if
+                childs = [node.run for node in node.getChildren() if
                           self.__validDependency(prot, node.run, protocols)]
                 if childs:
                     deps = [' ' + c.getRunName() for c in childs]
@@ -854,7 +855,7 @@ class Project(object):
         visitedNodes[int(node.getName())] = node
 
         def getDescendents(rootNode):
-            for child in rootNode.getChilds():
+            for child in rootNode.getChildren():
                 if int(child.getName()) not in visitedNodes:
                     visitedNodes[int(child.getName())] = child
                     getDescendents(child)
@@ -1013,7 +1014,7 @@ class Project(object):
                 affectedProtocolsActive[protocol.getObjId()] = protocol
 
             node = runGraph.getNode(protocol.strId())
-            dependencies = [node.run for node in node.getChilds()]
+            dependencies = [node.run for node in node.getChildren()]
             for dep in dependencies:
                 if not dep.getObjId() in auxProtList:
                     auxProtList.append([dep.getObjId(), level])
@@ -1049,7 +1050,7 @@ class Project(object):
         node = self.getRunsGraph().getNode(protocol.strId())
         deps = []
 
-        for node in node.getChilds():
+        for node in node.getChildren():
             for _, inputObj in node.run.iterInputAttributes():
                 value = inputObj.get()
                 if (value is not None and
@@ -1202,7 +1203,7 @@ class Project(object):
                 node = g.getNode(prot.strId())
                 newProt = newDict[prot.getObjId()]
 
-                for childNode in node.getChilds():
+                for childNode in node.getChildren():
                     newChildProt = newDict.get(childNode.run.getObjId(), None)
 
                     if newChildProt:
@@ -1261,7 +1262,7 @@ class Project(object):
             protId = prot.getObjId()
             node = g.getNode(prot.strId())
 
-            for childNode in node.getChilds():
+            for childNode in node.getChildren():
                 childId = childNode.run.getObjId()
                 childProt = childNode.run
                 if childId in newDict:
@@ -1720,7 +1721,7 @@ class Project(object):
                         parentNode.addChild(node)
                         if os.environ.get('CHECK_CYCLIC_REDUNDANCY') and self._checkCyclicRedundancy(parentNode, node):
                             conflictiveNodes = set()
-                            for child in node.getChilds():
+                            for child in node.getChildren():
                                 if node in child._parents:
                                     child._parents.remove(node)
                                     conflictiveNodes.add(child)
@@ -1729,7 +1730,7 @@ class Project(object):
                                                       child.getLabel() + '(' + child.getName() + ')'))
 
                             for conflictNode in conflictiveNodes:
-                                node._childs.remove(conflictNode)
+                                node._children.remove(conflictNode)
 
                             return False
                         return True
@@ -1762,7 +1763,7 @@ class Project(object):
         def depthFirstSearch(node):
             visitedNodes.add(node)
             recursionStack.add(node)
-            for child in node.getChilds():
+            for child in node.getChildren():
                 if child not in visitedNodes:
                     if depthFirstSearch(child):
                         return True

@@ -92,7 +92,7 @@ roots = runGraph.getRootNodes()
 # and the graph is lineal
 
 for root in roots:
-    for child in root.getChilds():
+    for child in root.getChildren():
         workflow, _ = project._getSubworkflow(child.run)
         for prot, level in workflow.values():
             protLabelName = prot.getObjLabel()

@@ -31,30 +31,40 @@ import os
 from pyworkflow.project import Manager
 import pyworkflow.utils as pwutils
 
+EMPTY_ARG = "-"
+
 
 def usage(error):
+
     print("""
     ERROR: %s
 
-    Usage: scipion python -m pyworkflow.project.scripts.create NAME [WORKFLOW] [LOCATION]
+    Usage: scipion python -m pyworkflow.project.scripts.create NAME [WORKFLOW] [LOCATION] [COMMENT]
         NAME: project name
         WORKFLOW: path to a Scipion json workflow
         LOCATION: where to create it, defaults to scipion default location
+        COMMENT: project comment, location is mandatory in this case... for a NULL LOCATION pass %s
 
         This script will create a project project, optionally based on a workflow file
-    """ % error)
+    """ % (error, EMPTY_ARG))
     sys.exit(1)
 
 
 n = len(sys.argv)
 
-if n < 2 or n > 4:
+if n < 2 or n > 5:
     usage("Incorrect number of input parameters")
 
 projName = sys.argv[1]
 
 jsonFile = None if n < 3 else os.path.abspath(sys.argv[2])
 location = None if n < 4 else sys.argv[3]
+
+# Location with - is None
+if location == EMPTY_ARG:
+    location = None
+
+comment = None if n < 5 else sys.argv[4]
 
 # This might not be working anymore for python3.
 # I'm getting invalid ELF header triggered by matplotlib -->from . import _tkagg
@@ -71,7 +81,7 @@ if manager.hasProject(projName):
 if jsonFile is not None and not os.path.exists(jsonFile):
     usage("Nonexistent json file: %s" % pwutils.red(jsonFile))
 
-project = manager.createProject(projName, location=location)
+project = manager.createProject(projName, location=location, comment=comment)
 
 if jsonFile is not None:
     protDict = project.loadProtocols(jsonFile)

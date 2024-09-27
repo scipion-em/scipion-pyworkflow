@@ -132,7 +132,7 @@ class LevelTreeLayout(GraphLayout):
 
             if self.__isNodeExpanded(node):
                 ancestors.append(node.getName())
-                for child in node.getChilds():
+                for child in node.getChildren():
                     if child.getName() in ancestors:
                         logger.warning("WARNING: There might be a cyclic redundancy error in this protocol: %s (%s)" %(child.getLabel(),
                                                                                                                        child.getName()))
@@ -155,7 +155,7 @@ class LevelTreeLayout(GraphLayout):
         visited by this node first (its 'parent')
         """
         if self.__isNodeExpanded(node):
-            return [c for c in node.getChilds() if c._layout['parent'] is node]
+            return [c for c in node.getChildren() if c._layout['parent'] is node]
         else:
             return []  # treat collapsed nodes as if they have no childs
         
