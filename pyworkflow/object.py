@@ -66,7 +66,7 @@ class Object(object):
             self._objId =  None  # Unique identifier of this object in some context
             self._objParentId =  None  # identifier of the parent object
             self._objName = ''  # The name of the object will contains the whole path of ancestors
-            self._objLabel =  ''  # This will serve to label the objects
+            self._objLabel = ''  # This will serve to label the objects
             self._objComment = ''
             # Performance: self._objTag =  None  # This attribute serve to make some annotation on the object.
             self._objDoStore = True

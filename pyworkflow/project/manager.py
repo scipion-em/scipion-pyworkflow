@@ -97,9 +97,9 @@ class Manager(object):
         return projList
     
     def createProject(self, projectName, runsView=1, 
-                      hostsConf=None, protocolsConf=None, location=None):
+                      hostsConf=None, protocolsConf=None, location=None, comment=None):
         """Create a new project.
-        confs dict can contains customs .conf files 
+        confs dict can contain customs .conf files
         for: menus, protocols, or hosts
         """
         # Clean project name from undesired characters
@@ -118,7 +118,8 @@ class Manager(object):
         project = Project(pw.Config.getDomain(), projectPath)
         project.create(runsView=runsView, 
                        hostsConf=hostsConf, 
-                       protocolsConf=protocolsConf)
+                       protocolsConf=protocolsConf,
+                       comment=comment)
         # If location is not the default one create a symlink on self.PROJECTS directory
         if projectPath != self.getProjectPath(projectName):
             # JMRT: Let's create the link to the absolute path, since relative

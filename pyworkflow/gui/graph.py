@@ -85,7 +85,7 @@ class LevelTree(object):
         nextLevel = level + 1
         if nextLevel > self.maxLevel:
             return
-        for child in node.getChilds():
+        for child in node.getChildren():
             if nextLevel > getattr(child, 'level', 0):
                 self._setLevel(child, nextLevel, node)
 
@@ -97,7 +97,7 @@ class LevelTree(object):
         if level > self.maxLevel:
             return
 
-        childs = [c for c in node.getChilds() if c.parent is node]
+        childs = [c for c in node.getChildren() if c.parent is node]
         n = len(childs)
 
         if n > 0:
@@ -174,7 +174,7 @@ class LevelTree(object):
         for each level of the tree
         """
         node.hLimits = [[-node.half, node.half]]
-        childs = [c for c in node.getChilds() if c.parent is node]
+        childs = [c for c in node.getChildren() if c.parent is node]
         for child in childs:
             count = 1
             if not hasattr(child, 'hLimits'):
@@ -221,7 +221,7 @@ class LevelTree(object):
         if node.level == self.maxLevel:
             return
 
-        for c in node.getChilds():
+        for c in node.getChildren():
             if c.parent is node:
                 self._createEdges(c, nx)
             self.createEdge(node.item, c.item)
@@ -230,7 +230,7 @@ class LevelTree(object):
         """ Paint nodes using its position. """
         self._paintNode(node, None)
 
-        for child in node.getChilds():
+        for child in node.getChildren():
             # parent = None for nodes that have been not traversed
             parent = getattr(child, 'parent', None)
             if parent is None:
@@ -241,7 +241,7 @@ class LevelTree(object):
         """ Paint only the edges between nodes, assuming they are
         already well positioned. 
         """
-        for child in node.getChilds():
+        for child in node.getChildren():
             if child.parent is node:
                 self._paintEdges(child)
             self.createEdge(node.item, child.item)

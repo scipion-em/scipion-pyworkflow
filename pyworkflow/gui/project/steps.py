@@ -30,7 +30,6 @@ import pyworkflow.protocol as pwprot
 import  pyworkflow.gui as pwgui
 import pyworkflow.utils as pwutils
 
-
 from pyworkflow import TK
 from pyworkflow.utils import Icon
 
@@ -59,11 +58,17 @@ class StepsTreeProvider(pwgui.tree.TreeProvider):
         return info
 
     @staticmethod
-    def getObjectPreview(obj):
+    def getObjectPreview(obj: pwprot.Step):
 
         args = json.loads(obj.argsStr.get())
         msg = "*Prerequisites*: %s \n" % str(obj._prerequisites)
-        msg += "*Arguments*: " + '\n  '.join([str(a) for a in args])
+
+        msg += ("*Arguments*:\n")
+        for arg in args:
+            msg += " %s\n" % arg
+
+        msg += "*Needs GPU*: %s" % obj.needsGPU()
+
         if hasattr(obj, 'resultFiles'):
             results = json.loads(obj.resultFiles.get())
             if len(results):

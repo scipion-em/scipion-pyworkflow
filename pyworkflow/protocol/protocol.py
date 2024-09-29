@@ -25,8 +25,7 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-import contextlib
-import sys, os
+import os
 import json
 import threading
 import time
@@ -36,7 +35,7 @@ import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
-from pyworkflow.utils.log import LoggingConfigurator, getExtraLogInfo, STATUS, setDefaultLoggingContext
+from pyworkflow.utils.log import getExtraLogInfo, STATUS, setDefaultLoggingContext
 from .executor import StepExecutor, ThreadStepExecutor, QueueStepExecutor
 from .constants import *
 from .params import Form
@@ -50,21 +49,24 @@ logger = logging.getLogger(__name__)
 
 class Step(Object):
     """ Basic execution unit.
-    It should defines its Input, Output
+    It should define its Input, Output
     and define a run method.
     """
 
-    def __init__(self, **kwargs):
-        Object.__init__(self, **kwargs)
+    def __init__(self, interactive=False, needsGPU=True, **kwargs):
+        super().__init__()
         self._prerequisites = CsvList()  # which steps needs to be done first
         self.status = String()
         self.initTime = String()
         self.endTime = String()
         self._error = String()
-        self.interactive = Boolean(False)
+        self.interactive = Boolean(interactive)
         self._resultFiles = String()
+        self._needsGPU = Boolean(needsGPU)
         self._index = None
 
+    def needsGPU(self) -> bool:
+        return self._needsGPU.get()
     def getIndex(self):
         return self._index
 
@@ -214,7 +216,7 @@ class Step(Object):
                 self.status.set(status)
 
         except PyworkflowException as e:
-            print(pwutils.redStr(str(e)))
+            logger.info(pwutils.redStr(str(e)))
             self.setFailed(str(e))
         except Exception as e:
             self.setFailed(str(e))
@@ -230,7 +232,7 @@ class FunctionStep(Step):
     This class will ease the insertion of Protocol function steps
     through the function _insertFunctionStep"""
 
-    def __init__(self, func=None, funcName=None, *funcArgs, **kwargs):
+    def __init__(self, func=None, funcName=None, *funcArgs,  wait=False, interactive=False, needsGPU=True):
         """
          Params:
             func: the function that will be executed.
@@ -238,13 +240,12 @@ class FunctionStep(Step):
             *funcArgs: argument list passed to the function (serialized and stored)
             **kwargs: extra parameters.
         """
-        Step.__init__(self)
+        super().__init__(interactive=interactive, needsGPU=needsGPU)
         self._func = func  # Function should be set before run
         self._args = funcArgs
         self.funcName = String(funcName)
         self.argsStr = String(json.dumps(funcArgs, default=lambda x: None))
-        self.setInteractive(kwargs.get('interactive', False))
-        if kwargs.get('wait', False):
+        if wait:
             self.setStatus(STATUS_WAITING)
 
     def _runFunc(self):
@@ -280,7 +281,7 @@ class FunctionStep(Step):
         return not self.__eq__(other)
 
     def __str__(self):
-        return self.funcName.get()
+        return "%s - %s" % (self._objId ,self.funcName.get())
 
 
 class RunJobStep(FunctionStep):
@@ -1016,12 +1017,11 @@ class Protocol(Step):
         """
         pass
 
-    def __insertStep(self, step, **kwargs):
+    def __insertStep(self, step, prerequisites=None):
         """ Insert a new step in the list.
 
         :param prerequisites: a single integer or a list with the steps index that need to be done
                            previous to the current one."""
-        prerequisites = kwargs.get('prerequisites', None)
 
         if prerequisites is None:
             if len(self._steps):
@@ -1117,7 +1117,7 @@ class Protocol(Step):
         """
         return self._getPath(os.path.basename(path))
 
-    def _insertFunctionStep(self, func, *funcArgs, **kwargs):
+    def _insertFunctionStep(self, func, *funcArgs, prerequisites=None, wait=False, interactive=False, needsGPU=True):
         """
          Params:
            func: the function itself or, optionally, the name (string) of the function to be run in the Step.
@@ -1135,24 +1135,24 @@ class Protocol(Step):
         if not callable(func):
             raise Exception("Protocol._insertFunctionStep: '%s' is not callable"
                             % func)
-        step = FunctionStep(func, func.__name__, *funcArgs, **kwargs)
+        step = FunctionStep(func, func.__name__, *funcArgs, wait=wait, interactive=interactive, needsGPU=needsGPU)
 
-        return self.__insertStep(step, **kwargs)
+        return self.__insertStep(step,prerequisites)
 
-    def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
-                          **kwargs):
-        """ Insert an Step that will simple call runJob function
-        **args: see __insertStep
-        """
-        return self._insertFunctionStep('runJob', progName, progArguments,
-                                        **kwargs)
-
-    def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
-        """ Shortcut function to insert an step for copying a file to a destiny. """
-        step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile,
-                            targetFile,
-                            **kwargs)
-        return self.__insertStep(step, **kwargs)
+    # def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
+    #                       **kwargs):
+    #     """ Insert an Step that will simple call runJob function
+    #     **args: see __insertStep
+    #     """
+    #     return self._insertFunctionStep('runJob', progName, progArguments,
+    #                                     **kwargs)
+    #
+    # def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
+    #     """ Shortcut function to insert a step for copying a file to a destiny. """
+    #     step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile,
+    #                         targetFile,
+    #                         **kwargs)
+    #     return self.__insertStep(step, **kwargs)
 
     def _enterDir(self, path):
         """ Enter into a new directory path and store the current path.
@@ -1216,7 +1216,7 @@ class Protocol(Step):
         protocol that allow some kind of continue (such as ctf estimation).
         """
         for step in self.loadSteps():
-            self.__insertStep(step)
+            self.__insertStep(step, )
 
     def __findStartingStep(self):
         """ From a previous run, compare self._steps and self._prevSteps
@@ -2538,7 +2538,7 @@ class ProtStreamingBase(Protocol):
         self.stepsExecutionMode = STEPS_PARALLEL
     def _insertAllSteps(self):
         # Insert the step that generates the steps
-        self._insertFunctionStep(self.resumableStepGeneratorStep, str(datetime.now()))
+        self._insertFunctionStep(self.resumableStepGeneratorStep, str(datetime.now()), needsGPU=False)
 
     def resumableStepGeneratorStep(self, ts):
         """ This allow to resume protocols. ts is the time stamp so this stap is alway different form previous exceution"""

@@ -29,7 +29,7 @@
 This module defines the text used in the application.
 """
 # NOTE: DO NOT REMOVE UNTIL plugin manager uses Config.SCIPION_MAIN_COLOR and is released
-from pyworkflow.constants import Color
+from pyworkflow.constants import Color, DOCSITEURLS
 from PIL import Image
 
 class Message:
@@ -124,6 +124,7 @@ class Message:
     LABEL_PARALLEL = 'Parallel'
     LABEL_HOST = 'Host'
     LABEL_THREADS = 'Threads'
+    LABEL_SCIPION_THREADS = 'Scipion threads'
     LABEL_MPI = 'MPI'
     LABEL_QUEUE = 'Use a queue engine?'
 
@@ -140,17 +141,20 @@ Each step could be computationally intensive, that's why
 the *Continue* execution mode will try to continue from the
 last completed step. On the other hand, the *Restart* mode
 will clean the whole run directory and start from scratch.    
-    """    
-
-    HELP_MPI_THREADS = """
-Define the number of processors to be used in the execution.
-*MPI*: This is a number of independent processes
-       that communicate through message passing
-       over the network (or the same computer).
-*Threads*: This refers to different execution threads 
-       in the same process that can share memory. They run in
-       the same computer.     
     """
+
+    HELP_PARALLEL_HEADER = 'Define the number of processors to be used in the execution.\nCheck %s for more detailed info.\n\n' % DOCSITEURLS.THREADS_MPIS_AND_GPUS
+    HELP_PARALLEL_MPI = ("*MPI*:\nThis is a number of independent processes"
+                         " that communicate through message passing "
+                         "over the network (or the same computer).\n")
+    HELP_PARALLEL_THREADS = ("*Threads*:\nThis refers to different execution threads in the same process that "
+                             "can share memory. They run in the same computer. This value is an argument"
+                             " passed to the program integrated")
+
+    HELP_SCIPION_THREADS = ("*Scipion threads*:\n threads created by Scipion to run the steps."
+                            " 1 thread is always used by the master/main process. Then extra threads will allow"
+                            " this protocol to run several steps at the same time, taking always into account "
+                            "restrictions to previous steps and 'theoretical GPU availability'")
 
     HELP_USEQUEUE = """
     Click Yes if you want to send this execution to a queue engine like Slurm, Torque, ...
@@ -446,7 +450,7 @@ class Sprite:
     @classmethod
     def getSpritesFile(cls):
         from pyworkflow import Config
-        return Config.SCIPION_SPRITES_FILE
+        return Config.getSpritesFile()
     @classmethod
     def loadSprites(cls):
         """ Loads the image of the sprite"""

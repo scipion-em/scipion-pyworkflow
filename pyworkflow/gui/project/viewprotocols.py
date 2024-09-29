@@ -808,7 +808,7 @@ class ProtocolsView(tk.Frame):
         item.margin = 0
 
         # Paint the oval..if apply.
-        self._paintOval(item, statusColor)
+        #self._paintOval(item, statusColor)
 
         # Paint the bottom line (for now only labels are painted there).
         self._paintBottomLine(item)
@@ -821,7 +821,7 @@ class ProtocolsView(tk.Frame):
         try:
 
             # If the color has to go to the box
-            if self.settings.statusColorMode():
+            if self.settings.statusColorMode() or self.settings.labelsColorMode():
                 boxColor = statusColor
 
             elif self.settings.ageColorMode():
@@ -931,7 +931,7 @@ class ProtocolsView(tk.Frame):
 
     def _paintBottomLine(self, item):
 
-        if self.settings.labelsColorMode():
+        if self.settings.labelsColorMode() or self.settings.statusColorMode():
             self._addLabels(item)
 
     def _paintOval(self, item, statusColor):
@@ -967,7 +967,7 @@ class ProtocolsView(tk.Frame):
             nodeText = nodeText[:37] + "..."
 
         if node.run:
-            expandedStr = '' if node.expanded else '\n ➕ %s more' % str(node.countChilds({}))
+            expandedStr = '' if node.expanded else '\n ➕ %s more' % str(node.countChildren({}))
             if self.runsView == VIEW_TREE_SMALL:
                 nodeText = node.getName() + expandedStr
             else:
@@ -978,7 +978,7 @@ class ProtocolsView(tk.Frame):
 
     def _addLabels(self, item):
         # If there is only one label it should be already used in the box color.
-        if self._getLabelsCount(item.nodeInfo) < 2:
+        if self._getLabelsCount(item.nodeInfo) < 1:
             return
         # Get the positions of the box
         (topLeftX, topLeftY, bottomRightX,
@@ -1056,7 +1056,7 @@ class ProtocolsView(tk.Frame):
         nextColorMode = currentMode + 1
 
         self.settings.setColorMode(nextColorMode)
-        self._updateActionToolbar()
+        # WHY? self._updateActionToolbar()
         # self.updateRunsGraph()
         self.drawRunsGraph()
         self._infoAboutColorScheme()
@@ -1283,7 +1283,7 @@ class ProtocolsView(tk.Frame):
             tm += 'Status: %s\n' % prot.getStatusMessage()
             tm += 'Wall time: %s\n' % pwutils.prettyDelta(prot.getElapsedTime())
             tm += 'CPU time: %s\n' % pwutils.prettyDelta(dt.timedelta(seconds=prot.cpuTime))
-            tm += 'Folder size: %s\n' % pwutils.prettySize(prot.getSize())
+            # tm += 'Folder size: %s\n' % pwutils.prettySize(prot.getSize())
 
             if not hasattr(tw, 'tooltipText'):
                 frame = tk.Frame(tw)
@@ -1805,7 +1805,7 @@ class ProtocolsView(tk.Frame):
         # Go in the direction .
         for run in nodesToSelect:
             # Choose the direction: down or up.
-            direction = run.getChilds if down else run.getParents
+            direction = run.getChildren if down else run.getParents
 
             # Select himself plus ancestors
             for parent in direction():
@@ -2054,7 +2054,7 @@ class ProtocolsView(tk.Frame):
 
     def setVisibleNodes(self, node, visible=True):
         hasParentHidden = False
-        for child in node.getChilds():
+        for child in node.getChildren():
             prot = child.run
             nodeInfo = self.settings.getNodeById(prot.getObjId())
             if visible:

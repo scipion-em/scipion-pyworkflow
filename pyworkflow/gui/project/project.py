@@ -158,10 +158,10 @@ class ProjectWindow(ProjectBaseWindow):
         self.commentTT = ToolTip(projLabel, self.project.getComment(), 200)
     def setComment(self, e):
 
-        newComment = askString("Change project description", "Description", self.root, defaultValue=self.project.getComment())
+        newComment = askString("Change project description", "Description", self.root, entryWidth=100, defaultValue=self.project.getComment())
         self.commentTT.configure(text=newComment)
         self.project.setComment(newComment)
-        self.project._storeCreationTime() # Comment is stored as creation time comment for now
+        self.project._storeCreationTime()  # Comment is stored as creation time comment for now
     def getSettings(self):
         return self.settings
     

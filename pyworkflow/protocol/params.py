@@ -345,18 +345,15 @@ class Form(object):
         self.addParam('hostName', StringParam, default="localhost",
                       label='Execution host',
                       help='Select in which of the available do you want to launch this protocol.')
+
+        # NOTE: help messages for these parameters is defined at HELP_MPI_THREADS and used in form.py.
+
         if threads > 0:
             self.addParam('numberOfThreads', IntParam, default=threads,
-                          label='Threads',
-                          help='This option provides shared-memory parallelization on multi-core machines.'
-                                'It does not require any additional software.')
+                          label='Threads')
         if mpi > 0:
             self.addParam('numberOfMpi', IntParam, default=mpi,
-                          label='MPI processes',
-                          help='This option provides the number of independent processes spawned'
-                                'in parallel by <mpirun> command in a cluster, usually through'
-                                'a queue system. This will require that you have compile this software '
-                                'with <mpi> support.')
+                          label='MPI processes')
         if jobsize > 0:
             self.addParam('mpiJobSize', IntParam, default=jobsize,
                           label='MPI job size', condition="numberOfMpi>1",

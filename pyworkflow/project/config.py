@@ -112,6 +112,9 @@ class ProjectSettings(pwobj.Object):
     def setColorMode(self, colorMode):
         """ Set the color mode to use when drawing the graph.
         """
+        # Skip LABELS color mode to avoid double iteration
+        if colorMode == self.COLOR_MODE_LABELS:
+            colorMode+=1
         self.colorMode.set(colorMode)
 
     def statusColorMode(self):

@@ -1,7 +1,18 @@
 V3.9.0
   - Project can have a comment (tooltip over the project name and click will edit it). Will be populated with templates description.
-  - Project size color mode removed: Problematic in slow setups or huge projects.
+  - Project Color modes:
+       size color mode removed: Problematic in slow setups or huge projects.
+       labels color mode merged with status color mode.
   - Manual subsets works when SCIPION_USE_QUEUE is active. For now this execution is not sent to the QUEUE: Might need to ask for the queue parameters.
+  - Step details show it step needs a GPU
+  - Folder size not showing in protocol's tooltip: poor performance in some setups
+  - Threads field and help improved: Distinguish between "Scipion threads" and "Threads" (program threads)
+  - create script accepts a comment (location optional as -)
+  - GPU "queue":
+      Basic GPU queue implemented for a more robust GPU specification in combination with threads. See threadmpigpu help page in the doc. Linked in the help.
+      Tests added
+  - Tolerate non exisiting SCIPION_SPRITES_FILE falling back to default value.
+  - Scroll and zoom gestures swap to more standard usage: Control + scroll = zoom, Shift + Scroll = Horizontal scroll.
 
 developers:
   - New constants for "id" and "_objId": ID_COLUMN='id', ID_ATTRIBUTE='_objId'
