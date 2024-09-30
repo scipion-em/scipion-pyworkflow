@@ -75,6 +75,7 @@ LEVEL_CHOICES = ('Normal', 'Advanced')
 # Param names for GPU processing
 USE_GPU = 'useGpu'
 GPU_LIST = 'gpuList'
+VOID_GPU = 99
 
 # Job management
 UNKNOWN_JOBID = -1

@@ -69,7 +69,7 @@ class StepExecutor:
                        numberOfMpi, numberOfThreads, 
                        self.hostConfig,
                        env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable)
-        
+
     def _getRunnable(self, steps, n=1):
         """ Return the n steps that are 'new' and all its
         dependencies have been finished, or None if none ready.
@@ -79,11 +79,16 @@ class StepExecutor:
         for s in steps:
             if (s.getStatus() == cts.STATUS_NEW and
                     all(steps[i-1].isFinished() for i in s._prerequisites)):
-                rs.append(s)
-                if len(rs) == n:
-                    break
+
+                if self._isStepRunnable(s):
+                    rs.append(s)
+                    if len(rs) == n:
+                        break
         return rs
-    
+    def _isStepRunnable(self, step):
+        """ Should be implemented by inherited classes to test extra conditions """
+        return True
+
     def _arePending(self, steps):
         """ Return True if there are pending steps (either running or waiting)
         that can be done and thus enable other steps to be executed.
@@ -169,28 +174,133 @@ class ThreadStepExecutor(StepExecutor):
         # all the threads
         self.gpuDict = {}
 
+        self._assignGPUperNode()
+
+    def _assignGPUperNode(self):
+        # If we have GPUs
         if self.gpuList:
-            nodes = range(nThreads)
+
+            nThreads = self.numberOfProcs
+
+            # Nodes: each concurrent steps
+            nodes = range(1, nThreads+1)
+
+            # Number of GPUs
             nGpu = len(self.gpuList)
 
+            # If more GPUs than threads
             if nGpu > nThreads:
-                chunk = int(nGpu / nThreads)
-                for i, node in enumerate(nodes):
-                    self.gpuDict[node] = list(self.gpuList[i*chunk:(i+1)*chunk])
+
+                # Get the ratio: 2 GPUs per thread? 3 GPUs per thread?
+                # 3 GPU and 2 threads is rounded to 1 (flooring)
+                step = int(nGpu / nThreads)
+                spare = nGpu % nThreads
+                fromPos = 0
+                # For each node(concurrent thread)
+                for node in nodes:
+                    # Store the GPUS per thread:
+                    # GPUs: 0 1 2
+                    # Threads 2 (step 1)
+                    # Node 0 : GPU 0 1
+                    # Node 1 : GPU 2
+
+                    extraGpu = 1 if spare>0 else 0
+                    toPos = fromPos + step +extraGpu
+                    gpusForNode = list(self.gpuList[fromPos:toPos])
+
+                    newGpusForNode = self.cleanVoidGPUs(gpusForNode)
+                    if len(newGpusForNode) == 0:
+                        logger.info("Gpu slot cancelled: all were null Gpus -> %s" % gpusForNode)
+                    else:
+                        logger.info("GPUs %s assigned to node %s" % (newGpusForNode, node))
+                        self.gpuDict[-node] = newGpusForNode
+
+                    fromPos = toPos
+                    spare-=1
+
             else:
                 # Expand gpuList repeating until reach nThreads items
                 if nThreads > nGpu:
-                    newList = self.gpuList * (int(nThreads/nGpu)+1)
-                    self.gpuList = newList[:nThreads]
+                    logger.warning("GPUs are no longer extended. If you want all GPUs to match threads repeat as many "
+                                   "GPUs as threads.")
+                    # newList = self.gpuList * (int(nThreads / nGpu) + 1)
+                    # self.gpuList = newList[:nThreads]
 
-                for node, gpu in zip(nodes, self.gpuList):
-                    self.gpuDict[node] = [gpu]
+                for index, gpu in enumerate(self.gpuList):
+
+                    if gpu == cts.VOID_GPU:
+                        logger.info("Void GPU (%s) found in the list. Skipping the slot." % cts.VOID_GPU)
+                    else:
+                        logger.info("GPU slot for gpu %s." % gpu)
+                        # Any negative number in the key means a free gpu slot. can't be 0!
+                        self.gpuDict[-index-1] = [gpu]
+
+    def cleanVoidGPUs(self, gpuList):
+        newGPUList=[]
+        for gpuid in gpuList:
+            if gpuid == cts.VOID_GPU:
+                logger.info("Void GPU detected in %s" % gpuList)
+            else:
+                newGPUList.append(gpuid)
+        return newGPUList
 
     def getGpuList(self):
         """ Return the GPU list assigned to current thread
         or empty list if not using GPUs. """
-        return self.gpuDict.get(threading.current_thread().thId, [])
-        
+
+        # If the node id has assigned gpus?
+        nodeId = threading.current_thread().thId
+        if nodeId in self.gpuDict:
+            gpus = self.gpuDict.get(nodeId)
+            logger.info("Reusing GPUs (%s) slot for %s" % (gpus, nodeId))
+            return gpus
+        else:
+
+            gpus = self.getFreeGpuSlot(nodeId)
+            if gpus is None:
+                logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning and empty list." % nodeId)
+                return []
+            else:
+                return gpus
+    def getFreeGpuSlot(self, nodeId=None):
+        """ Returns a free gpu slot available or None. If node is passed it also reserves it for that node
+
+        :param node: node to make the reserve of Gpus
+        """
+        for node in self.gpuDict.keys():
+            # This is a free node. Book it
+            if node < 0:
+                gpus = self.gpuDict[node]
+
+                if nodeId is not None:
+                    self.gpuDict.pop(node)
+                    self.gpuDict[nodeId] = gpus
+                    logger.info("GPUs %s assigned to thread %s" % (gpus, nodeId))
+                else:
+                    logger.info("Free gpu slot found at %s" % node)
+                return gpus
+
+        return None
+    def freeGpusSlot(self, node):
+        gpus = self.gpuDict.get(node, None)
+
+        # Some nodes/threads do not use gpus so may not be booked and not in the dictionary
+        if gpus is not None:
+            self.gpuDict.pop(node)
+            self.gpuDict[-node-1] = gpus
+            logger.info("GPUs %s freed from thread %s" % (gpus, node))
+        else:
+            logger.debug("node %s not found in GPU slots" % node)
+
+    def _isStepRunnable(self, step):
+        """ Overwrite this method to check GPUs availability"""
+
+        if self.gpuList and step.needsGPU() and self.getFreeGpuSlot() is None:
+            logger.info("Can't run step %s. Needs gpus and there are no free gpu slots" % step)
+            return False
+
+        return True
+
     def runSteps(self, steps, 
                  stepStartedCallback, 
                  stepFinishedCallback,
@@ -213,7 +323,9 @@ class ThreadStepExecutor(StepExecutor):
         sharedLock = threading.Lock()
 
         runningSteps = {}  # currently running step in each node ({node: step})
-        freeNodes = list(range(self.numberOfProcs))  # available nodes to send jobs
+        freeNodes = list(range(1, self.numberOfProcs+1))  # available nodes to send jobs
+        logger.info("Execution threads: %s" % freeNodes)
+        logger.info("Running steps using %s threads. 1 thread is used for this main proccess." % self.numberOfProcs)
 
         while True:
             # See which of the runningSteps are not really running anymore.
@@ -225,6 +337,7 @@ class ThreadStepExecutor(StepExecutor):
             for node in nodesFinished:
                 step = runningSteps.pop(node)  # remove entry from runningSteps
                 freeNodes.append(node)  # the node is available now
+                self.freeGpusSlot(node)
                 # Notify steps termination and check if we should continue
                 doContinue = stepFinishedCallback(step)
                 if not doContinue:
@@ -245,8 +358,9 @@ class ThreadStepExecutor(StepExecutor):
                         anyLaunched = True
                         step.setRunning()
                         stepStartedCallback(step)
-                        node = freeNodes.pop()  # take an available node
+                        node = freeNodes.pop(0)  # take an available node
                         runningSteps[node] = step
+                        logger.debug("Running step %s on node %s" % (step, node))
                         t = StepThread(node, step, sharedLock)
                         # won't keep process up if main thread ends
                         t.daemon = True
@@ -255,7 +369,7 @@ class ThreadStepExecutor(StepExecutor):
 
             if not anyLaunched:
                 if anyPending:  # nothing running
-                    time.sleep(0.5)
+                    time.sleep(3)
                 else:
                     break  # yeah, we are done, either failed or finished :)
 

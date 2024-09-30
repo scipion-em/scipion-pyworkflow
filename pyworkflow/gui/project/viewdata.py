@@ -55,7 +55,7 @@ def populateTree(tree, elements, parentId=''):
                 t += ' (%d)' % node.count
             node.nodeId = tree.insert(parentId, 'end', node.getName(),
                                       text=t, tags=DATA_TAG)
-            populateTree(tree, node.getChilds(), node.nodeId)
+            populateTree(tree, node.getChildren(), node.nodeId)
             if node.count:
                 tree.see(node.nodeId)
                 tree.item(node.nodeId, tags=('non-empty', DATA_TAG))

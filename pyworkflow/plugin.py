@@ -124,6 +124,7 @@ class Domain:
             (pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
             logger.info("Please, contact developers at %s and send this ugly information below. They'll understand it!." % DOCSITEURLS.CONTACTUS)
+            logger.info("Error message: %s"% str(e))
             logger.info(pwutils.yellow(traceback.format_exc()))
 
     @classmethod

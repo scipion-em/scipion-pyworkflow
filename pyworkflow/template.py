@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Template:
-    def __init__(self, source, name, description):
+    def __init__(self, source, name, description=""):
         self.source = source
         # Tidy up templates names: removing .json.template and .json (when passed as parameter)
         self.name = name

@@ -245,7 +245,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         if obj is None or not obj.hasValue():
             return None
 
-        if isinstance(obj, pwobj.String):
+        if isinstance(obj, pwobj.String) and not obj.getName():
             info = stringToInfo()
         else:
             # All attributes are considered output, unless they are pointers
@@ -504,7 +504,7 @@ class ProtocolTreeConfig:
 
             except Exception as e:
                 print('Failed to read settings. The reported error was:\n  %s\n'
-                      'To solve it, fix %s and run again.' % e)
+                      'To solve it, fix %s and run again.' % (e, pluginName))
 
         # Clean empty sections
         cls._hideEmptySections(protocols)

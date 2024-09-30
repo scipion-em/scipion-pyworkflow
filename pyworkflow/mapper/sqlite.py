@@ -27,12 +27,12 @@ logger = logging.getLogger(__name__)
 import re
 from collections import OrderedDict
 
-from pyworkflow import Config
+from pyworkflow import Config, ID_ATTRIBUTE, ID_COLUMN
 from pyworkflow.utils import replaceExt, joinExt, valueToList
 from .sqlite_db import SqliteDb, OperationalError
 from .mapper import Mapper
 
-ID = 'id'
+ID = ID_COLUMN
 CREATION = 'creation'
 PARENT_ID = 'parent_id'
 CLASSNAME = 'classname'
@@ -210,7 +210,7 @@ class SqliteMapper(Mapper):
         rowId = objRow[ID]
         rowName = self._getStrValue(objRow['name'])
 
-        if not hasattr(obj, '_objId'):
+        if not hasattr(obj, ID_ATTRIBUTE):
             raise Exception("Entry '%s' (id=%s) in the database, stored as '%s'"
                             ", is being mapped to %s object. " %
                             (rowName, rowId,
@@ -1356,8 +1356,8 @@ class SqliteFlatDb(SqliteDb):
     def addCommonFieldsToMap(self):
 
         # Add common fields to the mapping
-        self._columnsMapping["id"] = "id"
-        self._columnsMapping["_objId"] = "id"
+        self._columnsMapping[ID_COLUMN] = ID_COLUMN
+        self._columnsMapping[ID_ATTRIBUTE] = ID_COLUMN
 
     def getClassRows(self):
         """ Create a dictionary with names of the attributes

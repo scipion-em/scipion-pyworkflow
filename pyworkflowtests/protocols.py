@@ -55,16 +55,16 @@ class SleepingProtocol(pwprot.Protocol):
     def _insertAllSteps(self):
         print("Inserting all steps...")
         for i in range(self.numberOfSleeps.get()):
-            self._insertFunctionStep('sleepStep', i + 1)
+            self._insertFunctionStep(self.sleepStep, i + 1)
 
 
 class ParallelSleepingProtocol(SleepingProtocol):
     def _insertAllSteps(self):
-        step1 = self._insertFunctionStep('sleepStep', 1)
+        step1 = self._insertFunctionStep(self.sleepStep, 1)
         n = 2
         deps = [step1]
         for i in range(n):
-            self._insertFunctionStep('sleepStep')
+            self._insertFunctionStep(self.sleepStep)
 
 class ConcurrencyProtocol(SleepingProtocol):
     """ Protocol to test concurrency access to sets"""
