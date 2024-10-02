@@ -1,3 +1,4 @@
+V3.9.1 - hotfix: loading related objects (CTF - Mics in particle extraction)
 V3.9.0
   - Project can have a comment (tooltip over the project name and click will edit it). Will be populated with templates description.
   - Project Color modes:
