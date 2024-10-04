@@ -6,6 +6,7 @@ users:
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.
+V3.9.1 - hotfix: loading related objects (CTF - Mics in particle extraction)
 V3.9.0
 users:
   - Project can have a comment (tooltip over the project name and click will edit it). Will be populated with templates description.
