@@ -847,7 +847,7 @@ class SectionFrame(tk.Frame):
         csize = self._getContentSize()
 
         # update the inner frame's width to fill the canvas
-        self.canvas.itemconfigure(self.contentId, width=csize[0],height=csize[1])
+        self.canvas.itemconfigure(self.contentId, width=csize[0], height=csize[1])
         self.canvas.config(scrollregion="0 0 %s %s" % fsize)
 
     def _getContentSize(self):
@@ -931,7 +931,7 @@ class ParamWidget:
         self._protocol = self.window.protocol
         if self._protocol.getProject() is None:
             logger.error(">>> ERROR: Project is None for protocol: %s, "
-                  "start winpdb to debug it" % self._protocol)
+                         "start winpdb to debug it" % self._protocol)
 
         self.row = row
         self.column = column
@@ -1005,8 +1005,8 @@ class ParamWidget:
     def _showInfo(self, msg):
         showInfo("Info", msg, self.parent)
 
-    def _showError(self, msg):
-        showError("Error", msg, self.parent)
+    def _showError(self, msg, exception=None):
+        showError("Error", msg, self.parent, exception=exception)
 
     def _showWarning(self, msg):
         showWarning("Warning", msg, self.parent)
@@ -1015,7 +1015,8 @@ class ParamWidget:
         wizClass = self.window.wizards[self.wizParamName]
         wizard = wizClass()
         # wizParamName: form attribute, the wizard object can check from which parameter it was called
-        # Used into VariableWizard objects (scipion-chem), where input and output parameters used for each wizard are defined
+        # Used into VariableWizard objects (scipion-chem), where input and output parameters used
+        # for each wizard are defined
         self.window.wizParamName = self.wizParamName
         wizard.show(self.window)
 
@@ -1364,11 +1365,11 @@ class ParamWidget:
                              selectOnDoubleClick=True)
             if dlg.values:
                 self.set(dlg.values[0])
-        except AttributeError:
+        except AttributeError as e:
             self._showError("Error loading possible inputs. "
                             "This usually happens because the parameter "
                             "needs info from other parameters... are "
-                            "previous mandatory parameters set?")
+                            "previous mandatory parameters set?", exception=e)
 
     def _removeRelation(self, e=None):
         self.var.remove()
@@ -1573,6 +1574,14 @@ class FormWindow(Window):
         protocol.legacyCheck()
         self._createGUI()
 
+    def getParam(self, paramName):
+        """ Returns a specific parameter from the form definition by its name
+
+        :param paramName: Name of the parameter
+        """
+
+        return self.protocol._definition.getParam(paramName)
+
     def _createGUI(self):
         mainFrame = tk.Frame(self.root, name="main")
         configureWeigths(mainFrame, row=2)
@@ -1684,34 +1693,38 @@ class FormWindow(Window):
             allowGpu = prot.allowsGpu()
             numberOfMpi = prot.numberOfMpi.get()
             numberOfThreads = prot.numberOfThreads.get()
-            mode = prot.stepsExecutionMode
 
             if not (allowThreads or allowMpi or allowGpu):
                 return
 
-            self._createHeaderLabel(runFrame, pwutils.Message.LABEL_PARALLEL, bold=True,
-                                    sticky='e', row=r, pady=0)
 
             if allowThreads or allowMpi:
-                procFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
-                r2 = 0
-                c2 = 0
-                sticky = 'e'
 
-                helpMessage = pwutils.Message.HELP_PARALLEL_HEADER
+                threadsParam = self.getParam(pwutils.Message.VAR_THREADS)
+                mpiParam = self.getParam(pwutils.Message.VAR_MPI)
+                binThreads = self.getParam("binThreads")
 
-                if mode == pwprot.STEPS_PARALLEL:
+                if prot.modeParallel():
                     if allowThreads and numberOfThreads > 0:
+
                         prot.numberOfMpi.set(1)
-                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_SCIPION_THREADS,
-                                                sticky=sticky, row=r2, column=c2,
-                                                pady=0)
-                        entry = self._createBoundEntry(procFrame,
+                        self._createHeaderLabel(runFrame, threadsParam.getLabel(),
+                                                sticky='e', row=r, column=0,
+                                                pady=0, bold=True)
+                        entry = self._createBoundEntry(runFrame,
                                                        pwutils.Message.VAR_THREADS)
 
-                        helpMessage += pwutils.Message.HELP_SCIPION_THREADS
+                        entry.grid(row=r, column=1, padx=(0, 5), sticky='w')
 
-                        entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
+                        btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT,
+                                             pwutils.Icon.ACTION_HELP,
+                                             highlightthickness=0,
+                                             command=self._createHelpCommand(
+                                                 threadsParam.getHelp()))
+                        btnHelp.grid(row=r, column=2, padx=(5, 0), pady=2, sticky='e')
+
+                        r += 1
+
                     elif allowMpi and numberOfMpi > 1:
                         self.showError("MPI parameter is deprecated for protocols "
                                        "with execution is set to STEPS_PARALLEL. "
@@ -1721,42 +1734,60 @@ class FormWindow(Window):
                                        "STEPS_PARALLEL number of threads "
                                        "should not be set to zero.")
 
-                else:
+                # Either is serial (threads and/or mpi as argument, or is Scipion parallel with binThreads
+                if prot.modeSerial() or binThreads:
+
+                    helpMessage = pwutils.Message.HELP_PARALLEL_HEADER
+
+                    label = pwutils.Message.LABEL_PARALLEL
+                    label = "%s compute" % prot.getClassPackageName()
+                    # Add the main header and its frame
+                    self._createHeaderLabel(runFrame, label, bold=True,
+                                            sticky='e', row=r, pady=0)
+                    procFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
+                    r2 = 0
+                    c2 = 0
+                    sticky = 'e'
+
                     # ---- THREADS----
-                    if allowThreads:
-                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_THREADS,
+                    if binThreads or allowThreads:
+                        attrName = pwutils.Message.VAR_THREADS
+                        if binThreads:
+                            threadsParam = binThreads
+                            attrName = "binThreads"
+                        self._createHeaderLabel(procFrame, threadsParam.getLabel(),
                                                 sticky=sticky, row=r2, column=c2,
                                                 pady=0)
                         entry = self._createBoundEntry(procFrame,
-                                                       pwutils.Message.VAR_THREADS)
+                                                       attrName)
                         entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
                         # Modify values to be used in MPI entry
                         c2 += 2
                         sticky = 'w'
 
-                        helpMessage += pwutils.Message.HELP_PARALLEL_THREADS
+                        helpMessage += threadsParam.getHelp()
                     # ---- MPI ----
                     if allowMpi:
-                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_MPI,
+                        self._createHeaderLabel(procFrame, mpiParam.getLabel(),
                                                 sticky=sticky, row=r2, column=c2,
                                                 pady=0)
                         entry = self._createBoundEntry(procFrame, pwutils.Message.VAR_MPI)
                         entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
 
-                        helpMessage += pwutils.Message.HELP_PARALLEL_MPI
+                        helpMessage += mpiParam.getHelp()
 
 
-                btnHelp = IconButton(procFrame, pwutils.Message.TITLE_COMMENT,
-                                     pwutils.Icon.ACTION_HELP,
-                                     highlightthickness=0,
-                                     command=self._createHelpCommand(
-                                         helpMessage))
-                btnHelp.grid(row=0, column=4, padx=(5, 0), pady=2, sticky='e')
+                    btnHelp = IconButton(procFrame, pwutils.Message.TITLE_COMMENT,
+                                         pwutils.Icon.ACTION_HELP,
+                                         highlightthickness=0,
+                                         command=self._createHelpCommand(
+                                             helpMessage))
+                    btnHelp.grid(row=0, column=4, padx=(5, 0), pady=2, sticky='e')
 
-                procFrame.columnconfigure(0, minsize=60)
-                procFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
+                    procFrame.columnconfigure(0, minsize=60)
+                    procFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
 
-                r += 1
+                    r += 1
 
             if allowGpu:
                 self._createHeaderLabel(runFrame, "GPU IDs", bold=True,

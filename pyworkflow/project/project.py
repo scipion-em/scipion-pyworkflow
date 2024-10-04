@@ -1934,7 +1934,7 @@ class Project(object):
 
         if n is not None:
             # Iterate recursively all descendants
-            for node in n.iterChilds():
+            for node in n.iterChildren():
                 connection[node.pointer.getUniqueId()] = True
                 # Add also 
                 connection[node.pointer.get().strId()] = True

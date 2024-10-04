@@ -358,6 +358,22 @@ class Protocol(Step):
     _package = None
     _plugin = None
 
+    # Maybe this property can be inferred from the
+    # prerequisites of steps, but is easier to keep it
+    stepsExecutionMode = STEPS_SERIAL
+
+    @classmethod
+    def modeSerial(cls):
+        """ Returns true if steps are run one after another"""
+        # Maybe this property can be inferred from the
+        # prerequisites of steps, but is easier to keep it
+        return cls.stepsExecutionMode == STEPS_SERIAL
+
+    @classmethod
+    def modeParallel(cls):
+        """ Returns true if steps are run in parallel"""
+        return not cls.modeSerial()
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._size = None
@@ -410,9 +426,6 @@ class Protocol(Step):
         if not hasattr(self, 'hostFullName'):
             self.hostFullName = String()
 
-        # Maybe this property can be inferred from the
-        # prerequisites of steps, but is easier to keep it
-        self.stepsExecutionMode = STEPS_SERIAL
 
         # Run mode
         self.runMode = Integer(kwargs.get('runMode', MODE_RESUME))
@@ -1318,7 +1331,7 @@ class Protocol(Step):
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName(),
                                         step_id=step._index))
-        if step.isFailed() and self.stepsExecutionMode == STEPS_PARALLEL:
+        if step.isFailed() and self.modeParallel():
             # In parallel mode the executor will exit to close
             # all working threads, so we need to close
             self._endRun()
@@ -2436,7 +2449,7 @@ def runProtocolMain(projectPath, protDbPath, protId):
     executor = None
     nThreads = max(protocol.numberOfThreads.get(), 1)
 
-    if protocol.stepsExecutionMode == STEPS_PARALLEL and nThreads > 1:
+    if protocol.modeParallel() and nThreads > 1:
         if protocol.useQueueForSteps():
             executor = QueueStepExecutor(hostConfig,
                                          protocol.getSubmitDict(),
@@ -2532,10 +2545,7 @@ class ProtStreamingBase(Protocol):
     Minimum number of threads is 3 and should run in parallel mode.
     """
 
-    def __init__(self, **kwargs):
-
-        super().__init__()
-        self.stepsExecutionMode = STEPS_PARALLEL
+    stepsExecutionMode = STEPS_PARALLEL
     def _insertAllSteps(self):
         # Insert the step that generates the steps
         self._insertFunctionStep(self.resumableStepGeneratorStep, str(datetime.now()), needsGPU=False)

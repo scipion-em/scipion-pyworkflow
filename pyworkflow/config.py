@@ -360,6 +360,11 @@ class Config:
     "Set it to False to force instantiation for each item during sets iterations. Experimental. This penalize the iteration but avoids"
     "the use of .clone() ot the items.") == TRUE_STR
 
+    # CUDA_DEVICE_ORDER = _get('CUDA_DEVICE_ORDER', 'PCI_BUS_ID',
+    #                          "To make GPU ID match what you see in nvidia-smi, that is the PCI ID."
+    #                          " Use FASTEST_FIRST for default behaviour but this may not match what is returned by nvidia-smi."
+    #                          " See https://docs.nvidia.com/cuda/cuda-c-programming-guide/#:~:text=in%20device%20memory.-,CUDA_DEVICE_ORDER,-FASTEST_FIRST%2C%20PCI_BUS_ID%2C%20(default ")
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}", "Json string to define which viewer are the default ones per output type."))
     except Exception as e:

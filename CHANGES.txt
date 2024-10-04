@@ -1,4 +1,13 @@
+V3.10.0
+users:
+  - Parallel section refactored: Scipion threads and or "Package compute" lines.
+  - Allow for having the three compute fields: Scipion threads, threads and mpis.
+
+ developers:
+  - Protocol.getParam(name): returns the parameter definition by name.
+  - stepsExecutionMode has to be declared at class level not instance level.
 V3.9.0
+users:
   - Project can have a comment (tooltip over the project name and click will edit it). Will be populated with templates description.
   - Project Color modes:
        size color mode removed: Problematic in slow setups or huge projects.
