@@ -498,7 +498,9 @@ class LazyDict(object):
 def parseBibTex(bibtexStr):
     """ Parse a bibtex file and return a dictionary. """
 
-    return bibtexparser.loads(bibtexStr).entries_dict
+    return bibtexparser.loads(bibtexStr,
+                              parser=bibtexparser.bparser.BibTexParser(common_strings=True)
+                              ).entries_dict
 
 
 
