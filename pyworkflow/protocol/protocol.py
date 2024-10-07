@@ -1139,20 +1139,17 @@ class Protocol(Step):
 
         return self.__insertStep(step,prerequisites)
 
-    # def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
-    #                       **kwargs):
-    #     """ Insert an Step that will simple call runJob function
-    #     **args: see __insertStep
-    #     """
-    #     return self._insertFunctionStep('runJob', progName, progArguments,
-    #                                     **kwargs)
-    #
-    # def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
-    #     """ Shortcut function to insert a step for copying a file to a destiny. """
-    #     step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile,
-    #                         targetFile,
-    #                         **kwargs)
-    #     return self.__insertStep(step, **kwargs)
+    def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
+                          **kwargs):
+        """ Insert a Step that will simply call runJob function
+        **args: see __insertStep
+        """
+        return self._insertFunctionStep('runJob', progName, progArguments, **kwargs)
+
+    def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
+        """ Shortcut function to insert a step for copying a file to a destiny. """
+        step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile, targetFile, **kwargs)
+        return self.__insertStep(step, **kwargs)
 
     def _enterDir(self, path):
         """ Enter into a new directory path and store the current path.
