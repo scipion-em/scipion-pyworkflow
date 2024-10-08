@@ -358,6 +358,10 @@ class Protocol(Step):
     _package = None
     _plugin = None
 
+    # Maybe this property can be inferred from the
+    # prerequisites of steps, but is easier to keep it
+    stepsExecutionMode = STEPS_SERIAL
+
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
         self._size = None
@@ -410,9 +414,6 @@ class Protocol(Step):
         if not hasattr(self, 'hostFullName'):
             self.hostFullName = String()
 
-        # Maybe this property can be inferred from the
-        # prerequisites of steps, but is easier to keep it
-        self.stepsExecutionMode = STEPS_SERIAL
 
         # Run mode
         self.runMode = Integer(kwargs.get('runMode', MODE_RESUME))
@@ -2451,6 +2452,7 @@ def runProtocolMain(projectPath, protDbPath, protId):
         executor = StepExecutor(hostConfig,
                                 gpuList=protocol.getGpuList())
 
+    logger.info("Running protocol using the %s executor." % executor)
     protocol.setStepsExecutor(executor)
     # Finally run the protocol
     protocol.run()
