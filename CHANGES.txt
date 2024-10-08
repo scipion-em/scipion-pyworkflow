@@ -1,4 +1,4 @@
-V3.10.0
+V3.11.0
 users:
   - Parallel section refactored: Scipion threads and or "Package compute" lines.
   - Allow for having the three compute fields: Scipion threads, threads and mpis.
@@ -6,6 +6,11 @@ users:
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.
+V3.10.0
+developers:
+  -  stepsExecutionMode = STEPS_SERIAL at class level. Should a class attribute for future versions. Now both approaches are valid.
+
+V3.9.2 - hotfix: rescue commented methods: Protocol._insertRunJobStep and Protocol._insertCopyFileStep
 V3.9.1 - hotfix: loading related objects (CTF - Mics in particle extraction)
 V3.9.0
 users:
