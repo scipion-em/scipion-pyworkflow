@@ -292,10 +292,11 @@ def createAbsLink(source, dest):
     """ Creates a link to a given file path"""
     if os.path.islink(dest):
         os.remove(dest)
-        
+
     if os.path.exists(dest):
         raise Exception('Destination %s os.path.exists and is not a link' % dest)
-
+    
+    source = os.path.abspath(source)
     os.symlink(source, dest)
 
 
