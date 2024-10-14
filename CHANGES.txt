@@ -6,6 +6,7 @@ users:
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.
+V3.10.1: hotfix: Avoid double Gpu assignment in scipion parallelize protocols with concurrent GPU steps
 V3.10.0
 developers:
   -  stepsExecutionMode = STEPS_SERIAL at class level. Should a class attribute for future versions. Now both approaches are valid.
