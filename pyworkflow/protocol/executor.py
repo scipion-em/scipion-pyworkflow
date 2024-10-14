@@ -144,9 +144,9 @@ class StepExecutor:
 
 class StepThread(threading.Thread):
     """ Thread to run Steps in parallel. """
-    def __init__(self, thId, step, lock):
+    def __init__(self, step, lock):
         threading.Thread.__init__(self)
-        self.thId = thId
+        self.thId = step.getObjId()
         self.step = step
         self.lock = lock
 
@@ -262,7 +262,7 @@ class ThreadStepExecutor(StepExecutor):
                 return []
             else:
                 return gpus
-    def getFreeGpuSlot(self, nodeId=None):
+    def getFreeGpuSlot(self, stepId=None):
         """ Returns a free gpu slot available or None. If node is passed it also reserves it for that node
 
         :param node: node to make the reserve of Gpus
@@ -272,10 +272,10 @@ class ThreadStepExecutor(StepExecutor):
             if node < 0:
                 gpus = self.gpuDict[node]
 
-                if nodeId is not None:
+                if stepId is not None:
                     self.gpuDict.pop(node)
-                    self.gpuDict[nodeId] = gpus
-                    logger.info("GPUs %s assigned to thread %s" % (gpus, nodeId))
+                    self.gpuDict[stepId] = gpus
+                    logger.info("GPUs %s assigned to step %s" % (gpus, stepId))
                 else:
                     logger.info("Free gpu slot found at %s" % node)
                 return gpus
@@ -288,14 +288,14 @@ class ThreadStepExecutor(StepExecutor):
         if gpus is not None:
             self.gpuDict.pop(node)
             self.gpuDict[-node-1] = gpus
-            logger.info("GPUs %s freed from thread %s" % (gpus, node))
+            logger.info("GPUs %s freed from step %s" % (gpus, node))
         else:
-            logger.debug("node %s not found in GPU slots" % node)
+            logger.debug("step id %s not found in GPU slots" % node)
 
     def _isStepRunnable(self, step):
         """ Overwrite this method to check GPUs availability"""
 
-        if self.gpuList and step.needsGPU() and self.getFreeGpuSlot() is None:
+        if self.gpuList and step.needsGPU() and self.getFreeGpuSlot(step.getObjId()) is None:
             logger.info("Can't run step %s. Needs gpus and there are no free gpu slots" % step)
             return False
 
@@ -361,7 +361,7 @@ class ThreadStepExecutor(StepExecutor):
                         node = freeNodes.pop(0)  # take an available node
                         runningSteps[node] = step
                         logger.debug("Running step %s on node %s" % (step, node))
-                        t = StepThread(node, step, sharedLock)
+                        t = StepThread(step, sharedLock)
                         # won't keep process up if main thread ends
                         t.daemon = True
                         t.start()
