@@ -337,7 +337,7 @@ class ThreadStepExecutor(StepExecutor):
             for node in nodesFinished:
                 step = runningSteps.pop(node)  # remove entry from runningSteps
                 freeNodes.append(node)  # the node is available now
-                self.freeGpusSlot(node)
+                self.freeGpusSlot(step.getObjId())
                 # Notify steps termination and check if we should continue
                 doContinue = stepFinishedCallback(step)
                 if not doContinue:
