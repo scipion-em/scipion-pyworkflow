@@ -381,7 +381,7 @@ class Form(object):
         if binThreads:
             if self._protocol.modeParallel():
                 self.addParam('binThreads', IntParam, default=binThreads,
-                              label=binThreads, help=binHelpMsg)
+                              label=binLabel, help=binHelpMsg)
             else:
                 logger.warning("binThreads can't be used when stepsExecutionMode is not STEPS_PARALLEL. Use threads instead.")
 
