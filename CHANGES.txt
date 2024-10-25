@@ -2,6 +2,8 @@ V3.11.0
 users:
   - Parallel section refactored: Scipion threads and or "Package compute" lines.
   - Allow for having the three compute fields: Scipion threads, threads and mpis.
+  - Fix: jobs, processes killed are detected by scipion.
+  - Project log has info about protocol execution modes: queue, or subprocess
 
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.

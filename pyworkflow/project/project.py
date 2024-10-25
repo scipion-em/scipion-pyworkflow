@@ -584,7 +584,7 @@ class Project(object):
             self._continueWorkflow(errorsList,workflowProtocolList)
         return errorsList
 
-    def launchProtocol(self, protocol, wait=False, scheduled=False,
+    def launchProtocol(self, protocol:Protocol, wait=False, scheduled=False,
                        force=False):
         """ In this function the action of launching a protocol
         will be initiated. Actions done here are:
@@ -637,6 +637,8 @@ class Project(object):
             # NOTE: now we are simply copying the entire project db, this can be
             # changed later to only create a subset of the db need for the run
             pwutils.path.copyFile(self.dbPath, protocol.getDbPath())
+            # Update the lastUpdateTimeStamp so later PID obtained in launch is not "remove" with run.db data.
+            protocol.lastUpdateTimeStamp.set(pwutils.getFileLastModificationDate(protocol.getDbPath()))
 
         # Launch the protocol; depending on the case, either the pId or the jobId will be set in this call
         pwprot.launch(protocol, wait)
@@ -697,10 +699,10 @@ class Project(object):
 
             if skipUpdatedProtocols:
                 # If we are already updated, comparing timestamps
-                if pwprot.isProtocolUpToDate(protocol):
+                # Not true, if the process died or was killed by the queue then the db remains intact and protocol is not updated
+                if self.checkIsAlive(protocol) and pwprot.isProtocolUpToDate(protocol):
 
                     # Always check for the status of the process (queue job or pid)
-                    self.checkIsAlive(protocol)
                     return pw.NOT_UPDATED_UNNECESSARY
 
 
@@ -771,11 +773,21 @@ class Project(object):
         return pw.PROTOCOL_UPDATED
 
     def checkIsAlive(self, protocol):
-        """ Check if a protocol is alive based on its jobid or pid"""
-        if protocol.getPid() == 0:
-            self.checkJobId(protocol)
+        """ Check if a protocol is alive based on its jobid (queue engines) or pid
+        :param protocol: protocol to check its status
+        :returns True if it is alive
+        """
+        # For some reason pid ends up with a None...
+        pid = protocol.getPid()
+
+        if pid is None:
+            logger.info("Protocol's %s pid is None and is active... this should not happen. Checking its job id: %s" % (protocol.getRunName(), protocol.getJobIds()))
+            pid = 0
+
+        if pid == 0:
+            return self.checkJobId(protocol)
         else:
-            self.checkPid(protocol)
+            return self.checkPid(protocol)
 
     def stopProtocol(self, protocol):
         """ Stop a running protocol """
@@ -1608,12 +1620,14 @@ class Project(object):
         """ Check if a running protocol is still alive or not.
         The check will only be done for protocols that have not been sent
         to a queue system.
+
+        :returns True if pid is alive or irrelevant
         """
         from pyworkflow.protocol.launch import _runsLocally
         pid = protocol.getPid()
 
         if pid == 0:
-            return
+            return True
 
         # Include running and scheduling ones
         # Exclude interactive protocols
@@ -1626,17 +1640,22 @@ class Project(object):
                                "reporting the status to Scipion. Logs might "
                                "have information about what happened to this "
                                "process." % pid)
+            return False
+
+        return True
 
     def checkJobId(self, protocol):
         """ Check if a running protocol is still alive or not.
         The check will only be done for protocols that have been sent
         to a queue system.
+
+        :returns True if job is still alive or irrelevant
         """
         jobid = protocol.getJobIds()[0]
         hostConfig = protocol.getHostConfig()
 
         if jobid == UNKNOWN_JOBID:
-            return
+            return True
 
         # Include running and scheduling ones
         # Exclude interactive protocols
@@ -1647,12 +1666,15 @@ class Project(object):
             jobStatus = _checkJobStatus(hostConfig, jobid)
 
             if jobStatus == STATUS_FINISHED:
-                protocol.setFailed("Process %s not found running on the machine. "
-                                   "It probably has died or been killed without "
+                protocol.setFailed("JOB ID %s not found running on the queue engine. "
+                                   "It probably has timeout, died or been killed without "
                                    "reporting the status to Scipion. Logs might "
                                    "have information about what happened to this "
-                                   "process." % jobid)
+                                   "JOB ID." % jobid)
 
+                return False
+
+        return True
     def iterSubclasses(self, classesName, objectFilter=None):
         """ Retrieve all objects from the project that are instances
             of any of the classes in classesName list.

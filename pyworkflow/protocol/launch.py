@@ -148,10 +148,12 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
         if jobId is None or jobId == UNKNOWN_JOBID:
             protocol.setStatus(STATUS_FAILED)
         else:
+            logger.info("Protocol %s sent to queue. Got JOB ID %s" %(protocol.getRunName(), jobId))
             protocol.setJobId(jobId)
             protocol.setPid(0)  # we go through the queue, so we rely on the jobId
     else:  # If not, retrieve and set the process ID (both for normal execution or when using the queue for steps)
         pId = _run(command, wait, stdin, stdout, stderr)
+        logger.info("Protocol %s executed in a subproccess. Got PID %s." % (protocol.getRunName(), pId))
         protocol.setPid(pId)
 
 
