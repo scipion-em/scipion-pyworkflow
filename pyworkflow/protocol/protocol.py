@@ -2445,9 +2445,6 @@ def runProtocolMain(projectPath, protDbPath, protId):
     # Create the steps executor
     executor = None
     nThreads = max(protocol.numberOfThreads.get(), 1)
-    print('nTHreads is: %d' %nThreads)
-    print(protocol.modeParallel())
-    print(protocol.stepsExecutionMode == STEPS_PARALLEL)
 
     if protocol.modeParallel() and nThreads > 1:
         if protocol.useQueueForSteps():
