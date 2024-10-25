@@ -362,17 +362,15 @@ class Protocol(Step):
     # prerequisites of steps, but is easier to keep it
     stepsExecutionMode = STEPS_SERIAL
 
-    @classmethod
-    def modeSerial(cls):
+    def modeSerial(self):
         """ Returns true if steps are run one after another"""
         # Maybe this property can be inferred from the
         # prerequisites of steps, but is easier to keep it
-        return cls.stepsExecutionMode == STEPS_SERIAL
+        return self.stepsExecutionMode == STEPS_SERIAL
 
-    @classmethod
-    def modeParallel(cls):
+    def modeParallel(self):
         """ Returns true if steps are run in parallel"""
-        return not cls.modeSerial()
+        return not self.modeSerial()
 
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
