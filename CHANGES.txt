@@ -4,10 +4,11 @@ users:
   - Allow for having the three compute fields: Scipion threads, threads and mpis.
   - Fix: jobs, processes killed are detected by scipion.
   - Project log has info about protocol execution modes: queue, or subprocess
-
+  - killed protocol proccess (timeput in queue or plain killed) are detected
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.
+  - updateProtocol refactored to cover QUEUE timeout cases
 V3.10.2: hotfix: Executor frees the GPU/s used via step id instead of node.
 V3.10.1: hotfix: Avoid double Gpu assignment in scipion parallelize protocols with concurrent GPU steps
 V3.10.0

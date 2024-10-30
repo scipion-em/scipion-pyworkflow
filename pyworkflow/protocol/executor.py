@@ -424,13 +424,14 @@ class QueueStepExecutor(ThreadStepExecutor):
         submitDict['JOB_SCRIPT'] = os.path.abspath(removeExt(submitDict['JOB_SCRIPT']) + subthreadId + ".job")
         submitDict['JOB_LOGS'] = os.path.join(getParentFolder(submitDict['JOB_SCRIPT']), submitDict['JOB_NAME'])
 
-        jobid = _submit(self.hostConfig, submitDict, cwd, env)
+        jobid, error = _submit(self.hostConfig, submitDict, cwd, env)
         self.protocol.appendJobId(jobid)  # append active jobs
         self.protocol._store(self.protocol._jobId)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
-            logger.info("jobId is none therefore we set it to fail")
-            raise Exception("Failed to submit to queue.")
+            errorMsg = "Failed to submit to queue. JOBID is not valid. There's probably an error interacting with the queue: %s" % error
+            logger.info(errorMsg)
+            raise Exception(errorMsg)
 
         status = cts.STATUS_RUNNING
         wait = 3

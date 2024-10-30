@@ -682,8 +682,9 @@ class Project(object):
         self.mapper.store(protocol)
         self.mapper.commit()
 
-    def _updateProtocol(self, protocol: Protocol, tries=0, checkPid=False,
-                        skipUpdatedProtocols=True):
+    def _updateProtocol(self, protocol: Protocol, tries=0, checkPid=False):
+
+        updated= pw.NOT_UPDATED_UNNECESSARY
 
         # If this is read only exit
         if self.openedAsReadOnly():
@@ -691,67 +692,77 @@ class Project(object):
 
         try:
 
-            # Backup the values of 'jobId', 'label' and 'comment'
-            # to be restored after the .copy
-            jobId = protocol.getJobIds().clone()  # Use clone to prevent this variable from being overwritten or cleared in the latter .copy() call
-            label = protocol.getObjLabel()
-            comment = protocol.getObjComment()
+            # If the protocol database has changes ....
+            if not pwprot.isProtocolUpToDate(protocol):
 
-            if skipUpdatedProtocols:
-                # If we are already updated, comparing timestamps
-                # Not true, if the process died or was killed by the queue then the db remains intact and protocol is not updated
-                if self.checkIsAlive(protocol) and pwprot.isProtocolUpToDate(protocol):
+                updated = pw.PROTOCOL_UPDATED
 
-                    # Always check for the status of the process (queue job or pid)
-                    return pw.NOT_UPDATED_UNNECESSARY
+                # Backup the values of 'jobId', 'label' and 'comment'
+                # to be restored after the .copy
+                jobId = protocol.getJobIds().clone()  # Use clone to prevent this variable from being overwritten or cleared in the latter .copy() call
+                label = protocol.getObjLabel()
+                comment = protocol.getObjComment()
+
+                #  Comparing date will not work unless we have a reliable
+                # lastModificationDate of a protocol in the project.sqlite
+                prot2 = pwprot.getProtocolFromDb(self.path,
+                                                 protocol.getDbPath(),
+                                                 protocol.getObjId())
+
+                # Capture the db timestamp before loading.
+                lastUpdateTime = pwutils.getFileLastModificationDate(protocol.getDbPath())
+
+                # Copy is only working for db restored objects
+                protocol.setMapper(self.mapper)
+
+                localOutputs = list(protocol._outputs)
+                protocol.copy(prot2, copyId=False, excludeInputs=True)
+
+                # merge outputs: This is necessary when outputs are added from the GUI
+                # e.g.: adding coordinates from analyze result and protocol is active (interactive).
+                for attr in localOutputs:
+                    if attr not in protocol._outputs:
+                        protocol._outputs.append(attr)
+
+                # Restore backup values
+                if protocol.useQueueForProtocol() and jobId:  # If jobId not empty then restore value as the db is empty
+                    # Case for direct protocol launch from the GUI. Without passing through a scheduling process.
+                    # In this case the jobid is obtained by the GUI and the job id should be preserved.
+                    protocol.setJobIds(jobId)
+
+                # In case of scheduling a protocol, the jobid is obtained during the "scheduling job"
+                # and it is written in the rub.db. Therefore, it should be taken from there.
+
+                # Restore values edited in the GUI
+                protocol.setObjLabel(label)
+                protocol.setObjComment(comment)
+                # Use the run.db timestamp instead of the system TS to prevent
+                # possible inconsistencies.
+                protocol.lastUpdateTimeStamp.set(lastUpdateTime)
+
+                # # Check pid at the end, once updated. It may have brought new pids? Job ids? or process died and pid
+                # # pid and job ids were reset and status set to failed, so it does not make sense to check pids
+                # if checkPid and protocol.isActive():
+                #     self.checkIsAlive(protocol)
+
+                # Close DB connections to rundb
+                prot2.getProject().closeMapper()
+                prot2.closeMappers()
 
 
-            # If the protocol database has ....
-            #  Comparing date will not work unless we have a reliable
-            # lastModificationDate of a protocol in the project.sqlite
-            prot2 = pwprot.getProtocolFromDb(self.path,
-                                             protocol.getDbPath(),
-                                             protocol.getObjId())
+            # If protocol is still active
+            if protocol.isActive():
+                # If it is still alive, and hasn't been updated from run db
+                # NOTE: checkIsAlive may have changed the protocol status,in case the process ware killed
+                # So we need to persist those changes.
+                if not self.checkIsAlive(protocol):
 
-            # Capture the db timestamp before loading.
-            lastUpdateTime = pwutils.getFileLastModificationDate(protocol.getDbPath())
+                     updated = pw.PROTOCOL_UPDATED
 
-            # Copy is only working for db restored objects
-            protocol.setMapper(self.mapper)
 
-            localOutputs = list(protocol._outputs)
-            protocol.copy(prot2, copyId=False, excludeInputs=True)
-
-            # merge outputs: This is necessary when outputs are added from the GUI
-            # e.g.: adding coordinates from analyze result and protocol is active (interactive).
-            for attr in localOutputs:
-                if attr not in protocol._outputs:
-                    protocol._outputs.append(attr)
-
-            # Restore backup values
-            if protocol.useQueueForProtocol() and jobId:  # If jobId not empty then restore value as the db is empty
-                # Case for direct protocol launch from the GUI. Without passing through a scheduling process.
-                # In this case the jobid is obtained by the GUI and the job id should be preserved.
-                protocol.setJobIds(jobId)
-
-            # In case of scheduling a protocol, the jobid is obtained during the "scheduling job"
-            # and it is written in the rub.db. Therefore, it should be taken from there.
-
-            protocol.setObjLabel(label)
-            protocol.setObjComment(comment)
-            # Use the run.db timestamp instead of the system TS to prevent
-            # possible inconsistencies.
-            protocol.lastUpdateTimeStamp.set(lastUpdateTime)
-
-            # Check pid at the end, once updated
-            if checkPid:
-                self.checkIsAlive(protocol)
-
-            self.mapper.store(protocol)
-
-            # Close DB connections
-            prot2.getProject().closeMapper()
-            prot2.closeMappers()
+            if updated == pw.PROTOCOL_UPDATED:
+                # We store changes, either after updating the protocol with data from run-db or because it died
+                self.mapper.store(protocol)
 
         except Exception as ex:
             if tries == 3:  # 3 tries have been failed
@@ -765,12 +776,12 @@ class Project(object):
                     pass
                 return pw.NOT_UPDATED_ERROR
             else:
-                logger.warning("Couldn't update protocol %s(jobId=%s) from it's own database. ERROR: %s, attempt=%d"
-                             % (protocol.getObjName(), jobId, ex, tries))
+                logger.warning("Couldn't update protocol %s from it's own database. ERROR: %s, attempt=%d"
+                             % (protocol.getObjName(), ex, tries))
                 time.sleep(0.5)
                 self._updateProtocol(protocol, tries + 1)
 
-        return pw.PROTOCOL_UPDATED
+        return updated
 
     def checkIsAlive(self, protocol):
         """ Check if a protocol is alive based on its jobid (queue engines) or pid
@@ -1651,6 +1662,9 @@ class Project(object):
 
         :returns True if job is still alive or irrelevant
         """
+        if len(protocol.getJobIds()) == 0:
+            logger.warning("Checking if protocol alive in the queue but JOB ID is empty. Considering it dead.")
+            return False
         jobid = protocol.getJobIds()[0]
         hostConfig = protocol.getHostConfig()
 

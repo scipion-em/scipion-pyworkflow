@@ -144,9 +144,10 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
         submitDict = dict(hostConfig.getQueuesDefault())
         submitDict.update(protocol.getSubmitDict())
         submitDict['JOB_COMMAND'] = command
-        jobId = _submit(hostConfig, submitDict)
+        jobId, error = _submit(hostConfig, submitDict)
         if jobId is None or jobId == UNKNOWN_JOBID:
-            protocol.setStatus(STATUS_FAILED)
+            protocol.setFailed("There was a problem submitting this protocol to the queue engine: %s" % error)
+
         else:
             logger.info("Protocol %s sent to queue. Got JOB ID %s" %(protocol.getRunName(), jobId))
             protocol.setJobId(jobId)
@@ -215,18 +216,22 @@ def _submit(hostConfig, submitDict, cwd=None, env=None):
     gcmd = greenStr(command)
     logger.info("** Submitting to queue: '%s'" % gcmd)
 
-    p = Popen(command, shell=True, stdout=PIPE, cwd=cwd, env=env)
-    out = p.communicate()[0]
+    p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, cwd=cwd, env=env)
+    out = p.communicate()
     # Try to parse the result of qsub, searching for a number (jobId)
     # Review this, seems to exclusive to torque batch system
-    s = re.search(r'(\d+)', str(out))
+    firstLine = out[0]
+    s = re.search(r'(\d+)', str(firstLine))
     if p.returncode == 0 and s:
         job = int(s.group(0))
         logger.info("Launched job with id %s" % job)
-        return job
+        return job, None
     else:
-        logger.info("Couldn't submit to queue for reason: %s " % redStr(out.decode()))
-        return UNKNOWN_JOBID
+        # Call communicate again to get "late" messages.
+        out = p.communicate()
+        errors = [line.decode() for line in out]
+        logger.info("Couldn't submit to queue for reason: %s " % "\n".join(errors))
+        return UNKNOWN_JOBID, errors
 
 def _checkJobStatus(hostConfig, jobid):
     """
