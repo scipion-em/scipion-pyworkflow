@@ -683,8 +683,13 @@ class Project(object):
         self.mapper.commit()
 
     def _updateProtocol(self, protocol: Protocol, tries=0, checkPid=False):
+        """ Update the protocol passed taking the data from its run.db.
+        It also checks if the protocol is alive base on its PID of JOBIDS """
+        # NOTE: when this method fails recurrently....we are setting the protocol to failed and
+        # therefore closing its outputs. This, in streaming scenarios triggers a false closing to protocols
+        # while actual protocol is still alive but
 
-        updated= pw.NOT_UPDATED_UNNECESSARY
+        updated = pw.NOT_UPDATED_UNNECESSARY
 
         # If this is read only exit
         if self.openedAsReadOnly():
@@ -692,8 +697,14 @@ class Project(object):
 
         try:
 
+            # IMPORTANT: the protocol after some iterations of this ends up without the project!
+            # This is a problem if we want tu use protocol.useQueueForJobs that uses project info!
+            # print("PROJECT: %s" % protocol.getProject())
+
             # If the protocol database has changes ....
             if not pwprot.isProtocolUpToDate(protocol):
+
+                logger.debug("Protocol %s outdated. Updating it now." % protocol.getRunName())
 
                 updated = pw.PROTOCOL_UPDATED
 
@@ -702,6 +713,7 @@ class Project(object):
                 jobId = protocol.getJobIds().clone()  # Use clone to prevent this variable from being overwritten or cleared in the latter .copy() call
                 label = protocol.getObjLabel()
                 comment = protocol.getObjComment()
+                project = protocol.getProject() # The later protocol.copy(prot2, copyId=False, excludeInputs=True) cleans the project!!
 
                 #  Comparing date will not work unless we have a reliable
                 # lastModificationDate of a protocol in the project.sqlite
@@ -716,7 +728,8 @@ class Project(object):
                 protocol.setMapper(self.mapper)
 
                 localOutputs = list(protocol._outputs)
-                protocol.copy(prot2, copyId=False, excludeInputs=True)
+                protocol.copy(prot2, copyId=False, excludeInputs=True) # This cleans protocol._project cause getProtocolFromDb does not bring the project
+                protocol.setProject(project)
 
                 # merge outputs: This is necessary when outputs are added from the GUI
                 # e.g.: adding coordinates from analyze result and protocol is active (interactive).
@@ -777,9 +790,9 @@ class Project(object):
                 return pw.NOT_UPDATED_ERROR
             else:
                 logger.warning("Couldn't update protocol %s from it's own database. ERROR: %s, attempt=%d"
-                             % (protocol.getObjName(), ex, tries))
+                             % (protocol.getRunName(), ex, tries))
                 time.sleep(0.5)
-                self._updateProtocol(protocol, tries + 1)
+                return self._updateProtocol(protocol, tries + 1)
 
         return updated
 
@@ -795,10 +808,15 @@ class Project(object):
             logger.info("Protocol's %s pid is None and is active... this should not happen. Checking its job id: %s" % (protocol.getRunName(), protocol.getJobIds()))
             pid = 0
 
+        alive = False
         if pid == 0:
-            return self.checkJobId(protocol)
+            alive = self.checkJobId(protocol)
         else:
-            return self.checkPid(protocol)
+            alive = self.checkPid(protocol)
+
+        if alive:
+            logger.debug("Protocol %s is alive." % protocol.getRunName())
+        return alive
 
     def stopProtocol(self, protocol):
         """ Stop a running protocol """
