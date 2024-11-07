@@ -362,17 +362,15 @@ class Protocol(Step):
     # prerequisites of steps, but is easier to keep it
     stepsExecutionMode = STEPS_SERIAL
 
-    @classmethod
-    def modeSerial(cls):
+    def modeSerial(self):
         """ Returns true if steps are run one after another"""
         # Maybe this property can be inferred from the
         # prerequisites of steps, but is easier to keep it
-        return cls.stepsExecutionMode == STEPS_SERIAL
+        return self.stepsExecutionMode == STEPS_SERIAL
 
-    @classmethod
-    def modeParallel(cls):
+    def modeParallel(self):
         """ Returns true if steps are run in parallel"""
-        return not cls.modeSerial()
+        return not self.modeSerial()
 
     def __init__(self, **kwargs):
         Step.__init__(self, **kwargs)
@@ -1934,7 +1932,9 @@ class Protocol(Step):
              'JOB_CORES': self.numberOfMpi.get() * self.numberOfThreads.get(),
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
-             'QUEUE_FOR_JOBS': 'N'
+             'QUEUE_FOR_JOBS': 'N',
+             'SCIPION_PROJECT': self.getProject().getShortName(),
+             'SCIPION_PROTOCOL': self.getRunName()
              }
         d.update(queueParams)
         return d

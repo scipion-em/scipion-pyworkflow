@@ -287,7 +287,7 @@ class ThreadStepExecutor(StepExecutor):
         # Some nodes/threads do not use gpus so may not be booked and not in the dictionary
         if gpus is not None:
             self.gpuDict.pop(node)
-            self.gpuDict[-node-1] = gpus
+            self.gpuDict[-node] = gpus
             logger.info("GPUs %s freed from step %s" % (gpus, node))
         else:
             logger.debug("step id %s not found in GPU slots" % node)
@@ -392,8 +392,6 @@ class QueueStepExecutor(ThreadStepExecutor):
         self.submitDict = submitDict
         # Command counter per thread
         self.threadCommands = {}
-        for threadId in range(nThreads):
-            self.threadCommands[threadId] = 0
 
         if nThreads > 1:
             self.runJobs = ThreadStepExecutor.runSteps
@@ -411,6 +409,15 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         logger.debug("Updated gpus ids rebase starting from 0: %s per thread" %self.gpuDict)
 
+    def getThreadJobId(self, stepId):
+        """ Returns the job id extension assigned to each thread/step """
+        if not stepId in self.threadCommands:
+            self.threadCommands[stepId] = 0
+
+        self.threadCommands[stepId] += 1
+
+        return self.threadCommands[stepId]
+
     def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None, executable=None):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
@@ -418,8 +425,8 @@ class QueueStepExecutor(ThreadStepExecutor):
         submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
                                                             self.hostConfig, env,
                                                             gpuList=self.getGpuList())
-        self.threadCommands[threadId] += 1
-        subthreadId = '-%s-%s' % (threadId, self.threadCommands[threadId])
+        threadJobId = self.getThreadJobId(threadId)
+        subthreadId = '-%s-%s' % (threadId, threadJobId)
         submitDict['JOB_NAME'] = submitDict['JOB_NAME'] + subthreadId
         submitDict['JOB_SCRIPT'] = os.path.abspath(removeExt(submitDict['JOB_SCRIPT']) + subthreadId + ".job")
         submitDict['JOB_LOGS'] = os.path.join(getParentFolder(submitDict['JOB_SCRIPT']), submitDict['JOB_NAME'])
