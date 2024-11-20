@@ -282,3 +282,12 @@ def getExtraLogInfo(measurement, status, project_name=None, prot_id=None, prot_n
 
     except Exception as e:
         print("getExtraLogInfo failed: %s.Params were: dbFilename %s" % (e, dbfilename))
+
+
+def changeLogLevel(newLoglevel):
+    """ Changes "on-the-fly" the log level iterating through the handlders"""
+
+    logger = logging.getLogger()
+    logger.setLevel(newLoglevel)
+    for handler in logger.handlers:
+        handler.setLevel(newLoglevel)

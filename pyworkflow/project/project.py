@@ -715,6 +715,9 @@ class Project(object):
                 comment = protocol.getObjComment()
                 project = protocol.getProject() # The later protocol.copy(prot2, copyId=False, excludeInputs=True) cleans the project!!
 
+                if project is None:
+                    logger.warning("Protocol %s hasn't the project associated when updating it." % label)
+
                 #  Comparing date will not work unless we have a reliable
                 # lastModificationDate of a protocol in the project.sqlite
                 prot2 = pwprot.getProtocolFromDb(self.path,
@@ -1605,6 +1608,7 @@ class Project(object):
             for r in self.runs:
 
                 self._setProtocolMapper(r)
+                r.setProject(self)
 
                 # Check for run warnings
                 r.checkSummaryWarnings()

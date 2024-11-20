@@ -460,8 +460,13 @@ class Config:
         debugOn = not Config.debugOn()
         os.environ[SCIPION_DEBUG] = str(debugOn)
         os.environ[SCIPION_DEBUG_NOCLEAN] = str(debugOn)
-        os.environ[SCIPION_LOG_LEVEL] = "INFO" if not debugOn else "DEBUG"
 
+        newLevel = "DEBUG" if debugOn else "INFO"
+        os.environ[SCIPION_LOG_LEVEL] = newLevel
+
+        from pyworkflow.utils import changeLogLevel
+        changeLogLevel(newLevel)
+        logger.info("Log level set to %s" % newLevel)
     @staticmethod
     def debugSQLOn():
         from .utils import envVarOn

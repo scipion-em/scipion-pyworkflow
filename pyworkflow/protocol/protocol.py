@@ -393,7 +393,7 @@ class Protocol(Step):
         self._log = logger
         self._buffer = ''  # text buffer for reading log files
         # Project to which the protocol belongs
-        self.__project = kwargs.get('project', None)
+        self._project = kwargs.get('project', None)
         # Filename templates dict that will be used by _getFileName
         self.__filenamesDict = {}
 
@@ -546,10 +546,10 @@ class Protocol(Step):
         return self._hasExpert
 
     def getProject(self):
-        return self.__project
+        return self._project
 
     def setProject(self, project):
-        self.__project = project
+        self._project = project
 
     @staticmethod
     def hasDefinition(cls):
@@ -742,7 +742,7 @@ class Protocol(Step):
                         protocol = self.getProject().getRunsGraph(refresh=True).getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
-                        # Pointers do not have the __project set.
+                        # Pointers do not have the _project set.
                         # We do not have a clear way to get the protocol if
                         # we do not have the project object associated
                         # This case implies Direct Pointers to Sets
@@ -1150,20 +1150,20 @@ class Protocol(Step):
 
         return self.__insertStep(step,prerequisites)
 
-    # def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
-    #                       **kwargs):
-    #     """ Insert an Step that will simple call runJob function
-    #     **args: see __insertStep
-    #     """
-    #     return self._insertFunctionStep('runJob', progName, progArguments,
-    #                                     **kwargs)
-    #
-    # def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
-    #     """ Shortcut function to insert a step for copying a file to a destiny. """
-    #     step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile,
-    #                         targetFile,
-    #                         **kwargs)
-    #     return self.__insertStep(step, **kwargs)
+    def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
+                          **kwargs):
+        """ Insert an Step that will simple call runJob function
+        **args: see __insertStep
+        """
+        return self._insertFunctionStep('runJob', progName, progArguments,
+                                        **kwargs)
+
+    def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
+        """ Shortcut function to insert a step for copying a file to a destiny. """
+        step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile,
+                            targetFile,
+                            **kwargs)
+        return self.__insertStep(step, **kwargs)
 
     def _enterDir(self, path):
         """ Enter into a new directory path and store the current path.
@@ -1925,6 +1925,9 @@ class Protocol(Step):
         hc = self.getHostConfig()
 
         script = self._getLogsPath(hc.getSubmitPrefix() + self.strId() + '.job')
+
+        scipion_project =  "SCIPION_PROJECT" if self.getProject() is None else self.getProject().getShortName()
+
         d = {'JOB_SCRIPT': script,
              'JOB_LOGS': self._getLogsPath(hc.getSubmitPrefix() + self.strId()),
              'JOB_NODEFILE': os.path.abspath(script.replace('.job', '.nodefile')),
@@ -1936,7 +1939,7 @@ class Protocol(Step):
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
              'QUEUE_FOR_JOBS': 'N',
-             'SCIPION_PROJECT': "SCIPION_PROJECT",  # This does not work cause at execution time some protocols do NOT have the project!. self.getProject().getShortName(),
+             'SCIPION_PROJECT': scipion_project,
              'SCIPION_PROTOCOL': self.getRunName()
              }
         d.update(queueParams)
