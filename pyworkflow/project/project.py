@@ -1632,6 +1632,10 @@ class Project(object):
         The check will only be done for protocols that have been sent
         to a queue system.
         """
+
+        if len(protocol.getJobIds()) == 0:
+            return
+
         jobid = protocol.getJobIds()[0]
         hostConfig = protocol.getHostConfig()
 

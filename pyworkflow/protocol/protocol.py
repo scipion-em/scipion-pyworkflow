@@ -1933,7 +1933,7 @@ class Protocol(Step):
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
              'QUEUE_FOR_JOBS': 'N',
-             'SCIPION_PROJECT': self.getProject().getShortName(),
+             'SCIPION_PROJECT': "SCIPION_PROJECT",  # self.getProject().getShortName(),
              'SCIPION_PROTOCOL': self.getRunName()
              }
         d.update(queueParams)
