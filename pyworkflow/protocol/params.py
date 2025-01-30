@@ -331,7 +331,7 @@ class Form(object):
                            'should be used carefully.'
                       )
   
-    def addParallelSection(self, threads=1, mpi=8, binThreads=0):
+    def addParallelSection(self, threads=1, mpi=8, binThreads=0, binThreadsHelp=None):
 
         """ Adds the parallelization section to the form
             pass threads=0 to disable threads parameter and mpi=0 to disable mpi params

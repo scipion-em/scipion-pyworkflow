@@ -339,13 +339,13 @@ class Protocol(Step):
     
         class MyOutput(enum.Enum):
             outputMicrographs = SetOfMicrographs
-            outputMicrographDW = SetOfMicrographs
+            outputMicrographDW = SetOfMovies
     
     When defining outputs you can, optionally, use this enum like:
     self._defineOutputs(**{MyOutput.outputMicrographs.name, setOfMics})
     It will help to keep output names consistently
     
-    Alternative an inline dictionary will work:
+    Alternative an inline dictionary will work (this is mandatory in case two or more outputs are of the same type):
     _possibleOutputs = {"outputMicrographs" : SetOfMicrographs}
     
     For a more fine detailed/dynamic output based on parameters, you can overwrite the getter:
@@ -402,12 +402,13 @@ class Protocol(Step):
         self.lastUpdateTimeStamp = String()
 
         # For non-parallel protocols mpi=1 and threads=1
+        # MPIs
         self.allowMpi = hasattr(self, 'numberOfMpi')
         if not self.allowMpi:
             self.numberOfMpi = Integer(1)
 
+        # Threads
         self.allowThreads = hasattr(self, 'numberOfThreads')
-
         if not self.allowThreads:
             self.numberOfThreads = Integer(1)
 
@@ -455,6 +456,38 @@ class Protocol(Step):
         # than one time, thus avoiding deadlock situation. This fixed the concurrency problems we had before.
         self.forceSchedule = Boolean(False)
 
+
+    def getMPIs(self):
+        """ Returns the value of MPIs (integer)"""
+        return self.numberOfMpi.get()
+
+    def getScipionThreads(self):
+        """ Returns the number of Scipion threads. Not the threads that are argument for programs but those that will
+         run steps in parallel. This assumes cls.stepsExecutionMode = STEP_PARALLEL. See Param.addParallelSection"""
+        return self.numberOfThreads.get()
+
+    def getBinThreads(self):
+        """ Returns the number of binary threads. An integer to pass as an argument for the binary program integrated.
+         See Param.addParallelSection"""
+
+        if self.modeSerial():
+            return self.numberOfThreads.get()
+        else:
+            return self.binThreads.get()
+
+    def getTotalThreads(self):
+        """ Returns the total number of threads the protocol will need. This may be necessary when clusters require this value"""
+        if self.modeSerial():
+            # This will be the main thread + the binary threads * mpi ?
+            return 1 + self.getTotalBinThreads()
+        else:
+            # One main thread (included in Scipion threads) plus TotalBinThread time processing steps (Scipion threads -1)
+            return 1 + ((self.getScipionThreads()-1)* self.getTotalBinThreads())
+
+    def getTotalBinThreads(self):
+        """ Returns the total number to cores the binary will use: threads * mpis"""
+        return self.getBinThreads() * self.getMPIs()
+
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
         attributes of self, also store the key in attrList.
@@ -491,6 +524,7 @@ class Protocol(Step):
         """Close all output set"""
         for outputName, output in self.iterOutputAttributes():
             if isinstance(output, Set) and output.isStreamOpen():
+                logger.info("Closing %s output" % outputName)
                 self.__tryUpdateOutputSet(outputName, output, state=Set.STREAM_CLOSED)
 
     def _updateOutputSet(self, outputName, outputSet,
@@ -1078,6 +1112,7 @@ class Protocol(Step):
     def _finalizeStep(self, status, msg=None):
         """ Closes the step and setting up the protocol process id """
         super()._finalizeStep(status, msg)
+        self._closeOutputSet()
         self._pid.set(None)
 
     def _updateSteps(self, updater, where="1"):
@@ -1351,6 +1386,7 @@ class Protocol(Step):
 
         if startIndex == len(self._steps):
             self.lastStatus = STATUS_FINISHED
+            self.setFinished()
             self.info("All steps seem to be FINISHED, nothing to be done.")
         else:
             self.lastStatus = self.status.get()
@@ -1360,8 +1396,8 @@ class Protocol(Step):
                                          self._stepsCheck,
                                          self._stepsCheckSecs)
 
-        print("*** Last status is %s " % self.lastStatus)
-        self.setStatus(self.lastStatus)
+            logger.info("*** Last status is %s " % self.lastStatus)
+            self.setStatus(self.lastStatus)
         self._store(self.status)
 
     def __deleteOutputs(self):
@@ -1581,9 +1617,15 @@ class Protocol(Step):
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
+
+            if self.modeSerial():
+                self.info("Serial execution")
+            else:
+                self.info("Scipion threads: %d" % self.getScipionThreads())
+
             try:
-                self.info('          MPI: %d' % self.numberOfMpi)
-                self.info('      threads: %d' % self.numberOfThreads)
+                self.info('binary MPI: %d' % self.numberOfMpi)
+                self.info('binary Threads: %d' % self.getBinThreads())
             except Exception as e:
                 self.info('  * Cannot get information about MPI/threads (%s)' % e)
         # Something went wrong ans at this point status is launched. We mark it as failed.
@@ -1926,7 +1968,7 @@ class Protocol(Step):
 
         script = self._getLogsPath(hc.getSubmitPrefix() + self.strId() + '.job')
 
-        scipion_project =  "SCIPION_PROJECT" if self.getProject() is None else self.getProject().getShortName()
+        scipion_project = "SCIPION_PROJECT" if self.getProject() is None else self.getProject().getShortName()
 
         d = {'JOB_SCRIPT': script,
              'JOB_LOGS': self._getLogsPath(hc.getSubmitPrefix() + self.strId()),

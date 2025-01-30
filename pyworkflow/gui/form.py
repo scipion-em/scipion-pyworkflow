@@ -1262,7 +1262,7 @@ class ParamWidget:
 
     def _browseObject(self, e=None):
         """Select an object from DB
-        This function is suppose to be used only for PointerParam"""
+        This function is supposed to be used only for PointerParam"""
         value = self.get()
         selected = []
         if isinstance(value, list):
@@ -1323,7 +1323,7 @@ class ParamWidget:
                     return ("Please select object of types: %s"
                             % self.param.paramClass.get())
 
-        title = "Select object of types: %s" % self.param.paramClass.__name__
+        title = "Select object of type %s" % self.param.paramClass.__name__
 
         # Let's ignore conditions so far
         # pointerCond = self.param.pointerCondition.get()

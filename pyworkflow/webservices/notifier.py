@@ -152,11 +152,11 @@ class ProjectWorkflowNotifier(object):
         a test and therefore no statistics will be sent"""
         return os.path.basename(self.project.name).startswith("Test")
 
-    def getEntryFromWebservice(self, uuid):
+    def getEntryFromWebservice(self, projId):
         if not pyworkflow.Config.SCIPION_NOTIFY:
             return
         urlName = os.environ.get('SCIPION_NOTIFY_URL').strip()
         # remove last directory
         urlName = os.path.split(urlName)[0]
-        url = urlName + "/?project_uuid=" + uuid
-        resultDict = self._sendData(url)
+        url = urlName + "/?project_uuid=" + projId
+        self._sendData(url)

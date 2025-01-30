@@ -949,7 +949,7 @@ class Project(object):
                                     break
                                 # If it is a class already: "possibleOutput" case. In this case attr is the class and not
                                 # an instance of c. In this special case
-                                elif possibleOutput and attr == c:
+                                elif possibleOutput and issubclass(attr, c):
                                     match = True
                                     cancelConditionEval = True
 
