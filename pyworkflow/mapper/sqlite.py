@@ -1027,13 +1027,16 @@ class SqliteFlatMapper(Mapper):
 
         return obj
         
-    def __iterObjectsFromRows(self, objRows, objectFilter=None):
+    def __iterObjectsFromRows(self, objRows, objectFilter=None, rowFilter=None):
         for objRow in objRows:
+            if rowFilter and not rowFilter(objRow):
+                continue
+
             obj = self.__objFromRow(objRow)
             if objectFilter is None or objectFilter(obj):
                 yield obj
         
-    def __objectsFromRows(self, objRows, iterate=False, objectFilter=None):
+    def __objectsFromRows(self, objRows, iterate=False, objectFilter=None, rowFilter=None):
         """Create a set of object from a set of rows
         Params:
             objRows: rows result from a db select.
@@ -1043,9 +1046,9 @@ class SqliteFlatMapper(Mapper):
         """
         if not iterate:
             return [obj.clone()
-                    for obj in self.__iterObjectsFromRows(objRows, objectFilter)]
+                    for obj in self.__iterObjectsFromRows(objRows, objectFilter, rowFilter)]
         else:
-            return self.__iterObjectsFromRows(objRows, objectFilter)
+            return self.__iterObjectsFromRows(objRows, objectFilter, rowFilter)
          
     def selectBy(self, iterate=False, objectFilter=None, **args):
         """Select object meetings some criteria"""
@@ -1053,7 +1056,7 @@ class SqliteFlatMapper(Mapper):
         return self.__objectsFromRows(objRows, iterate, objectFilter)
     
     def selectAll(self, iterate=True, objectFilter=None, orderBy=ID,
-                  direction='ASC', where='1', limit=None):
+                  direction='ASC', where='1', limit=None, rowFilter=None):
         # Just a sanity check for emtpy sets, that doesn't contains
         # 'Properties' table
         if not self.db.hasTable('Properties'):
@@ -1076,7 +1079,7 @@ and restarting scipion. Export command:
     export SQLITE_TMPDIR=. """ % str(e)
             raise OperationalError(msg)
         
-        return self.__objectsFromRows(objRows, iterate, objectFilter) 
+        return self.__objectsFromRows(objRows, iterate, objectFilter, rowFilter)
 
     def unique(self, labels, where=None):
         """ Returns a list (for a single label) or a dictionary with unique values for the passed labels.
