@@ -258,7 +258,7 @@ class ThreadStepExecutor(StepExecutor):
 
             gpus = self.getFreeGpuSlot(nodeId)
             if gpus is None:
-                logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning and empty list." % nodeId)
+                logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning an empty list." % nodeId)
                 return []
             else:
                 return gpus
