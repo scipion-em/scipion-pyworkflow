@@ -186,13 +186,16 @@ class HostConfig(Object):
                         return default
 
                 def getDict(var):
-                    od = OrderedDict()
+                    try:
+                        od = OrderedDict()
 
-                    if cp.has_option(hostName, var):
-                        for key, value in json.loads(get(var)).items():
-                            od[key] = value
+                        if cp.has_option(hostName, var):
+                            for key, value in json.loads(get(var)).items():
+                                od[key] = value
 
-                    return od
+                        return od
+                    except Exception as e:
+                        raise AttributeError("There is a parsing error in the '%s' variable: %s" % (var, str(e)))
 
                 host.setScipionHome(get(pw.SCIPION_HOME_VAR, pw.Config.SCIPION_HOME))
                 host.setScipionConfig(pw.Config.SCIPION_CONFIG)

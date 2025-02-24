@@ -22,16 +22,17 @@
 # *  e-mail address 'scipion@cnb.csic.es'
 # *
 # **************************************************************************
-""" This modules hosts code provider and window to search for a protocol"""
+""" This module contains the provider and dialog to search for a protocol"""
 import tkinter as tk
-
 from pyworkflow import Config
-import  pyworkflow.gui as pwgui
+import pyworkflow.gui as pwgui
 import pyworkflow.object as pwobj
 from pyworkflow.gui.dialog import SearchBaseWindow
 
 from pyworkflow.gui.project.utils import isAFinalProtocol
 from pyworkflow.gui.project.viewprotocols_extra import ProtocolTreeConfig
+from pyworkflow.project.usage import getNextProtocolSuggestions
+from pyworkflow.utils import Icon
 
 UPDATED = "updated"
 
@@ -69,16 +70,54 @@ class SearchProtocolWindow(SearchBaseWindow):
         'score': ('Score', {'width': 50, 'stretch': tk.FALSE}, 5, int)
     }
 
-    def __init__(self, parentWindow, position=None):
+    def __init__(self, parentWindow, position=None, selectionGetter=None):
 
         posStr = "" if position is None else " at (%s,%s)" % position
         self.position = position
+        self.selectionGetter = selectionGetter
+        self.selectedProtocol = None
+        self._infoLbl = None  # Label to show information
         super().__init__(parentWindow,
                          title="Add a protocol" + posStr)
+
+        self.root.bind("<FocusIn>", self._onWindowFocusIn)
+
+    def _onWindowFocusIn(self, event):
+        """
+        To refresh the selected protocol in the graph upon window activation.
+        :param event: event information
+        :return: Nothing
+        """
+        if event.widget == self.root:
+            if self.selectionGetter:
+                self.selectedProtocol = self.selectionGetter()
+                if self._isSuggestionActive():
+                    self._onSearchClick()
+    def _isSuggestionActive(self):
+        """
+        :return: Returns true if current mode is suggestion mode.
+        """
+        return self._searchVar.get().lower().strip() ==""
+
+    def _createSearchBox(self, content):
+        frame = super()._createSearchBox(content)
+
+        btn = pwgui.widgets.IconButton(frame, "Suggest",
+                                 tooltip="Suggestions for active protocol based on usage.",
+                                 imagePath=Icon.LIGHTBULB,
+                                 command=self.showSuggestions)
+        btn.grid(row=0, column=3, sticky='nw')
+
+        self.lbl = tk.StringVar()
+        lbl = tk.Label(frame, text="", bg=Config.SCIPION_BG_COLOR, textvariable=self.lbl, font=self.font)
+        lbl.grid(row=0, column=4, sticky='news')
 
     def _createResultsTree(self, frame, show, columns):
         return self.master.getViewWidget()._createProtocolsTree(frame, show=show, columns=columns, position=self.position)
 
+    def showSuggestions(self, e=None):
+        self._searchVar.set("")
+        self._onSearchClick()
     def _onSearchClick(self, e=None):
 
         self._resultsTree.clear()
@@ -92,7 +131,12 @@ class SearchProtocolWindow(SearchBaseWindow):
 
     def scoreProtocols(self):
 
+        if self._isSuggestionActive():
+            return self.addSuggestions()
+
         keyword = self._searchVar.get().lower().strip()
+        self.lbl.set('Showing text search matches for "%s"' % keyword)
+
         emProtocolsDict = Config.getDomain().getProtocols()
         protList = []
 
@@ -111,6 +155,44 @@ class SearchProtocolWindow(SearchBaseWindow):
                 # something was found: weight > 0
                 if line[8] != 0:
                     protList.append(line)
+
+        return protList
+
+    def addSuggestions(self):
+
+        if self.selectedProtocol is None:
+            self.lbl.set("Not showing suggestions since there is no protocol selected.")
+            return []
+
+        self.lbl.set("Usage suggestions for selected protocol: %s" % self.selectedProtocol.getClassLabel())
+
+        protList = []
+        suggestions = getNextProtocolSuggestions(self.selectedProtocol.getClassName())
+        for suggestion in suggestions:
+            #Fields comming from the site:
+            # 'next_protocol__name', 'count', 'next_protocol__friendlyName', 'next_protocol__package', 'next_protocol__description'
+            nextProtName, count, name, package, descr = suggestion
+            streamstate = "unknown"
+            installed = "Missing. Available in %s plugin." % package
+            protClass = Config.getDomain().getProtocols().get(nextProtName, None)
+
+            # Get accurate valus from exisitng installation
+            if protClass is not None:
+                name = protClass.getClassLabel().lower()
+                descr = protClass.getHelpText().strip().replace('\r', '').replace('\n', '').lower()
+                streamstate = "streamified" if protClass.worksInStreaming() else "static"
+                installed = "installed" if protClass.isInstalled() else "missing installation"
+
+            line = (nextProtName, name,
+                    installed,
+                    descr,
+                    streamstate,
+                    "",
+                    "",
+                    "",
+                    count)
+
+            protList.append(line)
 
         return protList
 
@@ -139,7 +221,7 @@ class SearchProtocolWindow(SearchBaseWindow):
     def _addProtocolToTree(self, protList):
         """ Adds the items in protList to the tree
 
-        :param protList: List of tuples with all the values/colunms used in search ans shown in the tree"""
+        :param protList: List of tuples with all the values/columns used in search and shown in the tree"""
 
         for key, label, installed, help, streamified, beta, new, updated, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed',

@@ -1,5 +1,11 @@
 V3.11.0
 users:
+  - Usage report:
+      Sent upon project closing and not upon opening.
+      Sent once day(default), even if it hasn't changed.
+  - Suggestion mode added to the "add protocol" dialog:
+      Button added. An empty search "" activates the suggestions. Otherwise search on the installed protocols
+  - Host.conf parsing feedback. When there is a parsing error in the host.conf it will report more precisely the cause
   - Parallel section refactored: Scipion threads and or "Package compute" lines.
   - Allow for having the three compute fields: Scipion threads, threads and mpis.
   - Fix: jobs, processes killed are detected by scipion.

@@ -34,9 +34,9 @@ from datetime import timedelta, datetime
 from urllib.parse import urlencode
 from urllib.request import build_opener, HTTPHandler
 
-import pyworkflow
 import pyworkflow.utils as pwutils
-from . import config
+from pyworkflow import Config
+
 
 
 class ProjectWorkflowNotifier(object):
@@ -85,7 +85,9 @@ class ProjectWorkflowNotifier(object):
             # set debuglevel=0 for no messages
             opener = build_opener(HTTPHandler(debuglevel=0))
             data = urlencode(dataDict).encode()
-            content = opener.open(url, data=data).read()
+            opener.open(url, data=data).read()
+
+            # Store file time stamp with last time it was sent
             now = time.time()
             os.utime(self._getUuidFileName(), (now, now))
         except Exception as e:
@@ -106,12 +108,13 @@ class ProjectWorkflowNotifier(object):
 
         try:
             # check if environment exists otherwise abort
-            if not pyworkflow.Config.SCIPION_NOTIFY:
+            if not Config.SCIPION_NOTIFY:
                 return
 
             # if project specifies not to send stats
             if self._isProjectMuted():
                 return
+
             # Check the seconds range of the notify, by default one day
             seconds = int(os.environ.get('SCIPION_NOTIFY_SECONDS', '86400'))
 
@@ -120,26 +123,20 @@ class ProjectWorkflowNotifier(object):
 
             # INFO: now we are only sending the protocols names in the project.
             # We could pass namesOnly=False to get the full workflow template
-            projectWorfklow = self.project.getProtocolsJson(namesOnly=True)
+            project_workflow = self.project.getProjectUsage().toJSON()  # self.project.getProtocolsJson(namesOnly=True)
 
-            # if list with workflow has not been altered do not sent it
-            if not self._dataModified(projectWorfklow):
-                return
-            else:
-                # For compatibility with version 1.0 check
-                # if Log directory exists. If it does not
-                # create it
-                # TODO: REMOVE this check in scipion 1.3
-                dataFile = self._getDataFileName()
-                # create the folder of the file path if not exists
-                pwutils.makeFilePath(dataFile)
-                with open(dataFile, 'w') as f:
-                    f.write(projectWorfklow)
+
+            # Write what is going to be sent in a file for _modifiedBefore to check file TS and avoid resending stats
+            dataFile = self._getDataFileName()
+            # create the folder of the file path if not exists
+            pwutils.makeFilePath(dataFile)
+            with open(dataFile, 'w') as f:
+                f.write(project_workflow)
+
             dataDict = {'project_uuid': self._getUuid(),
-                        'project_workflow': projectWorfklow}
+                        'project_workflow': project_workflow}
 
-            urlName = os.environ.get('SCIPION_NOTIFY_URL',
-                                     config.SCIPION_STATS_WORKFLOW_APP).strip()
+            urlName = Config.SCIPION_STATS_WORKFLOW_APP.strip()
             urlName += "addOrUpdateWorkflow/"
             t = threading.Thread(name="notifier", target=lambda: self._sendData(urlName, dataDict))
             t.start()  # will execute function in a separate thread
@@ -152,11 +149,3 @@ class ProjectWorkflowNotifier(object):
         a test and therefore no statistics will be sent"""
         return os.path.basename(self.project.name).startswith("Test")
 
-    def getEntryFromWebservice(self, projId):
-        if not pyworkflow.Config.SCIPION_NOTIFY:
-            return
-        urlName = os.environ.get('SCIPION_NOTIFY_URL').strip()
-        # remove last directory
-        urlName = os.path.split(urlName)[0]
-        url = urlName + "/?project_uuid=" + projId
-        self._sendData(url)

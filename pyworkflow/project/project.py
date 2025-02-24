@@ -26,6 +26,7 @@
 # **************************************************************************
 import logging
 
+from .usage import ScipionWorkflow
 from ..protocol.launch import _checkJobStatus
 
 ROOT_NODE_NAME = "PROJECT"
@@ -48,7 +49,7 @@ from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_RESUME,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS,
                                            UNKNOWN_JOBID, INITIAL_SLEEP_TIME, STATUS_FINISHED)
-from pyworkflow.protocol.protocol import ProtImportBase, Protocol
+from pyworkflow.protocol.protocol import ProtImportBase, Protocol, LegacyProtocol
 
 from . import config
 
@@ -1279,6 +1280,35 @@ class Project(object):
                             "'type '%s'." % type(protocol))
 
         return result
+
+    def getProjectUsage(self) -> ScipionWorkflow:
+        """ returns usage class ScipionWorkflow populated with project data
+        """
+        protocols = self.getRuns()
+
+        # Handle the copy of a list of protocols
+        # for this case we need to update the references of input/outputs
+        sw = ScipionWorkflow()
+        g = self.getRunsGraph()
+
+        for prot in protocols:
+
+            if not isinstance(prot, LegacyProtocol):
+                # Add a count for the protocol
+                protName = prot.getClassName()
+                sw.addCount(protName)
+
+                # Add next protocols count
+                nodeId = prot.getObjId()
+                node = g.getNode(prot.strId())
+
+                for childNode in node.getChildren():
+                    prot = childNode.run
+                    if not isinstance(prot, LegacyProtocol):
+                        nextProtName = prot.getClassName()
+                        sw.addCountToNextProtocol(protName, nextProtName)
+
+        return sw
 
     def getProtocolsDict(self, protocols=None, namesOnly=False):
         """ Creates a dict with the information of the given protocols.

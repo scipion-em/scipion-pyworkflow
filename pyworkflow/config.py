@@ -260,8 +260,14 @@ class Config:
     SCIPION_PLUGIN_JSON = _get('SCIPION_PLUGIN_JSON', None,
     "Optional. Path to get the json file with all the plugins available for Scipion.")
 
+    SCIPION_SITE = _get('SCIPION_SITE', 'https://scipion.i2pc.es',
+    "Scipion site URL.")
+    SCIPION_SITE_API = SCIPION_SITE + '/report_protocols/api/v2'
+    SCIPION_STATS_WORKFLOW_APP = SCIPION_SITE_API + '/workflow/'
+    SCIPION_STATS_SUGGESTION = SCIPION_SITE_API + '/nextprotocol/suggestion/%s'
+
     SCIPION_PLUGIN_REPO_URL = _get('SCIPION_PLUGIN_REPO_URL',
-                                   'https://scipion.i2pc.es/getplugins/',
+                                   SCIPION_SITE + '/getplugins/',
     "Url from where to get the list of plugins.")
 
     # REMOTE Section

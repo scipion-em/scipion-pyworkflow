@@ -917,6 +917,8 @@ class SearchBaseWindow(Window):
 
         frame.grid(row=0, column=0, sticky='new', padx=5, pady=(10, 5))
 
+        return frame
+
     def _createResultsBox(self, content):
         frame = tk.Frame(content, bg=Color.ALT_COLOR, padx=5, pady=5)
         configureWeigths(frame)
