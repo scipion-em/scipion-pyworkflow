@@ -155,4 +155,5 @@ def getNextProtocolSuggestions(protocol):
         results = json.loads(urlopen(url).read().decode('utf-8'))
         return results
     except Exception as e:
-        logger.error("Suggestions system")
+        logger.error("Suggestions system not available", exc_info=e)
+        return []
