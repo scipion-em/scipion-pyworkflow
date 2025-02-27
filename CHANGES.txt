@@ -1,5 +1,6 @@
 V3.11.0
 users:
+  - GPU ID are now always based on the PCI slow. Should match what nvidia-smi output as IDs: CUDA_DEVICE_ORDER='PCI_BUS_ID'
   - Improving subset creation performance
   - Usage report:
       Sent upon project closing and not upon opening.
