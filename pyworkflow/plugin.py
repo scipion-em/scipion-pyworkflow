@@ -118,7 +118,6 @@ class Domain:
             if e.name == name:
                 # This is probably due to a priority package like pwchem not being installed
                 logger.debug("Name is different!!: e.name='%s', name='%s'" %( e.name , name))
-                pass
             else:
                 logger.warning("Plugin '%s' has import errors: %s. Maybe a missing dependency?. "
                                "Is it devel mode and need to be reinstalled?. Ignoring it and continuing." % (name, str(e)))

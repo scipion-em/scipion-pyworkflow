@@ -88,11 +88,10 @@ class SearchProtocolWindow(SearchBaseWindow):
         :param event: event information
         :return: Nothing
         """
-        if event.widget == self.root:
-            if self.selectionGetter:
-                self.selectedProtocol = self.selectionGetter()
-                if self._isSuggestionActive():
-                    self._onSearchClick()
+        if event.widget == self.root and self.selectionGetter:
+            self.selectedProtocol = self.selectionGetter()
+            if self._isSuggestionActive():
+                self._onSearchClick()
     def _isSuggestionActive(self):
         """
         :return: Returns true if current mode is suggestion mode.

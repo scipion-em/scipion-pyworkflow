@@ -46,7 +46,7 @@ class ProtStat:
         self._nextProts[nextProt] = self._nextProts.get(nextProt, 0) + count
 
     def toJSON(self):
-        str = "[%s,{%s}]"
+        jsonStr = "[%s,{%s}]"
         nextProtS = ""
 
         if len(self._nextProts):
@@ -56,9 +56,9 @@ class ProtStat:
 
             nextProtS= ",".join(nextProtA)
 
-        str = str % (self._count, nextProtS)
+        jsonStr = jsonStr % (self._count, nextProtS)
 
-        return str
+        return jsonStr
 
     def __repr__(self):
         return self.toJSON()
