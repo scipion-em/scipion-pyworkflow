@@ -161,13 +161,14 @@ class SearchProtocolWindow(SearchBaseWindow):
     def addSuggestions(self):
 
         if self.selectedProtocol is None:
-            self.lbl.set("Not showing suggestions since there is no protocol selected.")
-            return []
-
-        self.lbl.set("Usage suggestions for selected protocol: %s" % self.selectedProtocol.getClassLabel())
+            self.lbl.set("Showing suggestions for a first protocol")
+            protName =str(None)
+        else:
+            protName = self.selectedProtocol.getClassLabel()
+            self.lbl.set("Usage suggestions for selected protocol: %s" % protName)
 
         protList = []
-        suggestions = getNextProtocolSuggestions(self.selectedProtocol.getClassName())
+        suggestions = getNextProtocolSuggestions(protName)
         for suggestion in suggestions:
             #Fields comming from the site:
             # 'next_protocol__name', 'count', 'next_protocol__friendlyName', 'next_protocol__package', 'next_protocol__description'

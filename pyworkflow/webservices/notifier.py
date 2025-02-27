@@ -79,10 +79,14 @@ class ProjectWorkflowNotifier(object):
 
         return delta < timedelta(seconds=seconds)
 
-    def _sendData(self, url, dataDict=None):
+    def _sendData(self, url, project_workflow):
         try:
             # then connect to webserver a send json
             # set debuglevel=0 for no messages
+
+            dataDict = {'project_uuid': self._getUuid(),
+                        'project_workflow': project_workflow}
+
             opener = build_opener(HTTPHandler(debuglevel=0))
             data = urlencode(dataDict).encode()
             opener.open(url, data=data).read()
@@ -90,9 +94,17 @@ class ProjectWorkflowNotifier(object):
             # Store file time stamp with last time it was sent
             now = time.time()
             os.utime(self._getUuidFileName(), (now, now))
+
+            # Write what was sent in a file for _modifiedBefore to check file TS and avoid resending stats
+            dataFile = self._getDataFileName()
+            # create the folder of the file path if not exists
+            pwutils.makeFilePath(dataFile)
+            with open(dataFile, 'w') as f:
+                f.write(project_workflow)
+
         except Exception as e:
+            # Tolerate errors
             pass
-            # print("Could not notify, maybe there is not internet connection.")
 
     def _dataModified(self, projectWorfklow):
         try:
@@ -125,20 +137,9 @@ class ProjectWorkflowNotifier(object):
             # We could pass namesOnly=False to get the full workflow template
             project_workflow = self.project.getProjectUsage().toJSON()  # self.project.getProtocolsJson(namesOnly=True)
 
-
-            # Write what is going to be sent in a file for _modifiedBefore to check file TS and avoid resending stats
-            dataFile = self._getDataFileName()
-            # create the folder of the file path if not exists
-            pwutils.makeFilePath(dataFile)
-            with open(dataFile, 'w') as f:
-                f.write(project_workflow)
-
-            dataDict = {'project_uuid': self._getUuid(),
-                        'project_workflow': project_workflow}
-
             urlName = Config.SCIPION_STATS_WORKFLOW_APP.strip()
             urlName += "addOrUpdateWorkflow/"
-            t = threading.Thread(name="notifier", target=lambda: self._sendData(urlName, dataDict))
+            t = threading.Thread(name="notifier", target=lambda: self._sendData(urlName, project_workflow))
             t.start()  # will execute function in a separate thread
         except Exception as e:
             print("Can't report usage: ", e)

@@ -1299,7 +1299,6 @@ class Project(object):
                 sw.addCount(protName)
 
                 # Add next protocols count
-                nodeId = prot.getObjId()
                 node = g.getNode(prot.strId())
 
                 for childNode in node.getChildren():
@@ -1307,6 +1306,11 @@ class Project(object):
                     if not isinstance(prot, LegacyProtocol):
                         nextProtName = prot.getClassName()
                         sw.addCountToNextProtocol(protName, nextProtName)
+
+                # Special case: First protocols, those without parent. Import protocols mainly.
+                # All protocols, even the firs ones have a parent. For the fisrt ones the parent is "PROJECT" node that is the only root one.
+                if node.getParent().isRoot():
+                    sw.addCountToNextProtocol(str(None), protName)
 
         return sw
 

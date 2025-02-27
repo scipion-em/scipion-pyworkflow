@@ -1613,7 +1613,11 @@ class Protocol(Step):
             package = self.getClassPackage()
             if hasattr(package, "__version__"):
                 self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
-            self.info('plugin binary v: %s' % plugin.getActiveVersion())
+            try:
+                self.info('plugin binary v: %s' % plugin.getActiveVersion())
+            except Exception as e:
+                logger.error("Coudn't get the active version of the binary. This may be cause by a variable in the config"
+                             " file with a missing - in it and the protocol to fail.", exc_info=e)
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
@@ -1630,7 +1634,7 @@ class Protocol(Step):
                 self.info('  * Cannot get information about MPI/threads (%s)' % e)
         # Something went wrong ans at this point status is launched. We mark it as failed.
         except Exception as e:
-            print(e)
+            logger.error("Couldn't start the protocol." , exc_info=e)
             self.setFailed(str(e))
             self._store(self.status, self.getError())
             self._endRun()

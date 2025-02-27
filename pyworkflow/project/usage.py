@@ -113,14 +113,20 @@ class ScipionWorkflow:
     def addCount(self, protName):
         """ Adds one to the count of a protocol"""
 
+        protStat = self.getProtStat(protName)
+
+        protStat.addUsage()
+
+    def getProtStat(self, protName):
+
         protStat = self._prots.get(protName, ProtStat())
         if protName not in self._prots:
             self._prots[protName] = protStat
 
-        protStat.addUsage()
+        return protStat
 
     def addCountToNextProtocol(self, protName, nextProtName):
-        protStat = self._prots.get(protName)
+        protStat = self.getProtStat(protName)
         protStat.addCountToNextProtocol(nextProtName)
 
     def getCount(self):
