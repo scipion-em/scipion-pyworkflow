@@ -1365,11 +1365,11 @@ class ParamWidget:
                              selectOnDoubleClick=True)
             if dlg.values:
                 self.set(dlg.values[0])
-        except AttributeError as e:
+        except AttributeError as exc:
             self._showError("Error loading possible inputs. "
                             "This usually happens because the parameter "
                             "needs info from other parameters... are "
-                            "previous mandatory parameters set?", exception=e)
+                            "previous mandatory parameters set?", exception=exc)
 
     def _removeRelation(self, e=None):
         self.var.remove()
