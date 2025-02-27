@@ -1233,12 +1233,13 @@ class Set(Object):
         return self._getMapper().exists(itemId)
 
     def iterItems(self, orderBy='id', direction='ASC', where=None,
-                  limit=None, iterate=True):
+                  limit=None, iterate=True, rowFilter=None):
         return self._getMapper().selectAll(orderBy=orderBy,
                                            direction=direction,
                                            where=where,
                                            limit=limit,
-                                           iterate=iterate)  # has flat mapper, iterate is true
+                                           iterate=iterate,
+                                           rowFilter=rowFilter)  # has flat mapper, iterate is true
 
     def getFirstItem(self):
         """ Return the first item in the Set. """

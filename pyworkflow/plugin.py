@@ -511,7 +511,7 @@ class Domain:
 
         raiseMsg = "%s\n %s\n%s\n" % (msgStr, calling, hint)
         if doRaise:
-            raise Exception("\n\n" + raiseMsg)
+            raise ImportError("\n\n" + raiseMsg)
         else:
             logger.info(raiseMsg)
 

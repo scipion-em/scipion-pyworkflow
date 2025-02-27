@@ -1,5 +1,6 @@
 V3.11.0
 users:
+  - Improving subset creation performance
   - Usage report:
       Sent upon project closing and not upon opening.
       Sent once day(default), even if it hasn't changed.
@@ -18,6 +19,8 @@ users:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.
   - updateProtocol refactored to cover QUEUE timeout cases
+
+V3.10.5: cancel usage of SCIPION_PROJECT in the host template
 V3.10.4: hotfix: Parallelization with GPUs is fixed and step queue executor fixed with the new implementation.
 V3.10.3: Failed hotfix
 V3.10.2: hotfix: Executor frees the GPU/s used via step id instead of node.
