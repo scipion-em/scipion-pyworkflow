@@ -29,6 +29,9 @@ creation of protocol form GUI from its
 params definition.
 """
 import logging
+
+from typing import Type
+
 logger = logging.getLogger(__name__)
 import os
 import tkinter as tk
@@ -1538,7 +1541,8 @@ class FormWindow(Window):
         4. Buttons: buttons at bottom for close, save and execute.
     """
 
-    def __init__(self, title, protocol, callback, master=None, position=None, **kwargs):
+    def __init__(self, title, protocol:pwprot.Protocol, callback, master=None, position=None,
+                 previousProt:pwprot.Protocol=None, **kwargs):
         """ Constructor of the Form window. 
         Params:
          title: title string of the windows.
@@ -1558,6 +1562,7 @@ class FormWindow(Window):
         self.disableRunMode = kwargs.get('disableRunMode', False)
         self.bindings = []
         self.protocol = protocol
+        self.previousProt=previousProt
         self.position = position
         # This control when to close or not after execute
         self.visualizeMode = kwargs.get('visualizeMode', False)
@@ -1573,6 +1578,17 @@ class FormWindow(Window):
         # Call legacy for compatibility on protocol
         protocol.legacyCheck()
         self._createGUI()
+
+    def hasPreviousProt(self):
+        return self.previousProt is not None
+
+    def getPreviousProtOutput(self):
+        """ Returns the previous protocol output"""
+        if self.hasPreviousProt():
+
+            # NOTE: Should we cache this?.
+            for attr, output in self.previousProt.iterOutputAttributes(includePossible=True):
+                yield attr, output
 
     def getParam(self, paramName):
         """ Returns a specific parameter from the form definition by its name
@@ -2233,12 +2249,20 @@ class FormWindow(Window):
             # to avoid ghost inputs
             self._checkAllChanges(toggleWidgetVisibility=False)
 
+            # This may be viewprotocols.py.ProtocolsView._executeSaveProtocol
+            # Message is either a confirmation that the protocol has been saves or empty message
             message = self.callback(self.protocol, onlySave, doSchedule, position=self.position)
             if not self.visualizeMode:
+                # If there is a message
                 if len(message):
-                    self.showInfo(message, "Protocol action")
-                if not onlySave:
+                    if onlySave and not pw.Config.SCIPION_UNLOAD_FORM_ON_SAVE:
+                        self.showInfo(message, "Protocol action")
+                    else:
+                        logger.info(message)
+
+                if not onlySave or pw.Config.SCIPION_UNLOAD_FORM_ON_SAVE:
                     self.close()
+
         except ModificationNotAllowedException as ex:
             self.showInfo("Modification not allowed.\n\n %s\n" % ex)
         except Exception as ex:
@@ -2248,11 +2272,20 @@ class FormWindow(Window):
             self.showError("Error during %s: \n%s" % (action, ex), exception=ex)
 
     def getWidgetValue(self, protVar, param):
+        """ Returns the value for the widget"""
+
         widgetValue = ""
         if (isinstance(param, pwprot.PointerParam) or
                 isinstance(param, pwprot.MultiPointerParam) or
                 isinstance(param, pwprot.RelationParam)):
-            widgetValue = protVar
+
+            # If protVar has already a value
+            if protVar.hasValue():
+                widgetValue = protVar
+            elif self.protocol.isNew():
+                # try to link it to the output of the previousProtocol
+                return self.suggestValueFromPreviousProt(param, protVar)
+
         # For Scalar params that allowPointers
         elif param.allowsPointers:
             if protVar.hasPointer():
@@ -2264,6 +2297,28 @@ class FormWindow(Window):
             widgetValue = protVar.get(param.default.get())
         return widgetValue
 
+    def suggestValueFromPreviousProt(self, param, pointer:pwobj.Pointer):
+
+        """Suggest an input from the previous selected protocol that matches the param type"""
+        if not hasattr(param, "pointerClass"):
+            return pointer
+
+        paramTypeStr = param.pointerClass.get().split(",")
+
+        # Iterate over the output of the selected protocol
+        for attr, value in self.getPreviousProtOutput():
+
+            # Deal with possible outputs where value is the class and not an instance
+            # TODO: We may want here to deal with inheritance and use isinstance...
+            #       but for that we need the class and not the string
+            outputType = value.getClassName()
+            if outputType in paramTypeStr:
+                pointer.set(self.previousProt)
+                pointer.setExtended(attr)
+                # First found is enough
+                break
+
+        return pointer
     def _visualize(self, paramName):
         protVar = getattr(self.protocol, paramName)
         if protVar.hasValue():
@@ -2290,6 +2345,8 @@ class FormWindow(Window):
                 widget = LineWidget(r, paramName, param, self, parent, None)
                 self._fillLine(param, widget)
             else:
+
+                # Attribute of the protocol
                 protVar = getattr(self.protocol, paramName, None)
 
                 if protVar is None:

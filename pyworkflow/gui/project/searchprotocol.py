@@ -112,6 +112,7 @@ class SearchProtocolWindow(SearchBaseWindow):
         lbl.grid(row=0, column=4, sticky='news')
 
     def _createResultsTree(self, frame, show, columns):
+        # This code is where the callback (on double click) is defined.
         return self.master.getViewWidget()._createProtocolsTree(frame, show=show, columns=columns, position=self.position)
 
     def showSuggestions(self, e=None):
@@ -163,8 +164,8 @@ class SearchProtocolWindow(SearchBaseWindow):
             self.lbl.set("Showing suggestions for a first protocol")
             protName =str(None)
         else:
-            protName = self.selectedProtocol.getClassLabel()
-            self.lbl.set("Usage suggestions for selected protocol: %s" % protName)
+            protName = self.selectedProtocol.getClassName()
+            self.lbl.set("Usage suggestions for selected protocol: %s" % self.selectedProtocol.getClassLabel())
 
         protList = []
         suggestions = getNextProtocolSuggestions(protName)
