@@ -29,6 +29,9 @@ import collections
 from pyworkflow.object import *
 from .constants import *
 
+BIN_THREADS_PARAM = 'binThreads'
+PARALLELIZATION = 'Parallelization'
+
 class FormElement(Object):
     """Base for any element on the form"""
     ATTRIBUTES = ['label', 'expertLevel', 'condition', 'important', 'help',
@@ -205,11 +208,13 @@ class Form(object):
     def getClass(self):
         return type(self)
         
-    def addSection(self, label='', **kwargs):
+    def addSection(self, label='', updateSection=True, **kwargs):
         """Add a new section"""
-        self.lastSection = Section(self, label=label, **kwargs)
-        self._sectionList.append(self.lastSection)
-        return self.lastSection
+        newSection = Section(self, label=label, **kwargs)
+        if updateSection:
+            self.lastSection = newSection
+        self._sectionList.append(newSection)
+        return newSection
 
     def getSection(self, label):
         """ get section by label from _sectionList"""
@@ -217,6 +222,9 @@ class Form(object):
             if s.label == label:
                 return s
         return
+
+    def hasSection(self, label):
+        return self.getSection(label) is not None
 
     def addGroup(self, *args, **kwargs):
         return self.lastSection.addGroup(*args, **kwargs)
@@ -231,7 +239,11 @@ class Form(object):
         
     def addParam(self, *args, **kwargs):
         """Add a new param to last section"""
-        return self.lastSection.addParam(*args, **kwargs)
+        if args[0] == BIN_THREADS_PARAM:
+            section = self.getParallelSection(updateSection=False)
+        else:
+            section = self.lastSection
+        return section.addParam(*args, **kwargs)
 
     # Adhoc method for specific params
     def addBooleanParam(self, name, label, help, default=True, **kwargs):
@@ -330,6 +342,10 @@ class Form(object):
                            'of this particular run and start from the beginning. This option'
                            'should be used carefully.'
                       )
+
+    def getParallelSection(self, updateSection=True):
+        section = self.getSection(PARALLELIZATION)
+        return section if section else self.addSection(label=PARALLELIZATION, updateSection=updateSection)
   
     def addParallelSection(self, threads=1, mpi=8, binThreads=0, binThreadsHelp=None):
 
@@ -341,7 +357,7 @@ class Form(object):
         :param binThreads: Threads to pass as an argument to the program
         """
 
-        self.addSection(label='Parallelization')
+        self.getParallelSection()
         self.addParam('hostName', StringParam, default="localhost",
                       label='Execution host',
                       help='Select in which of the available do you want to launch this protocol.')
@@ -356,6 +372,7 @@ class Form(object):
         binHelpMsg = ("*Threads*:\nThis refers to different execution threads in the same process that "
                    "can share memory. They run in the same computer. This value is an argument"
                    " passed to the program integrated")
+        binHelpMsg = binThreadsHelp if binThreadsHelp else binHelpMsg
 
         if threads > 0:
 
@@ -380,7 +397,7 @@ class Form(object):
                           label='MPIs', help=mpiHelp)
         if binThreads:
             if self._protocol.modeParallel():
-                self.addParam('binThreads', IntParam, default=binThreads,
+                self.addParam(BIN_THREADS_PARAM, IntParam, default=binThreads,
                               label=binLabel, help=binHelpMsg)
             else:
                 logger.warning("binThreads can't be used when stepsExecutionMode is not STEPS_PARALLEL. Use threads instead.")
