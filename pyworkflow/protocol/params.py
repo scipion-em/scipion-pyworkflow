@@ -356,8 +356,7 @@ class Form(object):
         :param mpi: default value for mpi, defaults to 8
         :param binThreads: Threads to pass as an argument to the program
         """
-
-        self.getParallelSection()
+        self.addSection(label=PARALLELIZATION)
         self.addParam('hostName', StringParam, default="localhost",
                       label='Execution host',
                       help='Select in which of the available do you want to launch this protocol.')
