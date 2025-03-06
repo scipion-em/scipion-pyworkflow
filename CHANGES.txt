@@ -1,5 +1,7 @@
 V3.11.0
 users:
+  - New behaviour: Saving a protocol will unload the form and log the confirmation message. There will not be any pop up message.
+        -New variable: SCIPION_UNLOAD_FORM_ON_SAVE (True). define it in the config file to False to go back to old behaviour.
   - GPU ID are now always based on the PCI slow. Should match what nvidia-smi output as IDs: CUDA_DEVICE_ORDER='PCI_BUS_ID'
   - Improving subset creation performance
   - Usage report:
@@ -8,6 +10,7 @@ users:
   - Suggestion mode added to the "add protocol" dialog:
       Button added. An empty search "" activates the suggestions. Otherwise search on the installed protocols
       Suggestions works with empty selection (suggestion as first protocol).
+      Adding a new protocol may be linked automatically with a compatible output of the "Selected protocol"
   - Host.conf parsing feedback. When there is a parsing error in the host.conf it will report more precisely the cause
   - Parallel section refactored: Scipion threads and or "Package compute" lines.
   - Allow for having the three compute fields: Scipion threads, threads and mpis.

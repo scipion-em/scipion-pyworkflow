@@ -1052,7 +1052,7 @@ class ProtocolsView(tk.Frame):
         # If found continue to open the protocol form to ask for parameters
         if protClass is not None:
             prot = self.project.newProtocol(protClass)
-            self._openProtocolForm(prot, disableRunMode=True, position=position)
+            self._openProtocolForm(prot, disableRunMode=True, position=position, previousProt=self.getSelectedProtocol())
         # Missing class: probably not installed. Inform
         else:
             # Get the value as populated in pyworkflow.gui.project.searchprotocol.py:235 comming from SearchProtocolWindow.addSuggestions
@@ -1350,13 +1350,20 @@ class ProtocolsView(tk.Frame):
         #
         # if update is not None: self._updateSelection()
 
-    def _openProtocolForm(self, prot, disableRunMode=False, position=None):
-        """Open the Protocol GUI Form given a Protocol instance"""
+    def _openProtocolForm(self, prot, disableRunMode=False, position=None, previousProt=None):
+        """Open the Protocol GUI Form given a Protocol instance
+
+        :param prot: protocol to show and edit its parameters
+        :param disableRunMode: to show the form it in read only mode
+        :param position: Optional. Position to add the box once added to the graph.
+        :param previousProt: Optional. If passed it will try to link this protocol to the previous protocol.
+
+        """
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.window,
                        updateProtocolCallback=self._updateProtocol,
-                       disableRunMode=disableRunMode, position=position)
+                       disableRunMode=disableRunMode, position=position, previousProt=previousProt)
         w.adjustSize()
         w.show(center=True)
 
@@ -1527,7 +1534,6 @@ class ProtocolsView(tk.Frame):
         if onlySave:
             self.project.saveProtocol(prot)
             msg = Message.LABEL_SAVED_FORM
-            # msg = "Protocol successfully saved."
 
         else:
             if doSchedule:

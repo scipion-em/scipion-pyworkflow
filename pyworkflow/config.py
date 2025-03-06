@@ -97,12 +97,15 @@ class Variable:
         self.value = new_value
         self.isDefault= self._isValueDefault()
     def _isValueDefault(self):
-        return self.value==self.default
+        return self.value == self.default
+
+
 class VariablesRegistry:
-    _variables={}
+    _variables = {}
 
     def __init__(self):
         raise RuntimeError("Variables class doesn't need to be instantiated.")
+
     @classmethod
     def register(cls, variable: Variable):
         cls._variables[variable.name] = variable
@@ -146,7 +149,7 @@ class Config:
 
         if key in os.environ:
             value = os.environ.get(key)
-            isDefault = (value==default)
+            isDefault = (value == default)
         else:
             isDefault = True
             value = default
@@ -154,10 +157,10 @@ class Config:
         # If the caster is passed do the casting, if fails go back to default
         if caster:
             try:
-                value=caster(value)
-            except:
+                value = caster(value)
+            except Exception as e:
                 logger.warning("Variable %s has this value %s that can't be casted to the right type (%s). Using %s (default value)" %
-                               (key,value, caster, default))
+                               (key, value, caster, default))
                 value = default
         # If empty use default value
         if value == "" != default:
@@ -168,9 +171,22 @@ class Config:
         if isinstance(value, str):
             value = os.path.expandvars(os.path.expanduser(value))
 
-        # Register the variable
+        # Register the variable. Boolean variables are converted to booleans after this call. May not be accurate.
+        # 1 turns into False in the Config
         VariablesRegistry.register(Variable(key,description, source, value, default, var_type=var_type, isDefault=isDefault))
         return value
+
+    @staticmethod
+    def __notFalse(value):
+        return value != FALSE_STR
+
+    @staticmethod
+    def __notTrue(value):
+        return value != TRUE_STR
+
+    @staticmethod
+    def __bool(value):
+        return value.lower() in TRUE_YES_ON_
 
     class Root:
         """ Simple helper to return path from a root. """
@@ -185,8 +201,11 @@ class Config:
             # join will not join if expanded is absolute
             return os.path.join(self._root, expanded)
 
-    # Home for scipion
     _get = __get.__func__
+    _notFalse = __notFalse.__func__
+    __bool = __bool.__func__
+
+    # Home for scipion
     SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, '',
     "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"))
 
@@ -240,7 +259,8 @@ class Config:
     "Path to a folder where the output of the tests will be written. Defaults to SCIPION_USER_DATA/Tests.", var_type=VarTypes.FOLDER)
 
     SCIPION_TEST_NOSYNC = _get('SCIPION_TEST_NOSYNC', FALSE_STR,
-    "Set it to 1, True, Yes or y to cancel test dataset synchronization. Needed when updating files in a dataset.") != FALSE_STR
+                               "Set it to any value except False to cancel test dataset synchronization."
+                               " Needed when updating files in a dataset.", caster=_notFalse)
 
     SCIPION_SUPPORT_EMAIL = 'scipion@cnb.csic.es'
 
@@ -292,8 +312,9 @@ class Config:
     SCIPION_FONT_NAME = _get('SCIPION_FONT_NAME', "Helvetica",
     "Name of the font to use in Scipion GUI. Defaults to Helvetica.")
 
-    SCIPION_FONT_SIZE = _get('SCIPION_FONT_SIZE', SCIPION_DEFAULT_FONT_SIZE,
-    "Size of the 'normal' font to be used in Scipion GUI. Defaults to 10.", caster=int)
+    SCIPION_FONT_SIZE = _get('SCIPION_FONT_SIZE', str(SCIPION_DEFAULT_FONT_SIZE),
+                             "Size of the 'normal' font to be used in Scipion GUI. "
+                             "Defaults to 10.", caster=int)
 
     SCIPION_MAIN_COLOR = _get('SCIPION_MAIN_COLOR', Color.MAIN_COLOR,
     "str: Main color of the GUI. Background will be white, so for better contrast choose a dark color. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html",
@@ -303,28 +324,31 @@ class Config:
     "str: Main background color of the GUI. Default is white, chose a light one. Probably any name here will work: https://matplotlib.org/stable/gallery/color/named_colors.html",
                             validColor)
 
-    SCIPION_CONTRAST_COLOR = _get('SCIPION_CONTRAST_COLOR', 'cyan',
-    "Color used to highlight features over grayscaled images.", caster=validColor)
+    SCIPION_CONTRAST_COLOR = _get('SCIPION_CONTRAST_COLOR', 'cyan', "Color used to highlight features over "
+                                  "gray-scaled images.", caster=validColor)
 
     SCIPION_SPRITES_FILE = _get('SCIPION_SPRITES_FILE', __defaultSpritesFile,
-    "File (png) with the icons in a collage. Default is found at pyworkflow/resources/sprites.png. And a GIMP file could be found at the same folder in the github repo.")
+                                "File (png) with the icons in a collage. Default is found at "
+                                "pyworkflow/resources/sprites.png. And a GIMP file could be found at the same "
+                                "folder in the github repo.")
 
-    SCIPION_SHOW_TEXT_IN_TOOLBAR = _get('SCIPION_SHOW_TEXT_IN_TOOLBAR', TRUE_STR,
-    "Define it to anything else except False to show the label of the icons. It will take more space.") == TRUE_STR
+    SCIPION_SHOW_TEXT_IN_TOOLBAR = _get('SCIPION_SHOW_TEXT_IN_TOOLBAR', TRUE_STR, "Define it to anything else except "
+                                        "%s to hide labels. It will take less space." % TRUE_YES_ON_, caster=__bool)
 
-    SCIPION_ICON_ZOOM = _get('SCIPION_ICON_ZOOM', 50,
-    "Define it to anything else except False to show the label of the icons. It will take more space.", var_type=VarTypes.INTEGER, caster=int)
+    SCIPION_ICON_ZOOM = _get('SCIPION_ICON_ZOOM', "50",
+                             "Define it to any integer value(percentage) to increase/decrease the size of the icons.",
+                             var_type=VarTypes.INTEGER, caster=int)
 
     # Notification
-    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR,
-    "If set to False, Scipion developers will know almost nothing about Scipion usage and will have less information to improve it.") == TRUE_STR
+    SCIPION_NOTIFY = _get('SCIPION_NOTIFY', TRUE_STR, "If set to anything except %s Scipion developers will know "
+                          "nothing abut Scipion usage and will have less information to improve it." % TRUE_YES_ON_,
+                          caster=__bool)
 
     # *** Execution variables ***
-    SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()),
-    "Directory when scipion was launched")
+    SCIPION_CWD = _get('SCIPION_CWD', os.path.abspath(os.getcwd()), "Directory when scipion was launched")
 
     SCIPION_GUI_REFRESH_IN_THREAD = _get('SCIPION_GUI_REFRESH_IN_THREAD', FALSE_STR,
-    "True to refresh the runs graph with a thread. Unstable.") != FALSE_STR
+                                         "True to refresh the runs graph with a thread. Unstable.") != FALSE_STR
 
     SCIPION_GUI_REFRESH_INITIAL_WAIT = _get("SCIPION_GUI_REFRESH_INITIAL_WAIT", 5,
     "Seconds to wait after a manual refresh", caster=int)
@@ -345,16 +369,25 @@ class Config:
     SCIPION_PRIORITY_PACKAGE_LIST = _get('SCIPION_PRIORITY_PACKAGE_LIST', EMPTY_STR)
 
     SCIPION_STEPS_CHECK_SEC = _get('SCIPION_STEPS_CHECK_SEC', 5,
-    "Number of seconds to wait before checking if new input is available in streamified protocols.", caster=int)
+                                   "Number of seconds to wait before checking if new input is available in "
+                                   "streamified protocols.", caster=int)
 
     SCIPION_UPDATE_SET_ATTEMPTS = _get('SCIPION_UPDATE_SET_ATTEMPTS', 3,
-    "Number of attempts to modify the protocol output before failing. The default value is 3", caster=int)
+                                       "Number of attempts to modify the protocol output before failing. "
+                                       "The default value is 3", caster=int)
 
     SCIPION_UPDATE_SET_ATTEMPT_WAIT = _get('SCIPION_UPDATE_SET_ATTEMPT_WAIT', 2,
-    "Time in seconds to wait until the next attempt when checking new outputs. The default value is 2 seconds", caster=int)
+                                           "Time in seconds to wait until the next attempt when checking new outputs. "
+                                           "The default value is 2 seconds", caster=int)
+
+    SCIPION_UNLOAD_FORM_ON_SAVE = _get('SCIPION_UNLOAD_FORM_ON_SAVE', TRUE_STR,
+                                       "When a protocol is saved it is unloaded if all goes fine. Set it to false "
+                                       "otherwise to rescue old behaviour.", caster=__bool)
 
     SCIPION_USE_QUEUE = _get("SCIPION_USE_QUEUE", FALSE_STR,
-    "Default value for using the queue. By default is False. ANY value will be True except and empty value. \"False\" or \"0\" will be True too.")!= FALSE_STR
+                             "Default value for using the queue. By default is False. "
+                             "ANY value will be True except and empty value. \"False\" or \"0\" "
+                             "will be True too.") != FALSE_STR
 
     SCIPION_DEFAULT_EXECUTION_ACTION = _get('SCIPION_DEFAULT_EXECUTION_ACTION', DEFAULT_EXECUTION_ACTION_ASK,
     """Ask if you want to launch a single protocol or a sub-workflow. The default value is 1

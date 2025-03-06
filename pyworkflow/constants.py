@@ -131,6 +131,7 @@ PROJECT_SETTINGS = 'settings.sqlite'
 FALSE_STR = str(False)
 TRUE_STR = str(True)
 NONE_STR = str(None)
+TRUE_YES_ON_ = ['true', 'yes', 'on', '1']
 EMPTY_STR = ""
 
 # GUI colors
@@ -215,4 +216,3 @@ DEFAULT_EXECUTION_ACTION_ALL = 3
 # Id field/attribute constants
 ID_COLUMN='id'
 ID_ATTRIBUTE='_objId'
-
