@@ -91,6 +91,10 @@ class TestProtocolExecution(pwtests.BaseTest):
 
 
         currThread = threading.currentThread()
+        def needForGPU():
+            return True
+
+        currThread.needsGPU =needForGPU
         currThread.thId = 1
         self.assertEqual(stepExecutor.getGpuList(),[], "Gpu list should be empty")
 

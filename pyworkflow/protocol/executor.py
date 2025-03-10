@@ -59,6 +59,9 @@ class StepExecutor:
         """ Set protocol to append active jobs to its jobIds. """
         self.protocol = protocol
 
+    def getRunContext(self):
+        return {"PLUGIN_MODULE": self.protocol.getPlugin().getName()}
+
     def runJob(self, log, programName, params,           
                numberOfMpi=1, numberOfThreads=1,
                env=None, cwd=None, executable=None):
@@ -68,7 +71,7 @@ class StepExecutor:
         process.runJob(log, programName, params,
                        numberOfMpi, numberOfThreads, 
                        self.hostConfig,
-                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable)
+                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable,context=self.getRunContext())
 
     def _getRunnable(self, steps, n=1):
         """ Return the n steps that are 'new' and all its
@@ -432,13 +435,18 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         return self.threadCommands[stepId]
 
-    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None, executable=None):
+    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None, executable=None, context=dict()):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
         submitDict.update(self.submitDict)
+
+        # Update the context:
+        context.update(self.getRunContext())
+
         submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
                                                             self.hostConfig, env,
-                                                            gpuList=self.getGpuList())
+                                                            gpuList=self.getGpuList(),
+                                                            context=context)
         threadJobId = self.getThreadJobId(threadId)
         subthreadId = '-%s-%s' % (threadId, threadJobId)
         submitDict['JOB_NAME'] = submitDict['JOB_NAME'] + subthreadId

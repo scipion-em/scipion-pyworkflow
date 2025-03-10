@@ -42,10 +42,10 @@ from pyworkflow import Config
 # The job should be launched from the working directory!
 def runJob(log, programname, params,           
            numberOfMpi=1, numberOfThreads=1, 
-           hostConfig=None, env=None, cwd=None, gpuList=None, executable=None):
+           hostConfig=None, env=None, cwd=None, gpuList=None, executable=None, context=dict()):
 
     command = buildRunCommand(programname, params, numberOfMpi, hostConfig,
-                              env, gpuList=gpuList)
+                              env, gpuList=gpuList,context=context)
     
     if log is None:
         log = logger
@@ -74,8 +74,10 @@ def runCommand(command, env=None, cwd=None, executable=None):
 
     
 def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
-                    env=None, gpuList=None):
-    """ Return a string with the command line to run """
+                    env=None, gpuList=None, context=dict()):
+    """ Return a string with the command line to run
+
+     :param context: a dictionary with extra context variable to make run command more flexible"""
 
     # Convert our list of params to a string, with each element escaped
     # with "" in case there are spaces.
@@ -100,10 +102,13 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
             
         mpiFlags = '' if env is None else env.get('SCIPION_MPI_FLAGS', '') 
 
-        mpiCmd = hostConfig.mpiCommand.get() % {
+        context.update({
             'JOB_NODES': numberOfMpi,
             'COMMAND': "%s `which %s` %s" % (mpiFlags, programname, params),
-        }
+        })
+        logger.debug("Context variables for mpi command are: %s" % context)
+        mpiCmd = hostConfig.mpiCommand.get() % context
+
         return '%s %s' % (prepend, mpiCmd)
 
 

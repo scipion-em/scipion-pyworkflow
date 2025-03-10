@@ -932,9 +932,6 @@ class ParamWidget:
                  showButtons=True):
         self.window = window
         self._protocol = self.window.protocol
-        if self._protocol.getProject() is None:
-            logger.error(">>> ERROR: Project is None for protocol: %s, "
-                         "start winpdb to debug it" % self._protocol)
 
         self.row = row
         self.column = column
@@ -2274,7 +2271,7 @@ class FormWindow(Window):
     def getWidgetValue(self, protVar, param):
         """ Returns the value for the widget"""
 
-        widgetValue = ""
+        widgetValue = protVar
         if (isinstance(param, pwprot.PointerParam) or
                 isinstance(param, pwprot.MultiPointerParam) or
                 isinstance(param, pwprot.RelationParam)):
