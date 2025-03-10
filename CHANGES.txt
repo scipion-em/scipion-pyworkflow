@@ -1,4 +1,6 @@
 V3.10.6: Improving subset creation
+developers:
+  - Adding a Streaming section in ProtStreamingBase
 V3.10.5: cancel usage of SCIPION_PROJECT in the host template
 V3.10.4: hotfix: Parallelization with GPUs is fixed and step queue executor fixed with the new implementation.
 V3.10.3: Failed hotfix
