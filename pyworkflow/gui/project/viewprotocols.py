@@ -401,7 +401,7 @@ class ProtocolsView(tk.Frame):
     def _findProtocol(self, event=None):
         """ Find a desired protocol by typing some keyword. """
 
-        if event is not None and event.widget.widgetName=="canvas":
+        if event is not None and self._noSelection() and event.widget.widgetName=="canvas" and self:
             position = self.runsGraphCanvas.getCoordinates(event)
         else:
             position = None

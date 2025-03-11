@@ -64,10 +64,10 @@ class SearchProtocolWindow(SearchBaseWindow):
         '#0': ('Status', {'width': 50, 'minwidth': 50, 'stretch': tk.NO}, 5),
         # Heading, tree column kwargs, casting for sorting
         'protocol': ('Protocol', {'width': 300, 'stretch': tk.FALSE}, 10),
+        'score': ('Score/Freq.', {'width': 50, 'stretch': tk.FALSE}, 5, int),
         'streaming': ('Streamified', {'width': 100, 'stretch': tk.FALSE}, 5),
         'installed': ('Installation', {'width': 110, 'stretch': tk.FALSE}, 5),
         'help': ('Help', {'minwidth': 300, 'stretch': tk.YES}, 5),
-        'score': ('Score', {'width': 50, 'stretch': tk.FALSE}, 5, int)
     }
 
     def __init__(self, parentWindow, position=None, selectionGetter=None):
@@ -171,13 +171,14 @@ class SearchProtocolWindow(SearchBaseWindow):
         suggestions = getNextProtocolSuggestions(protName)
         for suggestion in suggestions:
             #Fields comming from the site:
+            # https://scipion.i2pc.es/report_protocols/api/v2/nextprotocol/suggestion/None/
             # 'next_protocol__name', 'count', 'next_protocol__friendlyName', 'next_protocol__package', 'next_protocol__description'
             nextProtName, count, name, package, descr = suggestion
             streamstate = "unknown"
             installed = "Missing. Available in %s plugin." % package
             protClass = Config.getDomain().getProtocols().get(nextProtName, None)
 
-            # Get accurate valus from exisitng installation
+            # Get accurate values from existing installations
             if protClass is not None:
                 name = protClass.getClassLabel().lower()
                 descr = protClass.getHelpText().strip().replace('\r', '').replace('\n', '').lower()
@@ -232,6 +233,6 @@ class SearchProtocolWindow(SearchBaseWindow):
 
             self._resultsTree.insert(
                 '', 'end', key, text="", tags=tag,
-                values=(label, streamified, installed, help, weight))
+                values=(label, weight, streamified, installed, help))
 
 

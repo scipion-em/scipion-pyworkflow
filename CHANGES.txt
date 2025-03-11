@@ -16,8 +16,9 @@ users:
   - Allow for having the three compute fields: Scipion threads, threads and mpis.
   - Fix: jobs, processes killed are detected by scipion.
   - Project log has info about protocol execution modes: queue, or subprocess
-  - Killed protocol proccess (timeout in queue or plain killed) are detected
-  - SCIPION_PROJECT label can br used in host.conf: richer job names
+  - Killed protocol process (timeout in queue or plain killed) are detected
+  - SCIPION_PROJECT label can be used in host.conf: richer job names
+  - PLUGIN_MODULE variable can be used in host.conf to customize mpirun command: mpirun.PLUGIN_MODULE(mpirun.relion)
   - Live change of loglevel during GUI
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
