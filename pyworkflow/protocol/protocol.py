@@ -2583,7 +2583,23 @@ class ProtStreamingBase(Protocol):
         """
         pass
 
-    def _validateThreads(self, messages:list):
+    def _getStreamingSleepOnWait(self):
+        """ Retrieves the configured sleep duration for waiting during streaming.
+            Returns:
+            - int: The sleep duration in seconds during streaming wait.
+            """
+        return self.getAttributeValue('streamingSleepOnWait', 0)
+
+    def _streamingSleepOnWait(self):
+        """ This method should be used by protocols that want to sleep
+        when there is not more work to do.
+        """
+        sleepOnWait = self._getStreamingSleepOnWait()
+        if sleepOnWait > 0:
+            self.info("Not much work to do now, sleeping %s seconds." % sleepOnWait)
+            time.sleep(sleepOnWait)
+
+    def _validateThreads(self, messages: list):
 
         if self.numberOfThreads.get() < 2:
             messages.append("At least 2 threads are needed for running this protocol. "
