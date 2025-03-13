@@ -2596,7 +2596,7 @@ class ProtStreamingBase(Protocol):
         """
         sleepOnWait = self._getStreamingSleepOnWait()
         if sleepOnWait > 0:
-            self.info("Not much work to do now, sleeping %s seconds." % sleepOnWait)
+            self.info("Waiting %s now before checking again for new input" % sleepOnWait)
             time.sleep(sleepOnWait)
 
     def _validateThreads(self, messages: list):
