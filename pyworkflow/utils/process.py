@@ -37,15 +37,16 @@ import psutil
 
 from .utils import greenStr
 from pyworkflow import Config
+from pyworkflow.constants import PLUGIN_MODULE_VAR, PARALLEL_COMMAND_VAR
 
 
 # The job should be launched from the working directory!
 def runJob(log, programname, params,           
            numberOfMpi=1, numberOfThreads=1, 
-           hostConfig=None, env=None, cwd=None, gpuList=None, executable=None):
+           hostConfig=None, env=None, cwd=None, gpuList=None, executable=None, context=dict()):
 
     command = buildRunCommand(programname, params, numberOfMpi, hostConfig,
-                              env, gpuList=gpuList)
+                              env, gpuList=gpuList,context=context)
     
     if log is None:
         log = logger
@@ -74,8 +75,10 @@ def runCommand(command, env=None, cwd=None, executable=None):
 
     
 def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
-                    env=None, gpuList=None):
-    """ Return a string with the command line to run """
+                    env=None, gpuList=None, context=dict()):
+    """ Return a string with the command line to run
+
+     :param context: a dictionary with extra context variable to make run command more flexible"""
 
     # Convert our list of params to a string, with each element escaped
     # with "" in case there are spaces.
@@ -100,10 +103,28 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
             
         mpiFlags = '' if env is None else env.get('SCIPION_MPI_FLAGS', '') 
 
-        mpiCmd = hostConfig.mpiCommand.get() % {
+        context.update({
             'JOB_NODES': numberOfMpi,
             'COMMAND': "%s `which %s` %s" % (mpiFlags, programname, params),
-        }
+        })
+        logger.debug("Context variables for mpi command are: %s" % context)
+
+        mpiCommand = hostConfig.mpiCommand.get()
+        pluginModule = context.get(PLUGIN_MODULE_VAR, None)
+
+        if pluginModule is not None:
+            custom_command_var = PARALLEL_COMMAND_VAR + "_" + pluginModule.upper()
+            if custom_command_var in env:
+                mpiCommand = env.get(custom_command_var)
+                logger.info("Custom mpi command for this plugin found. Using it.  %s: %s"
+                            % (custom_command_var, mpiCommand))
+            else:
+                logger.info("%s not found in the environment. Using default mpi command found in %s. %s: %s"
+                            % (custom_command_var, Config.SCIPION_HOSTS, PARALLEL_COMMAND_VAR, mpiCommand))
+
+
+        mpiCmd = mpiCommand % context
+
         return '%s %s' % (prepend, mpiCmd)
 
 
