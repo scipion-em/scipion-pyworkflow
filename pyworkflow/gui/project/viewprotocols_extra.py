@@ -167,7 +167,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
         that is more readable for the user to pick the desired object.
         """
         label = 'None'
-        if obj:
+        if obj is not None:
             label = obj.getObjLabel()
             if not len(label.strip()):
                 parentLabel = parent.getObjLabel() if parent else 'None'
@@ -240,7 +240,6 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
                     'text': namePtr, 'values': (valuePtr,)}
 
             return infoPtr
-
 
         if obj is None or not obj.hasValue():
             return None
