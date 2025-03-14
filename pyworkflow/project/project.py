@@ -306,7 +306,7 @@ class Project(object):
         if creationTime:  # CreationTime was found in project.sqlite
             ctStr = creationTime[0] # This is our String type instance
 
-            # We store it in mem as dateime
+            # We store it in mem as datetime
             self._creationTime = ctStr
 
         else:
