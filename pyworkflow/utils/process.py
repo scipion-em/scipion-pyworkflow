@@ -37,6 +37,7 @@ import psutil
 
 from .utils import greenStr
 from pyworkflow import Config
+from pyworkflow.constants import PLUGIN_MODULE_VAR, PARALLEL_COMMAND_VAR
 
 
 # The job should be launched from the working directory!
@@ -107,7 +108,22 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
             'COMMAND': "%s `which %s` %s" % (mpiFlags, programname, params),
         })
         logger.debug("Context variables for mpi command are: %s" % context)
-        mpiCmd = hostConfig.mpiCommand.get() % context
+
+        mpiCommand = hostConfig.mpiCommand.get()
+        pluginModule = context.get(PLUGIN_MODULE_VAR, None)
+
+        if pluginModule is not None:
+            custom_command_var = PARALLEL_COMMAND_VAR + "_" + pluginModule.upper()
+            if custom_command_var in env:
+                mpiCommand = env.get(custom_command_var)
+                logger.info("Custom mpi command for this plugin found. Using it.  %s: %s"
+                            % (custom_command_var, mpiCommand))
+            else:
+                logger.info("%s not found in the environment. Using default mpi command found in %s. %s: %s"
+                            % (custom_command_var, Config.SCIPION_HOSTS, PARALLEL_COMMAND_VAR, mpiCommand))
+
+
+        mpiCmd = mpiCommand % context
 
         return '%s %s' % (prepend, mpiCmd)
 

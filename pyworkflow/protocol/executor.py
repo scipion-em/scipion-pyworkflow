@@ -39,6 +39,7 @@ import os
 
 import pyworkflow.utils.process as process
 from pyworkflow.utils.path import getParentFolder, removeExt
+from pyworkflow.constants import PLUGIN_MODULE_VAR
 from . import constants as cts
 
 from .launch import _submit, UNKNOWN_JOBID, _checkJobStatus
@@ -59,9 +60,6 @@ class StepExecutor:
         """ Set protocol to append active jobs to its jobIds. """
         self.protocol = protocol
 
-    def getRunContext(self):
-        return {"PLUGIN_MODULE": self.protocol.getPlugin().getName()}
-
     def runJob(self, log, programName, params,           
                numberOfMpi=1, numberOfThreads=1,
                env=None, cwd=None, executable=None):
@@ -71,7 +69,7 @@ class StepExecutor:
         process.runJob(log, programName, params,
                        numberOfMpi, numberOfThreads, 
                        self.hostConfig,
-                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable,context=self.getRunContext())
+                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable,context=self.protocol.getSubmitDict())
 
     def _getRunnable(self, steps, n=1):
         """ Return the n steps that are 'new' and all its
@@ -435,25 +433,25 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         return self.threadCommands[stepId]
 
-    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None, executable=None, context=dict()):
+    def runJob(self, log, programName, params, numberOfMpi=1, numberOfThreads=1, env=None, cwd=None, executable=None):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
         submitDict.update(self.submitDict)
-
-        # Update the context:
-        context.update(self.getRunContext())
-
-        submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
-                                                            self.hostConfig, env,
-                                                            gpuList=self.getGpuList(),
-                                                            context=context)
         threadJobId = self.getThreadJobId(threadId)
         subthreadId = '-%s-%s' % (threadId, threadJobId)
         submitDict['JOB_NAME'] = submitDict['JOB_NAME'] + subthreadId
         submitDict['JOB_SCRIPT'] = os.path.abspath(removeExt(submitDict['JOB_SCRIPT']) + subthreadId + ".job")
         submitDict['JOB_LOGS'] = os.path.join(getParentFolder(submitDict['JOB_SCRIPT']), submitDict['JOB_NAME'])
 
-        jobid, error = _submit(self.hostConfig, submitDict, cwd, env)
+        logger.debug("Variables available for replacement in submission command are: %s" % submitDict)
+
+        submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
+                                                            self.hostConfig, env,
+                                                            gpuList=self.getGpuList(),
+                                                            context=submitDict)
+
+
+        jobid = _submit(self.hostConfig, submitDict, cwd, env)
         self.protocol.appendJobId(jobid)  # append active jobs
         self.protocol._store(self.protocol._jobId)
 

@@ -25,6 +25,17 @@ users:
   - stepsExecutionMode has to be declared at class level not instance level.
   - updateProtocol refactored to cover QUEUE timeout cases
 
+V3.10.6:
+  - Improving subset creation
+  - PLUGIN_MODULE variable can be used in host.conf to customize mpirun command: mpirun.PLUGIN_MODULE --> mpirun.relion)
+       This approach implies having this pattern for all mpi plugins that use mpi.
+  - Alternatively, in the scipion.conf file a variable called PARALLEL_COMMAND_XXX could be defined for a more
+       versatile way to have a mpi command only for some plugins. Example:
+       PARALLEL_COMMAND_RELION=mpirun.relion -np %%(JOB_NODES)d --map-by node %%(COMMAND)s
+       NOTE: in this config file, %_ (valid and needed in host.conf) should be replaced by %%
+  developers:
+  - Adding a Streaming section in ProtStreamingBase
+
 V3.10.5: cancel usage of SCIPION_PROJECT in the host template
 V3.10.4: hotfix: Parallelization with GPUs is fixed and step queue executor fixed with the new implementation.
 V3.10.3: Failed hotfix
@@ -32,7 +43,7 @@ V3.10.2: hotfix: Executor frees the GPU/s used via step id instead of node.
 V3.10.1: hotfix: Avoid double Gpu assignment in scipion parallelize protocols with concurrent GPU steps
 V3.10.0
 developers:
-  -  stepsExecutionMode = STEPS_SERIAL at class level. Should a class attribute for future versions. Now both approaches are valid.
+  - stepsExecutionMode = STEPS_SERIAL at class level. Should be a class attribute for future versions. Now both approaches are valid.
 
 V3.9.2 - hotfix: rescue commented methods: Protocol._insertRunJobStep and Protocol._insertCopyFileStep
 V3.9.1 - hotfix: loading related objects (CTF - Mics in particle extraction)
