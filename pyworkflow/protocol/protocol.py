@@ -36,6 +36,7 @@ from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import getExtraLogInfo, STATUS, setDefaultLoggingContext
+from pyworkflow.constants import PLUGIN_MODULE_VAR, QUEUE_FOR_JOBS
 from .executor import StepExecutor, ThreadStepExecutor, QueueStepExecutor
 from .constants import *
 from .params import Form, IntParam
@@ -43,6 +44,7 @@ from ..utils import getFileSize
 
 
 import  logging
+
 # Get the root logger
 logger = logging.getLogger(__name__)
 
@@ -1928,9 +1930,10 @@ class Protocol(Step):
              'JOB_CORES': self.numberOfMpi.get() * self.numberOfThreads.get(),
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
-             'QUEUE_FOR_JOBS': 'N',
+             QUEUE_FOR_JOBS: 'N',
              'SCIPION_PROJECT': "SCIPION_PROJECT",  # self.getProject().getShortName(),
-             'SCIPION_PROTOCOL': self.getRunName()
+             'SCIPION_PROTOCOL': self.getRunName(),
+             PLUGIN_MODULE_VAR: self.getPlugin().getName()
              }
         d.update(queueParams)
         return d
@@ -1942,12 +1945,12 @@ class Protocol(Step):
     def useQueueForSteps(self):
         """ This function will return True if the protocol has been set
         to be launched through a queue by steps """
-        return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "Y")
+        return self.useQueue() and (self.getSubmitDict()[QUEUE_FOR_JOBS] == "Y")
 
     def useQueueForProtocol(self):
         """ This function will return True if the protocol has been set
         to be launched through a queue """
-        return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "N")
+        return self.useQueue() and (self.getSubmitDict()[QUEUE_FOR_JOBS] != "Y")
 
     def getQueueParams(self):
         if self._queueParams.hasValue():
