@@ -1113,7 +1113,7 @@ class Protocol(Step):
         """ Closes the step and setting up the protocol process id """
         super()._finalizeStep(status, msg)
         self._closeOutputSet()
-        self._pid.set(None)
+        self._pid.set(0)
 
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
@@ -1398,6 +1398,7 @@ class Protocol(Step):
 
             logger.info("*** Last status is %s " % self.lastStatus)
             self.setStatus(self.lastStatus)
+            self.cleanExecutionAttributes(includeSteps=False)
         self._store(self.status)
 
     def __deleteOutputs(self):
@@ -1636,21 +1637,21 @@ class Protocol(Step):
         except Exception as e:
             logger.error("Couldn't start the protocol." , exc_info=e)
             self.setFailed(str(e))
-            self._store(self.status, self.getError())
+            # self._store(self.status, self.getError())
             self._endRun()
             return
 
         Step.run(self)
-        if self.isFailed():
-            self._store()
+        # if self.isFailed():
+        #     self._store()
         self._endRun()
 
     def _endRun(self):
         """ Print some ending message and close some files. """
-        # self._store()
-        self._store(self.summaryVar)
-        self._store(self.methodsVar)
-        self._store(self.endTime)
+        self._store()  # Store all protocol attributes
+        # self._store(self.summaryVar)
+        # self._store(self.methodsVar)
+        # self._store(self.endTime)
 
         if pwutils.envVarOn(pw.SCIPION_DEBUG_NOCLEAN):
             self.warning('Not cleaning temp folder since '
@@ -2450,11 +2451,12 @@ class Protocol(Step):
 
         return self._size
 
-    def cleanExecutionAttributes(self):
+    def cleanExecutionAttributes(self, includeSteps=True):
         """ Clean all the executions attributes """
         self.setPid(0)
         self._jobId.clear()
-        self._stepsDone.set(0)
+        if includeSteps:
+            self._stepsDone.set(0)
 
 class LegacyProtocol(Protocol):
     """ Special subclass of Protocol to be used when a protocol class

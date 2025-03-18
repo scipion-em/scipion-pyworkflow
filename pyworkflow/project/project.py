@@ -631,7 +631,7 @@ class Project(object):
                 self.mapper.deleteRelations(self)
                 # Clean and persist execution attributes; otherwise, this would retain old job IDs and PIDs.
                 protocol.cleanExecutionAttributes()
-                protocol._store(protocol._jobId)
+                protocol._store(protocol._jobId, protocol._pid)
 
             self.mapper.commit()
 

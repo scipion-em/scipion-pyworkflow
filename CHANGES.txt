@@ -24,6 +24,7 @@ users:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.
   - updateProtocol refactored to cover QUEUE timeout cases
+  - Updating the protocol process id (_pid) to 0 when the finish it.
 
 V3.10.5: cancel usage of SCIPION_PROJECT in the host template
 V3.10.4: hotfix: Parallelization with GPUs is fixed and step queue executor fixed with the new implementation.
