@@ -37,7 +37,7 @@ import psutil
 
 from .utils import greenStr
 from pyworkflow import Config
-from pyworkflow.constants import PLUGIN_MODULE_VAR, PARALLEL_COMMAND_VAR
+from pyworkflow.constants import PLUGIN_MODULE_VAR, PARALLEL_COMMAND_VAR, RUN_JOB_GPU_PARAM
 
 
 # The job should be launched from the working directory!
@@ -86,10 +86,10 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
         params = ' '.join('"%s"' % p for p in params)
 
     if gpuList:
-        params = params % {'GPU': ' '.join(str(g) for g in gpuList)}
+        params = params % {RUN_JOB_GPU_PARAM: ' '.join(str(g) for g in gpuList)}
         if "CUDA_VISIBLE_DEVICES" in programname:
             sep = "," if len(gpuList) > 1 else ""
-            programname = programname % {'GPU': sep.join(str(g) for g in gpuList)}
+            programname = programname % {RUN_JOB_GPU_PARAM: sep.join(str(g) for g in gpuList)}
 
     prepend = '' if env is None else env.getPrepend()
 

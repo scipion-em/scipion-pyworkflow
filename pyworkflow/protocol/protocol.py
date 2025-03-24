@@ -1919,11 +1919,7 @@ class Protocol(Step):
         queueName, queueParams = self.getQueueParams()
         hc = self.getHostConfig()
 
-        script = self._getLogsPath(hc.getSubmitPrefix() + self.strId() + '.job')
-        d = {'JOB_SCRIPT': script,
-             'JOB_LOGS': self._getLogsPath(hc.getSubmitPrefix() + self.strId()),
-             'JOB_NODEFILE': os.path.abspath(script.replace('.job', '.nodefile')),
-             'JOB_NAME': self.strId(),
+        d = {'JOB_NAME': self.strId(),
              'JOB_QUEUE': queueName,
              'JOB_NODES': self.numberOfMpi.get(),
              'JOB_THREADS': self.numberOfThreads.get(),
@@ -1935,6 +1931,14 @@ class Protocol(Step):
              'SCIPION_PROTOCOL': self.getRunName(),
              PLUGIN_MODULE_VAR: self.getPlugin().getName()
              }
+
+        # Criteria in HostConfig.load to load or not QUEUE variables
+        if hc.getQueueSystem().hasName():
+            job_logs = self._getLogsPath(hc.getSubmitPrefix() + self.strId())
+            d['JOB_SCRIPT'] = job_logs + '.job'
+            d['JOB_LOGS'] = job_logs
+            d['JOB_NODEFILE'] = os.path.abspath(job_logs +'.nodefile')
+
         d.update(queueParams)
         return d
 
@@ -2440,6 +2444,11 @@ def runProtocolMain(projectPath, protDbPath, protId):
     setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 
     hostConfig = protocol.getHostConfig()
+    gpuList = protocol.getGpuList()
+
+    #If queue is to be used
+    if protocol.useQueue():
+        gpuList = anonimizeGPUs(gpuList)
 
     # Create the steps executor
     executor = None
@@ -2450,23 +2459,39 @@ def runProtocolMain(projectPath, protDbPath, protId):
             executor = QueueStepExecutor(hostConfig,
                                          protocol.getSubmitDict(),
                                          nThreads - 1,
-                                         gpuList=protocol.getGpuList())
+                                         gpuList=gpuList)
         else:
             executor = ThreadStepExecutor(hostConfig, nThreads - 1,
-                                          gpuList=protocol.getGpuList())
+                                          gpuList=gpuList)
 
     if executor is None and protocol.useQueueForSteps():
         executor = QueueStepExecutor(hostConfig, protocol.getSubmitDict(), 1,
-                                     gpuList=protocol.getGpuList())
+                                     gpuList=gpuList)
 
     if executor is None:
         executor = StepExecutor(hostConfig,
-                                gpuList=protocol.getGpuList())
+                                gpuList=gpuList)
 
     logger.info("Running protocol using the %s executor." % executor)
     protocol.setStepsExecutor(executor)
     # Finally run the protocol
     protocol.run()
+
+
+def anonimizeGPUs(gpuList):
+
+    renamedGPUs=dict()
+    anonimousGPUs = []
+
+    for gpu in gpuList:
+
+        if gpu not in renamedGPUs:
+            renamedGPUs[gpu] = len(renamedGPUs)
+
+        anonimousGPUs.append(renamedGPUs[gpu])
+
+    return anonimousGPUs
+
 
 
 def getProtocolFromDb(projectPath, protDbPath, protId, chdir=False):
