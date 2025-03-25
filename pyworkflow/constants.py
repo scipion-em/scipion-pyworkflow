@@ -79,6 +79,10 @@ PLUGIN_MODULE_VAR = 'PLUGIN_MODULE'
 QUEUE_FOR_JOBS = 'QUEUE_FOR_JOBS'
 
 
+# Launching constants
+RUN_JOB_GPU_PARAM = 'GPU' # Param name to "place" GPU ids used to build a run command.
+RUN_JOB_GPU_PARAM_SEARCH = "%("+ RUN_JOB_GPU_PARAM +")s"
+
 # FONT
 SCIPION_DEFAULT_FONT_SIZE = 10
 

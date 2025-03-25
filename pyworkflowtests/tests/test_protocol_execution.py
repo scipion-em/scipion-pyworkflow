@@ -73,6 +73,13 @@ class TestProtocolExecution(pwtests.BaseTest):
         
         self.assertEqual(prot.endTime.get(), prot2.endTime.get())
 
+    def test_gpu_anonimization(self):
+
+        self.assertEqual(pwprot.anonimizeGPUs([0, 1, 2]),[0, 1, 2], "Anonimization of GPUs does not work")
+        self.assertEqual(pwprot.anonimizeGPUs([2, 1, 0]), [0, 1, 2], "Anonimization of GPUs does not work")
+        self.assertEqual(pwprot.anonimizeGPUs([2, 1, 2]), [0, 1, 0], "Anonimization of GPUs does not work")
+        self.assertEqual(pwprot.anonimizeGPUs([2, 1, 2, 4]), [0, 1, 0, 2], "Anonimization of GPUs does not work")
+
     def test_gpuSlots(self):
         """ Test gpu slots are properly composed in combination of threads"""
 
