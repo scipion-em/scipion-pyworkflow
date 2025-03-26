@@ -39,7 +39,7 @@ import os
 
 import pyworkflow.utils.process as process
 from pyworkflow.utils.path import getParentFolder, removeExt
-from pyworkflow.constants import PLUGIN_MODULE_VAR
+from pyworkflow.constants import PLUGIN_MODULE_VAR, RUN_JOB_GPU_PARAM_SEARCH
 from . import constants as cts
 
 from .launch import _submit, UNKNOWN_JOBID, _checkJobStatus
@@ -67,9 +67,16 @@ class StepExecutor:
         providing the host configuration. 
         """
         process.runJob(log, programName, params,
-                       numberOfMpi, numberOfThreads, 
+                       numberOfMpi, numberOfThreads,
                        self.hostConfig,
-                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable,context=self.protocol.getSubmitDict())
+                       env=env, cwd=cwd, gpuList=self._getGPUListForCommand(programName, params), executable=executable, context=self.protocol.getSubmitDict())
+
+    def _getGPUListForCommand(self, program, params):
+        """ Returns the list of GPUs if the program or the params have the GPU placeholder %(GPU)s """
+        if RUN_JOB_GPU_PARAM_SEARCH in params or RUN_JOB_GPU_PARAM_SEARCH in program:
+            return self.getGpuList()
+        else:
+            return []
 
     def _getRunnable(self, steps, n=1):
         """ Return the n steps that are 'new' and all its
@@ -447,7 +454,7 @@ class QueueStepExecutor(ThreadStepExecutor):
 
         submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
                                                             self.hostConfig, env,
-                                                            gpuList=self.getGpuList(),
+                                                            gpuList=self._getGPUListForCommand(programName, params),
                                                             context=submitDict)
 
 

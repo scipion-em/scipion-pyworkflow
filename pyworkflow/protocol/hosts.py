@@ -210,9 +210,9 @@ class HostConfig(Object):
 
                 # If the NAME is not provided or empty
                 # do no try to parse the rest of Queue parameters
+                hostQueue.submitPrefix.set(get('SUBMIT_PREFIX', ''))
                 if hostQueue.hasName():
                     hostQueue.setMandatory(get('MANDATORY', 0))
-                    hostQueue.submitPrefix.set(get('SUBMIT_PREFIX', ''))
                     hostQueue.submitCommand.set(get('SUBMIT_COMMAND'))
                     hostQueue.submitTemplate.set(get('SUBMIT_TEMPLATE'))
                     hostQueue.cancelCommand.set(get('CANCEL_COMMAND'))
