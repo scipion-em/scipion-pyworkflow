@@ -6,7 +6,8 @@ V3.10.6:
        versatile way to have a mpi command only for some plugins. Example:
        PARALLEL_COMMAND_RELION=mpirun.relion -np %%(JOB_NODES)d --map-by node %%(COMMAND)s
        NOTE: in this config file, %_ (valid and needed in host.conf) should be replaced by %%
-  - GPU Ids are automatically annonimized (0-len(GPUs)) when using queues
+  - GPU Ids are automatically anonymized (0-len(GPUs)) when using queues
+  - Bug-fix: creation time is not loaded when loadig run.db (updating a protocol)
   developers:
   - Adding a Streaming section in ProtStreamingBase
   - runJob call without %(GPU)s will not reserve GPU slots anymore.
