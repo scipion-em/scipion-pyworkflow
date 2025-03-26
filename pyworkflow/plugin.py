@@ -123,7 +123,7 @@ class Domain:
                                "Is it devel mode and need to be reinstalled?. Ignoring it and continuing." % (name, str(e)))
         except Exception as e:
 
-            (pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
+            logger.info(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
             logger.info("Please, contact developers at %s and send this ugly information below. They'll understand it!." % DOCSITEURLS.CONTACTUS)
             logger.info("Error message: %s"% str(e))

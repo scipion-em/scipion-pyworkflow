@@ -158,7 +158,7 @@ class Config:
         if caster:
             try:
                 value = caster(value)
-            except Exception as e:
+            except:
                 logger.warning("Variable %s has this value %s that can't be casted to the right type (%s). Using %s (default value)" %
                                (key, value, caster, default))
                 value = default
@@ -206,11 +206,12 @@ class Config:
     __bool = __bool.__func__
 
     # Home for scipion
-    SCIPION_HOME = os.path.abspath(_get(SCIPION_HOME_VAR, '',
-    "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified"))
+    _home_var = _get(SCIPION_HOME_VAR, '',
+        "Path where Scipion is installed. Other paths are based on this like SCIPION_SOFTWARE, SCIPION_TESTS,... unless specified")
+    SCIPION_HOME = os.path.abspath(_home_var)
 
     # False if SCIPION_HOME is not found in the environment. To distinguish API documentation generation execution.
-    SCIPION_HOME_DEFINED = SCIPION_HOME != ''
+    SCIPION_HOME_DEFINED = _home_var != ''
 
     _root = Root(str(SCIPION_HOME))
     _join = _root.join
@@ -421,7 +422,8 @@ class Config:
         :return: Folder where libraries must be placed in case a binding needs them
         """
         lib = cls._join(cls.SCIPION_SOFTWARE, 'lib')
-        os.makedirs(lib, exist_ok=True)
+        if cls.SCIPION_HOME_DEFINED:
+            os.makedirs(lib, exist_ok=True)
         return lib
 
     @classmethod
@@ -432,7 +434,8 @@ class Config:
         :return:   The bindings folder
         """
         bindings = cls._join(cls.SCIPION_SOFTWARE, 'bindings')
-        os.makedirs(bindings, exist_ok=True)
+        if cls.SCIPION_HOME_DEFINED:
+            os.makedirs(bindings, exist_ok=True)
         return bindings
 
     @classmethod
@@ -441,7 +444,8 @@ class Config:
         Folder where scipion logs must be placed. The folder is created         
         """
         logsFolder = cls.SCIPION_LOGS
-        os.makedirs(logsFolder, exist_ok=True)
+        if cls.SCIPION_HOME_DEFINED:
+            os.makedirs(logsFolder, exist_ok=True)
         return logsFolder
 
     @classmethod
