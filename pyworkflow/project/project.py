@@ -311,10 +311,13 @@ class Project(object):
             self._creationTime = ctStr
 
         else:
-            # We should read the creation time from settings.sqlite and
-            # update the CreationTime in the project.sqlite
-            self._creationTime = pwobj.String(self.getSettingsCreationTime())
-            self._storeCreationTime()
+
+            # If connected to project.sqlite and not any or the run.db
+            if self.path.endswith(PROJECT_DBNAME):
+                # We should read the creation time from settings.sqlite and
+                # update the CreationTime in the project.sqlite
+                self._creationTime = pwobj.String(self.getSettingsCreationTime())
+                self._storeCreationTime()
 
     # ---- Helper functions to load different pieces of a project
     def _loadDb(self, dbPath):

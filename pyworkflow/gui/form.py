@@ -1787,7 +1787,7 @@ class FormWindow(Window):
                         entry = self._createBoundEntry(procFrame, pwutils.Message.VAR_MPI)
                         entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
 
-                        helpMessage += mpiParam.getHelp()
+                        helpMessage += '\n' + mpiParam.getHelp()
 
 
                     btnHelp = IconButton(procFrame, pwutils.Message.TITLE_COMMENT,
