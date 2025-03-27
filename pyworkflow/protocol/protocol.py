@@ -36,13 +36,15 @@ from pyworkflow.exceptions import ValidationException, PyworkflowException
 from pyworkflow.object import *
 import pyworkflow.utils as pwutils
 from pyworkflow.utils.log import getExtraLogInfo, STATUS, setDefaultLoggingContext
+from pyworkflow.constants import PLUGIN_MODULE_VAR, QUEUE_FOR_JOBS
 from .executor import StepExecutor, ThreadStepExecutor, QueueStepExecutor
 from .constants import *
-from .params import Form
+from .params import Form, IntParam
 from ..utils import getFileSize
 
 
 import  logging
+
 # Get the root logger
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,7 @@ class Step(Object):
 
     def needsGPU(self) -> bool:
         return self._needsGPU.get()
+
     def getIndex(self):
         return self._index
 
@@ -1117,10 +1120,7 @@ class Protocol(Step):
     def _getRelPathExecutionDir(self, *path):
         """ Return a relative path from the projdir. """
         # TODO  must be a bettis
-        return os.path.relpath(
-            self._getPath(*path),
-            os.path.dirname(os.path.dirname(self.workingDir.get()))
-        )
+        return os.path.relpath(self._getPath(*path), os.path.dirname(os.path.dirname(self.workingDir.get())))
 
     def _getBasePath(self, path):
         """ Take the basename of the path and get the path
@@ -1617,7 +1617,6 @@ class Protocol(Step):
                                         prot_id=self.getObjId(),
                                         prot_name=self.getClassName()))
 
-
     def getLogPaths(self):
         return [self.getStdoutLog(),self.getStderrLog() , self.getScheduleLog()]
 
@@ -1637,7 +1636,6 @@ class Protocol(Step):
     def getStepsFile(self):
         """ Return the steps.sqlite file under logs directory. """
         return self._getLogsPath('steps.sqlite')
-
 
     def _addChunk(self, txt, fmt=None):
         """
@@ -1921,21 +1919,26 @@ class Protocol(Step):
         queueName, queueParams = self.getQueueParams()
         hc = self.getHostConfig()
 
-        script = self._getLogsPath(hc.getSubmitPrefix() + self.strId() + '.job')
-        d = {'JOB_SCRIPT': script,
-             'JOB_LOGS': self._getLogsPath(hc.getSubmitPrefix() + self.strId()),
-             'JOB_NODEFILE': os.path.abspath(script.replace('.job', '.nodefile')),
-             'JOB_NAME': self.strId(),
+        d = {'JOB_NAME': self.strId(),
              'JOB_QUEUE': queueName,
              'JOB_NODES': self.numberOfMpi.get(),
              'JOB_THREADS': self.numberOfThreads.get(),
              'JOB_CORES': self.numberOfMpi.get() * self.numberOfThreads.get(),
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
-             'QUEUE_FOR_JOBS': 'N',
+             QUEUE_FOR_JOBS: 'N',
              'SCIPION_PROJECT': "SCIPION_PROJECT",  # self.getProject().getShortName(),
-             'SCIPION_PROTOCOL': self.getRunName()
+             'SCIPION_PROTOCOL': self.getRunName(),
+             PLUGIN_MODULE_VAR: self.getPlugin().getName()
              }
+
+        # Criteria in HostConfig.load to load or not QUEUE variables
+        if hc.getQueueSystem().hasName():
+            job_logs = self._getLogsPath(hc.getSubmitPrefix() + self.strId())
+            d['JOB_SCRIPT'] = job_logs + '.job'
+            d['JOB_LOGS'] = job_logs
+            d['JOB_NODEFILE'] = os.path.abspath(job_logs +'.nodefile')
+
         d.update(queueParams)
         return d
 
@@ -1946,12 +1949,12 @@ class Protocol(Step):
     def useQueueForSteps(self):
         """ This function will return True if the protocol has been set
         to be launched through a queue by steps """
-        return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "Y")
+        return self.useQueue() and (self.getSubmitDict()[QUEUE_FOR_JOBS] == "Y")
 
     def useQueueForProtocol(self):
         """ This function will return True if the protocol has been set
         to be launched through a queue """
-        return self.useQueue() and (self.getSubmitDict()["QUEUE_FOR_JOBS"] == "N")
+        return self.useQueue() and (self.getSubmitDict()[QUEUE_FOR_JOBS] != "Y")
 
     def getQueueParams(self):
         if self._queueParams.hasValue():
@@ -2441,6 +2444,11 @@ def runProtocolMain(projectPath, protDbPath, protId):
     setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 
     hostConfig = protocol.getHostConfig()
+    gpuList = protocol.getGpuList()
+
+    #If queue is to be used
+    if protocol.useQueue():
+        gpuList = anonimizeGPUs(gpuList)
 
     # Create the steps executor
     executor = None
@@ -2451,23 +2459,39 @@ def runProtocolMain(projectPath, protDbPath, protId):
             executor = QueueStepExecutor(hostConfig,
                                          protocol.getSubmitDict(),
                                          nThreads - 1,
-                                         gpuList=protocol.getGpuList())
+                                         gpuList=gpuList)
         else:
             executor = ThreadStepExecutor(hostConfig, nThreads - 1,
-                                          gpuList=protocol.getGpuList())
+                                          gpuList=gpuList)
 
     if executor is None and protocol.useQueueForSteps():
         executor = QueueStepExecutor(hostConfig, protocol.getSubmitDict(), 1,
-                                     gpuList=protocol.getGpuList())
+                                     gpuList=gpuList)
 
     if executor is None:
         executor = StepExecutor(hostConfig,
-                                gpuList=protocol.getGpuList())
+                                gpuList=gpuList)
 
     logger.info("Running protocol using the %s executor." % executor)
     protocol.setStepsExecutor(executor)
     # Finally run the protocol
     protocol.run()
+
+
+def anonimizeGPUs(gpuList):
+
+    renamedGPUs=dict()
+    anonimousGPUs = []
+
+    for gpu in gpuList:
+
+        if gpu not in renamedGPUs:
+            renamedGPUs[gpu] = len(renamedGPUs)
+
+        anonimousGPUs.append(renamedGPUs[gpu])
+
+    return anonimousGPUs
+
 
 
 def getProtocolFromDb(projectPath, protDbPath, protId, chdir=False):
@@ -2535,6 +2559,7 @@ def isProtocolUpToDate(protocol):
 class ProtImportBase(Protocol):
     """ Base Import protocol"""
 
+
 class ProtStreamingBase(Protocol):
     """ Base protocol to implement streaming protocols.
     stepsGeneratorStep should be implemented (see its description) and output
@@ -2544,18 +2569,35 @@ class ProtStreamingBase(Protocol):
     """
 
     stepsExecutionMode = STEPS_PARALLEL
+
+    def _defineStreamingParams(self, form):
+        """ This function can be called during the _defineParams method
+        of some protocols that support stream processing.
+        It will add a Streaming section together with the following
+        params:
+            streamingSleepOnWait: Some streaming protocols are quite fast,
+                so, checking input/output updates creates an IO overhead.
+                This params allows them to sleep (without consuming resources)
+                to wait for new work to be done.
+        """
+        form.addSection("Streaming")
+        form.addParam("streamingSleepOnWait", IntParam, default=10,
+                      label="Sleep when waiting (secs)",
+                      help="If you specify a value greater than zero, "
+                           "it will be the number of seconds that the "
+                           "protocol will sleep when waiting for new "
+                           "input data in streaming mode. ")
+
     def _insertAllSteps(self):
-        # Insert the step that generates the steps
+        """ Insert the step that generates the steps """
         self._insertFunctionStep(self.resumableStepGeneratorStep, str(datetime.now()), needsGPU=False)
 
     def resumableStepGeneratorStep(self, ts):
-        """ This allow to resume protocols. ts is the time stamp so this stap is alway different form previous exceution"""
+        """ This allow to resume protocols. ts is the time stamp so this stap is always different form previous execution"""
         self.stepsGeneratorStep()
 
-
     def _stepsCheck(self):
-
-        # Just store steps created in checkNewInputStep
+        """ Just store steps created in checkNewInputStep"""
         if self._newSteps:
             self.updateSteps()
 
@@ -2569,11 +2611,28 @@ class ProtStreamingBase(Protocol):
         """
         pass
 
-    def _validateThreads(self, messages:list):
+    def _getStreamingSleepOnWait(self):
+        """ Retrieves the configured sleep duration for waiting during streaming.
+            Returns:
+            - int: The sleep duration in seconds during streaming wait.
+            """
+        return self.getAttributeValue('streamingSleepOnWait', 0)
+
+    def _streamingSleepOnWait(self):
+        """ This method should be used by protocols that want to sleep
+        when there is not more work to do.
+        """
+        sleepOnWait = self._getStreamingSleepOnWait()
+        if sleepOnWait > 0:
+            self.info("Waiting %s now before checking again for new input" % sleepOnWait)
+            time.sleep(sleepOnWait)
+
+    def _validateThreads(self, messages: list):
 
         if self.numberOfThreads.get() < 2:
             messages.append("At least 2 threads are needed for running this protocol. "
                             "1 for the 'stepsGenerator step' and one more for the actual processing" )
+
     def _validate(self):
         """ If you want to implement a validate method do it but call _validateThreads or validate threads value."""
         errors = []

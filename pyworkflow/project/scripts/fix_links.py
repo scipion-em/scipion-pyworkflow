@@ -3,10 +3,13 @@
 import sys
 import os
 import logging
-logging.basicConfig(level="INFO")
 
+from pyworkflow.config import Config
 from pyworkflow.project import Manager
 import pyworkflow.utils as pwutils
+
+
+logging.basicConfig(level=Config.SCIPION_LOG_LEVEL, format=Config.SCIPION_LOG_FORMAT)
 
 
 def usage(error):

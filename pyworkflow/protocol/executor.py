@@ -39,6 +39,7 @@ import os
 
 import pyworkflow.utils.process as process
 from pyworkflow.utils.path import getParentFolder, removeExt
+from pyworkflow.constants import PLUGIN_MODULE_VAR, RUN_JOB_GPU_PARAM_SEARCH
 from . import constants as cts
 
 from .launch import _submit, UNKNOWN_JOBID, _checkJobStatus
@@ -59,16 +60,26 @@ class StepExecutor:
         """ Set protocol to append active jobs to its jobIds. """
         self.protocol = protocol
 
-    def runJob(self, log, programName, params,           
+    def getRunContext(self):
+        return {PLUGIN_MODULE_VAR: self.protocol.getPlugin().getName()}
+
+    def runJob(self, log, programName, params,
                numberOfMpi=1, numberOfThreads=1,
                env=None, cwd=None, executable=None):
         """ This function is a wrapper around runJob, 
         providing the host configuration. 
         """
         process.runJob(log, programName, params,
-                       numberOfMpi, numberOfThreads, 
+                       numberOfMpi, numberOfThreads,
                        self.hostConfig,
-                       env=env, cwd=cwd, gpuList=self.getGpuList(), executable=executable)
+                       env=env, cwd=cwd, gpuList=self._getGPUListForCommand(programName, params), executable=executable, context=self.protocol.getSubmitDict())
+
+    def _getGPUListForCommand(self, program, params):
+        """ Returns the list of GPUs if the program or the params have the GPU placeholder %(GPU)s """
+        if RUN_JOB_GPU_PARAM_SEARCH in params or RUN_JOB_GPU_PARAM_SEARCH in program:
+            return self.getGpuList()
+        else:
+            return []
 
     def _getRunnable(self, steps, n=1):
         """ Return the n steps that are 'new' and all its
@@ -258,7 +269,7 @@ class ThreadStepExecutor(StepExecutor):
 
             gpus = self.getFreeGpuSlot(nodeId)
             if gpus is None:
-                logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning and empty list." % nodeId)
+                logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning an empty list." % nodeId)
                 return []
             else:
                 return gpus
@@ -422,14 +433,19 @@ class QueueStepExecutor(ThreadStepExecutor):
         threadId = threading.current_thread().thId
         submitDict = dict(self.hostConfig.getQueuesDefault())
         submitDict.update(self.submitDict)
-        submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
-                                                            self.hostConfig, env,
-                                                            gpuList=self.getGpuList())
         threadJobId = self.getThreadJobId(threadId)
         subthreadId = '-%s-%s' % (threadId, threadJobId)
         submitDict['JOB_NAME'] = submitDict['JOB_NAME'] + subthreadId
         submitDict['JOB_SCRIPT'] = os.path.abspath(removeExt(submitDict['JOB_SCRIPT']) + subthreadId + ".job")
         submitDict['JOB_LOGS'] = os.path.join(getParentFolder(submitDict['JOB_SCRIPT']), submitDict['JOB_NAME'])
+
+        logger.debug("Variables available for replacement in submission command are: %s" % submitDict)
+
+        submitDict['JOB_COMMAND'] = process.buildRunCommand(programName, params, numberOfMpi,
+                                                            self.hostConfig, env,
+                                                            gpuList=self._getGPUListForCommand(programName, params),
+                                                            context=submitDict)
+
 
         jobid = _submit(self.hostConfig, submitDict, cwd, env)
         self.protocol.appendJobId(jobid)  # append active jobs

@@ -43,7 +43,7 @@ VERSION_1 = '1.0.0'
 VERSION_1_1 = '1.1.0'
 VERSION_1_2 = '1.2.0'
 VERSION_2_0 = '2.0.0'
-VERSION_3_0 = '3.10.5'
+VERSION_3_0 = '3.10.6'
 
 # For a new release, define a new constant and assign it to LAST_VERSION
 # The existing one has to be added to OLD_VERSIONS list.
@@ -72,6 +72,16 @@ SCIPION_PYTHON_DEFAULT = 'python3'
 SCIPION_HOME_VAR = 'SCIPION_HOME'
 SCIPION_TESTS = 'SCIPION_TESTS'
 SCIPION_SCRATCH = 'SCIPION_SCRATCH'
+
+# VARIABLE names in host.conf
+PARALLEL_COMMAND_VAR = 'PARALLEL_COMMAND'
+PLUGIN_MODULE_VAR = 'PLUGIN_MODULE'
+QUEUE_FOR_JOBS = 'QUEUE_FOR_JOBS'
+
+
+# Launching constants
+RUN_JOB_GPU_PARAM = 'GPU' # Param name to "place" GPU ids used to build a run command.
+RUN_JOB_GPU_PARAM_SEARCH = "%("+ RUN_JOB_GPU_PARAM +")s"
 
 # FONT
 SCIPION_DEFAULT_FONT_SIZE = 10
@@ -215,4 +225,3 @@ DEFAULT_EXECUTION_ACTION_ALL = 3
 # Id field/attribute constants
 ID_COLUMN='id'
 ID_ATTRIBUTE='_objId'
-

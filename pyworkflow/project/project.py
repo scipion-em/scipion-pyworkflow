@@ -48,7 +48,7 @@ from pyworkflow.mapper import SqliteMapper
 from pyworkflow.protocol.constants import (MODE_RESTART, MODE_RESUME,
                                            STATUS_INTERACTIVE, ACTIVE_STATUS,
                                            UNKNOWN_JOBID, INITIAL_SLEEP_TIME, STATUS_FINISHED)
-from pyworkflow.protocol.protocol import ProtImportBase, Protocol
+from pyworkflow.protocol.protocol import Protocol
 
 from . import config
 
@@ -306,14 +306,17 @@ class Project(object):
         if creationTime:  # CreationTime was found in project.sqlite
             ctStr = creationTime[0] # This is our String type instance
 
-            # We store it in mem as dateime
+            # We store it in mem as datetime
             self._creationTime = ctStr
 
         else:
-            # We should read the creation time from settings.sqlite and
-            # update the CreationTime in the project.sqlite
-            self._creationTime = pwobj.String(self.getSettingsCreationTime())
-            self._storeCreationTime()
+
+            # If connected to project.sqlite and not any or the run.db
+            if self.path.endswith(PROJECT_DBNAME):
+                # We should read the creation time from settings.sqlite and
+                # update the CreationTime in the project.sqlite
+                self._creationTime = pwobj.String(self.getSettingsCreationTime())
+                self._storeCreationTime()
 
     # ---- Helper functions to load different pieces of a project
     def _loadDb(self, dbPath):
@@ -1961,37 +1964,31 @@ class Project(object):
         self.settings.setReadOnly(value)
 
     def fixLinks(self, searchDir):
-        logger.info("Fixing project links. Searching at %s" % searchDir)
+        logger.info(f"Fixing links for project {self.getShortName()}. Searching in: {searchDir}")
         runs = self.getRuns()
 
+        counter = 0
         for prot in runs:
-            print (prot)
-            broken = False
-            if isinstance(prot, ProtImportBase) or prot.getClassName() == "ProtImportMovies":
-                logger.info("Import detected")
-                for _, attr in prot.iterOutputAttributes():
-                    for f in attr.getFiles():
-                        if ':' in f:
-                            f = f.split(':')[0]
+            if prot.getClassName().startswith("ProtImport"):
+                runName = prot.getRunName()
+                logger.info(f"Found protocol {runName}")
+                for f in prot.getOutputFiles():
+                    if ':' in f:
+                        f = f.split(':')[0]
 
-                        if not os.path.exists(f):
-                            if not broken:
-                                broken = True
-                                logger.info("Found broken links in run: %s" %
-                                      pwutils.magenta(prot.getRunName()))
-                            logger.info("  Missing: %s" % pwutils.magenta(f))
+                    if not os.path.exists(f):
+                        logger.info(f"\tMissing link: {f}")
 
-                            if os.path.islink(f):
-                                sourceFile = os.path.realpath(f)
-                                logger.info("    -> %s" % pwutils.red(sourceFile))
+                        if os.path.islink(f):
+                            sourceFile = os.path.realpath(f)
+                            newFile = pwutils.findFileRecursive(os.path.basename(sourceFile),
+                                                                searchDir)
+                            if newFile:
+                                counter += 1
+                                logger.info(f"\t\tCreating link: {f} -> {newFile}")
+                                pwutils.createAbsLink(newFile, f)
 
-                                newFile = pwutils.findFile(os.path.basename(sourceFile),
-                                                       searchDir,
-                                                       recursive=True)
-                                if newFile:
-                                    logger.info("  Found file %s, creating link... %s" % (newFile,
-                                        pwutils.green("   %s -> %s" % (f, newFile))))
-                                    pwutils.createAbsLink(newFile, f)
+        logger.info(f"Fixed {counter} broken links")
 
     @staticmethod
     def cleanProjectName(projectName):

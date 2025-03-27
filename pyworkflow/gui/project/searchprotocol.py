@@ -139,7 +139,7 @@ class SearchProtocolWindow(SearchBaseWindow):
     def _addProtocolToTree(self, protList):
         """ Adds the items in protList to the tree
 
-        :param protList: List of tuples with all the values/colunms used in search ans shown in the tree"""
+        :param protList: List of tuples with all the values/columns used in the search search to show in the tree"""
 
         for key, label, installed, help, streamified, beta, new, updated, weight in protList:
             tag = ProtocolTreeConfig.getProtocolTag(installed == 'installed',

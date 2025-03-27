@@ -36,6 +36,7 @@ from configparser import RawConfigParser
 from collections import OrderedDict
 
 import pyworkflow as pw
+from pyworkflow import PARALLEL_COMMAND_VAR
 from pyworkflow.object import Object, String, Integer
 
 
@@ -199,7 +200,7 @@ class HostConfig(Object):
                 # Read the address of the remote hosts,
                 # using 'localhost' as default for backward compatibility
                 host.setAddress(get('ADDRESS', 'localhost'))
-                host.mpiCommand.set(get('PARALLEL_COMMAND'))
+                host.mpiCommand.set(get(PARALLEL_COMMAND_VAR))
                 host.queueSystem = QueueSystemConfig()
                 hostQueue = host.queueSystem  # shortcut
                 hostQueue.name.set(get('NAME'))

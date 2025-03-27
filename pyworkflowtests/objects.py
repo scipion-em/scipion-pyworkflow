@@ -640,10 +640,10 @@ class MockSetOfImages(MockSet):
         """ Return the string representing the dimensions. """
         return str(self._firstDim)
 
-    def iterItems(self, orderBy='id', direction='ASC', where=None, limit=None):
+    def iterItems(self, orderBy='id', direction='ASC', where=None, limit=None, rowFilter=None):
         """ Redefine iteration to set the acquisition to images. """
         for img in pwobj.Set.iterItems(self, orderBy=orderBy, direction=direction,
-                                       where=where, limit=limit):
+                                       where=where, limit=limit, rowFilter=rowFilter):
 
             # Sometimes the images items in the set could
             # have the acquisition info per data row and we
