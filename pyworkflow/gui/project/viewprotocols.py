@@ -25,9 +25,9 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from pyworkflow import Config, DEFAULT_EXECUTION_ACTION_ASK, DEFAULT_EXECUTION_ACTION_SINGLE
+from pyworkflow import Config, DEFAULT_EXECUTION_ACTION_ASK, DEFAULT_EXECUTION_ACTION_SINGLE, DOCSITEURLS
 from pyworkflow.gui import LIST_TREEVIEW, \
-    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL, BORDERLESS_TREEVIEW
+    ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL, BORDERLESS_TREEVIEW, showInfo
 from pyworkflow.gui.project.constants import *
 from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
 
@@ -401,12 +401,12 @@ class ProtocolsView(tk.Frame):
     def _findProtocol(self, event=None):
         """ Find a desired protocol by typing some keyword. """
 
-        if event is not None and event.widget.widgetName=="canvas":
+        if event is not None and self._noSelection() and event.widget.widgetName=="canvas" and self:
             position = self.runsGraphCanvas.getCoordinates(event)
         else:
             position = None
 
-        window = SearchProtocolWindow(self.window, position=position)
+        window = SearchProtocolWindow(self.window, position=position, selectionGetter=self.getSelectedProtocol)
         window.show()
 
     def _locateProtocol(self, e=None):
@@ -1035,16 +1035,34 @@ class ProtocolsView(tk.Frame):
             self.viewButtons[ACTION_TREE].grid(row=0, column=1)
 
     def _protocolItemClick(self, e=None, position=None):
-        """ Callback for the window to add a new protocol."""
+        """ Callback for the window to add a new protocol.
+        """
 
         # Get the tree widget that originated the event
         # it could be the left panel protocols tree or just
-        # the search protocol dialog tree
+        # the search protocol dialog tree. In this case now non installed protocols are listed from the suggestions
         tree = e.widget
+
+        # Get the class name
         protClassName = tree.getFirst().split('.')[-1]
+
+        # Get the class: Now it may not be installed!!
         protClass = self.domain.getProtocols().get(protClassName)
-        prot = self.project.newProtocol(protClass)
-        self._openProtocolForm(prot, disableRunMode=True, position=position)
+
+        # If found continue to open the protocol form to ask for parameters
+        if protClass is not None:
+            prot = self.project.newProtocol(protClass)
+            self._openProtocolForm(prot, disableRunMode=True, position=position, previousProt=self.getSelectedProtocol())
+        # Missing class: probably not installed. Inform
+        else:
+            # Get the value as populated in pyworkflow.gui.project.searchprotocol.py:235 comming from SearchProtocolWindow.addSuggestions
+            rowValues = tree.item(protClassName)["values"]
+            prot_label = rowValues[0]
+            installedMsg = rowValues[2]
+            msg = ("%s %s To get it use the plugin manager or installation "
+                   "command and restart Scipion. See %s .") % (prot_label, installedMsg, DOCSITEURLS.PLUGIN_MANAGER)
+            showInfo("%s protocol is missing." % prot_label,
+                     msg, self)
 
     def _toggleColorScheme(self, e=None):
 
@@ -1332,13 +1350,20 @@ class ProtocolsView(tk.Frame):
         #
         # if update is not None: self._updateSelection()
 
-    def _openProtocolForm(self, prot, disableRunMode=False, position=None):
-        """Open the Protocol GUI Form given a Protocol instance"""
+    def _openProtocolForm(self, prot, disableRunMode=False, position=None, previousProt=None):
+        """Open the Protocol GUI Form given a Protocol instance
+
+        :param prot: protocol to show and edit its parameters
+        :param disableRunMode: to show the form it in read only mode
+        :param position: Optional. Position to add the box once added to the graph.
+        :param previousProt: Optional. If passed it will try to link this protocol to the previous protocol.
+
+        """
 
         w = FormWindow(Message.TITLE_NAME_RUN + prot.getClassName(),
                        prot, self._executeSaveProtocol, self.window,
                        updateProtocolCallback=self._updateProtocol,
-                       disableRunMode=disableRunMode, position=position)
+                       disableRunMode=disableRunMode, position=position, previousProt=previousProt)
         w.adjustSize()
         w.show(center=True)
 
@@ -1495,7 +1520,7 @@ class ProtocolsView(tk.Frame):
 
     def _scheduleRunsUpdate(self, secs=1, position=None):
         # self.runsTree.after(secs*1000, self.refreshRuns)
-        self.window.enqueue(lambda : self.refreshRuns(position=position))
+        self.window.enqueue(lambda: self.refreshRuns(position=position))
 
     def executeProtocol(self, prot):
         """ Function to execute a protocol called not
@@ -1509,7 +1534,6 @@ class ProtocolsView(tk.Frame):
         if onlySave:
             self.project.saveProtocol(prot)
             msg = Message.LABEL_SAVED_FORM
-            # msg = "Protocol successfully saved."
 
         else:
             if doSchedule:

@@ -29,6 +29,9 @@ creation of protocol form GUI from its
 params definition.
 """
 import logging
+
+from typing import Type
+
 logger = logging.getLogger(__name__)
 import os
 import tkinter as tk
@@ -847,7 +850,7 @@ class SectionFrame(tk.Frame):
         csize = self._getContentSize()
 
         # update the inner frame's width to fill the canvas
-        self.canvas.itemconfigure(self.contentId, width=csize[0],height=csize[1])
+        self.canvas.itemconfigure(self.contentId, width=csize[0], height=csize[1])
         self.canvas.config(scrollregion="0 0 %s %s" % fsize)
 
     def _getContentSize(self):
@@ -929,9 +932,6 @@ class ParamWidget:
                  showButtons=True):
         self.window = window
         self._protocol = self.window.protocol
-        if self._protocol.getProject() is None:
-            logger.error(">>> ERROR: Project is None for protocol: %s, "
-                  "start winpdb to debug it" % self._protocol)
 
         self.row = row
         self.column = column
@@ -1005,8 +1005,8 @@ class ParamWidget:
     def _showInfo(self, msg):
         showInfo("Info", msg, self.parent)
 
-    def _showError(self, msg):
-        showError("Error", msg, self.parent)
+    def _showError(self, msg, exception=None):
+        showError("Error", msg, self.parent, exception=exception)
 
     def _showWarning(self, msg):
         showWarning("Warning", msg, self.parent)
@@ -1015,7 +1015,8 @@ class ParamWidget:
         wizClass = self.window.wizards[self.wizParamName]
         wizard = wizClass()
         # wizParamName: form attribute, the wizard object can check from which parameter it was called
-        # Used into VariableWizard objects (scipion-chem), where input and output parameters used for each wizard are defined
+        # Used into VariableWizard objects (scipion-chem), where input and output parameters used
+        # for each wizard are defined
         self.window.wizParamName = self.wizParamName
         wizard.show(self.window)
 
@@ -1261,7 +1262,7 @@ class ParamWidget:
 
     def _browseObject(self, e=None):
         """Select an object from DB
-        This function is suppose to be used only for PointerParam"""
+        This function is supposed to be used only for PointerParam"""
         value = self.get()
         selected = []
         if isinstance(value, list):
@@ -1322,7 +1323,7 @@ class ParamWidget:
                     return ("Please select object of types: %s"
                             % self.param.paramClass.get())
 
-        title = "Select object of types: %s" % self.param.paramClass.__name__
+        title = "Select object of type %s" % self.param.paramClass.__name__
 
         # Let's ignore conditions so far
         # pointerCond = self.param.pointerCondition.get()
@@ -1364,11 +1365,11 @@ class ParamWidget:
                              selectOnDoubleClick=True)
             if dlg.values:
                 self.set(dlg.values[0])
-        except AttributeError:
+        except AttributeError as exc:
             self._showError("Error loading possible inputs. "
                             "This usually happens because the parameter "
                             "needs info from other parameters... are "
-                            "previous mandatory parameters set?")
+                            "previous mandatory parameters set?", exception=exc)
 
     def _removeRelation(self, e=None):
         self.var.remove()
@@ -1537,7 +1538,8 @@ class FormWindow(Window):
         4. Buttons: buttons at bottom for close, save and execute.
     """
 
-    def __init__(self, title, protocol, callback, master=None, position=None, **kwargs):
+    def __init__(self, title, protocol:pwprot.Protocol, callback, master=None, position=None,
+                 previousProt:pwprot.Protocol=None, **kwargs):
         """ Constructor of the Form window. 
         Params:
          title: title string of the windows.
@@ -1557,6 +1559,7 @@ class FormWindow(Window):
         self.disableRunMode = kwargs.get('disableRunMode', False)
         self.bindings = []
         self.protocol = protocol
+        self.previousProt=previousProt
         self.position = position
         # This control when to close or not after execute
         self.visualizeMode = kwargs.get('visualizeMode', False)
@@ -1572,6 +1575,25 @@ class FormWindow(Window):
         # Call legacy for compatibility on protocol
         protocol.legacyCheck()
         self._createGUI()
+
+    def hasPreviousProt(self):
+        return self.previousProt is not None
+
+    def getPreviousProtOutput(self):
+        """ Returns the previous protocol output"""
+        if self.hasPreviousProt():
+
+            # NOTE: Should we cache this?.
+            for attr, output in self.previousProt.iterOutputAttributes(includePossible=True):
+                yield attr, output
+
+    def getParam(self, paramName):
+        """ Returns a specific parameter from the form definition by its name
+
+        :param paramName: Name of the parameter
+        """
+
+        return self.protocol._definition.getParam(paramName)
 
     def _createGUI(self):
         mainFrame = tk.Frame(self.root, name="main")
@@ -1684,34 +1706,38 @@ class FormWindow(Window):
             allowGpu = prot.allowsGpu()
             numberOfMpi = prot.numberOfMpi.get()
             numberOfThreads = prot.numberOfThreads.get()
-            mode = prot.stepsExecutionMode
 
             if not (allowThreads or allowMpi or allowGpu):
                 return
 
-            self._createHeaderLabel(runFrame, pwutils.Message.LABEL_PARALLEL, bold=True,
-                                    sticky='e', row=r, pady=0)
 
             if allowThreads or allowMpi:
-                procFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
-                r2 = 0
-                c2 = 0
-                sticky = 'e'
 
-                helpMessage = pwutils.Message.HELP_PARALLEL_HEADER
+                threadsParam = self.getParam(pwutils.Message.VAR_THREADS)
+                mpiParam = self.getParam(pwutils.Message.VAR_MPI)
+                binThreads = self.getParam("binThreads")
 
-                if mode == pwprot.STEPS_PARALLEL:
+                if prot.modeParallel():
                     if allowThreads and numberOfThreads > 0:
+
                         prot.numberOfMpi.set(1)
-                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_SCIPION_THREADS,
-                                                sticky=sticky, row=r2, column=c2,
-                                                pady=0)
-                        entry = self._createBoundEntry(procFrame,
+                        self._createHeaderLabel(runFrame, threadsParam.getLabel(),
+                                                sticky='e', row=r, column=0,
+                                                pady=0, bold=True)
+                        entry = self._createBoundEntry(runFrame,
                                                        pwutils.Message.VAR_THREADS)
 
-                        helpMessage += pwutils.Message.HELP_SCIPION_THREADS
+                        entry.grid(row=r, column=1, padx=(0, 5), sticky='w')
 
-                        entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
+                        btnHelp = IconButton(runFrame, pwutils.Message.TITLE_COMMENT,
+                                             pwutils.Icon.ACTION_HELP,
+                                             highlightthickness=0,
+                                             command=self._createHelpCommand(
+                                                 threadsParam.getHelp()))
+                        btnHelp.grid(row=r, column=2, padx=(5, 0), pady=2, sticky='e')
+
+                        r += 1
+
                     elif allowMpi and numberOfMpi > 1:
                         self.showError("MPI parameter is deprecated for protocols "
                                        "with execution is set to STEPS_PARALLEL. "
@@ -1721,42 +1747,60 @@ class FormWindow(Window):
                                        "STEPS_PARALLEL number of threads "
                                        "should not be set to zero.")
 
-                else:
+                # Either is serial (threads and/or mpi as argument, or is Scipion parallel with binThreads
+                if prot.modeSerial() or binThreads:
+
+                    helpMessage = pwutils.Message.HELP_PARALLEL_HEADER
+
+                    label = pwutils.Message.LABEL_PARALLEL
+                    label = "%s compute" % prot.getClassPackageName()
+                    # Add the main header and its frame
+                    self._createHeaderLabel(runFrame, label, bold=True,
+                                            sticky='e', row=r, pady=0)
+                    procFrame = tk.Frame(runFrame, bg=pw.Config.SCIPION_BG_COLOR)
+                    r2 = 0
+                    c2 = 0
+                    sticky = 'e'
+
                     # ---- THREADS----
-                    if allowThreads:
-                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_THREADS,
+                    if binThreads or allowThreads:
+                        attrName = pwutils.Message.VAR_THREADS
+                        if binThreads:
+                            threadsParam = binThreads
+                            attrName = "binThreads"
+                        self._createHeaderLabel(procFrame, threadsParam.getLabel(),
                                                 sticky=sticky, row=r2, column=c2,
                                                 pady=0)
                         entry = self._createBoundEntry(procFrame,
-                                                       pwutils.Message.VAR_THREADS)
+                                                       attrName)
                         entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
                         # Modify values to be used in MPI entry
                         c2 += 2
                         sticky = 'w'
 
-                        helpMessage += pwutils.Message.HELP_PARALLEL_THREADS
+                        helpMessage += threadsParam.getHelp()
                     # ---- MPI ----
                     if allowMpi:
-                        self._createHeaderLabel(procFrame, pwutils.Message.LABEL_MPI,
+                        self._createHeaderLabel(procFrame, mpiParam.getLabel(),
                                                 sticky=sticky, row=r2, column=c2,
                                                 pady=0)
                         entry = self._createBoundEntry(procFrame, pwutils.Message.VAR_MPI)
                         entry.grid(row=r2, column=c2 + 1, padx=(0, 5), sticky='w')
 
-                        helpMessage += '\n' + pwutils.Message.HELP_PARALLEL_MPI
+                        helpMessage += '\n' + mpiParam.getHelp()
 
 
-                btnHelp = IconButton(procFrame, pwutils.Message.TITLE_COMMENT,
-                                     pwutils.Icon.ACTION_HELP,
-                                     highlightthickness=0,
-                                     command=self._createHelpCommand(
-                                         helpMessage))
-                btnHelp.grid(row=0, column=4, padx=(5, 0), pady=2, sticky='e')
+                    btnHelp = IconButton(procFrame, pwutils.Message.TITLE_COMMENT,
+                                         pwutils.Icon.ACTION_HELP,
+                                         highlightthickness=0,
+                                         command=self._createHelpCommand(
+                                             helpMessage))
+                    btnHelp.grid(row=0, column=4, padx=(5, 0), pady=2, sticky='e')
 
-                procFrame.columnconfigure(0, minsize=60)
-                procFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
+                    procFrame.columnconfigure(0, minsize=60)
+                    procFrame.grid(row=r, column=1, sticky='ew', columnspan=2)
 
-                r += 1
+                    r += 1
 
             if allowGpu:
                 self._createHeaderLabel(runFrame, "GPU IDs", bold=True,
@@ -2202,12 +2246,20 @@ class FormWindow(Window):
             # to avoid ghost inputs
             self._checkAllChanges(toggleWidgetVisibility=False)
 
+            # This may be viewprotocols.py.ProtocolsView._executeSaveProtocol
+            # Message is either a confirmation that the protocol has been saves or empty message
             message = self.callback(self.protocol, onlySave, doSchedule, position=self.position)
             if not self.visualizeMode:
+                # If there is a message
                 if len(message):
-                    self.showInfo(message, "Protocol action")
-                if not onlySave:
+                    if onlySave and not pw.Config.SCIPION_UNLOAD_FORM_ON_SAVE:
+                        self.showInfo(message, "Protocol action")
+                    else:
+                        logger.info(message)
+
+                if not onlySave or pw.Config.SCIPION_UNLOAD_FORM_ON_SAVE:
                     self.close()
+
         except ModificationNotAllowedException as ex:
             self.showInfo("Modification not allowed.\n\n %s\n" % ex)
         except Exception as ex:
@@ -2217,11 +2269,20 @@ class FormWindow(Window):
             self.showError("Error during %s: \n%s" % (action, ex), exception=ex)
 
     def getWidgetValue(self, protVar, param):
-        widgetValue = ""
+        """ Returns the value for the widget"""
+
+        widgetValue = protVar
         if (isinstance(param, pwprot.PointerParam) or
                 isinstance(param, pwprot.MultiPointerParam) or
                 isinstance(param, pwprot.RelationParam)):
-            widgetValue = protVar
+
+            # If protVar has already a value
+            if protVar.hasValue():
+                widgetValue = protVar
+            elif self.protocol.isNew():
+                # try to link it to the output of the previousProtocol
+                return self.suggestValueFromPreviousProt(param, protVar)
+
         # For Scalar params that allowPointers
         elif param.allowsPointers:
             if protVar.hasPointer():
@@ -2233,6 +2294,28 @@ class FormWindow(Window):
             widgetValue = protVar.get(param.default.get())
         return widgetValue
 
+    def suggestValueFromPreviousProt(self, param, pointer:pwobj.Pointer):
+
+        """Suggest an input from the previous selected protocol that matches the param type"""
+        if not hasattr(param, "pointerClass"):
+            return pointer
+
+        paramTypeStr = param.pointerClass.get().split(",")
+
+        # Iterate over the output of the selected protocol
+        for attr, value in self.getPreviousProtOutput():
+
+            # Deal with possible outputs where value is the class and not an instance
+            # TODO: We may want here to deal with inheritance and use isinstance...
+            #       but for that we need the class and not the string
+            outputType = value.getClassName()
+            if outputType in paramTypeStr:
+                pointer.set(self.previousProt)
+                pointer.setExtended(attr)
+                # First found is enough
+                break
+
+        return pointer
     def _visualize(self, paramName):
         protVar = getattr(self.protocol, paramName)
         if protVar.hasValue():
@@ -2259,6 +2342,8 @@ class FormWindow(Window):
                 widget = LineWidget(r, paramName, param, self, parent, None)
                 self._fillLine(param, widget)
             else:
+
+                # Attribute of the protocol
                 protVar = getattr(self.protocol, paramName, None)
 
                 if protVar is None:

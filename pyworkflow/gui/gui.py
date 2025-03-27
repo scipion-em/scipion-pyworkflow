@@ -133,7 +133,7 @@ def getBigFont():
     return getNamedFont(FONT_BIG)
 
 
-def setCommonFonts(windows=None):
+def setCommonFonts(window=None):
     """Set some predefined common fonts.
     Same conditions of setFont applies here."""
     f = setFont(FONT_NORMAL, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE)
@@ -150,17 +150,17 @@ def setCommonFonts(windows=None):
 
     setFont(FONT_BIG, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE+8)
 
-    if windows:
-        windows.fontBig = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE + 2, family=pw.Config.SCIPION_FONT_NAME,
+    if window:
+        window.fontBig = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE + 2, family=pw.Config.SCIPION_FONT_NAME,
                                       weight='bold')
-        windows.font = f
-        windows.fontBold = fb
-        windows.fontItalic = fi
+        window.font = f
+        window.fontBold = fb
+        window.fontItalic = fi
 
         # This adds the default value for the listbox inside a combo box
         # Which seems to not react to default font!!
-        windows.root.option_add("*TCombobox*Listbox*Font", default_font)
-        windows.root.option_add("*TCombobox*Font", default_font)
+        window.root.option_add("*TCombobox*Listbox*Font", default_font)
+        window.root.option_add("*TCombobox*Font", default_font)
 
 
 def changeFontSizeByDeltha(font, deltha, minSize=-999, maxSize=999):

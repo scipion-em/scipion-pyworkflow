@@ -82,9 +82,9 @@ class LoggingConfigurator:
     customLoggingActive = False  # Holds if a custom logging configuration has taken place.
 
     @classmethod
-    def setupLogging(cls, logFile=None, console=True):
+    def setupLogging(cls, logFile=None, console=True, consoleLevel='ERROR'):
         if not cls.loadCustomLoggingConfig():
-            cls.setupDefaultLogging(logFile=logFile, console=console)
+            cls.setupDefaultLogging(logFile=logFile, console=console, consoleLevel=consoleLevel)
 
     @classmethod
     def loadCustomLoggingConfig(cls):
@@ -104,13 +104,13 @@ class LoggingConfigurator:
         return False
 
     @staticmethod
-    def setupDefaultLogging(logFile=None, console=True):
+    def setupDefaultLogging(logFile=None, console=True, consoleLevel="ERROR"):
         """ Configures logging in a default way that is to file (rotating) and console
 
         :param logFile: Optional, path to the log file. Defaults to SCIPION_LOG variable value. If folder
-            does not exists it will be created.
+            does not exist it will be created.
         :param console: Optional, defaults to True, so log messages are sent to the terminal as well
-
+        :param consoleLevel: Optional, defaults to ERROR. Only error messages are sent to the console.
         """
         from pyworkflow import Config
 
@@ -147,7 +147,7 @@ class LoggingConfigurator:
 
         if console:
             config["handlers"][CONSOLE_HANDLER] = {
-                        'level': 'ERROR', #Config.SCIPION_LOG_LEVEL,
+                        'level': consoleLevel,
                         'class': 'logging.StreamHandler',
                         'formatter': 'standard',
                         }
@@ -282,3 +282,12 @@ def getExtraLogInfo(measurement, status, project_name=None, prot_id=None, prot_n
 
     except Exception as e:
         print("getExtraLogInfo failed: %s.Params were: dbFilename %s" % (e, dbfilename))
+
+
+def changeLogLevel(newLoglevel):
+    """ Changes "on-the-fly" the log level iterating through the handlders"""
+
+    logger = logging.getLogger()
+    logger.setLevel(newLoglevel)
+    for handler in logger.handlers:
+        handler.setLevel(newLoglevel)

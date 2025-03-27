@@ -60,10 +60,7 @@ class StepExecutor:
         """ Set protocol to append active jobs to its jobIds. """
         self.protocol = protocol
 
-    def getRunContext(self):
-        return {PLUGIN_MODULE_VAR: self.protocol.getPlugin().getName()}
-
-    def runJob(self, log, programName, params,
+    def runJob(self, log, programName, params,           
                numberOfMpi=1, numberOfThreads=1,
                env=None, cwd=None, executable=None):
         """ This function is a wrapper around runJob, 
@@ -161,6 +158,9 @@ class StepThread(threading.Thread):
         self.step = step
         self.lock = lock
 
+    def needsGPU(self):
+        return self.step.needsGPU()
+
     def run(self):
         error = None
         try:
@@ -255,24 +255,35 @@ class ThreadStepExecutor(StepExecutor):
                 newGPUList.append(gpuid)
         return newGPUList
 
+    def getCurrentStepThread(self) -> StepThread:
+
+        return threading.current_thread()
+
     def getGpuList(self):
         """ Return the GPU list assigned to current thread
         or empty list if not using GPUs. """
 
         # If the node id has assigned gpus?
-        nodeId = threading.current_thread().thId
-        if nodeId in self.gpuDict:
-            gpus = self.gpuDict.get(nodeId)
-            logger.info("Reusing GPUs (%s) slot for %s" % (gpus, nodeId))
-            return gpus
-        else:
+        stepThread = self.getCurrentStepThread()
 
-            gpus = self.getFreeGpuSlot(nodeId)
-            if gpus is None:
-                logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning an empty list." % nodeId)
-                return []
-            else:
+        # If the step does not need the gpu
+        if not stepThread.needsGPU():
+            # return an empty list
+            return []
+        else:
+            nodeId = stepThread.thId
+            if nodeId in self.gpuDict:
+                gpus = self.gpuDict.get(nodeId)
+                logger.info("Reusing GPUs (%s) slot for %s" % (gpus, nodeId))
                 return gpus
+            else:
+
+                gpus = self.getFreeGpuSlot(nodeId)
+                if gpus is None:
+                    logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning an empty list." % nodeId)
+                    return []
+                else:
+                    return gpus
     def getFreeGpuSlot(self, stepId=None):
         """ Returns a free gpu slot available or None. If node is passed it also reserves it for that node
 
@@ -336,7 +347,7 @@ class ThreadStepExecutor(StepExecutor):
         runningSteps = {}  # currently running step in each node ({node: step})
         freeNodes = list(range(1, self.numberOfProcs+1))  # available nodes to send jobs
         logger.info("Execution threads: %s" % freeNodes)
-        logger.info("Running steps using %s threads. 1 thread is used for this main proccess." % self.numberOfProcs)
+        logger.info("Running steps using %s threads. 1 thread is used for this main process." % self.numberOfProcs)
 
         while True:
             # See which of the runningSteps are not really running anymore.
@@ -452,8 +463,9 @@ class QueueStepExecutor(ThreadStepExecutor):
         self.protocol._store(self.protocol._jobId)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
-            logger.info("jobId is none therefore we set it to fail")
-            raise Exception("Failed to submit to queue.")
+            errorMsg = "Failed to submit to queue. JOBID is not valid. There's probably an error interacting with the queue: %s" % error
+            logger.info(errorMsg)
+            raise Exception(errorMsg)
 
         status = cts.STATUS_RUNNING
         wait = 3

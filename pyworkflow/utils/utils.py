@@ -22,6 +22,7 @@
 # *
 # **************************************************************************
 import logging
+
 logger = logging.getLogger(__name__)
 
 import contextlib
@@ -36,7 +37,7 @@ import sysconfig
 import bibtexparser
 import numpy as np
 import math
-from pyworkflow.constants import StrColors
+from pyworkflow.constants import StrColors, TRUE_YES_ON_
 from pyworkflow import Config
 
 
@@ -705,7 +706,7 @@ def envVarOn(varName, env=None):
 
 def strToBoolean(string):
     """ Converts a string into a Boolean if the string is on of true, yes, on, 1. Case insensitive."""
-    return string is not None and string.lower() in ['true', 'yes', 'on', '1']
+    return string is not None and string.lower() in TRUE_YES_ON_
 
 def strToDuration(durationStr):
     """ Converts a string representing an elapsed time to seconds

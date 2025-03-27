@@ -69,9 +69,7 @@ class ParallelSleepingProtocol(SleepingProtocol):
 class ConcurrencyProtocol(SleepingProtocol):
     """ Protocol to test concurrency access to sets"""
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.stepsExecutionMode = pwprot.STEPS_PARALLEL
+    stepsExecutionMode = pwprot.STEPS_PARALLEL
 
     def _defineParams(self, form):
         form.addParallelSection(threads=2, mpi=0)

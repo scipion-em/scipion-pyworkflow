@@ -113,15 +113,17 @@ class Domain:
 
         # Catch any import exception, warn about it but continue.
         except ModuleNotFoundError as e:
+
+            logger.debug("Module %s not found: %s" %(name, e))
             if e.name == name:
                 # This is probably due to a priority package like pwchem not being installed
-                pass
+                logger.debug("Name is different!!: e.name='%s', name='%s'" %( e.name , name))
             else:
                 logger.warning("Plugin '%s' has import errors: %s. Maybe a missing dependency?. "
                                "Is it devel mode and need to be reinstalled?. Ignoring it and continuing." % (name, str(e)))
         except Exception as e:
 
-            (pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
+            logger.info(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
             logger.info("Please, contact developers at %s and send this ugly information below. They'll understand it!." % DOCSITEURLS.CONTACTUS)
             logger.info("Error message: %s"% str(e))

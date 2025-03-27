@@ -342,13 +342,13 @@ class Protocol(Step):
     
         class MyOutput(enum.Enum):
             outputMicrographs = SetOfMicrographs
-            outputMicrographDW = SetOfMicrographs
+            outputMicrographDW = SetOfMovies
     
     When defining outputs you can, optionally, use this enum like:
     self._defineOutputs(**{MyOutput.outputMicrographs.name, setOfMics})
     It will help to keep output names consistently
     
-    Alternative an inline dictionary will work:
+    Alternative an inline dictionary will work (this is mandatory in case two or more outputs are of the same type):
     _possibleOutputs = {"outputMicrographs" : SetOfMicrographs}
     
     For a more fine detailed/dynamic output based on parameters, you can overwrite the getter:
@@ -396,7 +396,7 @@ class Protocol(Step):
         self._log = logger
         self._buffer = ''  # text buffer for reading log files
         # Project to which the protocol belongs
-        self.__project = kwargs.get('project', None)
+        self._project = kwargs.get('project', None)
         # Filename templates dict that will be used by _getFileName
         self.__filenamesDict = {}
 
@@ -405,12 +405,13 @@ class Protocol(Step):
         self.lastUpdateTimeStamp = String()
 
         # For non-parallel protocols mpi=1 and threads=1
+        # MPIs
         self.allowMpi = hasattr(self, 'numberOfMpi')
         if not self.allowMpi:
             self.numberOfMpi = Integer(1)
 
+        # Threads
         self.allowThreads = hasattr(self, 'numberOfThreads')
-
         if not self.allowThreads:
             self.numberOfThreads = Integer(1)
 
@@ -458,6 +459,38 @@ class Protocol(Step):
         # than one time, thus avoiding deadlock situation. This fixed the concurrency problems we had before.
         self.forceSchedule = Boolean(False)
 
+
+    def getMPIs(self):
+        """ Returns the value of MPIs (integer)"""
+        return self.numberOfMpi.get()
+
+    def getScipionThreads(self):
+        """ Returns the number of Scipion threads. Not the threads that are argument for programs but those that will
+         run steps in parallel. This assumes cls.stepsExecutionMode = STEP_PARALLEL. See Param.addParallelSection"""
+        return self.numberOfThreads.get()
+
+    def getBinThreads(self):
+        """ Returns the number of binary threads. An integer to pass as an argument for the binary program integrated.
+         See Param.addParallelSection"""
+
+        if self.modeSerial():
+            return self.numberOfThreads.get()
+        else:
+            return self.binThreads.get()
+
+    def getTotalThreads(self):
+        """ Returns the total number of threads the protocol will need. This may be necessary when clusters require this value"""
+        if self.modeSerial():
+            # This will be the main thread + the binary threads * mpi ?
+            return 1 + self.getTotalBinThreads()
+        else:
+            # One main thread (included in Scipion threads) plus TotalBinThread time processing steps (Scipion threads -1)
+            return 1 + ((self.getScipionThreads()-1)* self.getTotalBinThreads())
+
+    def getTotalBinThreads(self):
+        """ Returns the total number to cores the binary will use: threads * mpis"""
+        return self.getBinThreads() * self.getMPIs()
+
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
         attributes of self, also store the key in attrList.
@@ -494,6 +527,7 @@ class Protocol(Step):
         """Close all output set"""
         for outputName, output in self.iterOutputAttributes():
             if isinstance(output, Set) and output.isStreamOpen():
+                logger.info("Closing %s output" % outputName)
                 self.__tryUpdateOutputSet(outputName, output, state=Set.STREAM_CLOSED)
 
     def _updateOutputSet(self, outputName, outputSet,
@@ -549,10 +583,10 @@ class Protocol(Step):
         return self._hasExpert
 
     def getProject(self):
-        return self.__project
+        return self._project
 
     def setProject(self, project):
-        self.__project = project
+        self._project = project
 
     @staticmethod
     def hasDefinition(cls):
@@ -745,7 +779,7 @@ class Protocol(Step):
                         protocol = self.getProject().getRunsGraph(refresh=True).getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
-                        # Pointers do not have the __project set.
+                        # Pointers do not have the _project set.
                         # We do not have a clear way to get the protocol if
                         # we do not have the project object associated
                         # This case implies Direct Pointers to Sets
@@ -1081,7 +1115,8 @@ class Protocol(Step):
     def _finalizeStep(self, status, msg=None):
         """ Closes the step and setting up the protocol process id """
         super()._finalizeStep(status, msg)
-        self._pid.set(None)
+        self._closeOutputSet()
+        self._pid.set(0)
 
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
@@ -1152,14 +1187,17 @@ class Protocol(Step):
 
     def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
                           **kwargs):
-        """ Insert a Step that will simply call runJob function
+        """ Insert an Step that will simple call runJob function
         **args: see __insertStep
         """
-        return self._insertFunctionStep('runJob', progName, progArguments, **kwargs)
+        return self._insertFunctionStep('runJob', progName, progArguments,
+                                        **kwargs)
 
     def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
         """ Shortcut function to insert a step for copying a file to a destiny. """
-        step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile, targetFile, **kwargs)
+        step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile,
+                            targetFile,
+                            **kwargs)
         return self.__insertStep(step, **kwargs)
 
     def _enterDir(self, path):
@@ -1348,6 +1386,7 @@ class Protocol(Step):
 
         if startIndex == len(self._steps):
             self.lastStatus = STATUS_FINISHED
+            self.setFinished()
             self.info("All steps seem to be FINISHED, nothing to be done.")
         else:
             self.lastStatus = self.status.get()
@@ -1357,8 +1396,9 @@ class Protocol(Step):
                                          self._stepsCheck,
                                          self._stepsCheckSecs)
 
-        print("*** Last status is %s " % self.lastStatus)
-        self.setStatus(self.lastStatus)
+            logger.info("*** Last status is %s " % self.lastStatus)
+            self.setStatus(self.lastStatus)
+            self.cleanExecutionAttributes(includeSteps=False)
         self._store(self.status)
 
     def __deleteOutputs(self):
@@ -1574,34 +1614,44 @@ class Protocol(Step):
             package = self.getClassPackage()
             if hasattr(package, "__version__"):
                 self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
-            self.info('plugin binary v: %s' % plugin.getActiveVersion())
+            try:
+                self.info('plugin binary v: %s' % plugin.getActiveVersion())
+            except Exception as e:
+                logger.error("Coudn't get the active version of the binary. This may be cause by a variable in the config"
+                             " file with a missing - in it and the protocol to fail.", exc_info=e)
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
+
+            if self.modeSerial():
+                self.info("Serial execution")
+            else:
+                self.info("Scipion threads: %d" % self.getScipionThreads())
+
             try:
-                self.info('          MPI: %d' % self.numberOfMpi)
-                self.info('      threads: %d' % self.numberOfThreads)
+                self.info('binary MPI: %d' % self.numberOfMpi)
+                self.info('binary Threads: %d' % self.getBinThreads())
             except Exception as e:
                 self.info('  * Cannot get information about MPI/threads (%s)' % e)
-        # Something went wrong ans at this point status is launched. We mark it as failed.
+        # Something went wrong and at this point status is launched. We mark it as failed.
         except Exception as e:
-            print(e)
+            logger.error("Couldn't start the protocol." , exc_info=e)
             self.setFailed(str(e))
-            self._store(self.status, self.getError())
+            # self._store(self.status, self.getError())
             self._endRun()
             return
 
         Step.run(self)
-        if self.isFailed():
-            self._store()
+        # if self.isFailed():
+        #     self._store()
         self._endRun()
 
     def _endRun(self):
         """ Print some ending message and close some files. """
-        # self._store()
-        self._store(self.summaryVar)
-        self._store(self.methodsVar)
-        self._store(self.endTime)
+        self._store()  # Store all protocol attributes
+        # self._store(self.summaryVar)
+        # self._store(self.methodsVar)
+        # self._store(self.endTime)
 
         if pwutils.envVarOn(pw.SCIPION_DEBUG_NOCLEAN):
             self.warning('Not cleaning temp folder since '
@@ -1636,6 +1686,7 @@ class Protocol(Step):
     def getStepsFile(self):
         """ Return the steps.sqlite file under logs directory. """
         return self._getLogsPath('steps.sqlite')
+
 
     def _addChunk(self, txt, fmt=None):
         """
@@ -1919,6 +1970,8 @@ class Protocol(Step):
         queueName, queueParams = self.getQueueParams()
         hc = self.getHostConfig()
 
+        scipion_project = "SCIPION_PROJECT" if self.getProject() is None else self.getProject().getShortName()
+
         d = {'JOB_NAME': self.strId(),
              'JOB_QUEUE': queueName,
              'JOB_NODES': self.numberOfMpi.get(),
@@ -1927,9 +1980,9 @@ class Protocol(Step):
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
              QUEUE_FOR_JOBS: 'N',
-             'SCIPION_PROJECT': "SCIPION_PROJECT",  # self.getProject().getShortName(),
-             'SCIPION_PROTOCOL': self.getRunName(),
-             PLUGIN_MODULE_VAR: self.getPlugin().getName()
+             PLUGIN_MODULE_VAR: self.getPlugin().getName(),
+             'SCIPION_PROJECT': scipion_project,
+             'SCIPION_PROTOCOL': self.getRunName()
              }
 
         # Criteria in HostConfig.load to load or not QUEUE variables
@@ -2401,11 +2454,12 @@ class Protocol(Step):
 
         return self._size
 
-    def cleanExecutionAttributes(self):
+    def cleanExecutionAttributes(self, includeSteps=True):
         """ Clean all the executions attributes """
         self.setPid(0)
         self._jobId.clear()
-        self._stepsDone.set(0)
+        if includeSteps:
+            self._stepsDone.set(0)
 
 class LegacyProtocol(Protocol):
     """ Special subclass of Protocol to be used when a protocol class

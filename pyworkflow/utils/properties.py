@@ -121,11 +121,8 @@ class Message:
     LABEL_RUNNAME = 'Run name'
     LABEL_EXECUTION = 'Run mode'
     LABEL_RUNMODE = 'Mode'
-    LABEL_PARALLEL = 'Parallel'
+    LABEL_PARALLEL = 'Program compute'
     LABEL_HOST = 'Host'
-    LABEL_THREADS = 'Threads'
-    LABEL_SCIPION_THREADS = 'Scipion threads'
-    LABEL_MPI = 'MPI'
     LABEL_QUEUE = 'Use a queue engine?'
 
     LABEL_WAIT_FOR = 'Wait for'
@@ -144,17 +141,6 @@ will clean the whole run directory and start from scratch.
     """
 
     HELP_PARALLEL_HEADER = 'Define the number of processors to be used in the execution.\nCheck %s for more detailed info.\n\n' % DOCSITEURLS.THREADS_MPIS_AND_GPUS
-    HELP_PARALLEL_MPI = ("*MPI*:\nThis is a number of independent processes"
-                         " that communicate through message passing "
-                         "over the network (or the same computer).\n")
-    HELP_PARALLEL_THREADS = ("*Threads*:\nThis refers to different execution threads in the same process that "
-                             "can share memory. They run in the same computer. This value is an argument"
-                             " passed to the program integrated")
-
-    HELP_SCIPION_THREADS = ("*Scipion threads*:\n threads created by Scipion to run the steps."
-                            " 1 thread is always used by the master/main process. Then extra threads will allow"
-                            " this protocol to run several steps at the same time, taking always into account "
-                            "restrictions to previous steps and 'theoretical GPU availability'")
 
     HELP_USEQUEUE = """
     Click Yes if you want to send this execution to a queue engine like Slurm, Torque, ...
@@ -478,54 +464,54 @@ class Sprite:
 # To get font awesome icons into png use: http://fa2png.io/
 class Icon:
     # Protocols status
-    PROT_DISABLED = SpriteImage(16,32,'prot_disabled.png',bottom=32,right=64)
-    BETA = SpriteImage(0,0,'beta.png',bottom=16,right=32)
-    NEW = SpriteImage(32,0,'new.png',bottom=48,right=32)
-    PRODUCTION = SpriteImage(32,32,'production.png',bottom=48,right=64)
-    UPDATED = SpriteImage(16,0,'updated.png',bottom=32,right=32)
+    PROT_DISABLED = SpriteImage(16,32, 'prot_disabled.png', bottom=32, right=64)
+    BETA = SpriteImage(0, 0, 'beta.png', bottom=16, right=32)
+    NEW = SpriteImage(32, 0, 'new.png', bottom=48, right=32)
+    PRODUCTION = SpriteImage(32, 32, 'production.png', bottom=48, right=64)
+    UPDATED = SpriteImage(16, 0, 'updated.png', bottom=32, right=32)
 
-    GROUP = SpriteImage(80, 224,'class_obj.png')
-    FAVORITE = SpriteImage(80,256,'bookmark.png')
-    DEBUG = SpriteImage(64,288,'debug.png')
-    DOWNLOAD = SpriteImage(48,272,'fa-download.png')
-    FIND = SpriteImage(80,272,'binoculares.png')
-    SELECT_ALL = SpriteImage(0,32,'workflow.png')
+    GROUP = SpriteImage(80, 224, 'class_obj.png')
+    FAVORITE = SpriteImage(80, 256, 'bookmark.png')
+    DEBUG = SpriteImage(64, 288, 'debug.png')
+    DOWNLOAD = SpriteImage(48, 272, 'fa-download.png')
+    FIND = SpriteImage(80, 272, 'binoculares.png')
+    SELECT_ALL = SpriteImage(0, 32, 'workflow.png')
 
     # Project window icons
-    RUNS_TREE = SpriteImage(16,272,'fa-sitemap.png')
-    ACTION_NEW = SpriteImage(80,304,'fa-plus-circle.png')
-    ACTION_EDIT = SpriteImage(32,272,'fa-pencil.png')
-    ACTION_SELECT_FROM = SpriteImage(64,272,'fa-arrow-down.png')
-    ACTION_SELECT_TO = SpriteImage(64,256,'fa-arrow-up.png')
-    ACTION_COPY = SpriteImage(80,208,'clipboard-regular.png')
-    ACTION_PASTE = SpriteImage(0,64,'paste-solid.png')
-    ACTION_DUPLICATE = SpriteImage(48,208,'fa-files-o.png')
-    ACTION_DELETE = SpriteImage(16,176,'fa-trash-o.png')
-    ACTION_REFRESH = SpriteImage(32,144, 'fa-refresh.png')
-    ACTION_RENAME = SpriteImage(0,48,'rename.png')
-    ACTION_BROWSE = SpriteImage(32,304,'fa-folder-open.png')
-    ACTION_DB = SpriteImage(48,288,'fa-database.png')
-    ACTION_STOP = SpriteImage(16,256,'fa-stop.png')
-    ACTION_CONTINUE = SpriteImage(32,256,'fa-play-circle-o.png')
-    ACTION_STOP_WORKFLOW = SpriteImage(16,240,'fa-stop-workflow.png')
-    ACTION_RESULTS = SpriteImage(48,240,'fa-eye.png')
-    ACTION_SAVE = SpriteImage(32,112, 'fa-save.png')
+    RUNS_TREE = SpriteImage(16, 272, 'fa-sitemap.png')
+    ACTION_NEW = SpriteImage(80, 304, 'fa-plus-circle.png')
+    ACTION_EDIT = SpriteImage(32, 272, 'fa-pencil.png')
+    ACTION_SELECT_FROM = SpriteImage(64, 272, 'fa-arrow-down.png')
+    ACTION_SELECT_TO = SpriteImage(64, 256, 'fa-arrow-up.png')
+    ACTION_COPY = SpriteImage(80, 208, 'clipboard-regular.png')
+    ACTION_PASTE = SpriteImage(0, 64, 'paste-solid.png')
+    ACTION_DUPLICATE = SpriteImage(48, 208, 'fa-files-o.png')
+    ACTION_DELETE = SpriteImage(16, 176, 'fa-trash-o.png')
+    ACTION_REFRESH = SpriteImage(32, 144, 'fa-refresh.png')
+    ACTION_RENAME = SpriteImage(0, 48, 'rename.png')
+    ACTION_BROWSE = SpriteImage(32, 304, 'fa-folder-open.png')
+    ACTION_DB = SpriteImage(48, 288, 'fa-database.png')
+    ACTION_STOP = SpriteImage(16, 256, 'fa-stop.png')
+    ACTION_CONTINUE = SpriteImage(32, 256, 'fa-play-circle-o.png')
+    ACTION_STOP_WORKFLOW = SpriteImage(16, 240, 'fa-stop-workflow.png')
+    ACTION_RESULTS = SpriteImage(48, 240, 'fa-eye.png')
+    ACTION_SAVE = SpriteImage(32, 112, 'fa-save.png')
     ACTION_VISUALIZE = ACTION_RESULTS
-    ACTION_WIZ = SpriteImage(32,288,'fa-magic.png')
-    ACTION_HELP = SpriteImage(32,160,'fa-question-circle.png')
-    ACTION_REFERENCES = SpriteImage(48,256,'link')
+    ACTION_WIZ = SpriteImage(32, 288, 'fa-magic.png')
+    ACTION_HELP = SpriteImage(32, 160, 'fa-question-circle.png')
+    ACTION_REFERENCES = SpriteImage(48, 256, 'link')
     ACTION_EXPORT = ACTION_REFERENCES
-    ACTION_EXPORT_UPLOAD = SpriteImage(16,96, 'fa-upload.png')
-    ACTION_SEARCH = SpriteImage(32,96, 'fa-search.png')
-    SETTINGS = SpriteImage(48,304,'fa-cogs.png')
+    ACTION_EXPORT_UPLOAD = SpriteImage(16, 96, 'fa-upload.png')
+    ACTION_SEARCH = SpriteImage(32, 96, 'fa-search.png')
+    SETTINGS = SpriteImage(48, 304, 'fa-cogs.png')
     ACTION_EXECUTE = SETTINGS
-    ACTION_IN = SpriteImage(16,304,'fa-sign-in.png')
-    ACTION_OUT = SpriteImage(16,288,'fa-sign-out.png')
-    ACTION_FIND_NEXT = SpriteImage(32,208,'fa-next.png')
-    ACTION_FIND_PREVIOUS = SpriteImage(32,192,'fa-previous.png')
-    ACTION_COLLAPSE = SpriteImage(32,240,'fa-minus-square.png')
-    ACTION_EXPAND = SpriteImage(32,224,'fa-plus-square.png')
-    ACTION_CIRCLE = SpriteImage(48,192,'circle.png')
+    ACTION_IN = SpriteImage(16, 304, 'fa-sign-in.png')
+    ACTION_OUT = SpriteImage(16, 288, 'fa-sign-out.png')
+    ACTION_FIND_NEXT = SpriteImage(32, 208, 'fa-next.png')
+    ACTION_FIND_PREVIOUS = SpriteImage(32, 192, 'fa-previous.png')
+    ACTION_COLLAPSE = SpriteImage(32, 240, 'fa-minus-square.png')
+    ACTION_EXPAND = SpriteImage(32, 224, 'fa-plus-square.png')
+    ACTION_CIRCLE = SpriteImage(48, 192, 'circle.png')
     ACTION_PICKING = SpriteImage(64, 192, 'picking.png')
     ACTION_STATS = SpriteImage(80, 192, 'stats.png')
     ACTION_ZOOM = SpriteImage(64, 176, 'zoom.png')
@@ -536,38 +522,38 @@ class Icon:
 
 
     # Host template
-    BUTTON_SELECT = SpriteImage(64,224,'fa-check.png')
-    BUTTON_CANCEL = SpriteImage(64,240,'fa-ban.png')
+    BUTTON_SELECT = SpriteImage(64, 224, 'fa-check.png')
+    BUTTON_CANCEL = SpriteImage(64, 240, 'fa-ban.png')
     ACTION_CLOSE = BUTTON_CANCEL
     BUTTON_CLOSE = ACTION_CLOSE
     BUTTON_SAVE = ACTION_SAVE
 
     ARROW_UP = ACTION_SELECT_TO
-    TAGS = SpriteImage(16,224,'fa-tags.png')
-    HOME = SpriteImage(0,304,'fa-home.png')
-    LIGHTBULB = SpriteImage(32,80,'fa-lightbulb-o.png')
-    ROCKET = SpriteImage(32,128, 'fa-rocket.png')
+    TAGS = SpriteImage(16, 224, 'fa-tags.png')
+    HOME = SpriteImage(0, 304, 'fa-home.png')
+    LIGHTBULB = SpriteImage(32, 80, 'fa-lightbulb-o.png')
+    ROCKET = SpriteImage(32, 128, 'fa-rocket.png')
 
     # File browser icons
     FOLDER_OPEN = ACTION_BROWSE
-    DB = SpriteImage(0,144,'file_sqlite.png')
-    TXT_FILE = SpriteImage(0,96,'file_text.png')
-    FILE_VOL = SpriteImage(0,80,'file_vol.png')
-    FILE_STACK = SpriteImage(0,112,'file_stack.png')
-    FILE_STACK_LINK = SpriteImage(0,128, 'file_stack_link.png')
-    PYTHON_FILE = SpriteImage(0,160,'file_python.png')
-    FILE_METADATA = SpriteImage(0,176,'file_md.png')
-    FILE_METADATA_LINK = SpriteImage(0,192, 'file_md_link.png')
-    FILE_IMAGE = SpriteImage(0,208, 'file_image.png')
-    FILE_IMAGE_LINK = SpriteImage(0,224, 'file_image_link.png')
-    FILE = SpriteImage(0,240, 'file_generic.png')
-    FILE_LINK = SpriteImage(0,256, 'file_generic_link.png')
-    FOLDER = SpriteImage(0,272, 'file_folder.png')
-    FOLDER_LINK = SpriteImage(0,288, 'file_folder_link.png')
+    DB = SpriteImage(0, 144, 'file_sqlite.png')
+    TXT_FILE = SpriteImage(0, 96, 'file_text.png')
+    FILE_VOL = SpriteImage(0, 80, 'file_vol.png')
+    FILE_STACK = SpriteImage(0, 112, 'file_stack.png')
+    FILE_STACK_LINK = SpriteImage(0, 128, 'file_stack_link.png')
+    PYTHON_FILE = SpriteImage(0, 160, 'file_python.png')
+    FILE_METADATA = SpriteImage(0, 176, 'file_md.png')
+    FILE_METADATA_LINK = SpriteImage(0, 192, 'file_md_link.png')
+    FILE_IMAGE = SpriteImage(0, 208, 'file_image.png')
+    FILE_IMAGE_LINK = SpriteImage(0, 224, 'file_image_link.png')
+    FILE = SpriteImage(0, 240, 'file_generic.png')
+    FILE_LINK = SpriteImage(0, 256, 'file_generic_link.png')
+    FOLDER = SpriteImage(0, 272, 'file_folder.png')
+    FOLDER_LINK = SpriteImage(0, 288, 'file_folder_link.png')
 
-    BROOM = SpriteImage(80,240,'broom-solid.png')
-    BACKWARD = SpriteImage(80,288,'backward-solid.png')
-    CODE_BRANCH = SpriteImage(64,304,'code-branch-solid.png')
+    BROOM = SpriteImage(80, 240, 'broom-solid.png')
+    BACKWARD = SpriteImage(80, 288, 'backward-solid.png')
+    CODE_BRANCH = SpriteImage(64, 304, 'code-branch-solid.png')
 
     # Dialog icons
     ERROR = 'fa-times-circle_alert.png'
@@ -585,20 +571,20 @@ class Icon:
     CHIMERA = 'chimera.png'
 
     # PLUGIN MANAGER ICONS
-    CHECKED = SpriteImage(64,208,'fa-checked.png')
-    UNCHECKED = SpriteImage(16,160,'fa-unchecked.png')
-    INSTALL = SpriteImage(32,64,'fa-install.png')
+    CHECKED = SpriteImage(64, 208, 'fa-checked.png')
+    UNCHECKED = SpriteImage(16, 160, 'fa-unchecked.png')
+    INSTALL = SpriteImage(32, 64, 'fa-install.png')
     UNINSTALL = ACTION_CLOSE
-    TO_INSTALL = SpriteImage(32,256,'fa-to_install.png')
-    INSTALLED = SpriteImage(16, 64,'fa-installed.png')
-    PROCESSING = SpriteImage(32, 176, 'fa-processing.png',48,192)
-    FAILURE = SpriteImage(48,224,'fa-failure.png')
+    TO_INSTALL = SpriteImage(32, 256, 'fa-to_install.png')
+    INSTALLED = SpriteImage(16, 64, 'fa-installed.png')
+    PROCESSING = SpriteImage(32, 176, 'fa-processing.png', 48, 192)
+    FAILURE = SpriteImage(48, 224, 'fa-failure.png')
     DELETE_OPERATION = ACTION_DELETE
-    TO_UPDATE = SpriteImage(32,144,'fa-update.png')
+    TO_UPDATE = SpriteImage(32, 144, 'fa-update.png')
     WAITING = 'wait.gif'
-    ACTION_UNDO = SpriteImage(16,144,'fa-undo.png')
+    ACTION_UNDO = SpriteImage(16, 144, 'fa-undo.png')
 
-    PLUGIN_AUTHORS = SpriteImage(16,80,'users.png')
+    PLUGIN_AUTHORS = SpriteImage(16, 80, 'users.png')
     PLUGIN_DESCRIPTION = FILE_STACK
     PLUGIN_RELEASE_DATE = ACTION_EXPORT_UPLOAD
     PLUGIN_VERSION = FILE_VOL

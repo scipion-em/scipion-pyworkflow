@@ -1543,18 +1543,18 @@ class SqliteFlatDb(SqliteDb):
         return self._results(iterate=False)
 
     def count(self):
-        """ Return the number of element in the table. """
-        self.executeCommand(self.selectCmd('1').replace('*', 'COUNT(id)'))
+        """ Return the number of elements in the table. """
+        self.executeCommand(self.selectCmd(None, orderByStr="").replace('*', 'COUNT(*)'))
         return self.cursor.fetchone()[0]
 
     def maxId(self):
         """ Return the maximum id from the Objects table. """
-        self.executeCommand(self.selectCmd('1').replace('*', 'MAX(id)'))
+        self.executeCommand(self.selectCmd(None, orderByStr="").replace('*', 'MAX(id)'))
         return self.cursor.fetchone()[0]
 
     # FIXME: Seems to be duplicated and a subset of selectAll
     def selectObjectsBy(self, iterate=False, **args):
-        """More flexible select where the constrains can be passed
+        """More flexible select where the constraints can be passed
         as a dictionary, the concatenation is done by an AND"""
         whereList = ['%s=?' % k for k in args.keys()]
         whereStr = ' AND '.join(whereList)

@@ -136,8 +136,6 @@ class ProjectWindow(ProjectBaseWindow):
 
         self.initProjectTCPServer()  # Socket thread to communicate with clients
 
-        ProjectWorkflowNotifier(self.project).notifyWorkflow()
-
 
     def createHeaderFrame(self, parent):
         """Create the header and add the view selection frame at the right."""
@@ -175,6 +173,9 @@ class ProjectWindow(ProjectBaseWindow):
     def _onClosing(self):
         if not self.project.openedAsReadOnly():
             self.saveSettings()
+            # Send usage stats when closing scipion.
+            ProjectWorkflowNotifier(self.project).notifyWorkflow()
+
 
         ProjectBaseWindow._onClosing(self)
      

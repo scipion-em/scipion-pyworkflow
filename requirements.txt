@@ -10,3 +10,4 @@ requests==2.31.0; python_version >= '3.8' # up to date on 11-2023
 git+https://github.com/scipion-em/tkColorPicker#egg=tkcolorpicker # updated 01-2023
 distro<=1.8 # up to date on 11-2023
 importlib-metadata<=6.8.0 # up to date on 11-2023
+setuptools>=62.6
