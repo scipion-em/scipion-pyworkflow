@@ -29,7 +29,7 @@ from pyworkflow import Config, DEFAULT_EXECUTION_ACTION_ASK, DEFAULT_EXECUTION_A
 from pyworkflow.gui import LIST_TREEVIEW, \
     ShortCut, ToolTip, RESULT_RUN_ALL, RESULT_RUN_SINGLE, RESULT_CANCEL, BORDERLESS_TREEVIEW, showInfo
 from pyworkflow.gui.project.constants import *
-from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB
+from pyworkflow.protocol import SIZE_1MB, SIZE_1GB, SIZE_1TB, Protocol
 
 INIT_REFRESH_SECONDS = Config.SCIPION_GUI_REFRESH_INITIAL_WAIT
 
@@ -299,7 +299,7 @@ class ProtocolsView(tk.Frame):
         """ Call appropriate viewer for objId. """
         proj = self.project
         obj = proj.getObject(int(objId))
-        viewerClasses = self.domain.findViewers(obj.getClassName(), DESKTOP_TKINTER)
+        viewerClasses = self.domain.findViewers(obj, DESKTOP_TKINTER)
         if not viewerClasses:
             return  # TODO: protest nicely
         viewer = viewerClasses[0](project=proj, parent=self.window)
@@ -1889,13 +1889,13 @@ class ProtocolsView(tk.Frame):
             self._lastStatus = None  # force logs to re-load
             self._scheduleRunsUpdate()
 
-    def _analyzeResults(self, prot, keyPressed):
-        viewers = self.domain.findViewers(prot.getClassName(), DESKTOP_TKINTER)
+    def _analyzeResults(self, prot:Protocol, keyPressed):
+        viewers = self.domain.findViewers(prot, DESKTOP_TKINTER)
         if len(viewers):
             # Instantiate the first available viewer
-            # TODO: If there are more than one viewer we should display
-            # TODO: a selection menu
-            firstViewer = viewers[0](project=self.project, protocol=prot,
+            viewer = viewers[0]
+            logger.info("Specific viewer found for protocol %s: %s" % (prot.getRunName, viewer))
+            firstViewer = viewer(project=self.project, protocol=prot,
                                      parent=self.window, keyPressed=keyPressed)
 
             if isinstance(firstViewer, ProtocolViewer):
@@ -1908,7 +1908,7 @@ class ProtocolsView(tk.Frame):
                 outputList.append(output)
 
             for output in outputList:
-                viewers = self.domain.findViewers(output.getClassName(), DESKTOP_TKINTER)
+                viewers = self.domain.findViewers(output, DESKTOP_TKINTER)
                 if len(viewers):
                     # Instantiate the first available viewer
                     # TODO: If there are more than one viewer we should display

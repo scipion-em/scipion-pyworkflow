@@ -561,11 +561,15 @@ class SubclassesTreeProvider(TreeProvider):
         obj = pobj.get()
         actions = []
         domain = pw.Config.getDomain()
-        viewers = domain.findViewers(obj.getClassName(), DESKTOP_TKINTER)
+        viewers = domain.findViewers(obj, DESKTOP_TKINTER)
         proj = self.protocol.getProject()
+
+        def addViewer(viewer):
+            actions.append((viewer.getName(),
+                            lambda: viewer(project=proj).visualize(obj)))
+
         for v in viewers:
-            actions.append((v.getName(),
-                            lambda: v(project=proj).visualize(obj)))
+            addViewer(v)
         return actions
 
 
@@ -1236,7 +1240,7 @@ class ParamWidget:
             label, _ = getPointerLabelAndInfo(pointer, self._protocol.getMapper())
             self._showInfo('*%s* points to *None*' % label)
         else:
-            viewers = pw.Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
+            viewers = pw.Config.getDomain().findViewers(obj, DESKTOP_TKINTER)
             if len(viewers):
                 ViewerClass = viewers[0]  # Use the first viewer registered
                 # Instantiate the viewer and visualize object
@@ -2320,7 +2324,7 @@ class FormWindow(Window):
         protVar = getattr(self.protocol, paramName)
         if protVar.hasValue():
             obj = protVar.get()  # Get the reference to the object
-            viewers = pw.Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
+            viewers = pw.Config.getDomain().findViewers(obj, DESKTOP_TKINTER)
             if len(viewers):
                 ViewerClass = viewers[0]  # Use the first viewer registered
                 v = ViewerClass(project=self.protocol.getProject(),

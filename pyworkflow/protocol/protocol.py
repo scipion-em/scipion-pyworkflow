@@ -1788,7 +1788,7 @@ class Protocol(Step):
             executor = StepExecutor(self.getHostConfig())
 
         self._stepsExecutor = executor
-        self._stepsExecutor.setProtocol(self) # executor needs the protocol to store the jobs Ids submitted to a queue
+        self._stepsExecutor.setProtocol(self)  # executor needs the protocol to store the jobs Ids submitted to a queue
 
     def getFiles(self):
         resultFiles = set()

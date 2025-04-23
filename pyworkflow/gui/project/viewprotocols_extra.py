@@ -27,8 +27,12 @@ import json
 import os
 from configparser import ConfigParser
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 from pyworkflow import Config
-import  pyworkflow.gui as pwgui
+import pyworkflow.gui as pwgui
 import pyworkflow.object as pwobj
 import pyworkflow.utils as pwutils
 from pyworkflow.gui.project.utils import isAFinalProtocol
@@ -113,7 +117,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
                                             % objLabel):
                 prot.getProject().deleteProtocolOutput(prot, obj)
                 self.parent._fillSummary()
-                self.parent.window.showInfo("Object *%s* successfully deleted."
+                logger.info("Object *%s* successfully deleted upon user request."
                                              % objLabel)
         except Exception as ex:
             self.parent.window.showError(str(ex))
@@ -138,7 +142,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             self._loggerCallback("Discovering viewers for the first time across all the plugins.")
 
 
-        viewers = Config.getDomain().findViewers(obj.getClassName(), DESKTOP_TKINTER)
+        viewers = Config.getDomain().findViewers(obj, DESKTOP_TKINTER)
 
         def viewerCallback(viewer):
             return lambda: self._visualizeObject(viewer, obj)
@@ -191,7 +195,7 @@ class RunIOTreeProvider(pwgui.tree.TreeProvider):
             try:
                 value = str(label)
             except Exception as e:
-                print("Can not convert object %s - %s to string." % (key, name))
+                logger.info("Can not convert object %s - %s to string." % (key, name))
                 value = str(e)
 
             return value
@@ -502,8 +506,7 @@ class ProtocolTreeConfig:
                     cls.__addProtocolsFromConf(protocols, protocolsConfPath)
 
             except Exception as e:
-                print('Failed to read settings. The reported error was:\n  %s\n'
-                      'To solve it, fix %s and run again.' % (e, pluginName))
+                logger.info(f'Failed to read protocols.conf from {pluginName}. The reported error was:\n  {e}\n')
 
         # Clean empty sections
         cls._hideEmptySections(protocols)
