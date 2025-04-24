@@ -133,6 +133,22 @@ class Viewer(object):
         self._keyPressed = args.get('keyPressed', None)
         self._tkRoot = self.formWindow.root if self.formWindow else None
 
+    @classmethod
+    def can_handle_this(cls, classHierarchy, instance=None):
+        """ Returns none if it cannot handle the instance, otherwise returns which of the
+        classes of the hierarchy it targets (used for establishing priority"""
+
+        for t in cls._targets:
+            if t in classHierarchy:
+
+                if instance is not None and not cls.can_handle_this_instance(instance):
+                    return None
+                else:
+                    return t
+
+    @classmethod
+    def can_handle_this_instance(cls, instance):
+        return True
     def getKeyPressed(self):
         return self._keyPressed
 
@@ -222,6 +238,8 @@ class ProtocolViewer(Viewer, pwprot.Protocol):
     If should provide a mapping between form params and the corresponding
     functions that will return the corresponding Views.
     """
+
+    _label ="Protocol viewer"
     def __init__(self, **kwargs):
         # Here we are going to intercept the original _defineParams function
         # and replace by an empty one, this is to postpone the definition of 
@@ -241,7 +259,11 @@ class ProtocolViewer(Viewer, pwprot.Protocol):
         
     def getWindow(self):
         return self.formWindow
-    
+
+    @classmethod
+    def getName(cls):
+        return cls._label
+
     def getTkRoot(self):
         return self._tkRoot
     

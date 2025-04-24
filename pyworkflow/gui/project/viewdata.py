@@ -381,7 +381,7 @@ class ProjectDataView(tk.Frame):
     def _viewObject(self, objId):
         """ Call appropriate viewer for objId. """
         obj = self.project.getObject(int(objId))
-        viewerClasses = self.domain.findViewers(obj.getClassName(),
+        viewerClasses = self.domain.findViewers(obj,
                                                 pwviewer.DESKTOP_TKINTER)
         if not viewerClasses:
             return  # TODO: protest nicely
