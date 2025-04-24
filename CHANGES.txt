@@ -21,6 +21,8 @@ users:
   - PLUGIN_MODULE variable can be used in host.conf to customize mpirun command: mpirun.PLUGIN_MODULE(mpirun.relion)
   - Live change of loglevel during GUI
   - Bug fix: viewers shown when"searching for input" are now correct.
+  - Report better when running a protocol in node and protocol does not load (installation mismatch).
+  - Bug fix: stop launched protocol with PID and  the PID died.
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.

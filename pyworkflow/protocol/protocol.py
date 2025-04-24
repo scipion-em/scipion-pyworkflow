@@ -27,6 +27,7 @@ execution and tracking like: Step and Protocol
 """
 import os
 import json
+import sys
 import threading
 import time
 from datetime import datetime
@@ -2497,6 +2498,13 @@ def runProtocolMain(projectPath, protDbPath, protId):
 
     setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 
+    if isinstance(protocol,LegacyProtocol):
+        logger.error(f"There is a problem loading the protocol {protId} ({protocol}) at {pwutils.getHostName()} "
+                     f"Installations of the execution differs from the visualization installation. "
+                     f"This is probably because you are running this protocol in a cluster node which installation is not "
+                     f"compatible with the head node or you have a plugin available on the Main GUI process (check launching directory) but "
+                     f"not properly installed as a plugin in Scipion. Please verify installation.")
+        sys.exit()
     hostConfig = protocol.getHostConfig()
     gpuList = protocol.getGpuList()
 
