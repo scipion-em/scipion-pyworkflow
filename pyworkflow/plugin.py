@@ -424,15 +424,9 @@ class Domain:
     @lru_cache
     def getViewersSorted(cls):
         """ Returns all viewers sorted by its class name"""
+
         viewers = cls.getViewers()
-        viewer_keys = list(viewers.keys())
-        viewer_keys.sort()
-        viewers_list = []
-
-        for viewer_key in viewer_keys:
-            viewers_list.append(viewers[viewer_key])
-
-        return viewers_list
+        return [viewers[key] for key in sorted(viewers)]
 
     @classmethod
     def findViewers(cls, target, environment):
