@@ -28,6 +28,7 @@
 # **************************************************************************
 import logging
 import sys
+from functools import lru_cache
 
 from pyworkflow import Variable, VariablesRegistry, VarTypes
 from .protocol import Protocol
@@ -420,6 +421,20 @@ class Domain:
         return cls._preferred_viewers.get(className, [])
 
     @classmethod
+    @lru_cache
+    def getViewersSorted(cls):
+        """ Returns all viewers sorted by its class name"""
+        viewers = cls.getViewers()
+        viewer_keys = list(viewers.keys())
+        viewer_keys.sort()
+        viewers_list = []
+
+        for viewer_key in viewer_keys:
+            viewers_list.append(viewers[viewer_key])
+
+        return viewers_list
+
+    @classmethod
     def findViewers(cls, target, environment):
         """ Find the available viewers in this Domain for this target.
 
@@ -464,7 +479,8 @@ class Domain:
             specific_viewers = []
             other_viewers=[]
             # get all the viewers available
-            for viewer in cls.getViewers().values():
+
+            for viewer in cls.getViewersSorted():
 
                 if environment in viewer._environments:
 
