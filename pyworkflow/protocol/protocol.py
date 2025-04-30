@@ -1974,9 +1974,9 @@ class Protocol(Step):
 
         d = {'JOB_NAME': self.strId(),
              'JOB_QUEUE': queueName,
-             'JOB_NODES': self.numberOfMpi.get(),
-             'JOB_THREADS': self.numberOfThreads.get(),
-             'JOB_CORES': self.numberOfMpi.get() * self.numberOfThreads.get(),
+             'JOB_NODES': max([1,self.numberOfMpi.get()]),
+             'JOB_THREADS': max([1,self.numberOfThreads.get()]),
+             'JOB_CORES': max([1,self.numberOfMpi.get() * self.numberOfThreads.get()]),
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
              QUEUE_FOR_JOBS: 'N',
