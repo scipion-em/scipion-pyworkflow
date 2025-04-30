@@ -29,6 +29,7 @@ users:
   - updateProtocol refactored to cover QUEUE timeout cases
   - Updating the protocol process id (_pid) to 0 when the finish it.
   - Viewers can evaluate the object that is going to be used in can_handle_this method
+  - using toml
 
 V3.10.6:
   - Improving subset creation
