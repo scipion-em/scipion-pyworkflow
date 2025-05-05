@@ -7,7 +7,7 @@ pillow==10.1.0; python_version >= '3.8' # up to date on 11-2023
 numpy==1.24.4; python_version == '3.8'
 numpy==1.26.1; python_version >= '3.9' # up to date on 11-2023. Careful. Xmipp is compiled against numpy!
 requests==2.31.0; python_version >= '3.8' # up to date on 11-2023
-git+https://github.com/scipion-em/tkColorPicker#egg=tkcolorpicker # updated 01-2023
+tkcolorpicker @ git+https://github.com/scipion-em/tkColorPicker#egg=tkcolorpicker # updated 01-2023
 distro<=1.8 # up to date on 11-2023
 importlib-metadata<=6.8.0 # up to date on 11-2023
 setuptools>=62.6

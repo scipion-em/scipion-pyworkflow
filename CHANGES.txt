@@ -21,12 +21,15 @@ users:
   - PLUGIN_MODULE variable can be used in host.conf to customize mpirun command: mpirun.PLUGIN_MODULE(mpirun.relion)
   - Live change of loglevel during GUI
   - Bug fix: viewers shown when"searching for input" are now correct.
+  - Report better when running a protocol in node and protocol does not load (installation mismatch).
+  - Bug fix: stop launched protocol with PID and  the PID died.
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.
   - updateProtocol refactored to cover QUEUE timeout cases
   - Updating the protocol process id (_pid) to 0 when the finish it.
   - Viewers can evaluate the object that is going to be used in can_handle_this method
+  - using toml
 
 V3.10.6:
   - Improving subset creation
