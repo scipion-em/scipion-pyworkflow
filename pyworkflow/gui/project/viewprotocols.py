@@ -1620,7 +1620,6 @@ class ProtocolsView(tk.Frame):
     def _copyProtocolsToClipboard(self, e=None):
 
         protocols = self._getSelectedProtocols()
-
         jsonStr = self.project.getProtocolsJson(protocols)
 
         self.clipboard_clear()
