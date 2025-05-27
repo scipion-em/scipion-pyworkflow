@@ -23,6 +23,8 @@ users:
   - Bug fix: viewers shown when"searching for input" are now correct.
   - Report better when running a protocol in node and protocol does not load (installation mismatch).
   - Bug fix: stop launched protocol with PID and  the PID died.
+  - Menu > Project > "Remove temporary files" remove folders too.
+  - File browser: 2 new actions on right click: "delete" and "copy"
  developers:
   - Protocol.getParam(name): returns the parameter definition by name.
   - stepsExecutionMode has to be declared at class level not instance level.

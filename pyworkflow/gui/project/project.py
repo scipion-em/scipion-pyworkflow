@@ -244,11 +244,9 @@ class ProjectWindow(ProjectBaseWindow):
         try:
             for fname in os.listdir(tmpPath):
                 fpath = "%s/%s" % (tmpPath, fname)
-                if os.path.isfile(fpath):
-                    os.remove(fpath)
-                    n += 1
-                # TODO: think what to do with directories. Delete? Report?
-            self.showInfo("Deleted content of %s -- %d file(s)." % (tmpPath, n))
+                pwutils.cleanPath(fpath)
+                n += 1
+            self.showInfo("Deleted content of %s -- %d files or folders." % (tmpPath, n))
         except Exception as e:
             self.showError(str(e))
         

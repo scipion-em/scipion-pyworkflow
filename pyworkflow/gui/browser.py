@@ -217,6 +217,33 @@ class FileHandler(object):
         return []
 
 
+class FSFileHandler(FileHandler):
+
+    def __init__(self):
+        self._refresh_callback = None
+
+    def setRefresh(self, refresh_callback):
+        self._refresh_callback = refresh_callback
+
+    def copyToClipboard(self, file):
+        import pyperclip
+        pyperclip.copy(file)
+        logger.info(f'{file} copy to clipboard')
+
+    def deleteFile(self, file):
+        pwutils.cleanPath(file)
+
+        if self._refresh_callback:
+            self._refresh_callback(None)
+    def getFileActions(self, objFile):
+        """ Return basic os actions like delete or copy to clipboard
+        """
+        fn = objFile.getPath()
+        return [('Copy path', lambda: self.copyToClipboard(fn), pwutils.Icon.ACTION_COPY),
+                ('Delete', lambda: self.deleteFile(fn), pwutils.Icon.DELETE_OPERATION)
+                ]
+
+
 class TextFileHandler(FileHandler):
     def __init__(self, textIcon):
         FileHandler.__init__(self)
@@ -235,7 +262,7 @@ class FileTreeProvider(TreeProvider):
     """ Populate a tree with files and folders of a given path """
 
     _FILE_HANDLERS = {}
-    _DEFAULT_HANDLER = FileHandler()
+    _FS_HANDLER = FSFileHandler()
     FILE_COLUMN = 'File'
     SIZE_COLUMN = 'Size'
 
@@ -252,18 +279,23 @@ class FileTreeProvider(TreeProvider):
             handlersList.append(fileHandler)
             cls._FILE_HANDLERS[fileExt] = handlersList
 
-    def __init__(self, currentDir=None, showHidden=False, onlyFolders=False):
+    def __init__(self, currentDir, showHidden, onlyFolders, browser):
         TreeProvider.__init__(self, sortingColumnName=self.FILE_COLUMN)
         self._currentDir = os.path.abspath(currentDir)
         self._showHidden = showHidden
         self._onlyFolders = onlyFolders
+        self._browser = browser
         self.getColumns = lambda: [(self.FILE_COLUMN, 300),
                                    (self.SIZE_COLUMN, 70), ('Time', 150)]
 
     def getFileHandlers(self, obj):
         filename = obj.getFileName()
         fileExt = pwutils.getExt(filename)
-        return self._FILE_HANDLERS.get(fileExt, [self._DEFAULT_HANDLER])
+        fhs = self._FILE_HANDLERS.get(fileExt,[])
+        # add basic options: delete, copy. They do not depend on the extension.
+        if self._FS_HANDLER not in fhs:
+            fhs.append(self._FS_HANDLER)
+        return fhs
 
     def getObjectInfo(self, obj):
         filename = obj.getFileName()
@@ -299,11 +331,13 @@ class FileTreeProvider(TreeProvider):
         fileHandlers = self.getFileHandlers(obj)
         actions = []
         for fileHandler in fileHandlers:
+            if fileHandler == self._FS_HANDLER:
+                fileHandler.setRefresh(self._browser._actionRefresh)
             actions += fileHandler.getFileActions(obj)
         # Always allow the option to open as text
         # specially useful for unknown formats
         fn = obj.getPath()
-        actions.append(("Open external Editor",
+        actions.append(("Open external program",
                         lambda: openTextFileEditor(fn), pwutils.Icon.ACTION_REFERENCES))
 
         return actions
@@ -404,7 +438,7 @@ class FileBrowser(ObjectBrowser):
         self.previousSearch = None
         self.previousSearchTS = None
         self.shortCuts = shortCuts
-        self._provider = FileTreeProvider(initialDir, showHidden, onlyFolders)
+        self._provider = FileTreeProvider(initialDir, showHidden, onlyFolders, self)
         self.selectButton = selectButton
         self.entryLabel = entryLabel
         self.entryVar = tk.StringVar()
