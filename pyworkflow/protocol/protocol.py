@@ -1265,7 +1265,7 @@ class Protocol(Step):
         for step in self.loadSteps():
             self.__insertStep(step, )
 
-    def __findStartingStep(self):
+    def __findDoneSteps(self):
         """ From a previous run, compare self._steps and self._prevSteps
         to find which steps we need to start at, skipping successful done
         and not changed steps. Steps that needs to be done, will be deleted
@@ -1280,7 +1280,7 @@ class Protocol(Step):
         n = min(len(self._steps), len(self._prevSteps))
         self.debug("len(steps) %s len(prevSteps) %s "
                    % (len(self._steps), len(self._prevSteps)))
-
+        doneSteps = []
         for i in range(n):
             newStep = self._steps[i]
             oldStep = self._prevSteps[i]
@@ -1298,10 +1298,11 @@ class Protocol(Step):
                               % (newStep != oldStep))
                     self.info("     not oldStep._postconditions(): %s"
                               % (not oldStep._postconditions()))
-                return i
-            newStep.copy(oldStep)
+            else:
+                doneSteps.append(i)
+                newStep.copy(oldStep)
 
-        return n
+        return doneSteps
 
     def _storeSteps(self):
         """ Store the new steps list that can be retrieved
@@ -1374,9 +1375,9 @@ class Protocol(Step):
     def _stepsCheck(self):
         pass
 
-    def _runSteps(self, startIndex):
+    def _runSteps(self, doneSteps):
         """ Run all steps defined in self._steps. """
-        self._stepsDone.set(startIndex)
+        self._stepsDone.set(len(doneSteps))
         self._numberOfSteps.set(len(self._steps))
         self.setRunning()
         # Keep the original value to set in sub-protocols
@@ -1385,7 +1386,7 @@ class Protocol(Step):
         self.runMode.set(MODE_RESUME)
         self._store()
 
-        if startIndex == len(self._steps):
+        if len(doneSteps) == len(self._steps):
             self.lastStatus = STATUS_FINISHED
             self.setFinished()
             self.info("All steps seem to be FINISHED, nothing to be done.")
@@ -1557,11 +1558,11 @@ class Protocol(Step):
 
         self._insertAllSteps()  # Define steps for execute later
         # Find at which step we need to start
-        startIndex = self.__findStartingStep()
-        self.info(" Starting at step: %d" % (startIndex + 1))
+        doneSteps = self.__findDoneSteps()
+        # self.info(" Starting at step: %d" % (startIndex + 1))
         self._storeSteps()
         self.info(" Running steps ")
-        self._runSteps(startIndex)
+        self._runSteps(doneSteps)
 
     def _getEnviron(self):
         """ This function should return an environ variable
