@@ -1287,7 +1287,7 @@ class Protocol(Step):
             if (not oldStep.isFinished() or newStep != oldStep
                     or not oldStep._postconditions()):
                 if pw.Config.debugOn():
-                    self.info("Starting at step %d" % i)
+                    self.info("Rerunning step %d" % i)
                     self.info("     Old step: %s, args: %s"
                               % (oldStep.funcName, oldStep.argsStr))
                     self.info("     New step: %s, args: %s"
