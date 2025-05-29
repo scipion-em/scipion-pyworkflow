@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scipion-pyworkflow"
+dynamic = ["version", "dependencies"]
+
+authors = [
+    {name = "Pablo Conesa", email = "pconesa@cnb.csic.es"},
+    {name = "Yunior Fonseca", email = "cfonseca@cnb.csic.es"},
+    {name = "J.M. De la Rosa Trevin", email = "josemiguel.delarosatrevin@stjude.org"},
+    {name = "Roberto Marabini", email = "roberto@cnb.csic.es"},
+    {name = "Grigory Sharov", email = "sharov.grigory@gmail.com"},
+    {name = "Josue Gomez Blanco", email = "josue.gomez-blanco@mcgill.ca"},
+]
+description = """Workflow platform used in scientific applications, initially developed
+            within the Scipion framework for image processing in Electron Microscopy but
+            generic by design to be applied to any domain."""
+
+readme = "README.rst"
+requires-python = ">=3.8"
+keywords = ["scipion", "electron-microscopy", "cryo-em", "structural-biology", "generic-workflow-engine", "image-processing", "scipion-3.0"]
+license = {text = "GNU General Public License v3 (GPLv3)"}
+
+[project.urls]
+Homepage = "https://scipion.i2pc.es"
+Repository = "https://github.com/scipion-em/scipion-pyworkflow"
+Issues = "https://github.com/scipion-em/scipion-pyworkflow/issues"
+
+[tool.setuptools]
+packages = ["pyworkflow", "pyworkflowtests"]
+
+[tool.setuptools.package-data]
+"pyworkflow" = ["resources/*", "project/scripts/*"]
+
+[project.entry-points."pyworkflow.plugin"]
+pyworkflowtests = "pyworkflowtests"
+
+
+[tool.setuptools.dynamic]
+version = {attr = "pyworkflow.__version__"}
+dependencies = {file = ["requirements.txt"]}
