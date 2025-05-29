@@ -1273,7 +1273,7 @@ class Protocol(Step):
         """
         if self.runMode == MODE_RESTART:
             self._prevSteps = []
-            return 0
+            return []
 
         self._prevSteps = self.loadSteps()
 
