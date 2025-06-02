@@ -1265,15 +1265,16 @@ class Protocol(Step):
         for step in self.loadSteps():
             self.__insertStep(step, )
 
-    def __findStartingStep(self):
+    def __updateDoneSteps(self):
         """ From a previous run, compare self._steps and self._prevSteps
-        to find which steps we need to start at, skipping successful done
+        to find which steps we need to execute, skipping successful done
         and not changed steps. Steps that needs to be done, will be deleted
         from the previous run storage.
         """
+        doneSteps = 0
         if self.runMode == MODE_RESTART:
             self._prevSteps = []
-            return 0
+            return doneSteps
 
         self._prevSteps = self.loadSteps()
 
@@ -1287,21 +1288,24 @@ class Protocol(Step):
             if (not oldStep.isFinished() or newStep != oldStep
                     or not oldStep._postconditions()):
                 if pw.Config.debugOn():
-                    self.info("Starting at step %d" % i)
-                    self.info("     Old step: %s, args: %s"
-                              % (oldStep.funcName, oldStep.argsStr))
-                    self.info("     New step: %s, args: %s"
-                              % (newStep.funcName, newStep.argsStr))
-                    self.info("     not oldStep.isFinished(): %s"
-                              % (not oldStep.isFinished()))
-                    self.info("     newStep != oldStep: %s"
-                              % (newStep != oldStep))
-                    self.info("     not oldStep._postconditions(): %s"
-                              % (not oldStep._postconditions()))
-                return i
-            newStep.copy(oldStep)
+                    self.info("Rerunning step %d" % i)
+                    if not oldStep.isFinished():
+                        self.info("     Old step: %s, args: %s was not finished"
+                                  % (oldStep.funcName, oldStep.argsStr))
+                    elif newStep != oldStep:
+                        self.info("     New step: %s, args: %s is different"
+                                  % (newStep.funcName, newStep.argsStr))
+                    elif not oldStep._postconditions():
+                        self.info("     Old step: %s, args: %s postconditions were not met"
+                                  % (oldStep.funcName, oldStep.argsStr))
 
-        return n
+            else:
+                doneSteps += 1
+                #  If the step has not changed and is properly finished, it is copied to the new steps so it is not
+                #  executed again
+                newStep.copy(oldStep)
+
+        return doneSteps
 
     def _storeSteps(self):
         """ Store the new steps list that can be retrieved
@@ -1374,9 +1378,9 @@ class Protocol(Step):
     def _stepsCheck(self):
         pass
 
-    def _runSteps(self, startIndex):
+    def _runSteps(self, doneSteps):
         """ Run all steps defined in self._steps. """
-        self._stepsDone.set(startIndex)
+        self._stepsDone.set(doneSteps)
         self._numberOfSteps.set(len(self._steps))
         self.setRunning()
         # Keep the original value to set in sub-protocols
@@ -1385,7 +1389,7 @@ class Protocol(Step):
         self.runMode.set(MODE_RESUME)
         self._store()
 
-        if startIndex == len(self._steps):
+        if doneSteps == len(self._steps):
             self.lastStatus = STATUS_FINISHED
             self.setFinished()
             self.info("All steps seem to be FINISHED, nothing to be done.")
@@ -1557,11 +1561,11 @@ class Protocol(Step):
 
         self._insertAllSteps()  # Define steps for execute later
         # Find at which step we need to start
-        startIndex = self.__findStartingStep()
-        self.info(" Starting at step: %d" % (startIndex + 1))
+        doneSteps = self.__updateDoneSteps()
+        # self.info(" Starting at step: %d" % (startIndex + 1))
         self._storeSteps()
         self.info(" Running steps ")
-        self._runSteps(startIndex)
+        self._runSteps(doneSteps)
 
     def _getEnviron(self):
         """ This function should return an environ variable
