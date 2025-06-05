@@ -28,6 +28,7 @@
 # **************************************************************************
 import logging
 import sys
+from functools import lru_cache
 
 from pyworkflow import Variable, VariablesRegistry, VarTypes
 from .protocol import Protocol
@@ -79,6 +80,9 @@ class Domain:
     _viewers = {}
     _wizards = {}
 
+    # Preferred viewers:
+    _preferred_viewers = None
+
     @classmethod
     def registerPlugin(cls, name):
         """ Register a new plugin. This function should only be called when
@@ -113,15 +117,17 @@ class Domain:
 
         # Catch any import exception, warn about it but continue.
         except ModuleNotFoundError as e:
+
+            logger.debug("Module %s not found: %s" %(name, e))
             if e.name == name:
                 # This is probably due to a priority package like pwchem not being installed
-                pass
+                logger.debug("Name is different!!: e.name='%s', name='%s'" %( e.name , name))
             else:
                 logger.warning("Plugin '%s' has import errors: %s. Maybe a missing dependency?. "
                                "Is it devel mode and need to be reinstalled?. Ignoring it and continuing." % (name, str(e)))
         except Exception as e:
 
-            (pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
+            logger.info(pwutils.yellow("WARNING!!: Plugin containing module %s does not import properly. "
                                  "All its content will be missing in this execution." % name))
             logger.info("Please, contact developers at %s and send this ugly information below. They'll understand it!." % DOCSITEURLS.CONTACTUS)
             logger.info("Error message: %s"% str(e))
@@ -390,56 +396,99 @@ class Domain:
     @classmethod
     def getPreferredViewers(cls, className):
         """ Find and import the preferred viewers for this class. """
-        viewerNames = pw.Config.VIEWERS.get(className, [])
-        if not isinstance(viewerNames, list):
-            viewerNames = [viewerNames]
-        viewers = []  # we will try to import them and store here
-        for prefViewerStr in viewerNames:
-            try:
-                viewerModule, viewerClassName = prefViewerStr.rsplit('.', 1)
-                prefViewer = cls.importFromPlugin(viewerModule,
-                                                  viewerClassName,
-                                                  doRaise=True)
-                viewers.append(prefViewer)
-            except Exception as e:
-                logger.error("Couldn't load \"%s\" as preferred viewer for %s.\n"
-                      "There might be a typo in your VIEWERS variable "
-                      "or an error in the viewer's plugin installation"
-                      % (prefViewerStr, className), exc_info=e)
-        return viewers
+
+        if cls._preferred_viewers is None:
+            logger.info("Caching preferred viewers from VIEWERS config variable.")
+            cls._preferred_viewers = dict()
+
+            for target, viewerNames in pw.Config.VIEWERS.items():
+                viewers = []
+                for prefViewerStr in viewerNames:
+                    try:
+                        viewerModule, viewerClassName = prefViewerStr.rsplit('.', 1)
+                        prefViewer = cls.importFromPlugin(viewerModule,
+                                                          viewerClassName,
+                                                          doRaise=True)
+                        viewers.append(prefViewer)
+                    except Exception as e:
+                        logger.error("Couldn't load \"%s\" as preferred viewer for %s.\n"
+                              "There might be a typo in your VIEWERS variable "
+                              "or an error in the viewer's plugin installation"
+                              % (prefViewerStr, className), exc_info=e)
+
+                cls._preferred_viewers[target] = viewers
+
+        return cls._preferred_viewers.get(className, [])
 
     @classmethod
-    def findViewers(cls, className, environment):
-        """ Find the available viewers in this Domain for this class. """
+    @lru_cache
+    def getViewersSorted(cls):
+        """ Returns all viewers sorted by its class name"""
+
+        viewers = cls.getViewers()
+        return [viewers[key] for key in sorted(viewers)]
+
+    @classmethod
+    def findViewers(cls, target, environment):
+        """ Find the available viewers in this Domain for this target.
+
+        Sorting criteria:
+
+        1st Will appear those viewers in VIEWERS variable (preferred viewers) in appearance order
+        2nd Viewers targeting specifically the target and not any super class of it
+        3rd rest.
+
+        In 2nd and 3rd case the order viewers are added depends on the alphabetical order the viewer when discovered.
+        This usually matches the viewer class name, but could be fine tune using import aliases like:
+
+        from my_viewer import MyViewer as AAAMyViewer in the viewers folder of the plugin.
+
+        In case viewers is a file and not a folder with an __init__, I'm afraid class name is what is taken into account
+
+        The import order is not possible to use since python sort them automatically.
+
+        """
         viewers = []
         try:
-            clazz = cls.findClass(className)
+            instance = None
+            if isinstance(target, str):
+                logger.warning("DEVELOPERS: pass the instance/object instead of the class. This mode will be deprecated soon")
+                className = target
+                clazz = cls.findClass(className)
+            else:
+                className = target.__class__.__name__
+                clazz = target.__class__
+                instance = target
+
             baseClasses = clazz.mro()
-            preferredViewers = cls.getPreferredViewers(className)
-            preferedFlag = 0
 
-            for viewer in cls.getViewers().values():
-                viewerAdded=False
+            # Add preferred viewers
+            preferred_viewers = []
+            available_preferred_viewers = cls.getPreferredViewers(className)
+            for prefViewer in available_preferred_viewers:
+                if prefViewer.can_handle_this(baseClasses, instance=instance):
+                    preferred_viewers.append(prefViewer)
+
+
+            specific_viewers = []
+            other_viewers=[]
+            # get all the viewers available
+
+            for viewer in cls.getViewersSorted():
+
                 if environment in viewer._environments:
-                    for t in viewer._targets:
-                        if t in baseClasses:
-                            for prefViewer in preferredViewers:
-                                if viewer is prefViewer:
-                                    viewers.insert(0, viewer)
-                                    viewerAdded=True
-                                    preferedFlag = 1
-                                    break
-                            else:
-                                if t == clazz:
-                                    viewers.insert(preferedFlag, viewer)
-                                    viewerAdded = True
-                                else:
-                                    viewers.append(viewer)
-                                    viewerAdded = True
-                                break
 
-                        if viewerAdded:
-                            break
+                    if viewer not in preferred_viewers:
+
+                        t = viewer.can_handle_this(baseClasses, target)
+                        if t is not None:
+                            if t == clazz:
+                                specific_viewers.append(viewer)
+
+                            else:
+                                other_viewers.append(viewer)
+
+            viewers = preferred_viewers + specific_viewers + other_viewers
 
         except Exception as e:
             # Catch if there is a missing plugin, we will get Legacy which triggers and Exception

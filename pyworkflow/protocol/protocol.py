@@ -27,6 +27,7 @@ execution and tracking like: Step and Protocol
 """
 import os
 import json
+import sys
 import threading
 import time
 from datetime import datetime
@@ -342,13 +343,13 @@ class Protocol(Step):
     
         class MyOutput(enum.Enum):
             outputMicrographs = SetOfMicrographs
-            outputMicrographDW = SetOfMicrographs
+            outputMicrographDW = SetOfMovies
     
     When defining outputs you can, optionally, use this enum like:
     self._defineOutputs(**{MyOutput.outputMicrographs.name, setOfMics})
     It will help to keep output names consistently
     
-    Alternative an inline dictionary will work:
+    Alternative an inline dictionary will work (this is mandatory in case two or more outputs are of the same type):
     _possibleOutputs = {"outputMicrographs" : SetOfMicrographs}
     
     For a more fine detailed/dynamic output based on parameters, you can overwrite the getter:
@@ -396,7 +397,7 @@ class Protocol(Step):
         self._log = logger
         self._buffer = ''  # text buffer for reading log files
         # Project to which the protocol belongs
-        self.__project = kwargs.get('project', None)
+        self._project = kwargs.get('project', None)
         # Filename templates dict that will be used by _getFileName
         self.__filenamesDict = {}
 
@@ -405,12 +406,13 @@ class Protocol(Step):
         self.lastUpdateTimeStamp = String()
 
         # For non-parallel protocols mpi=1 and threads=1
+        # MPIs
         self.allowMpi = hasattr(self, 'numberOfMpi')
         if not self.allowMpi:
             self.numberOfMpi = Integer(1)
 
+        # Threads
         self.allowThreads = hasattr(self, 'numberOfThreads')
-
         if not self.allowThreads:
             self.numberOfThreads = Integer(1)
 
@@ -458,6 +460,38 @@ class Protocol(Step):
         # than one time, thus avoiding deadlock situation. This fixed the concurrency problems we had before.
         self.forceSchedule = Boolean(False)
 
+
+    def getMPIs(self):
+        """ Returns the value of MPIs (integer)"""
+        return self.numberOfMpi.get()
+
+    def getScipionThreads(self):
+        """ Returns the number of Scipion threads. Not the threads that are argument for programs but those that will
+         run steps in parallel. This assumes cls.stepsExecutionMode = STEP_PARALLEL. See Param.addParallelSection"""
+        return self.numberOfThreads.get()
+
+    def getBinThreads(self):
+        """ Returns the number of binary threads. An integer to pass as an argument for the binary program integrated.
+         See Param.addParallelSection"""
+
+        if self.modeSerial():
+            return self.numberOfThreads.get()
+        else:
+            return self.binThreads.get()
+
+    def getTotalThreads(self):
+        """ Returns the total number of threads the protocol will need. This may be necessary when clusters require this value"""
+        if self.modeSerial():
+            # This will be the main thread + the binary threads * mpi ?
+            return 1 + self.getTotalBinThreads()
+        else:
+            # One main thread (included in Scipion threads) plus TotalBinThread time processing steps (Scipion threads -1)
+            return 1 + ((self.getScipionThreads()-1)* self.getTotalBinThreads())
+
+    def getTotalBinThreads(self):
+        """ Returns the total number to cores the binary will use: threads * mpis"""
+        return self.getBinThreads() * self.getMPIs()
+
     def _storeAttributes(self, attrList, attrDict):
         """ Store all attributes in attrDict as
         attributes of self, also store the key in attrList.
@@ -494,6 +528,7 @@ class Protocol(Step):
         """Close all output set"""
         for outputName, output in self.iterOutputAttributes():
             if isinstance(output, Set) and output.isStreamOpen():
+                logger.info("Closing %s output" % outputName)
                 self.__tryUpdateOutputSet(outputName, output, state=Set.STREAM_CLOSED)
 
     def _updateOutputSet(self, outputName, outputSet,
@@ -549,10 +584,10 @@ class Protocol(Step):
         return self._hasExpert
 
     def getProject(self):
-        return self.__project
+        return self._project
 
     def setProject(self, project):
-        self.__project = project
+        self._project = project
 
     @staticmethod
     def hasDefinition(cls):
@@ -745,7 +780,7 @@ class Protocol(Step):
                         protocol = self.getProject().getRunsGraph(refresh=True).getNode(str(output.getObjParentId())).run
                     else:
                         # This is a problem, since protocols coming from
-                        # Pointers do not have the __project set.
+                        # Pointers do not have the _project set.
                         # We do not have a clear way to get the protocol if
                         # we do not have the project object associated
                         # This case implies Direct Pointers to Sets
@@ -1081,7 +1116,8 @@ class Protocol(Step):
     def _finalizeStep(self, status, msg=None):
         """ Closes the step and setting up the protocol process id """
         super()._finalizeStep(status, msg)
-        self._pid.set(None)
+        self._closeOutputSet()
+        self._pid.set(0)
 
     def _updateSteps(self, updater, where="1"):
         """Set the status of all steps
@@ -1152,14 +1188,17 @@ class Protocol(Step):
 
     def _insertRunJobStep(self, progName, progArguments, resultFiles=[],
                           **kwargs):
-        """ Insert a Step that will simply call runJob function
+        """ Insert an Step that will simple call runJob function
         **args: see __insertStep
         """
-        return self._insertFunctionStep('runJob', progName, progArguments, **kwargs)
+        return self._insertFunctionStep('runJob', progName, progArguments,
+                                        **kwargs)
 
     def _insertCopyFileStep(self, sourceFile, targetFile, **kwargs):
         """ Shortcut function to insert a step for copying a file to a destiny. """
-        step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile, targetFile, **kwargs)
+        step = FunctionStep(pwutils.copyFile, 'copyFile', sourceFile,
+                            targetFile,
+                            **kwargs)
         return self.__insertStep(step, **kwargs)
 
     def _enterDir(self, path):
@@ -1226,15 +1265,16 @@ class Protocol(Step):
         for step in self.loadSteps():
             self.__insertStep(step, )
 
-    def __findStartingStep(self):
+    def __updateDoneSteps(self):
         """ From a previous run, compare self._steps and self._prevSteps
-        to find which steps we need to start at, skipping successful done
+        to find which steps we need to execute, skipping successful done
         and not changed steps. Steps that needs to be done, will be deleted
         from the previous run storage.
         """
+        doneSteps = 0
         if self.runMode == MODE_RESTART:
             self._prevSteps = []
-            return 0
+            return doneSteps
 
         self._prevSteps = self.loadSteps()
 
@@ -1248,21 +1288,24 @@ class Protocol(Step):
             if (not oldStep.isFinished() or newStep != oldStep
                     or not oldStep._postconditions()):
                 if pw.Config.debugOn():
-                    self.info("Starting at step %d" % i)
-                    self.info("     Old step: %s, args: %s"
-                              % (oldStep.funcName, oldStep.argsStr))
-                    self.info("     New step: %s, args: %s"
-                              % (newStep.funcName, newStep.argsStr))
-                    self.info("     not oldStep.isFinished(): %s"
-                              % (not oldStep.isFinished()))
-                    self.info("     newStep != oldStep: %s"
-                              % (newStep != oldStep))
-                    self.info("     not oldStep._postconditions(): %s"
-                              % (not oldStep._postconditions()))
-                return i
-            newStep.copy(oldStep)
+                    self.info("Rerunning step %d" % i)
+                    if not oldStep.isFinished():
+                        self.info("     Old step: %s, args: %s was not finished"
+                                  % (oldStep.funcName, oldStep.argsStr))
+                    elif newStep != oldStep:
+                        self.info("     New step: %s, args: %s is different"
+                                  % (newStep.funcName, newStep.argsStr))
+                    elif not oldStep._postconditions():
+                        self.info("     Old step: %s, args: %s postconditions were not met"
+                                  % (oldStep.funcName, oldStep.argsStr))
 
-        return n
+            else:
+                doneSteps += 1
+                #  If the step has not changed and is properly finished, it is copied to the new steps so it is not
+                #  executed again
+                newStep.copy(oldStep)
+
+        return doneSteps
 
     def _storeSteps(self):
         """ Store the new steps list that can be retrieved
@@ -1335,9 +1378,9 @@ class Protocol(Step):
     def _stepsCheck(self):
         pass
 
-    def _runSteps(self, startIndex):
+    def _runSteps(self, doneSteps):
         """ Run all steps defined in self._steps. """
-        self._stepsDone.set(startIndex)
+        self._stepsDone.set(doneSteps)
         self._numberOfSteps.set(len(self._steps))
         self.setRunning()
         # Keep the original value to set in sub-protocols
@@ -1346,8 +1389,9 @@ class Protocol(Step):
         self.runMode.set(MODE_RESUME)
         self._store()
 
-        if startIndex == len(self._steps):
+        if doneSteps == len(self._steps):
             self.lastStatus = STATUS_FINISHED
+            self.setFinished()
             self.info("All steps seem to be FINISHED, nothing to be done.")
         else:
             self.lastStatus = self.status.get()
@@ -1357,8 +1401,9 @@ class Protocol(Step):
                                          self._stepsCheck,
                                          self._stepsCheckSecs)
 
-        print("*** Last status is %s " % self.lastStatus)
-        self.setStatus(self.lastStatus)
+            logger.info("*** Last status is %s " % self.lastStatus)
+            self.setStatus(self.lastStatus)
+            self.cleanExecutionAttributes(includeSteps=False)
         self._store(self.status)
 
     def __deleteOutputs(self):
@@ -1516,11 +1561,11 @@ class Protocol(Step):
 
         self._insertAllSteps()  # Define steps for execute later
         # Find at which step we need to start
-        startIndex = self.__findStartingStep()
-        self.info(" Starting at step: %d" % (startIndex + 1))
+        doneSteps = self.__updateDoneSteps()
+        # self.info(" Starting at step: %d" % (startIndex + 1))
         self._storeSteps()
         self.info(" Running steps ")
-        self._runSteps(startIndex)
+        self._runSteps(doneSteps)
 
     def _getEnviron(self):
         """ This function should return an environ variable
@@ -1574,34 +1619,44 @@ class Protocol(Step):
             package = self.getClassPackage()
             if hasattr(package, "__version__"):
                 self.info('plugin v: %s%s' %(package.__version__, ' (devel)' if plugin.inDevelMode() else '(production)'))
-            self.info('plugin binary v: %s' % plugin.getActiveVersion())
+            try:
+                self.info('plugin binary v: %s' % plugin.getActiveVersion())
+            except Exception as e:
+                logger.error("Coudn't get the active version of the binary. This may be cause by a variable in the config"
+                             " file with a missing - in it and the protocol to fail.", exc_info=e)
             self.info('currentDir: %s' % os.getcwd())
             self.info('workingDir: %s' % self.workingDir)
             self.info('runMode: %s' % MODE_CHOICES[self.runMode.get()])
+
+            if self.modeSerial():
+                self.info("Serial execution")
+            else:
+                self.info("Scipion threads: %d" % self.getScipionThreads())
+
             try:
-                self.info('          MPI: %d' % self.numberOfMpi)
-                self.info('      threads: %d' % self.numberOfThreads)
+                self.info('binary MPI: %d' % self.numberOfMpi)
+                self.info('binary Threads: %d' % self.getBinThreads())
             except Exception as e:
                 self.info('  * Cannot get information about MPI/threads (%s)' % e)
-        # Something went wrong ans at this point status is launched. We mark it as failed.
+        # Something went wrong and at this point status is launched. We mark it as failed.
         except Exception as e:
-            print(e)
+            logger.error("Couldn't start the protocol." , exc_info=e)
             self.setFailed(str(e))
-            self._store(self.status, self.getError())
+            # self._store(self.status, self.getError())
             self._endRun()
             return
 
         Step.run(self)
-        if self.isFailed():
-            self._store()
+        # if self.isFailed():
+        #     self._store()
         self._endRun()
 
     def _endRun(self):
         """ Print some ending message and close some files. """
-        # self._store()
-        self._store(self.summaryVar)
-        self._store(self.methodsVar)
-        self._store(self.endTime)
+        self._store()  # Store all protocol attributes
+        # self._store(self.summaryVar)
+        # self._store(self.methodsVar)
+        # self._store(self.endTime)
 
         if pwutils.envVarOn(pw.SCIPION_DEBUG_NOCLEAN):
             self.warning('Not cleaning temp folder since '
@@ -1636,6 +1691,7 @@ class Protocol(Step):
     def getStepsFile(self):
         """ Return the steps.sqlite file under logs directory. """
         return self._getLogsPath('steps.sqlite')
+
 
     def _addChunk(self, txt, fmt=None):
         """
@@ -1737,7 +1793,7 @@ class Protocol(Step):
             executor = StepExecutor(self.getHostConfig())
 
         self._stepsExecutor = executor
-        self._stepsExecutor.setProtocol(self) # executor needs the protocol to store the jobs Ids submitted to a queue
+        self._stepsExecutor.setProtocol(self)  # executor needs the protocol to store the jobs Ids submitted to a queue
 
     def getFiles(self):
         resultFiles = set()
@@ -1919,17 +1975,19 @@ class Protocol(Step):
         queueName, queueParams = self.getQueueParams()
         hc = self.getHostConfig()
 
+        scipion_project = "SCIPION_PROJECT" if self.getProject() is None else self.getProject().getShortName()
+
         d = {'JOB_NAME': self.strId(),
              'JOB_QUEUE': queueName,
-             'JOB_NODES': self.numberOfMpi.get(),
-             'JOB_THREADS': self.numberOfThreads.get(),
-             'JOB_CORES': self.numberOfMpi.get() * self.numberOfThreads.get(),
+             'JOB_NODES': max([1,self.numberOfMpi.get()]),
+             'JOB_THREADS': max([1,self.numberOfThreads.get()]),
+             'JOB_CORES': max([1,self.numberOfMpi.get() * self.numberOfThreads.get()]),
              'JOB_HOURS': 72,
              'GPU_COUNT': len(self.getGpuList()),
              QUEUE_FOR_JOBS: 'N',
-             'SCIPION_PROJECT': "SCIPION_PROJECT",  # self.getProject().getShortName(),
-             'SCIPION_PROTOCOL': self.getRunName(),
-             PLUGIN_MODULE_VAR: self.getPlugin().getName()
+             PLUGIN_MODULE_VAR: self.getPlugin().getName(),
+             'SCIPION_PROJECT': scipion_project,
+             'SCIPION_PROTOCOL': self.getRunName()
              }
 
         # Criteria in HostConfig.load to load or not QUEUE variables
@@ -2401,11 +2459,12 @@ class Protocol(Step):
 
         return self._size
 
-    def cleanExecutionAttributes(self):
+    def cleanExecutionAttributes(self, includeSteps=True):
         """ Clean all the executions attributes """
         self.setPid(0)
         self._jobId.clear()
-        self._stepsDone.set(0)
+        if includeSteps:
+            self._stepsDone.set(0)
 
 class LegacyProtocol(Protocol):
     """ Special subclass of Protocol to be used when a protocol class
@@ -2443,6 +2502,13 @@ def runProtocolMain(projectPath, protDbPath, protId):
 
     setDefaultLoggingContext(protId, protocol.getProject().getShortName())
 
+    if isinstance(protocol,LegacyProtocol):
+        logger.error(f"There is a problem loading the protocol {protId} ({protocol}) at {pwutils.getHostName()} "
+                     f"Installations of the execution differs from the visualization installation. "
+                     f"This is probably because you are running this protocol in a cluster node which installation is not "
+                     f"compatible with the head node or you have a plugin available on the Main GUI process (check launching directory) but "
+                     f"not properly installed as a plugin in Scipion. Please verify installation.")
+        sys.exit()
     hostConfig = protocol.getHostConfig()
     gpuList = protocol.getGpuList()
 

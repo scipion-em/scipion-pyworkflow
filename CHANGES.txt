@@ -1,3 +1,38 @@
+V3.11.0
+users:
+  - New behaviour: Saving a protocol will unload the form and log the confirmation message. There will not be any pop up message.
+        -New variable: SCIPION_UNLOAD_FORM_ON_SAVE (True). define it in the config file to False to go back to old behaviour.
+  - GPU ID are now always based on the PCI slow. Should match what nvidia-smi output as IDs: CUDA_DEVICE_ORDER='PCI_BUS_ID'
+  - Improving subset creation performance
+  - Usage report:
+      Sent upon project closing and not upon opening.
+      Sent once day(default), even if it hasn't changed.
+  - Suggestion mode added to the "add protocol" dialog:
+      Button added. An empty search "" activates the suggestions. Otherwise search on the installed protocols
+      Suggestions works with empty selection (suggestion as first protocol).
+      Adding a new protocol may be linked automatically with a compatible output of the "Selected protocol"
+  - Host.conf parsing feedback. When there is a parsing error in the host.conf it will report more precisely the cause
+  - Parallel section refactored: Scipion threads and or "Package compute" lines.
+  - Allow for having the three compute fields: Scipion threads, threads and mpis.
+  - Fix: jobs, processes killed are detected by scipion.
+  - Project log has info about protocol execution modes: queue, or subprocess
+  - Killed protocol process (timeout in queue or plain killed) are detected
+  - SCIPION_PROJECT label can be used in host.conf: richer job names
+  - PLUGIN_MODULE variable can be used in host.conf to customize mpirun command: mpirun.PLUGIN_MODULE(mpirun.relion)
+  - Live change of loglevel during GUI
+  - Bug fix: viewers shown when"searching for input" are now correct.
+  - Report better when running a protocol in node and protocol does not load (installation mismatch).
+  - Bug fix: stop launched protocol with PID and  the PID died.
+  - Menu > Project > "Remove temporary files" remove folders too.
+  - File browser: 2 new actions on right click: "delete" and "copy"
+ developers:
+  - Protocol.getParam(name): returns the parameter definition by name.
+  - stepsExecutionMode has to be declared at class level not instance level.
+  - updateProtocol refactored to cover QUEUE timeout cases
+  - Updating the protocol process id (_pid) to 0 when the finish it.
+  - Viewers can evaluate the object that is going to be used in can_handle_this method
+  - using toml
+  - Config.getEnvName(): return Scipion's env name
 V3.10.6:
   - Improving subset creation
   - PLUGIN_MODULE variable can be used in host.conf to customize mpirun command: mpirun.PLUGIN_MODULE --> mpirun.relion)
@@ -24,6 +59,7 @@ developers:
 V3.9.2 - hotfix: rescue commented methods: Protocol._insertRunJobStep and Protocol._insertCopyFileStep
 V3.9.1 - hotfix: loading related objects (CTF - Mics in particle extraction)
 V3.9.0
+users:
   - Project can have a comment (tooltip over the project name and click will edit it). Will be populated with templates description.
   - Project Color modes:
        size color mode removed: Problematic in slow setups or huge projects.

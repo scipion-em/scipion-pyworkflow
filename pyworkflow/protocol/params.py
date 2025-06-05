@@ -29,6 +29,8 @@ import collections
 from pyworkflow.object import *
 from .constants import *
 
+BIN_THREADS_PARAM = 'binThreads'
+PARALLELIZATION = 'Parallelization'
 
 class FormElement(Object):
     """Base for any element on the form"""
@@ -206,11 +208,13 @@ class Form(object):
     def getClass(self):
         return type(self)
         
-    def addSection(self, label='', **kwargs):
+    def addSection(self, label='', updateSection=True, **kwargs):
         """Add a new section"""
-        self.lastSection = Section(self, label=label, **kwargs)
-        self._sectionList.append(self.lastSection)
-        return self.lastSection
+        newSection = Section(self, label=label, **kwargs)
+        if updateSection:
+            self.lastSection = newSection
+        self._sectionList.append(newSection)
+        return newSection
 
     def getSection(self, label):
         """ get section by label from _sectionList"""
@@ -218,6 +222,9 @@ class Form(object):
             if s.label == label:
                 return s
         return
+
+    def hasSection(self, label):
+        return self.getSection(label) is not None
 
     def addGroup(self, *args, **kwargs):
         return self.lastSection.addGroup(*args, **kwargs)
@@ -232,7 +239,11 @@ class Form(object):
         
     def addParam(self, *args, **kwargs):
         """Add a new param to last section"""
-        return self.lastSection.addParam(*args, **kwargs)
+        if args[0] == BIN_THREADS_PARAM:
+            section = self.getParallelSection(updateSection=False)
+        else:
+            section = self.lastSection
+        return section.addParam(*args, **kwargs)
 
     # Adhoc method for specific params
     def addBooleanParam(self, name, label, help, default=True, **kwargs):
@@ -331,35 +342,64 @@ class Form(object):
                            'of this particular run and start from the beginning. This option'
                            'should be used carefully.'
                       )
+
+    def getParallelSection(self, updateSection=True):
+        section = self.getSection(PARALLELIZATION)
+        return section if section else self.addSection(label=PARALLELIZATION, updateSection=updateSection)
   
-    def addParallelSection(self, threads=1, mpi=8, condition="",
-                           hours=72, jobsize=0):
+    def addParallelSection(self, threads=1, mpi=8, binThreads=0, binThreadsHelp=None):
 
         """ Adds the parallelization section to the form
             pass threads=0 to disable threads parameter and mpi=0 to disable mpi params
 
         :param threads: default value for of threads, defaults to 1
-        :param mpi: default value for mpi, defaults to 8"""
-
-        self.addSection(label='Parallelization')
+        :param mpi: default value for mpi, defaults to 8
+        :param binThreads: Threads to pass as an argument to the program
+        """
+        self.addSection(label=PARALLELIZATION)
         self.addParam('hostName', StringParam, default="localhost",
                       label='Execution host',
                       help='Select in which of the available do you want to launch this protocol.')
 
-        # NOTE: help messages for these parameters is defined at HELP_MPI_THREADS and used in form.py.
+        # WARNING. THis is confusing but is described here. For legacy reasons it is not obvious how to disentangle this
+        # threads ahs 2 meanings:
+        # 1.- threads for the binary when execution mode is serial
+        # 2.- threads for Scipion when execution mode is parallel
+        # In this case (#2), there could be a binThreads which are the binary threads as in #1 case
+
+        binLabel = "Threads"
+        binHelpMsg = ("*Threads*:\nThis refers to different execution threads in the same process that "
+                   "can share memory. They run in the same computer. This value is an argument"
+                   " passed to the program integrated")
+        binHelpMsg = binThreadsHelp if binThreadsHelp else binHelpMsg
 
         if threads > 0:
+
+            label= "Scipion threads"
+            helpMsg= ("*Scipion threads*:\n threads created by Scipion to run the steps."
+                            " 1 thread is always used by the master/main process. Then extra threads will allow"
+                            " this protocol to run several steps at the same time, taking always into account "
+                            "restrictions to previous steps and 'theoretical GPU availability'")
+
+            if self._protocol.modeSerial():
+                label = binLabel
+                helpMsg = binHelpMsg
+
+
             self.addParam('numberOfThreads', IntParam, default=threads,
-                          label='Threads')
+                          label=label, help=helpMsg)
         if mpi > 0:
+            mpiHelp=("*MPI*:\nThis is a number of independent processes"
+                         " that communicate through message passing "
+                         "over the network (or the same computer).\n")
             self.addParam('numberOfMpi', IntParam, default=mpi,
-                          label='MPI processes')
-        if jobsize > 0:
-            self.addParam('mpiJobSize', IntParam, default=jobsize,
-                          label='MPI job size', condition="numberOfMpi>1",
-                          help='Minimum size of jobs in mpi processes.'
-                               'Set to 1 for large images (e.g. 500x500)'
-                               'and to 10 for small images (e.g. 100x100)')
+                          label='MPIs', help=mpiHelp)
+        if binThreads:
+            if self._protocol.modeParallel():
+                self.addParam(BIN_THREADS_PARAM, IntParam, default=binThreads,
+                              label=binLabel, help=binHelpMsg)
+            else:
+                logger.warning("binThreads can't be used when stepsExecutionMode is not STEPS_PARALLEL. Use threads instead.")
 
 
 class StringParam(Param):
