@@ -14,9 +14,7 @@ authors = [
     {name = "Grigory Sharov", email = "sharov.grigory@gmail.com"},
     {name = "Josue Gomez Blanco", email = "josue.gomez-blanco@mcgill.ca"},
 ]
-description = """Workflow platform used in scientific applications, initially developed
-            within the Scipion framework for image processing in Electron Microscopy but
-            generic by design to be applied to any domain."""
+description = """Workflow platform used in scientific applications, initially developed within the Scipion framework for image processing in Electron Microscopy but generic by design to be applied to any domain."""
 
 readme = "README.rst"
 requires-python = ">=3.8"
@@ -28,8 +26,10 @@ Homepage = "https://scipion.i2pc.es"
 Repository = "https://github.com/scipion-em/scipion-pyworkflow"
 Issues = "https://github.com/scipion-em/scipion-pyworkflow/issues"
 
-[tool.setuptools]
-packages = ["pyworkflow", "pyworkflowtests"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyworkflow*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 "pyworkflow" = ["resources/*", "project/scripts/*"]
