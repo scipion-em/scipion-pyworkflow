@@ -92,7 +92,8 @@ class ProjectBaseWindow(Window):
         logoLabel = tk.Label(header, image=logoImg, 
                              borderwidth=0, anchor='nw', bg=pw.Config.SCIPION_BG_COLOR)
         logoLabel.grid(row=0, column=0, sticky='nw', padx=(5, 0), pady=5)
-        version = "%s - %s (core)" % (os.environ.get('SCIPION_VERSION', ""), pw.LAST_VERSION)
+
+        version = "%s - %s (core%s)" % (os.environ.get('SCIPION_VERSION', ""), pw.LAST_VERSION, ' optimized'if not __debug__ else '')
 
         versionLabel = tk.Label(header, text=version,
                                 bg=pw.Config.SCIPION_BG_COLOR)

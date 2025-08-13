@@ -371,6 +371,8 @@ class Window:
         self.master = masterWindow
         setCommonFonts(self)
 
+        self.initial_focus = None
+
         if kwargs.get('enableQueue', False):
             self.queue = queue.Queue(maxsize=0)
         else:
@@ -450,6 +452,9 @@ class Window:
         self.root.focus_set()
         if self.queue is not None:
             self._queueTimer = self.root.after(1000, self.__processQueue)
+
+        if self.initial_focus is not None:
+            self.initial_focus.focus_set()
 
         if modal:
             self.root.wait_window(self.root)

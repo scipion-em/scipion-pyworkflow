@@ -96,7 +96,8 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
     if numberOfMpi <= 1:
         return '%s %s %s' % (prepend, programname, params)
     else:
-        assert hostConfig is not None, 'hostConfig needed to launch MPI processes.'
+        if hostConfig is None:
+            raise AssertionError('hostConfig needed to launch MPI processes.')
 
         if programname.startswith('xmipp') and not programname.startswith('xmipp_mpi'):
             programname = programname.replace('xmipp', 'xmipp_mpi')

@@ -85,6 +85,18 @@ class ProtocolsView(tk.Frame):
                     SIZE_1GB: "orange",
                     SIZE_1TB: "red"}
 
+    _actionList = [
+        ACTION_NEW, ACTION_EDIT, ACTION_RENAME, ACTION_DUPLICATE, ACTION_COPY, ACTION_PASTE, ACTION_DELETE,
+        ACTION_BROWSE,
+        ACTION_STOP, ACTION_STOP_WORKFLOW, ACTION_CONTINUE, ACTION_CONTINUE_WORKFLOW, ACTION_RESTART_WORKFLOW,
+        ACTION_RESET_WORKFLOW,
+        ACTION_RESULTS,
+        ACTION_EXPORT, ACTION_EXPORT_UPLOAD,
+        ACTION_COLLAPSE, ACTION_EXPAND,
+        ACTION_LABELS, ACTION_SEARCH,
+        ACTION_SELECT_FROM, ACTION_SELECT_TO,
+        ACTION_STEPS, ACTION_DB
+    ]
     _protocolViews = None
 
     def __init__(self, parent, window, **args):
@@ -442,17 +454,6 @@ class ProtocolsView(tk.Frame):
         """ Prepare the buttons that will be available for protocol actions. """
 
         self.actionButtons = {}
-        actionList = [
-            ACTION_NEW, ACTION_EDIT, ACTION_RENAME, ACTION_DUPLICATE, ACTION_COPY, ACTION_PASTE,  ACTION_DELETE,
-            ACTION_BROWSE,
-            ACTION_STOP, ACTION_STOP_WORKFLOW, ACTION_CONTINUE, ACTION_CONTINUE_WORKFLOW, ACTION_RESTART_WORKFLOW, ACTION_RESET_WORKFLOW,
-            ACTION_RESULTS,
-            ACTION_EXPORT, ACTION_EXPORT_UPLOAD,
-            ACTION_COLLAPSE, ACTION_EXPAND,
-            ACTION_LABELS, ACTION_SEARCH,
-            ACTION_SELECT_FROM, ACTION_SELECT_TO,
-            ACTION_STEPS, ACTION_DB
-        ]
 
         def addButton(action, text, toolbar):
 
@@ -464,17 +465,16 @@ class ProtocolsView(tk.Frame):
             callback = lambda e: self._runActionClicked(action, event=e)
             btn.bind(TK.LEFT_CLICK, callback)
 
-            # Shortcuts:
+            # Shortcuts, these are bind later!!
             shortCut = ActionShortCuts.get(action, None)
             if shortCut:
                 text += " (%s)" % shortCut
-                self.root.bind(shortCut, callback)
 
             ToolTip(btn, text, 500)
 
             return btn
 
-        for action in actionList:
+        for action in self._actionList:
             self.actionButtons[action] = addButton(action, action,
                                                    self.runsToolbar)
 
@@ -744,6 +744,17 @@ class ProtocolsView(tk.Frame):
         self.settings.getLabels().updateDict()
 
         self.updateRunsGraph()
+
+        # Shortcuts for actions
+        for action in self._actionList:
+
+            # prevent "late binding closure" by passing action as a default value for the lambda param.
+            callback = lambda e, my_action=action: self._runActionClicked(my_action, event=e)
+
+            # Shortcuts:
+            shortCut = ActionShortCuts.get(action, None)
+            if shortCut:
+                self.runsGraphCanvas.bind(shortCut, callback)
 
     def updateRunsGraph(self, refresh=False, checkPids=False, position=None):
 
@@ -1612,7 +1623,7 @@ class ProtocolsView(tk.Frame):
 
             self.project.loadProtocols(jsonStr=self.clipboard_get())
             self.info("Clipboard content pasted successfully.")
-            self.updateRunsGraph(False)
+            self.updateRunsGraph(True)
         except Exception as e:
             self.info("Paste failed, maybe clipboard content is not valid content? See GUI log for details.")
             logger.error("Clipboard content couldn't be pasted." , exc_info=e)
@@ -1988,7 +1999,7 @@ class ProtocolsView(tk.Frame):
         if event is not None:
             # log Search box events are reaching here
             # Since this method is bound to the window events
-            if event.widget.widgetName == 'entry':
+            if event.widget.widgetName in ['text', 'entry']:
                 return
 
         # Following actions do not need a select run

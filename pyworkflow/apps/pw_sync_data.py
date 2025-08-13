@@ -278,8 +278,8 @@ def download(dataset, destination=None, url=None, verbose=False):
                 urlopen('%s/%s/%s' % (url, dataset, fname)))
 
             md5 = md5sum(fpath)
-            assert md5 == md5Remote, \
-                "Bad md5. Expected: %s Computed: %s" % (md5Remote, md5)
+            if md5 != md5Remote:
+                raise AssertionError("Bad md5. Expected: %s Computed: %s" % (md5Remote, md5))
 
             done += inc
             if verbose:
@@ -315,7 +315,8 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
     try:
         last = max(os.stat(join(datasetFolder, x)).st_mtime for x in md5sRemote)
         t_manifest = os.stat(join(datasetFolder, 'MANIFEST')).st_mtime
-        assert t_manifest > last and time.time() - t_manifest < 60*60*24*7
+        if not (t_manifest > last and time.time() - t_manifest < 60*60*24*7):
+            raise AssertionError("Manifest times seems to be wrong.")
     except (OSError, IOError, AssertionError) as e:
         logger.info("Regenerating local MANIFEST...")
         createMANIFEST(datasetFolder)

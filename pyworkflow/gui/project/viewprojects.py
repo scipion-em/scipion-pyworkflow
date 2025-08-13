@@ -220,7 +220,16 @@ class ProjectsView(tk.Frame):
     def openProject(self, projName):
         from subprocess import Popen
         script = pw.join(pw.APPS, 'pw_project.py')
-        Popen([pw.PYTHON, script, projName])
+        args=[pw.PYTHON, "-O", script, projName]
+
+        # Launcher is the ona calling this process. Since launcher does not deal
+        # with __debug__ we should use the variable in the config
+        if pw.Config.debugOn():
+            # If not optimizing code, remove -O
+            logger.warning(f"Launching project {projName} in debug mode.")
+            del args[1]
+
+        Popen(args)
 
     def deleteProject(self, projInfo):
 

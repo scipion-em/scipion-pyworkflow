@@ -187,6 +187,10 @@ class SqliteMapper(Mapper):
         """Build the object which id is objId"""
         if objId in self.objDict:
             obj = self.objDict[objId]
+
+            if __debug__:
+                # If not optimized code
+                logger.debug("Object with id %s already loaded: %s", objId, obj)
         else:
             objRow = self.db.selectObjectById(objId)
             if objRow is None:

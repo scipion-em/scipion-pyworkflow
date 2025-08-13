@@ -101,7 +101,7 @@ class Template:
                     field.setValue(oldValue)
                     raise Exception("%s is not compatible with %s(%s) parameter." % (newValue, field.getTitle(), alias))
         if not paramsSetted:
-            raise Exception("Alias %s not recognized." % alias)
+            logger.warning('Argument "%s" not available in the template.' % alias)
         return paramsSetted
 
 class LocalTemplate(Template):

@@ -61,7 +61,8 @@ class DataSet:
         """
         This method is called every time the dataset want to be retrieved
         """
-        assert name in cls._datasetDict, "Dataset: %s dataset doesn't exist." % name
+        if name not in cls._datasetDict:
+            raise AssertionError("Dataset: %s dataset doesn't exist." % name)
 
         ds = cls._datasetDict[name]
         folder = ds.folder
