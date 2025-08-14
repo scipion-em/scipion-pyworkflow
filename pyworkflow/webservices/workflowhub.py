@@ -36,7 +36,7 @@ def make_request(url, asJson=True):
                 data = html_response.decode(encoding)
             return data
     except Exception as e:
-        logger.error(f"Couldn't get data from workflow hub at {url}.")
+        logger.error(f"Couldn't get data from workflow hub at {url}: {str(e)}")
 
 def get_workflow_file_url(workflow_id, version):
     root_url = "https://workflowhub.eu/workflows/%s/git/%s/" % (workflow_id, version)

@@ -1,4 +1,19 @@
-V3.11.2 Adding new icons
+V3.11.2
+ users:
+  Copy (Control-C) work in log viewers too
+  Pasting a copied workflow refreshes the graph
+  Bugfix: Protocol with very fast (almost notime) steps work instead of end up finished with pending steps.
+  templates can be fetched from urls having ".json" and not json.template only.
+
+ developers:
+  new icon
+  Executor.getGpuListStr(): Returns the assigned gpus for the step as a string (accepts sep --> separator, defaults to " ")
+  Executor.setCudaVisibleDevices(): Sets the variable CUDA_VISIBLE_DEVICES with owned information.
+  Protocol.getExecutor: returns the executor. Useful to aske for gpu information inside a step
+  __debug__ allowed: By default Project load is with -O (optimized) so __debug__ is false.
+       asserts removed, swap to if + raise AssertionError
+       if optimized, shown in project window header
+
 V3.11.1 fix packaging
 V3.11.0
 users:
