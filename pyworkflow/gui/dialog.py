@@ -644,7 +644,7 @@ class ListDialog(Dialog):
             label = tk.Label(bodyFrame, text=self.message, compound=tk.LEFT,
                              image=self.getImage(Icon.LIGHTBULB))
             label.grid(row=2, column=0, sticky='nw', padx=5, pady=5)
-        self.initial_focus = self.tree
+        # CAncel this, now focus is set to the search box. self.initial_focus = self.tree
 
     def _createTree(self, parent):
         self.tree = BoundTree(parent, self.provider, selectmode=self._selectmode, style=LIST_TREEVIEW)
@@ -677,6 +677,7 @@ class ListDialog(Dialog):
         self.entry.bind('<KeyRelease>', self._onSearch)
         self.entry.focus_set()
         self.entry.grid(row=0, column=1, sticky='news')
+        self.initial_focus=self.entry
         self.searchBoxframe.grid(row=0, column=0, sticky='news', padx=5,
                                  pady=(10, 5))
 
@@ -910,6 +911,7 @@ class SearchBaseWindow(Window):
         entry.bind(TK.ENTER, self._onSearchClick)
         entry.focus_set()
         entry.grid(row=0, column=1, sticky='nw')
+        self.initial_focus=entry
         btn = widgets.IconButton(frame, "Search",
                                  imagePath=Icon.ACTION_SEARCH,
                                  command=self._onSearchClick)

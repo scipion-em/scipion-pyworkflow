@@ -29,3 +29,4 @@ pyworkflow/foo
 # Packaging files
 dist
 *egg-info
+build

@@ -24,6 +24,8 @@
 # **************************************************************************
 """ This module contains the provider and dialog to search for a protocol"""
 import tkinter as tk
+import logging
+logger = logging.getLogger(__name__)
 from pyworkflow import Config
 import pyworkflow.gui as pwgui
 import pyworkflow.object as pwobj
@@ -35,11 +37,8 @@ from pyworkflow.project.usage import getNextProtocolSuggestions
 from pyworkflow.utils import Icon
 
 UPDATED = "updated"
-
 NEW = "new"
-
 BETA = "beta"
-
 
 class ProtocolTreeProvider(pwgui.tree.ObjectTreeProvider):
     """Create the tree elements for a Protocol run"""
@@ -81,6 +80,7 @@ class SearchProtocolWindow(SearchBaseWindow):
                          title="Add a protocol" + posStr)
 
         self.root.bind("<FocusIn>", self._onWindowFocusIn)
+        self.root.focus()
 
     def _onWindowFocusIn(self, event):
         """
@@ -92,6 +92,8 @@ class SearchProtocolWindow(SearchBaseWindow):
             self.selectedProtocol = self.selectionGetter()
             if self._isSuggestionActive():
                 self._onSearchClick()
+        self.initial_focus.focus_set()
+
     def _isSuggestionActive(self):
         """
         :return: Returns true if current mode is suggestion mode.

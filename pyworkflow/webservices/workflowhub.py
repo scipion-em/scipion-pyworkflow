@@ -1,6 +1,8 @@
 import json
 from urllib.request import Request, urlopen
 from pyworkflow.template import Template
+import logging
+logger = logging.getLogger(__name__)
 
 
 class WHTemplate(Template):
@@ -12,24 +14,29 @@ class WHTemplate(Template):
     def loadContent(self):
         """ Download the file pointer by url and read the content"""
 
-        return make_request(self.url, asJson=False)
+        data = make_request(self.url, asJson=False)
 
+        # Clean all text up to the first [
+        data = data[data.index("["):]
+        return data
 
 def make_request(url, asJson=True):
     """ Makes a request to the url and returns the json as a dictionary"""
 
-    req = Request(url)
-    req.add_header("accept", "application/json")
+    try:
+        req = Request(url)
+        req.add_header("accept", "application/json")
 
-    with urlopen(req, timeout=1) as response:
-        if asJson:
-            data = json.load(response)
-        else:
-            html_response = response.read()
-            encoding = response.headers.get_content_charset('utf-8')
-            data = html_response.decode(encoding)
-        return data
-
+        with urlopen(req, timeout=1) as response:
+            if asJson:
+                data = json.load(response)
+            else:
+                html_response = response.read()
+                encoding = response.headers.get_content_charset('utf-8')
+                data = html_response.decode(encoding)
+            return data
+    except Exception as e:
+        logger.error(f"Couldn't get data from workflow hub at {url}: {str(e)}")
 
 def get_workflow_file_url(workflow_id, version):
     root_url = "https://workflowhub.eu/workflows/%s/git/%s/" % (workflow_id, version)
@@ -39,8 +46,11 @@ def get_workflow_file_url(workflow_id, version):
 
     for file in result["tree"]:
         path = (file["path"])
-        if path.endswith(".json.template"):
+        if ".json" in path:
             return root_url + 'raw/' + path
+
+    # Haven't found the workflow file
+    raise Exception(f"Couldn't find any path element at {url} containing .json in it")
 
 
 def get_wh_templates(template_id=None, organization="Scipion%20CNB"):
@@ -53,17 +63,19 @@ def get_wh_templates(template_id=None, organization="Scipion%20CNB"):
     template_list = []
 
     for workflow in response:
-        workflow_id = workflow["id"]
-        name = workflow["name"]
-        description = workflow['description']
-        version = workflow["versions"][-1]
-        version_id = version["id"]
-        template_url = get_workflow_file_url(workflow_id, version_id)
+        try:
+            workflow_id = workflow["id"]
+            name = workflow["name"]
+            description = workflow['description']
+            version = workflow["versions"][-1]
+            version_id = version["id"]
+            template_url = get_workflow_file_url(workflow_id, version_id)
 
-        new_template = WHTemplate("Workflow hub", name, description, template_url)
-        if template_id is None or new_template.getObjId() == template_id:
-            template_list.append(new_template)
-
+            new_template = WHTemplate("WH", name, description, template_url)
+            if template_id is None or new_template.getObjId() == template_id:
+                template_list.append(new_template)
+        except Exception as e:
+            logger.warning(f"Couldn't retrieve a data for {name} workflow hub template. ERROR: {e}" )
     return template_list
 
 

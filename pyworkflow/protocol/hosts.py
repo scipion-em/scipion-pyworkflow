@@ -164,7 +164,8 @@ class HostConfig(Object):
         hosts = OrderedDict()
 
         try:
-            assert cp.read(hostsConf) != [], 'Missing file %s' % hostsConf
+            if not cp.read(hostsConf):
+                raise AssertionError('Missing file %s' % hostsConf)
 
             for hostName in cp.sections():
                 host = HostConfig(label=hostName, hostName=hostName)

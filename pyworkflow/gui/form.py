@@ -1937,6 +1937,7 @@ class FormWindow(Window):
         self.waitForVar.set(', '.join(self.protocol.getPrerequisites()))
         entryWf = tk.Entry(runFrame, font=self.font, width=25,
                            textvariable=self.waitForVar)
+        self.initial_focus = entryWf
         entryWf.grid(row=r, column=c + 1, padx=(0, 5), pady=5, sticky='ew')
 
         self.waitForVar.trace('w', self._setWaitFor)
