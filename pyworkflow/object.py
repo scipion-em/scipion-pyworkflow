@@ -1344,6 +1344,7 @@ class Set(Object):
         else:
             self._idCount = max(self._idCount, item.getObjId())
         self._insertItem(item)
+        # FIXME: Incrementing always!! When updating this is wrong.
         self._size.increment()
 
     def _insertItem(self, item):

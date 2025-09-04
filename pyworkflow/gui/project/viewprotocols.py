@@ -101,6 +101,7 @@ class ProtocolsView(tk.Frame):
 
     def __init__(self, parent, window, **args):
         tk.Frame.__init__(self, parent, **args)
+
         # Load global configuration
         self.window = window
         self.project = window.project
@@ -122,6 +123,8 @@ class ProtocolsView(tk.Frame):
         self.root.bind("<Control-t>", self._toggleColorScheme)
         self.root.bind("<Control-D>", self._toggleDebug)
         self.root.bind("<Control-l>", self._locateProtocol)
+        # Bind to root "focus in"
+        self.root.bind("<FocusIn>", self._onWindowFocusIn)
 
         if Config.debugOn():
             self.root.bind("<Control-i>", self._inspectProtocols)
@@ -306,6 +309,11 @@ class ProtocolsView(tk.Frame):
         p.paneconfig(rightFrame, minsize=10)
 
         return p
+
+    def _onWindowFocusIn(self, event):
+        """ Refresh on windows get focus """
+        if event.widget == self.root:
+            self.runsGraphCanvas.focus_set()
 
     def _viewObject(self, objId):
         """ Call appropriate viewer for objId. """
@@ -1226,8 +1234,14 @@ class ProtocolsView(tk.Frame):
         self._selectItemProtocol(prot)
 
     def _runItemDoubleClick(self, item=None, e=None):
-        if item.nodeInfo.isExpanded():
+
+        if self.runsView == VIEW_LIST:
             self._runActionClicked(ACTION_EDIT)
+
+        elif item.nodeInfo.isExpanded():
+            self._runActionClicked(ACTION_EDIT)
+        else:
+            self._runActionClicked(ACTION_EXPAND)
 
     def _runItemMiddleClick(self, e=None):
         self._runActionClicked(ACTION_SELECT_TO)

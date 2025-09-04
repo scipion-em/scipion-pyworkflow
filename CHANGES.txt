@@ -4,6 +4,8 @@ V3.11.2
   Pasting a copied workflow refreshes the graph
   Bugfix: Protocol with very fast (almost notime) steps work instead of end up finished with pending steps.
   templates can be fetched from urls having ".json" and not json.template only.
+  Double click in a protocol in "list mode" opens the protocol
+  Double click in a collapsed node, expands it.
 
  developers:
   new icon

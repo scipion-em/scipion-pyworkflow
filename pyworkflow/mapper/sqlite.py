@@ -215,10 +215,8 @@ class SqliteMapper(Mapper):
         rowName = self._getStrValue(objRow['name'])
 
         if not hasattr(obj, ID_ATTRIBUTE):
-            raise Exception("Entry '%s' (id=%s) in the database, stored as '%s'"
-                            ", is being mapped to %s object. " %
-                            (rowName, rowId,
-                             objRow['classname'], type(obj)))
+            raise Exception(f"Entry '{rowName}' (id={rowId}) in the database, stored as '{objRow['classname']}'"
+                            f", is being mapped to {type(obj)} object.")
 
         obj._objId = rowId
 
@@ -884,7 +882,7 @@ class SqliteFlatMapper(Mapper):
         self.db.deleteAll()
                 
     def delete(self, obj):
-        """Delete an object and all its childs"""
+        """Delete an object and all its children"""
         self.db.deleteObject(obj.getObjId())
     
     def updateTo(self, obj, level=1):
