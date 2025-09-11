@@ -166,7 +166,8 @@ class Tester:
         """ Show the list of tests available """
         mode = self.mode
 
-        assert mode in ['modules', 'classes', 'onlyclasses', 'all'], 'Unknown mode %s' % mode
+        if mode not in ['modules', 'classes', 'onlyclasses', 'all']:
+            raise AssertionError('Unknown mode %s' % mode)
 
         # First flatten the list of tests.
         # testsFlat = list(iter(self.__iterTests(tests)))

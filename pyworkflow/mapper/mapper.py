@@ -84,6 +84,10 @@ class Mapper:
 
         try:
             instance = self.dictClasses[className]()
+
+            if __debug__:
+                logger.debug("Object instantiated of class %s", className)
+
         except Exception as e:
             clazz = self.dictClasses._default
             logger.error('Class %s could not be created. Replacing it with %s ' % (className, clazz.__name__), exc_info=e)

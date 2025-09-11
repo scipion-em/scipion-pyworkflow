@@ -31,6 +31,7 @@ using different threads and the last one with MPI processes.
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 import time
 import datetime
@@ -47,6 +48,7 @@ from .launch import _submit, UNKNOWN_JOBID, _checkJobStatus
 
 class StepExecutor:
     """ Run a list of Protocol steps. """
+
     def __init__(self, hostConfig, **kwargs):
         self.hostConfig = hostConfig
         self.gpuList = kwargs.get(cts.GPU_LIST, None)
@@ -56,11 +58,22 @@ class StepExecutor:
         """ Return the GPU list assigned to current thread. """
         return self.gpuList
 
+    def getGpuListStr(self, sep=" "):
+        """ Returns the GPU list assigned to the current thread as string
+        :param sep: default ot space. Pass "," or other string to use a separator
+        """
+        return sep.join(map(str, self.getGpuList()))
+
+    def setCudaVisibleDevices(self):
+        """ sets CUDA_VISIBLE DEVICES in the environment to the available GPUs in turn"""
+        # https://developer.nvidia.com/blog/cuda-pro-tip-control-gpu-visibility-cuda_visible_devices/
+        os.environ["CUDA_VISIBLE_DEVICES"] = self.getGpuListStr(",")
+
     def setProtocol(self, protocol):
         """ Set protocol to append active jobs to its jobIds. """
         self.protocol = protocol
 
-    def runJob(self, log, programName, params,           
+    def runJob(self, log, programName, params,
                numberOfMpi=1, numberOfThreads=1,
                env=None, cwd=None, executable=None):
         """ This function is a wrapper around runJob, 
@@ -69,7 +82,8 @@ class StepExecutor:
         process.runJob(log, programName, params,
                        numberOfMpi, numberOfThreads,
                        self.hostConfig,
-                       env=env, cwd=cwd, gpuList=self._getGPUListForCommand(programName, params), executable=executable, context=self.protocol.getSubmitDict())
+                       env=env, cwd=cwd, gpuList=self._getGPUListForCommand(programName, params), executable=executable,
+                       context=self.protocol.getSubmitDict())
 
     def _getGPUListForCommand(self, program, params):
         """ Returns the list of GPUs if the program or the params have the GPU placeholder %(GPU)s """
@@ -86,13 +100,14 @@ class StepExecutor:
 
         for s in steps:
             if (s.getStatus() == cts.STATUS_NEW and
-                    all(steps[i-1].isFinished() for i in s._prerequisites)):
+                    all(steps[i - 1].isFinished() for i in s._prerequisites)):
 
                 if self._isStepRunnable(s):
                     rs.append(s)
                     if len(rs) == n:
                         break
         return rs
+
     def _isStepRunnable(self, step):
         """ Should be implemented by inherited classes to test extra conditions """
         return True
@@ -102,9 +117,9 @@ class StepExecutor:
         that can be done and thus enable other steps to be executed.
         """
         return any(s.isRunning() or s.isWaiting() for s in steps)
-    
-    def runSteps(self, steps, 
-                 stepStartedCallback, 
+
+    def runSteps(self, steps,
+                 stepStartedCallback,
                  stepFinishedCallback,
                  stepsCheckCallback,
                  stepsCheckSecs=3):
@@ -128,15 +143,15 @@ class StepExecutor:
                 stepStartedCallback(step)
                 step.run()
                 doContinue = stepFinishedCallback(step)
-            
+
                 if not doContinue:
                     break
 
             elif self._arePending(steps):
-                # We have not found any runnable step, but still there
+                # We have not found any runnable step, but still
                 # there are some running or waiting for dependencies
                 # So, let's wait a bit to check if something changes
-                time.sleep(0.5)
+                time.sleep(3)
             else:
                 # No steps to run, neither running or waiting
                 # So, we are done, either failed or finished :)
@@ -152,6 +167,7 @@ class StepExecutor:
 
 class StepThread(threading.Thread):
     """ Thread to run Steps in parallel. """
+
     def __init__(self, step, lock):
         threading.Thread.__init__(self)
         self.thId = step.getObjId()
@@ -167,7 +183,7 @@ class StepThread(threading.Thread):
             self.step._run()  # not self.step.run() , to avoid race conditions
         except Exception as e:
             error = str(e)
-            logger.error("Couldn't run the code in a thread." , exc_info=e)
+            logger.error("Couldn't run the code in a thread.", exc_info=e)
         finally:
             with self.lock:
                 if error is None:
@@ -178,6 +194,7 @@ class StepThread(threading.Thread):
 
 class ThreadStepExecutor(StepExecutor):
     """ Run steps in parallel using threads. """
+
     def __init__(self, hostConfig, nThreads, **kwargs):
         StepExecutor.__init__(self, hostConfig, **kwargs)
         self.numberOfProcs = nThreads
@@ -194,7 +211,7 @@ class ThreadStepExecutor(StepExecutor):
             nThreads = self.numberOfProcs
 
             # Nodes: each concurrent steps
-            nodes = range(1, nThreads+1)
+            nodes = range(1, nThreads + 1)
 
             # Number of GPUs
             nGpu = len(self.gpuList)
@@ -215,8 +232,8 @@ class ThreadStepExecutor(StepExecutor):
                     # Node 0 : GPU 0 1
                     # Node 1 : GPU 2
 
-                    extraGpu = 1 if spare>0 else 0
-                    toPos = fromPos + step +extraGpu
+                    extraGpu = 1 if spare > 0 else 0
+                    toPos = fromPos + step + extraGpu
                     gpusForNode = list(self.gpuList[fromPos:toPos])
 
                     newGpusForNode = self.cleanVoidGPUs(gpusForNode)
@@ -227,7 +244,7 @@ class ThreadStepExecutor(StepExecutor):
                         self.gpuDict[-node] = newGpusForNode
 
                     fromPos = toPos
-                    spare-=1
+                    spare -= 1
 
             else:
                 # Expand gpuList repeating until reach nThreads items
@@ -244,10 +261,10 @@ class ThreadStepExecutor(StepExecutor):
                     else:
                         logger.info("GPU slot for gpu %s." % gpu)
                         # Any negative number in the key means a free gpu slot. can't be 0!
-                        self.gpuDict[-index-1] = [gpu]
+                        self.gpuDict[-index - 1] = [gpu]
 
     def cleanVoidGPUs(self, gpuList):
-        newGPUList=[]
+        newGPUList = []
         for gpuid in gpuList:
             if gpuid == cts.VOID_GPU:
                 logger.info("Void GPU detected in %s" % gpuList)
@@ -280,10 +297,12 @@ class ThreadStepExecutor(StepExecutor):
 
                 gpus = self.getFreeGpuSlot(nodeId)
                 if gpus is None:
-                    logger.warning("Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning an empty list." % nodeId)
+                    logger.warning(
+                        "Step on node %s is requesting GPUs but there isn't any available. Review configuration of threads/GPUs. Returning an empty list." % nodeId)
                     return []
                 else:
                     return gpus
+
     def getFreeGpuSlot(self, stepId=None):
         """ Returns a free gpu slot available or None. If node is passed it also reserves it for that node
 
@@ -303,6 +322,7 @@ class ThreadStepExecutor(StepExecutor):
                 return gpus
 
         return None
+
     def freeGpusSlot(self, node):
         gpus = self.gpuDict.get(node, None)
 
@@ -323,8 +343,8 @@ class ThreadStepExecutor(StepExecutor):
 
         return True
 
-    def runSteps(self, steps, 
-                 stepStartedCallback, 
+    def runSteps(self, steps,
+                 stepStartedCallback,
                  stepFinishedCallback,
                  stepsCheckCallback,
                  stepsCheckSecs=5):
@@ -345,7 +365,7 @@ class ThreadStepExecutor(StepExecutor):
         sharedLock = threading.Lock()
 
         runningSteps = {}  # currently running step in each node ({node: step})
-        freeNodes = list(range(1, self.numberOfProcs+1))  # available nodes to send jobs
+        freeNodes = list(range(1, self.numberOfProcs + 1))  # available nodes to send jobs
         logger.info("Execution threads: %s" % freeNodes)
         logger.info("Running steps using %s threads. 1 thread is used for this main process." % self.numberOfProcs)
 
@@ -382,17 +402,21 @@ class ThreadStepExecutor(StepExecutor):
                         stepStartedCallback(step)
                         node = freeNodes.pop(0)  # take an available node
                         runningSteps[node] = step
-                        logger.debug("Running step %s on node %s" % (step, node))
+                        logger.info("Running step %s on node %s" % (step, node))
                         t = StepThread(step, sharedLock)
                         # won't keep process up if main thread ends
                         t.daemon = True
                         t.start()
+
                 anyPending = self._arePending(steps)
 
             if not anyLaunched:
+                logger.debug("Nothing launched in this loop")
                 if anyPending:  # nothing running
+                    logger.debug("There are steps pending. Waiting 3 secs")
                     time.sleep(3)
                 else:
+                    logger.info("Nothing pending. Breaking the loop.")
                     break  # yeah, we are done, either failed or finished :)
 
             now = datetime.datetime.now()
@@ -406,6 +430,15 @@ class ThreadStepExecutor(StepExecutor):
         for t in threading.enumerate():
             if t is not threading.current_thread():
                 t.join()
+
+    def _arePending(self, steps):
+        """ Return True if there are pending steps (either running, waiting or new (not yet executed)
+        """
+        for s in steps:
+            if s.isRunning() or s.isWaiting() or s.isNew():
+                return True
+
+        return False
 
 
 class QueueStepExecutor(ThreadStepExecutor):
@@ -429,7 +462,7 @@ class QueueStepExecutor(ThreadStepExecutor):
             for i in range(len(gpuList)):
                 self.gpuDict[threadId][i] = i
 
-        logger.debug("Updated gpus ids rebase starting from 0: %s per thread" %self.gpuDict)
+        logger.debug("Updated gpus ids rebase starting from 0: %s per thread" % self.gpuDict)
 
     def getThreadJobId(self, stepId):
         """ Returns the job id extension assigned to each thread/step """
@@ -456,7 +489,6 @@ class QueueStepExecutor(ThreadStepExecutor):
                                                             self.hostConfig, env,
                                                             gpuList=self._getGPUListForCommand(programName, params),
                                                             context=submitDict)
-
 
         jobid = _submit(self.hostConfig, submitDict, cwd, env)
         self.protocol.appendJobId(jobid)  # append active jobs

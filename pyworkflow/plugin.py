@@ -410,11 +410,11 @@ class Domain:
                                                           viewerClassName,
                                                           doRaise=True)
                         viewers.append(prefViewer)
-                    except Exception as e:
-                        logger.error("Couldn't load \"%s\" as preferred viewer for %s.\n"
+                    except Exception:
+                        logger.info("Couldn't load \"%s\" as preferred viewer for %s.\n"
                               "There might be a typo in your VIEWERS variable "
-                              "or an error in the viewer's plugin installation"
-                              % (prefViewerStr, className), exc_info=e)
+                              "or an error in the viewer's plugin installation or simply the plugin is not installed."
+                              % (prefViewerStr, target))
 
                 cls._preferred_viewers[target] = viewers
 

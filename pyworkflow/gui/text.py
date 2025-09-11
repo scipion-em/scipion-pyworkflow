@@ -170,6 +170,7 @@ class Text(tk.Text, Scrollable):
         # Associate with right click
         self.bind("<Button-1>", self.onClick)
         self.bind("<Button-3>", self.onRightClick)
+        self.bind("Control-c", self.copyToClipboard)
         
     def getDefaults(self):
         """This should be implemented in subclasses to provide defaults"""
@@ -234,6 +235,7 @@ class Text(tk.Text, Scrollable):
     def copyToClipboard(self, e=None):
         self.clipboard_clear()
         self.clipboard_append(self.selection)
+        return "break"
 
     def openFile(self):
         # What happens when you right-click and select "Open path"
@@ -508,7 +510,7 @@ class TextFileViewer(tk.Frame):
         self.maxSize = maxSize
         self.width = width
         self.height = height
-
+        self.searchEntry = None
         self.createWidgets(fileList)
         self.master = master
         self.addBinding()
@@ -755,6 +757,7 @@ def openTextFileEditor(filename, tkParent=None):
 def showTextFileViewer(title, filelist, parent=None, main=False):
     w = gui.Window(title, parent, minsize=(600, 400))
     viewer = TextFileViewer(w.root, filelist, maxSize=-1, font=w.font)
+    w.initial_focus=viewer.searchEntry
     viewer.grid(row=0, column=0, sticky='news')
     gui.configureWeigths(w.root)
     w.show()

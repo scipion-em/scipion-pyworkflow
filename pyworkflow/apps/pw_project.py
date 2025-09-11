@@ -30,8 +30,9 @@ Launch main project window
 
 import sys
 import os
+from subprocess import Popen
 
-from pyworkflow import Config
+from pyworkflow import Config, PYTHON
 from pyworkflow.project import Manager
 from pyworkflow.gui.project import ProjectWindow
 import pyworkflow.utils as pwutils
@@ -89,12 +90,28 @@ def openProject(projectName):
     projPath = manager.getProjectPath(projName)
 
     if os.path.exists(projPath):
-        projWindow = ProjectWindow(projPath)
-        projWindow.show()
+
+        # This opens the project in the same process as the launcher. This is good for directly debugging code
+        # but  does not allow -O or not execution (usage of __debug__ flag).
+        # All we can do is to go straight to loading the project if debug is active or running optimized.
+        if Config.debugOn() or not __debug__:
+
+
+            # This may or may not be run Optimized (-O). It depends on the call to scipion last (launcher)
+            print("Launching project in debug or optimized...")
+            projWindow = ProjectWindow(projPath)
+            projWindow.show()
+        else:
+
+            # Run this same  script optimized: Defined in scipion module under scipion-app: Circular definition. To fix! Bad design.
+            print("Launching project optimized...")
+            Popen([PYTHON, "-O", "-m","scipion", "project", projectName])
+
+
     else:
         print("Can't open project %s. It does not exist" % projPath)
 
-        #Show the list of projects
+        # Show the list of projects
         showProjectList(manager)
 
 def showProjectList(manager):

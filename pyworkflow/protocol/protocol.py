@@ -1795,6 +1795,11 @@ class Protocol(Step):
         self._stepsExecutor = executor
         self._stepsExecutor.setProtocol(self)  # executor needs the protocol to store the jobs Ids submitted to a queue
 
+    def getExecutor(self):
+        """Return the executor associated. This must be used only during protocol execution (steps code).
+         In "design/GUI time" is not set."""
+        return self._stepsExecutor
+
     def getFiles(self):
         resultFiles = set()
         for paramName, _ in self.getDefinition().iterPointerParams():

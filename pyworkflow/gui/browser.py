@@ -72,6 +72,10 @@ class ObjectBrowser(tk.Frame):
         p.grid(row=0, column=0, sticky='news')
 
         leftPanel = tk.Frame(p)
+
+        # Optional, widget to get the focus
+        self.initial_focus=None
+
         self._fillLeftPanel(leftPanel)
         p.add(leftPanel, padx=5, pady=5)
         p.paneconfig(leftPanel, minsize=300)
@@ -88,6 +92,7 @@ class ObjectBrowser(tk.Frame):
     def _fillLeftPanel(self, frame):
         gui.configureWeigths(frame)
         self.tree = BoundTree(frame, self.treeProvider, style=LIST_TREEVIEW)
+        self.initial_focus=self.tree
         self.tree.grid(row=0, column=0, sticky='news')
         self.itemConfig = self.tree.itemConfig
         self.getImage = self.tree.getImage
@@ -489,6 +494,7 @@ class FileBrowser(ObjectBrowser):
         pathLabel.grid(row=0, column=0, padx=0, pady=3)
         pathEntry = tk.Entry(pathFrame, bg='white', width=65,
                              textvariable=self.pathVar, font=gui.getDefaultFont())
+        self.initial_focus=pathEntry
         pathEntry.grid(row=0, column=1, sticky='new', pady=3)
         pathEntry.bind("<Return>", self._onEnterPath)
         pathEntry.bind("<KP_Enter>", self._onEnterPath)
@@ -711,6 +717,8 @@ class BrowserWindow(gui.Window):
         browser.grid(row=row, column=column, sticky='news')
         self.itemConfig = browser.tree.itemConfig
 
+        if browser.initial_focus is not None:
+            self.initial_focus = browser.initial_focus
 
 STANDARD_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg']
 

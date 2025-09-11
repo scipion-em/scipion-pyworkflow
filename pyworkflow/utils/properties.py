@@ -519,6 +519,7 @@ class Icon:
     ACTION_FILAMENT_PICKING = SpriteImage(48, 176, 'filament.png')
     ACTION_GRID = SpriteImage(64, 160, 'grid.png')
     ACTION_CONTRAST = SpriteImage(80, 160, 'contrast.png')
+    ACTION_INTERPOLATE = SpriteImage(80, 144, 'interpolate.png')
 
 
     # Host template
