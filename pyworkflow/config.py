@@ -405,6 +405,8 @@ class Config:
                              " Use FASTEST_FIRST for default behaviour but this may not match what is returned by nvidia-smi."
                              " See https://docs.nvidia.com/cuda/cuda-c-programming-guide/#:~:text=in%20device%20memory.-,CUDA_DEVICE_ORDER,-FASTEST_FIRST%2C%20PCI_BUS_ID%2C%20(default ")
 
+    SQLITE_JOURNAL_MODE =_get('SQLITE_JOURNAL_MODE', 'DELETE', 'To change sqlite journal mode. WAL has been reoprted to work fine in some setups to avoid sqlite locking problems.')
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}", "Json string to define which viewer are the default ones per output type."))
     except Exception as e:

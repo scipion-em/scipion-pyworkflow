@@ -5,4 +5,3 @@
 from .config import *
 
 from .notifier import ProjectWorkflowNotifier
-from .repository import WorkflowRepository

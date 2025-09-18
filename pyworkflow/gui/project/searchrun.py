@@ -81,7 +81,6 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                 (ACTION_RESET_WORKFLOW, single),
 
                 (ACTION_EXPORT, anyselected),
-                (ACTION_EXPORT_UPLOAD, anyselected),
 
                 (ACTION_STEPS, single and Config.debugOn() and status and expanded),
                 (ACTION_DB, single and Config.debugOn() and status and expanded),
