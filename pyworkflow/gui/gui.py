@@ -46,6 +46,7 @@ FONT_ITALIC = 'fontItalic'
 FONT_NORMAL = 'fontNormal'
 FONT_BOLD = 'fontBold'
 FONT_BIG = 'fontBig'
+FONT_FIXED = 'fontFixed'
 # TextColor
 # cfgCitationTextColor = "dark olive green"
 # cfgLabelTextColor = "black"
@@ -54,7 +55,7 @@ FONT_BIG = 'fontBig'
 # cfgBgColor = "light grey"
 # cfgLabelBgColor = "white"
 # cfgHighlightBgColor = cfgBgColor
-#This with trigger the validation of the color falling back the firebrick if fails
+# This with trigger the validation of the color falling back the firebrick if fails
 cfgButtonActiveBgColor = pw.Config.getActiveColor()
 cfgButtonFgColor = pw.Config.SCIPION_BG_COLOR
 cfgButtonActiveFgColor = pw.Config.SCIPION_BG_COLOR
@@ -133,7 +134,7 @@ def getBigFont():
     return getNamedFont(FONT_BIG)
 
 
-def setCommonFonts(window=None):
+def setCommonFonts(windows=None):
     """Set some predefined common fonts.
     Same conditions of setFont applies here."""
     f = setFont(FONT_NORMAL, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE)
@@ -147,20 +148,22 @@ def setCommonFonts(window=None):
                  weight='bold')
     fi = setFont(FONT_ITALIC, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE,
                  slant='italic')
+    ff = setFont(FONT_FIXED, family='TkFixedFont', size=pw.Config.SCIPION_FONT_SIZE)
 
     setFont(FONT_BIG, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE+8)
 
-    if window:
-        window.fontBig = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE + 2, family=pw.Config.SCIPION_FONT_NAME,
+    if windows:
+        windows.fontBig = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE + 2, family=pw.Config.SCIPION_FONT_NAME,
                                       weight='bold')
-        window.font = f
-        window.fontBold = fb
-        window.fontItalic = fi
+        windows.font = f
+        windows.fontBold = fb
+        windows.fontItalic = fi
+        windows.fontFixed = ff
 
         # This adds the default value for the listbox inside a combo box
         # Which seems to not react to default font!!
-        window.root.option_add("*TCombobox*Listbox*Font", default_font)
-        window.root.option_add("*TCombobox*Font", default_font)
+        windows.root.option_add("*TCombobox*Listbox*Font", default_font)
+        windows.root.option_add("*TCombobox*Font", default_font)
 
 
 def changeFontSizeByDeltha(font, deltha, minSize=-999, maxSize=999):
@@ -371,8 +374,6 @@ class Window:
         self.master = masterWindow
         setCommonFonts(self)
 
-        self.initial_focus = None
-
         if kwargs.get('enableQueue', False):
             self.queue = queue.Queue(maxsize=0)
         else:
@@ -452,9 +453,6 @@ class Window:
         self.root.focus_set()
         if self.queue is not None:
             self._queueTimer = self.root.after(1000, self.__processQueue)
-
-        if self.initial_focus is not None:
-            self.initial_focus.focus_set()
 
         if modal:
             self.root.wait_window(self.root)
