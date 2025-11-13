@@ -793,6 +793,7 @@ class Project(object):
                     protocol.setFailed(str(ex))
                     self.mapper.store(protocol)
                 except Exception:
+                    traceback.print_exc()
                     pass
                 return pw.NOT_UPDATED_ERROR
             else:
