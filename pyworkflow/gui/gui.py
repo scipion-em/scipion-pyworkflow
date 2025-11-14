@@ -134,7 +134,7 @@ def getBigFont():
     return getNamedFont(FONT_BIG)
 
 
-def setCommonFonts(windows=None):
+def setCommonFonts(window=None):
     """Set some predefined common fonts.
     Same conditions of setFont applies here."""
     f = setFont(FONT_NORMAL, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE)
@@ -152,18 +152,18 @@ def setCommonFonts(windows=None):
 
     setFont(FONT_BIG, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE+8)
 
-    if windows:
-        windows.fontBig = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE + 2, family=pw.Config.SCIPION_FONT_NAME,
+    if window:
+        window.fontBig = tkFont.Font(size=pw.Config.SCIPION_FONT_SIZE + 2, family=pw.Config.SCIPION_FONT_NAME,
                                       weight='bold')
-        windows.font = f
-        windows.fontBold = fb
-        windows.fontItalic = fi
-        windows.fontFixed = ff
+        window.font = f
+        window.fontBold = fb
+        window.fontItalic = fi
+        window.fontFixed = ff
 
         # This adds the default value for the listbox inside a combo box
         # Which seems to not react to default font!!
-        windows.root.option_add("*TCombobox*Listbox*Font", default_font)
-        windows.root.option_add("*TCombobox*Font", default_font)
+        window.root.option_add("*TCombobox*Listbox*Font", default_font)
+        window.root.option_add("*TCombobox*Font", default_font)
 
 
 def changeFontSizeByDeltha(font, deltha, minSize=-999, maxSize=999):
@@ -374,6 +374,8 @@ class Window:
         self.master = masterWindow
         setCommonFonts(self)
 
+        self.initial_focus = None
+
         if kwargs.get('enableQueue', False):
             self.queue = queue.Queue(maxsize=0)
         else:
@@ -453,6 +455,9 @@ class Window:
         self.root.focus_set()
         if self.queue is not None:
             self._queueTimer = self.root.after(1000, self.__processQueue)
+
+        if self.initial_focus is not None:
+            self.initial_focus.focus_set()
 
         if modal:
             self.root.wait_window(self.root)
