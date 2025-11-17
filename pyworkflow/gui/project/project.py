@@ -52,7 +52,7 @@ from pyworkflow.gui.browser import FileBrowserWindow
 
 from pyworkflow.gui.plotter import Plotter
 from pyworkflow.gui.text import _open_cmd, openTextFileEditor
-from pyworkflow.webservices import ProjectWorkflowNotifier, WorkflowRepository
+from pyworkflow.webservices import ProjectWorkflowNotifier
 
 from .labels import LabelsDialog
 # Import possible Object commands to be handled
@@ -265,9 +265,6 @@ class ProjectWindow(ProjectBaseWindow):
                           onSelect=self._loadWorkflow,
                           selectButton='Import'
                           ).show()
-
-    def onSearchWorkflow(self):
-        WorkflowRepository().search()
 
     def onToggleColorMode(self):
         self.getViewWidget()._toggleColorScheme(None)

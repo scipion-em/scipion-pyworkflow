@@ -84,7 +84,6 @@ class Message:
     LABEL_DEFAULT = 'Default'
     LABEL_CONTINUE = 'Continue'
     LABEL_EXPORT = 'Export'
-    LABEL_EXPORT_UPLOAD = 'Export & upload'
     LABEL_RESTART_WORKFLOW = 'Restart all'
     LABEL_CONTINUE_WORKFLOW = 'Continue all'
     LABEL_STOP_WORKFLOW = 'Stop from'
