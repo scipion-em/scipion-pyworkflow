@@ -1169,7 +1169,7 @@ class Project(object):
         sizeGb = totalBytes /  (1024 ** 3)  # convert to GB
 
         # Save text file
-        outputFile = os.path.join(folder, 'project_info.txt')
+        outputFile = os.path.join(folder, 'project_size_info.txt')
         with open(outputFile, "w") as f:
             f.write(f"Size: {sizeGb:.2f} GB\n")
 
@@ -1178,7 +1178,7 @@ class Project(object):
         Retrieves the size of the protocol folder in GB
         """
         protocolFolder = protocol._getPath()
-        protocolInfoFile = os.path.join(protocolFolder, "protocol_info.txt")
+        protocolInfoFile = os.path.join(protocolFolder, "protocol_size_binfo.txt")
 
         if not os.path.exists(protocolInfoFile):
             protocol.calculateProtocolFolderSize()

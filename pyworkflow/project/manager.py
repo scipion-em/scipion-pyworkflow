@@ -185,7 +185,7 @@ class Manager(object):
         """
         project = self.loadProject(projectName)
         projectFolder = project.path        # self.getProjectPath(projectName)
-        projectInfoFile = os.path.join(projectFolder, 'project_info.txt')
+        projectInfoFile = os.path.join(projectFolder, 'project_size_info.txt')
 
         if not os.path.exists(projectInfoFile):
             project.calculateProjectFolderSize()

@@ -1542,7 +1542,7 @@ class Protocol(Step):
         sizeGb = totalBytes /  (1024 ** 3)  # convert to GB
 
         # Save text file
-        outputFile = os.path.join(folder, 'protocol_info.txt')
+        outputFile = os.path.join(folder, 'protocol_size_info.txt')
         with open(outputFile, "w") as f:
             f.write(f"Size: {sizeGb:.2f} GB\n")
 
