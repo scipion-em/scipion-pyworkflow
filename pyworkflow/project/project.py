@@ -1155,6 +1155,40 @@ class Project(object):
 
         return newProt
 
+    def calculateProjectFolderSize(self):
+        """"
+        Calculates the size of the project in GB
+        """
+        # Get size of path directory
+        folder = self.path
+        totalBytes = 0
+        for dirpath, dirnames, filenames in os.walk(folder):
+            for filename in filenames:
+                file_path = os.path.join(dirpath, filename)
+                totalBytes += os.path.getsize(file_path)
+        sizeGb = totalBytes /  (1024 ** 3)  # convert to GB
+
+        # Save text file
+        outputFile = os.path.join(folder, 'project_info.txt')
+        with open(outputFile, "w") as f:
+            f.write(f"Size: {sizeGb:.2f} GB\n")
+
+    def getProtocolFolderSize(self, protocol):
+        """
+        Retrieves the size of the protocol folder in GB
+        """
+        protocolFolder = protocol._getPath()
+        protocolInfoFile = os.path.join(protocolFolder, "protocol_info.txt")
+
+        if not os.path.exists(protocolInfoFile):
+            protocol.calculateProtocolFolderSize()
+
+        with open(protocolInfoFile, "r") as f:
+            line = f.read().strip()
+            size_gb = float(line.replace("Size:", "").replace("GB", "").strip())
+
+        return size_gb
+
     def __getIOMatches(self, node, childNode):
         """ Check if some output of node is used as input in childNode.
         Return the list of attribute names that matches.
