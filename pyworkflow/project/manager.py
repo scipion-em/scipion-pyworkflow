@@ -178,3 +178,20 @@ class Manager(object):
             if projectName == projInfo.projName:
                 return True
         return False
+
+    def getProjectFolderSize(self, projectName):
+        """
+        Retrieves the size of the protocol folder in GB
+        """
+        project = self.loadProject(projectName)
+        projectFolder = project.path        # self.getProjectPath(projectName)
+        projectInfoFile = os.path.join(projectFolder, 'project_info.txt')
+
+        if not os.path.exists(projectInfoFile):
+            project.calculateProjectFolderSize()
+
+        with open(projectInfoFile, "r") as f:
+            line = f.read().strip()
+            size_gb = float(line.replace("Size:", "").replace("GB", "").strip())
+
+        return size_gb
