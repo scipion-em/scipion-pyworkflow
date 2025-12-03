@@ -464,12 +464,13 @@ class SubclassesTreeProvider(TreeProvider):
         project = self.protocol.getProject()
         className = self.param.pointerClass.get()
         condition = self.param.pointerCondition.get()
+        strictPointer = self.param.strictPointer.get()
         # Get the classes that are valid as input object in this Domain
         domain = pw.Config.getDomain()
         classes = [domain.findClass(c.strip()) for c in className.split(",")]
         # Obtaining only the outputs of the protocols that do not violate the sense of processing,
         # thus avoiding circular references between protocols
-        objects = project.getProtocolCompatibleOutputs(self.protocol, classes, condition)
+        objects = project.getProtocolCompatibleOutputs(self.protocol, classes, condition, strictPointer=strictPointer)
 
         # Sort objects before returning them
         self._sortObjects(objects)

@@ -2,6 +2,7 @@ V3.11.3
  users:
   remove workflow upload
   new config variable: SQLITE_JOURNAL_MODE =DELETE. Use WAL may avoid db locks? (caution)
+  add strict param to the PointerParam. If True, only the outputs of the same class will be shown. Set default to False.
 V3.11.2
  users:
   Copy (Control-C) work in log viewers too

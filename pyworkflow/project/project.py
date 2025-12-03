@@ -912,7 +912,7 @@ class Project(object):
         getDescendents(node)
         return visitedNodes
 
-    def getProtocolCompatibleOutputs(self, protocol, classes, condition):
+    def getProtocolCompatibleOutputs(self, protocol, classes, condition, strictPointer=False):
         """Getting the outputs compatible with an object type. The outputs of the child protocols are excluded. """
         objects = []
         maxNum = 200
@@ -948,9 +948,8 @@ class Project(object):
 
                             # Go through all compatible Classes coming from in pointerClass string
                             for c in classes:
-                                # If attr is an instance
-                                if isinstance(attr, c):
-                                    match = True
+                                match = type(attr) == c  if strictPointer else isinstance(attr, c)
+                                if match:
                                     break
                                 # If it is a class already: "possibleOutput" case. In this case attr is the class and not
                                 # an instance of c. In this special case
