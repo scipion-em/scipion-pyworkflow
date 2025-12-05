@@ -604,6 +604,8 @@ class Plugin:
     _url = ""  # For the plugin
     _condaActivationCmd = None
     _tmpName = None # This would be temporary. It will hold the plugin name during the call to defineVariables
+    # Plugin processing field: SPA, TOMO, MODELLING, FLEXIBILITY,...
+    _processingField = []
 
     def __init__(self):
         self._path = None
@@ -738,7 +740,6 @@ class Plugin:
     def getPluginTemplateDir(self):
         return os.path.join(self.getPath(), 'templates')
 
-
     def getTemplates(self):
         """ Get the plugin templates from the templates directory.
             If more than one template is found or passed, a dialog is raised
@@ -759,8 +760,16 @@ class Plugin:
             self._path = sys.modules[self.__class__.__module__].__path__[0]
 
         return self._path
-    def inDevelMode(self)-> bool:
+
+    def inDevelMode(self) -> bool:
         """ Returns true if code is not in python's site-packages folder"""
         if self._inDevelMode is None:
             self._inDevelMode = pwutils.getPythonPackagesFolder() not in self.getPath()
         return self._inDevelMode
+
+    def getProcessingField(self):
+        """
+        Returns the processing field associated with this plugin.The processing field indicates which
+        EM workflow the plugin belongs to (for example SPA, TOMOGRAPHY,...).
+        """
+        return self._processingField

@@ -56,6 +56,13 @@ BETA = 1
 NEW = 2
 UPDATED = 3
 
+# PLUGIN DOMAINS
+SPA = 0
+TOMO = 1
+MODELLING = 2
+FLEXIBILITY = 3
+CHEM = 4
+
 # Dir names
 APPS = 'apps'
 DATA_TAG = 'data'
