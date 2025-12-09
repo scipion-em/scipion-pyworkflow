@@ -31,6 +31,7 @@ import sys
 import threading
 import time
 from datetime import datetime
+from pathlib import Path
 
 import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
@@ -1526,6 +1527,26 @@ class Protocol(Step):
         # Create scratch if SCIPION_SCRATCH environment variable exist.
         # In other case, tmp folder is created
         pwutils.makeTmpPath(self)
+
+    def calculateProtocolFolderSize(self):
+        """"
+        Calculates the size of the protocol in GB
+        """
+        # Get size of path directory
+        folder = self._getPath()
+        totalBytes = 0
+        for dirpath, dirnames, filenames in os.walk(folder):
+            for filename in filenames:
+                file_path = os.path.join(dirpath, filename)
+                totalBytes += os.path.getsize(file_path)
+        sizeGb = totalBytes /  (1024 ** 3)  # convert to GB
+
+        # Save text file
+        outputFile = os.path.join(folder, 'protocol_size_info.txt')
+        with open(outputFile, "w") as f:
+            f.write(f"Size: {sizeGb:.2f} GB\n")
+
+        # self.info(f"Saved folder size file at: {outputFile}")
 
     def cleanTmp(self):
         """ Delete all files and subdirectories under Tmp folder. """
