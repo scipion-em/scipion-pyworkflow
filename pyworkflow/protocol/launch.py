@@ -154,7 +154,7 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
             protocol.setPid(0)  # we go through the queue, so we rely on the jobId
     else:  # If not, retrieve and set the process ID (both for normal execution or when using the queue for steps)
         pId = _run(command, wait, stdin, stdout, stderr)
-        logger.info("Protocol %s executed in a subproccess. Got PID %s." % (protocol.getRunName(), pId))
+        logger.info("Protocol %s executed in a subprocess. Got PID %s." % (protocol.getRunName(), pId))
         protocol.setPid(pId)
 
 
