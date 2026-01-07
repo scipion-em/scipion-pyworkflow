@@ -62,8 +62,8 @@ def retry_on_sqlite_lock(
                         who = getattr(func, "__qualname__", func.__name__)
                         if log:
                             if attempts == 1:
-                                log.warning(yellowStr(f"[{who}] SQLite locked/busy; retrying up to {max_attempts} attempts"))
-                            log.warning(yellowStr(f"[{who}] attempt {attempts}/{max_attempts} -> {exc}; sleeping {delay:.2f}s"))
+                                log.error(yellowStr(f"[{who}] SQLite locked/busy; retrying up to {max_attempts} attempts"))
+                            log.error(yellowStr(f"[{who}] attempt {attempts}/{max_attempts} -> {exc}; sleeping {delay:.2f}s"))
                         if attempts >= max_attempts:
                             if log:
                                 log.error(redStr(f"[{who}] exhausted retries; raising"))
