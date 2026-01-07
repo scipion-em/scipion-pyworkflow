@@ -22,10 +22,10 @@ def is_sqlite_lock_error(exc: Exception) -> bool:
     return False
 
 def retry_on_sqlite_lock(
-    max_attempts: int = 8,
+    max_attempts: int = 15,
     initial_delay: float = 0.25,
     backoff_factor: float = 1.7,
-    max_delay: float = 5.0,
+    max_delay: float = 10,
     jitter: float = 0.05,
     log=None,
     predicate=is_sqlite_lock_error,
