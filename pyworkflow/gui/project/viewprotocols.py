@@ -51,7 +51,6 @@ import pyworkflow.utils as pwutils
 import pyworkflow.protocol as pwprot
 from pyworkflow.viewer import DESKTOP_TKINTER, ProtocolViewer
 from pyworkflow.utils.properties import Color, KEYSYM, Icon, Message
-from pyworkflow.webservices import WorkflowRepository
 
 import pyworkflow.gui as pwgui
 from pyworkflow.gui.form import FormWindow
@@ -91,7 +90,7 @@ class ProtocolsView(tk.Frame):
         ACTION_STOP, ACTION_STOP_WORKFLOW, ACTION_CONTINUE, ACTION_CONTINUE_WORKFLOW, ACTION_RESTART_WORKFLOW,
         ACTION_RESET_WORKFLOW,
         ACTION_RESULTS,
-        ACTION_EXPORT, ACTION_EXPORT_UPLOAD,
+        ACTION_EXPORT,
         ACTION_COLLAPSE, ACTION_EXPAND,
         ACTION_LABELS, ACTION_SEARCH,
         ACTION_SELECT_FROM, ACTION_SELECT_TO,
@@ -1896,16 +1895,6 @@ class ProtocolsView(tk.Frame):
             entryLabel='File  ', entryValue=defaultBasename or 'workflow.json')
         browser.show()
 
-    def _exportUploadProtocols(self):
-        try:
-            jsonFn = os.path.join(tempfile.mkdtemp(), 'workflow.json')
-            self.project.exportProtocols(self._getSelectedProtocols(), jsonFn)
-            WorkflowRepository().upload(jsonFn)
-            pwutils.cleanPath(jsonFn)
-        except Exception as ex:
-            self.window.showError("Error connecting to workflow repository:\n"
-                                   + str(ex))
-
     def _stopProtocol(self, prot):
         if pwgui.dialog.askYesNo(Message.TITLE_STOP_FORM,
                                  Message.LABEL_STOP_FORM, self.root):
@@ -2060,8 +2049,6 @@ class ProtocolsView(tk.Frame):
                         self._analyzeResults(prot, None)
                     elif action == ACTION_EXPORT:
                         self._exportProtocols(defaultPath=pwutils.getHomePath())
-                    elif action == ACTION_EXPORT_UPLOAD:
-                        self._exportUploadProtocols()
                     elif action == ACTION_COLLAPSE:
                         node = self.runsGraph.getNode(str(prot.getObjId()))
                         nodeInfo = self.settings.getNodeById(prot.getObjId())

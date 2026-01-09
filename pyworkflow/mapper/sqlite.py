@@ -815,7 +815,7 @@ class SqliteFlatMapper(Mapper):
                 # 0 | OFF | 1 | NORMAL | 2 | FULL | 3 | EXTRA;
                 # #'synchronous': 'OFF', # ON
                 # DELETE | TRUNCATE | PERSIST | MEMORY | WAL | OFF
-                # #'journal_mode': 'OFF', # DELETE
+                'journal_mode': Config.SQLITE_JOURNAL_MODE,
                 # FILE 0 | DEFAULT | 1 | FILE | 2 | MEMORY;
                 # #'temp_store': 'MEMORY',
                 # PRAGMA schema.cache_size = pages;
@@ -1293,7 +1293,7 @@ class SqliteFlatDb(SqliteDb):
         """
         self.setVersion(self.VERSION)
         for pragma in self._pragmas.items():
-            logger.debug("Executing pragma: %s" % pragma)
+            logger.debug("Executing pragma %s: %s",  pragma)
             self.executeCommand("PRAGMA %s = %s;" % pragma)
         # Create a general Properties table to store some needed values
         self.executeCommand("""CREATE TABLE IF NOT EXISTS Properties

@@ -338,7 +338,7 @@ class ThreadStepExecutor(StepExecutor):
         """ Overwrite this method to check GPUs availability"""
 
         if self.gpuList and step.needsGPU() and self.getFreeGpuSlot(step.getObjId()) is None:
-            logger.info("Can't run step %s. Needs gpus and there are no free gpu slots" % step)
+            # logger.info("Can't run step %s. Needs gpus and there are no free gpu slots" % step)
             return False
 
         return True
@@ -495,7 +495,7 @@ class QueueStepExecutor(ThreadStepExecutor):
         self.protocol._store(self.protocol._jobId)
 
         if (jobid is None) or (jobid == UNKNOWN_JOBID):
-            errorMsg = "Failed to submit to queue. JOBID is not valid. There's probably an error interacting with the queue: %s" % error
+            errorMsg = "Failed to submit to queue. JOBID is not valid. There's probably an error interacting with the queue."
             logger.info(errorMsg)
             raise Exception(errorMsg)
 

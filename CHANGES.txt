@@ -1,3 +1,9 @@
+V3.11.3
+ users:
+  Remove workflow upload
+  New config variable: SQLITE_JOURNAL_MODE =DELETE. Use WAL may avoid db locks? (caution)
+  Add strict param to the PointerParam. If True, only the outputs of the same class will be shown. Set default to False.
+  Add decorator methods that can be used to manage the DB lock in both parallelization and streaming.
 V3.11.2
  users:
   Copy (Control-C) work in log viewers too
