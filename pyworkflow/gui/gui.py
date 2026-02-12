@@ -46,6 +46,7 @@ FONT_ITALIC = 'fontItalic'
 FONT_NORMAL = 'fontNormal'
 FONT_BOLD = 'fontBold'
 FONT_BIG = 'fontBig'
+FONT_FIXED = 'fontFixed'
 # TextColor
 # cfgCitationTextColor = "dark olive green"
 # cfgLabelTextColor = "black"
@@ -54,7 +55,7 @@ FONT_BIG = 'fontBig'
 # cfgBgColor = "light grey"
 # cfgLabelBgColor = "white"
 # cfgHighlightBgColor = cfgBgColor
-#This with trigger the validation of the color falling back the firebrick if fails
+# This with trigger the validation of the color falling back the firebrick if fails
 cfgButtonActiveBgColor = pw.Config.getActiveColor()
 cfgButtonFgColor = pw.Config.SCIPION_BG_COLOR
 cfgButtonActiveFgColor = pw.Config.SCIPION_BG_COLOR
@@ -147,6 +148,7 @@ def setCommonFonts(window=None):
                  weight='bold')
     fi = setFont(FONT_ITALIC, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE,
                  slant='italic')
+    ff = setFont(FONT_FIXED, family='TkFixedFont', size=pw.Config.SCIPION_FONT_SIZE)
 
     setFont(FONT_BIG, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE+8)
 
@@ -156,6 +158,7 @@ def setCommonFonts(window=None):
         window.font = f
         window.fontBold = fb
         window.fontItalic = fi
+        window.fontFixed = ff
 
         # This adds the default value for the listbox inside a combo box
         # Which seems to not react to default font!!
