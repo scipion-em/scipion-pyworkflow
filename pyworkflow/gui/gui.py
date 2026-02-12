@@ -148,8 +148,8 @@ def setCommonFonts(window=None):
                  weight='bold')
     fi = setFont(FONT_ITALIC, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE,
                  slant='italic')
-    ff = setFont(FONT_FIXED, family='TkFixedFont', size=pw.Config.SCIPION_FONT_SIZE)
-
+    # ff = setFont(FONT_FIXED, family='TkFixedFont', size=pw.Config.SCIPION_FONT_SIZE)
+    ff = setFont(FONT_FIXED, family='Courier', size=pw.Config.SCIPION_FONT_SIZE)
     setFont(FONT_BIG, family=pw.Config.SCIPION_FONT_NAME, size=pw.Config.SCIPION_FONT_SIZE+8)
 
     if window:
