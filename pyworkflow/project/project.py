@@ -1273,11 +1273,13 @@ class Project(object):
             # Handle the copy of a list of protocols
             # for this case we need to update the references of input/outputs
             newDict = {}
+            result = []
 
             for prot in protocol:
                 newProt = self.__cloneProtocol(prot)
                 newDict[prot.getObjId()] = newProt
                 self.saveProtocol(newProt)
+                result.append(newProt)
 
             g = self.getRunsGraph()
 

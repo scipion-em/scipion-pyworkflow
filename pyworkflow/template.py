@@ -293,9 +293,9 @@ class TemplateList:
 
         try:
 
-            from pyworkflow.webservices.workflowhub import get_wh_templates
+            from pyworkflow.webservices.workflowhub import getWhTemplates
 
-            templates = get_wh_templates(tempId)
+            templates = getWhTemplates(tempId)
 
             self.templates.extend(templates)
         except Exception as e:
