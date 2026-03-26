@@ -209,14 +209,32 @@ class Domain:
                         pass
 
     @classmethod
-    def __getSubclasses(cls, submoduleName, BaseClass,
-                        updateBaseClasses=False, setPackage=False):
-        """ Load all detected subclasses of a given BaseClass.
+    def __getSubclasses(
+            cls,
+            submoduleName,
+            BaseClass,
+            updateBaseClasses=False,
+            setPackage=False,
+    ):
+        """Load all detected subclasses of a given BaseClass.
+
         Params:
             updateBaseClasses: if True, it will try to load classes from the
                 Domain submodule that was not imported as globals()
         """
-        subclasses = getattr(cls, '_%s' % submoduleName)
+
+        def _safeOriginName(klass):
+            package = getattr(klass, "_package", None)
+            if package is not None:
+                return getattr(package, "__name__", str(package))
+
+            plugin = getattr(klass, "_plugin", None)
+            if plugin is not None:
+                return getattr(plugin.__class__, "__name__", str(plugin))
+
+            return getattr(klass, "__module__", "unknown")
+
+        subclasses = getattr(cls, "_%s" % submoduleName)
 
         if not subclasses:  # Only discover subclasses once
             if updateBaseClasses:
@@ -234,27 +252,47 @@ class Domain:
                         attr = getattr(sub, name)
                         if inspect.isclass(attr) and issubclass(attr, BaseClass):
 
+                            # Store origin metadata even when setPackage is False.
+                            # This makes collision reporting safe for objects too.
+                            try:
+                                if not hasattr(attr, "_plugin"):
+                                    attr._plugin = getattr(module, "_pluginInstance", None)
+                            except Exception:
+                                pass
+
+                            try:
+                                if not hasattr(attr, "_package"):
+                                    attr._package = module
+                            except Exception:
+                                pass
+
                             # Check if the class already exists (to prevent
                             # naming collisions)
                             if name in subclasses:
-                                # Get already added class plugin
-                                pluginCollision = subclasses[name]._package.__name__
-                                logger.info("ERROR: Name collision (%s) detected "
-                                      "while discovering %s.%s.\n"
-                                      " It conflicts with %s" %
-                                      (name, pluginName, submoduleName,
-                                       pluginCollision))
-                            else:
-                                # Set this special property used by Scipion
-                                # Protocols need the package to be set
-                                if setPackage:
+                                pluginCollision = _safeOriginName(subclasses[name])
+                                currentOrigin = _safeOriginName(attr)
 
+                                logger.info(
+                                    "ERROR: Name collision (%s) detected while discovering %s.%s.\n"
+                                    " It conflicts with %s (current: %s)",
+                                    name,
+                                    pluginName,
+                                    submoduleName,
+                                    pluginCollision,
+                                    currentOrigin,
+                                )
+                            else:
+                                # Keep the original behavior for protocols or other
+                                # cases where Scipion expects these attributes.
+                                if setPackage:
                                     attr._plugin = getattr(module, "_pluginInstance", None)
                                     attr._package = module
 
                                 subclasses[name] = attr
+
             subclasses.update(
-                pwutils.getSubclasses(BaseClass, cls._baseClasses))
+                pwutils.getSubclasses(BaseClass, cls._baseClasses)
+            )
 
         return subclasses
 
@@ -280,7 +318,7 @@ class Domain:
     @classmethod
     def getObjects(cls):
         """ Return all EMObject subclasses from all plugins for this domain."""
-        return cls.__getSubclasses('objects', cls._objectClass)
+        return cls.__getSubclasses('objects', cls._objectClass, setPackage=True)
 
     @classmethod
     def viewersLoaded(cls):
