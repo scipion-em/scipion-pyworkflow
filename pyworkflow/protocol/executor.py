@@ -490,26 +490,32 @@ class QueueStepExecutor(ThreadStepExecutor):
                                                             gpuList=self._getGPUListForCommand(programName, params),
                                                             context=submitDict)
 
-        jobid = _submit(self.hostConfig, submitDict, cwd, env)
-        self.protocol.appendJobId(jobid)  # append active jobs
-        self.protocol._store(self.protocol._jobId)
+        jobId, submitError = _submit(self.hostConfig, submitDict, cwd, env)
 
-        if (jobid is None) or (jobid == UNKNOWN_JOBID):
-            errorMsg = "Failed to submit to queue. JOBID is not valid. There's probably an error interacting with the queue."
+        if (jobId is None) or (jobId == UNKNOWN_JOBID):
+            errorMsg = (
+                "Failed to submit to queue. JOBID is not valid. "
+                "There's probably an error interacting with the queue."
+            )
+            if submitError:
+                errorMsg += " Submit error: %s" % submitError
             logger.info(errorMsg)
             raise Exception(errorMsg)
+
+        self.protocol.appendJobId(jobId)
+        self.protocol._store(self.protocol._jobId)
 
         status = cts.STATUS_RUNNING
         wait = 3
 
         # Check status while job running
         # REVIEW this to minimize the overhead in time put by this delay check
-        while _checkJobStatus(self.hostConfig, jobid) == cts.STATUS_RUNNING:
+        while _checkJobStatus(self.hostConfig, jobId) == cts.STATUS_RUNNING:
             time.sleep(wait)
             if wait < 300:
                 wait += 3
 
-        self.protocol.removeJobId(jobid)  # After completion, remove inactive jobs.
+        self.protocol.removeJobId(jobId)  # After completion, remove inactive jobs.
         self.protocol._store(self.protocol._jobId)
 
         return status
