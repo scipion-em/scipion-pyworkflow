@@ -249,7 +249,7 @@ def _checkJobStatus(hostConfig, jobid):
     logger.debug("Queue engine replied %s, variable JOB_DONE_REGEX has %s" % (out, jobDoneRegex))
     # If nothing is returned we assume job is no longer in queue and thus finished
     if out == "":
-        logger.warning("Empty response from queue system to job (%s)" % jobid)
+        logger.warning("Empty response from queue system to job (%s)", jobid)
         return STATUS_FINISHED
 
     # If some string is returned we use the JOB_DONE_REGEX variable (if present) to infer the status
