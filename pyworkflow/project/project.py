@@ -1257,6 +1257,7 @@ class Project(object):
         newProt.copyDefinitionAttributes(protocol)
         newProt.copyAttributes(protocol, 'hostName', '_useQueue', '_queueParams')
         newProt.runMode.set(MODE_RESTART)
+        newProt.runName.set(newProtLabel)
         newProt.cleanExecutionAttributes() # Clean jobIds and Pid; otherwise, this would retain old job IDs and PIDs.
 
         return newProt
