@@ -439,13 +439,13 @@ class ProtocolTreeConfig:
                     # Store it in the dict
                     packages[packageName] = packageMenu
 
-                # Add the protocol
-                tag = cls.getProtocolTag(v.isInstalled(), v.isBeta(), v.isNewDev(), v.isUpdated())
-
-                protLine = {"tag": tag, "value": k,
+                # Add the protocol using the same structure expected by
+                # protocols.conf entries. Protocol status metadata such as
+                # beta/new/updated is completed by __checkItem.
+                protLine = {"tag": cls.TAG_PROTOCOL, "value": k,
                             "text": v.getClassLabel(prependPackageName=False)}
 
-                cls.__addToTree(packageMenu, protLine)
+                cls.__addToTree(packageMenu, protLine, cls.__checkItem)
 
         protocols[cls.ALL_PROTOCOLS] = allProtMenu
 
