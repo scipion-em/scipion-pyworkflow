@@ -1,11 +1,68 @@
 
 
+import logging
+import os
 import time
 import random
 import sqlite3
 from functools import wraps
 
 from pyworkflow.utils import yellowStr, redStr
+
+logger = logging.getLogger(__name__)
+
+# Stream state constants (mirrors pyworkflow.object.Set)
+_STREAM_OPEN = 1
+_STREAM_STATE_KEY = '_streamState'
+
+
+def safeIsStreamOpen(setObj) -> bool:
+    """Check if a Set's stream is open using an independent SQLite connection.
+
+    Opens a short-lived, read-only connection to the Set's backing SQLite file
+    and queries ONLY the _streamState property. This avoids:
+      - Reusing the Set's internal mapper connection (no mapper contention)
+      - Holding protocol-level locks during the check
+      - The heavyweight loadAllProperties() call that reads ALL properties
+
+    Safe to call from any thread while the producer may be writing concurrently.
+    Returns False (stream closed) on any error, since a missing/corrupt DB means
+    no more data is coming.
+    """
+    dbPath = getattr(setObj, 'getFileName', lambda: None)()
+    if not dbPath or not os.path.exists(dbPath):
+        return False
+
+    try:
+        conn = sqlite3.connect(f"file:{dbPath}?mode=ro", uri=True, timeout=3)
+        try:
+            cursor = conn.execute(
+                "SELECT value FROM Properties WHERE key=?",
+                (_STREAM_STATE_KEY,)
+            )
+            row = cursor.fetchone()
+            if row is None:
+                return False
+            return int(row[0]) == _STREAM_OPEN
+        finally:
+            conn.close()
+    except Exception:
+        return False
+
+
+def refreshStreamState(setObj) -> None:
+    """Update the in-memory stream state of a Set from the database.
+
+    Uses safeIsStreamOpen() to read the current state from an independent
+    connection, then patches the in-memory _streamState attribute so that
+    subsequent setObj.isStreamOpen() calls return the fresh value without
+    needing loadAllProperties().
+    """
+    from pyworkflow.object import Set
+    if safeIsStreamOpen(setObj):
+        setObj.setStreamState(Set.STREAM_OPEN)
+    else:
+        setObj.setStreamState(Set.STREAM_CLOSED)
 
 
 def is_sqlite_lock_error(exc: Exception) -> bool:
