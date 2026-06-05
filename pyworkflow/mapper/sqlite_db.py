@@ -54,6 +54,7 @@ class SqliteDb:
             # self.closeConnection(dbName)  # Close the connect if exists for this db
             self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
             self.connection.row_factory = sqlite.Row
+            self.connection.execute("PRAGMA busy_timeout = %d" % Config.SQLITE_BUSY_TIMEOUT)
             self.OPEN_CONNECTIONS[dbName] = self.connection
             logger.debug("Connection open for %s" % dbName, extra=getExtraLogInfo(
                 "CONNECTIONS",

@@ -793,6 +793,7 @@ class SqliteFlatMapper(Mapper):
         Mapper.__init__(self, dictClasses)
         self._objTemplate = None
         self._attributesToStore = None
+        self._hasPropertiesTable = None
         try:
             # We (ROB and JMRT) are playing with different
             # PRAGMAS (see https://www.sqlite.org/pragma.html)
@@ -1059,9 +1060,9 @@ class SqliteFlatMapper(Mapper):
     
     def selectAll(self, iterate=True, objectFilter=None, orderBy=ID,
                   direction='ASC', where='1', limit=None, rowFilter=None):
-        # Just a sanity check for emtpy sets, that doesn't contains
-        # 'Properties' table
-        if not self.db.hasTable('Properties'):
+        if self._hasPropertiesTable is None:
+            self._hasPropertiesTable = self.db.hasTable('Properties')
+        if not self._hasPropertiesTable:
             return iter([]) if iterate else []
 
         # Initialize the instance
