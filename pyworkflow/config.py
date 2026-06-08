@@ -407,7 +407,7 @@ class Config:
 
     SQLITE_JOURNAL_MODE =_get('SQLITE_JOURNAL_MODE', 'DELETE', 'To change sqlite journal mode. WAL has been reoprted to work fine in some setups to avoid sqlite locking problems.')
 
-    SQLITE_BUSY_TIMEOUT = int(_get('SQLITE_BUSY_TIMEOUT', '15000', 'SQLite busy timeout in milliseconds. Increase if you see "database is locked" errors during streaming.', caster=int))
+    SQLITE_BUSY_TIMEOUT = int(_get('SQLITE_BUSY_TIMEOUT', '60000', 'SQLite busy timeout in milliseconds. Increase if you see "database is locked" errors during streaming.', caster=int))
 
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}", "Json string to define which viewer are the default ones per output type."))
