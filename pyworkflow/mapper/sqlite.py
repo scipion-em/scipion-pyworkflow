@@ -1343,7 +1343,9 @@ class SqliteFlatDb(SqliteDb):
 
     def setupCommands(self, objDict):
         """ Setup the INSERT and UPDATE commands base on the object dictionary. """
-        self.INSERT_OBJECT = "INSERT INTO %sObjects (id, enabled, label, comment, creation" % self.tablePrefix
+        # FIX: 'INSERT OR IGNORE' prevents UNIQUE constraint failures during retry
+        # loops if an object was partially persisted before an OperationalError lock.
+        self.INSERT_OBJECT = "INSERT OR IGNORE INTO %sObjects (id, enabled, label, comment, creation" % self.tablePrefix
         self.UPDATE_OBJECT = "UPDATE %sObjects SET enabled=?, label=?, comment=?" % self.tablePrefix
         c = 0
         for k in objDict:
