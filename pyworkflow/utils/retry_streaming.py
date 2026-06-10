@@ -13,56 +13,120 @@ logger = logging.getLogger(__name__)
 
 # Stream state constants (mirrors pyworkflow.object.Set)
 _STREAM_OPEN = 1
+_STREAM_CLOSED = 2
 _STREAM_STATE_KEY = '_streamState'
 
+# Tri-state result of an independent stream-state probe.
+#   OPEN    -> the producer definitively reported the stream as open
+#   CLOSED  -> the producer definitively reported the stream as closed
+#   UNKNOWN -> we could NOT determine the state (DB locked/busy, property not
+#              written yet, transient error). This is NOT "closed": treating a
+#              transient lock as "closed" would make a consumer finalise its
+#              output prematurely and miss items that are still being produced.
+STREAM_STATE_OPEN = 'open'
+STREAM_STATE_CLOSED = 'closed'
+STREAM_STATE_UNKNOWN = 'unknown'
 
-def safeIsStreamOpen(setObj) -> bool:
-    """Check if a Set's stream is open using an independent SQLite connection.
+
+def safeStreamOpenState(setObj,
+                        max_attempts: int = 5,
+                        initial_delay: float = 0.1,
+                        backoff_factor: float = 1.7,
+                        max_delay: float = 2.0,
+                        jitter: float = 0.05):
+    """Probe a Set's stream state using an independent, read-only connection.
 
     Opens a short-lived, read-only connection to the Set's backing SQLite file
-    and queries ONLY the _streamState property. This avoids:
+    and queries ONLY the ``_streamState`` property. This avoids:
       - Reusing the Set's internal mapper connection (no mapper contention)
       - Holding protocol-level locks during the check
-      - The heavyweight loadAllProperties() call that reads ALL properties
+      - The heavyweight ``loadAllProperties()`` call that reads ALL properties
 
-    Safe to call from any thread while the producer may be writing concurrently.
-    Returns False (stream closed) on any error, since a missing/corrupt DB means
-    no more data is coming.
+    Safe to call from any thread while the producer may be writing concurrently
+    (it is a read-only connection and tolerates DELETE journal mode).
+
+    Returns one of ``STREAM_STATE_OPEN`` / ``STREAM_STATE_CLOSED`` /
+    ``STREAM_STATE_UNKNOWN``. Lock/busy errors are retried with bounded
+    exponential backoff + jitter; if they cannot be resolved the result is
+    UNKNOWN (transient) rather than CLOSED, so the caller never finalises a
+    stream just because the producer happened to hold a write lock.
     """
     dbPath = getattr(setObj, 'getFileName', lambda: None)()
     if not dbPath or not os.path.exists(dbPath):
-        return False
+        # The backing file does not exist yet: we simply do not know.
+        return STREAM_STATE_UNKNOWN
 
-    try:
-        conn = sqlite3.connect(f"file:{dbPath}?mode=ro", uri=True, timeout=3)
+    delay = float(initial_delay)
+    attempts = 0
+    while True:
         try:
-            cursor = conn.execute(
-                "SELECT value FROM Properties WHERE key=?",
-                (_STREAM_STATE_KEY,)
-            )
-            row = cursor.fetchone()
+            conn = sqlite3.connect(f"file:{dbPath}?mode=ro", uri=True, timeout=max_delay)
+            try:
+                row = conn.execute(
+                    "SELECT value FROM Properties WHERE key=?",
+                    (_STREAM_STATE_KEY,)
+                ).fetchone()
+            finally:
+                conn.close()
             if row is None:
-                return False
-            return int(row[0]) == _STREAM_OPEN
-        finally:
-            conn.close()
-    except Exception:
-        return False
+                # Property not written yet (producer created the DB but has not
+                # committed its stream state). Unknown, NOT closed.
+                return STREAM_STATE_UNKNOWN
+            return STREAM_STATE_OPEN if int(row[0]) == _STREAM_OPEN else STREAM_STATE_CLOSED
+        except sqlite3.OperationalError as exc:
+            if is_sqlite_lock_error(exc):
+                attempts += 1
+                if attempts >= max_attempts:
+                    logger.debug("safeStreamOpenState: DB busy after %d attempts "
+                                 "for %s; reporting UNKNOWN" % (attempts, dbPath))
+                    return STREAM_STATE_UNKNOWN
+                time.sleep(delay + random.uniform(0.0, jitter))
+                delay = min(delay * backoff_factor, max_delay)
+                continue
+            # Non-lock operational error (e.g. malformed/missing table): unknown.
+            return STREAM_STATE_UNKNOWN
+        except Exception:
+            return STREAM_STATE_UNKNOWN
+
+
+def safeIsStreamOpen(setObj) -> bool:
+    """Backwards-compatible boolean probe of a Set's stream state.
+
+    Returns False ONLY when the producer definitively reported the stream as
+    closed. A transient lock/busy condition or a not-yet-written state returns
+    True (treated as still open) so consumers keep polling instead of
+    finalising prematurely.
+    """
+    return safeStreamOpenState(setObj) != STREAM_STATE_CLOSED
 
 
 def refreshStreamState(setObj) -> None:
     """Update the in-memory stream state of a Set from the database.
 
-    Uses safeIsStreamOpen() to read the current state from an independent
-    connection, then patches the in-memory _streamState attribute so that
-    subsequent setObj.isStreamOpen() calls return the fresh value without
-    needing loadAllProperties().
+    Uses :func:`safeStreamOpenState` to read the current state from an
+    independent read-only connection and patches the in-memory
+    ``_streamState`` attribute so subsequent ``setObj.isStreamOpen()`` calls
+    return the fresh value without needing ``loadAllProperties()``.
+
+    Conservative finalisation rule: the in-memory state is downgraded to
+    CLOSED only on a *definitive* on-disk read. On an UNKNOWN (transient) probe
+    we keep the stream OPEN whenever the backing DB exists, so a momentary lock
+    can never make a downstream consumer stop early and drop items. This method
+    never raises.
     """
     from pyworkflow.object import Set
-    if safeIsStreamOpen(setObj):
+    state = safeStreamOpenState(setObj)
+    if state == STREAM_STATE_CLOSED:
+        setObj.setStreamState(Set.STREAM_CLOSED)
+    elif state == STREAM_STATE_OPEN:
         setObj.setStreamState(Set.STREAM_OPEN)
     else:
-        setObj.setStreamState(Set.STREAM_CLOSED)
+        # UNKNOWN/transient: never finalise on uncertainty. If the producer's
+        # DB exists, assume it is still streaming and keep polling.
+        dbPath = getattr(setObj, 'getFileName', lambda: None)()
+        if dbPath and os.path.exists(dbPath):
+            setObj.setStreamState(Set.STREAM_OPEN)
+        # else: leave the current in-memory state untouched.
 
 
 def is_sqlite_lock_error(exc: Exception) -> bool:
