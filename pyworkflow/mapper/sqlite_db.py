@@ -51,29 +51,6 @@ class SqliteDb:
         if self._reuseConnections and dbName in self.OPEN_CONNECTIONS:
             self.connection = self.OPEN_CONNECTIONS[dbName]
         else:
-            # DIAGNOSTIC: a non-reusing mapper is about to create a SECOND connection
-            # to a file that already has one. The previous connection is NOT closed
-            # here (the closeConnection call below is disabled), so it is ORPHANED and
-            # keeps whatever lock/transaction it held. If that orphan holds a
-            # write-intent (RESERVED) lock, this new connection's `BEGIN IMMEDIATE`
-            # will fail with "database is locked" and a per-connection rollback cannot
-            # clear it (it is a DIFFERENT connection). This is the classic in-process
-            # self-deadlock signature. Log who is creating the second connection.
-            if dbName in self.OPEN_CONNECTIONS:
-                import traceback as _tb
-                _old = self.OPEN_CONNECTIONS[dbName]
-                try:
-                    _oldInTx = _old.in_transaction
-                except Exception:
-                    _oldInTx = '?'
-                logger.warning(
-                    "ORPHANING SQLite connection for %s (reuseConnections=%s). "
-                    "Previous connection in_transaction=%s. A second in-process "
-                    "connection to the same file is being created; if the previous "
-                    "one holds a write lock this will deadlock on BEGIN IMMEDIATE. "
-                    "Created by:\n%s"
-                    % (dbName, self._reuseConnections, _oldInTx,
-                       ''.join(_tb.format_stack()[-7:-1])))
             # self.closeConnection(dbName)  # Close the connect if exists for this db
             self.connection = sqlite.Connection(dbName, timeout, check_same_thread=False)
             self.connection.row_factory = sqlite.Row
