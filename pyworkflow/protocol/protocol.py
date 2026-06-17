@@ -31,6 +31,7 @@ import sys
 import threading
 import time
 from datetime import datetime
+import importlib
 from pathlib import Path
 
 import pyworkflow as pw
@@ -1131,6 +1132,26 @@ class Protocol(Step):
         stepsSet.write()
         stepsSet.close()  # Close the connection
 
+    def _notifyStepsChanged(self, event, step=None):
+        """Notify external integrations when protocol steps are created or updated."""
+        notifierSpec = os.environ.get("SCIPION_PROTOCOL_STEPS_NOTIFIER", "").strip()
+        if not notifierSpec:
+            return
+
+        try:
+            moduleName, functionName = notifierSpec.split(":", 1)
+            notifierModule = importlib.import_module(moduleName)
+            notifier = getattr(notifierModule, functionName)
+            notifier(self, event=event, steps=self._steps, step=step)
+        except Exception as ex:
+            logger.warning(
+                "Protocol steps notifier failed. protocolId=%s event=%s error=%s",
+                self.getObjId(),
+                event,
+                ex,
+                exc_info=True,
+            )
+
     def getPath(self, *paths):
         """ Same as _getPath but without underscore. """
         return self._getPath(*paths)
@@ -1324,11 +1345,13 @@ class Protocol(Step):
             self._stepsSet.append(step)
 
         self._stepsSet.write()
+        self._notifyStepsChanged("steps-stored")
 
     def __updateStep(self, step):
         """ Store a given step and write changes. """
         self._stepsSet.update(step)
         self._stepsSet.write()
+        self._notifyStepsChanged("step-updated", step=step)
 
     def _stepStarted(self, step):
         """This function will be called whenever an step
