@@ -23,13 +23,15 @@
 # *
 # **************************************************************************
 import logging
+
+from .sqlite_db import SqliteDb
+
 logger = logging.getLogger(__name__)
 import re
 from collections import OrderedDict
 
 from pyworkflow import Config, ID_ATTRIBUTE, ID_COLUMN
 from pyworkflow.utils import replaceExt, joinExt, valueToList
-from .sqlite_db import SqliteDb, OperationalError
 from .mapper import Mapper
 
 ID = ID_COLUMN

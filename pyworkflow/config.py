@@ -409,6 +409,21 @@ class Config:
 
     SQLITE_BUSY_TIMEOUT = int(_get('SQLITE_BUSY_TIMEOUT', '60000', 'SQLite busy timeout in milliseconds. Increase if you see "database is locked" errors during streaming.', caster=int))
 
+    # Opt-in (default OFF): copy each SQLite DB to node-local storage on open and
+    # sync it back to shared storage (atomic os.replace) on close. This keeps the
+    # network filesystem off SQLite's locking path on HPC clusters while honoring
+    # the WAL prohibition (journal_mode is untouched).
+    SQLITE_NODE_LOCAL = _get('SQLITE_NODE_LOCAL', 'False', 'Opt-in: run each SQLite DB on node-local storage and sync to shared storage on close. Reduces SQLite-on-network-filesystem locking risk on HPC. Default off.', caster=__bool)
+
+    SQLITE_NODE_LOCAL_DIR = _get('SQLITE_NODE_LOCAL_DIR', '', 'Directory on node-local storage used when SQLITE_NODE_LOCAL is enabled. Empty means the system temporary directory.')
+
+    # While SQLITE_NODE_LOCAL is enabled, a background thread publishes read-only
+    # snapshots of the node-local DBs (run.db + output sets) back to shared storage
+    # every N seconds, so the GUI can live-monitor status/progress and viewers can
+    # show intermediate results while the protocol keeps writing node-local. Set to
+    # 0 to disable periodic publishing (only the final sync-on-close happens then).
+    SQLITE_NODE_LOCAL_SYNC_SEC = int(_get('SQLITE_NODE_LOCAL_SYNC_SEC', '20', 'Seconds between live snapshot publishes of node-local SQLite DBs to shared storage (for GUI live monitoring). 0 disables periodic publishing.', caster=int))
+
     try:
         VIEWERS = ast.literal_eval(_get('VIEWERS', "{}", "Json string to define which viewer are the default ones per output type."))
     except Exception as e:
