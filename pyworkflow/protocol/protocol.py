@@ -30,8 +30,10 @@ import json
 import sys
 import threading
 import time
+import typing
 from datetime import datetime
 from pathlib import Path
+from typing import Union
 
 import pyworkflow as pw
 from pyworkflow.exceptions import ValidationException, PyworkflowException
@@ -525,12 +527,25 @@ class Protocol(Step):
         self._useOutputList.set(True)
         self._insertChild("_useOutputList", self._useOutputList)
 
-    def _closeOutputSet(self):
+    def _closeOutputSet(self, outputNames: Union[typing.List[str], str] = '') -> None:
         """Close all output set"""
         for outputName, output in self.iterOutputAttributes():
             if isinstance(output, Set) and output.isStreamOpen():
                 logger.info("Closing %s output" % outputName)
                 self.__tryUpdateOutputSet(outputName, output, state=Set.STREAM_CLOSED)
+        if outputNames:
+            self.__validateOutputs(outputNames)
+
+    def __validateOutputs(self, outputNames: Union[typing.List[str], str] = '') -> None:
+        failedOutputList = []
+        outputNames = [outputNames] if type(outputNames) is str else outputNames
+        for outputName in outputNames:
+            output = getattr(self, outputName, [])
+            if not output or (output and len(output) == 0):
+                failedOutputList.append(outputName)
+        if failedOutputList:
+            raise Exception(f'No output/s {failedOutputList} were generated. Please check the '
+                            f'Output Log > run.stdout and run.stderr')
 
     def _updateOutputSet(self, outputName, outputSet,
                          state=Set.STREAM_OPEN):
