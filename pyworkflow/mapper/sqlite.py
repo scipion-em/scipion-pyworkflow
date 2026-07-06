@@ -325,7 +325,7 @@ class SqliteMapper(Mapper):
             # Get the parent, we should have it cached
             parentObj = self.objDict.get(parentId, None)
             if parentObj is None:  # Something went wrong
-                logger.warning("Parent object (id=%d) was not found, "
+                logger.debug("Parent object (id=%d) was not found, "
                       "object: %s. Ignored." % (parentId, name))
                 return None
 
