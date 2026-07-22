@@ -154,7 +154,7 @@ def _launchLocal(protocol, wait, stdin=None, stdout=None, stderr=None):
             protocol.setPid(0)  # we go through the queue, so we rely on the jobId
     else:  # If not, retrieve and set the process ID (both for normal execution or when using the queue for steps)
         pId = _run(command, wait, stdin, stdout, stderr)
-        logger.info("Protocol %s executed in a subproccess. Got PID %s." % (protocol.getRunName(), pId))
+        logger.info("Protocol %s executed in a subprocess. Got PID %s." % (protocol.getRunName(), pId))
         protocol.setPid(pId)
 
 
@@ -249,7 +249,7 @@ def _checkJobStatus(hostConfig, jobid):
     logger.debug("Queue engine replied %s, variable JOB_DONE_REGEX has %s" % (out, jobDoneRegex))
     # If nothing is returned we assume job is no longer in queue and thus finished
     if out == "":
-        logger.warning("Empty response from queue system to job (%s)" % jobid)
+        logger.warning("Empty response from queue system to job (%s)", jobid)
         return STATUS_FINISHED
 
     # If some string is returned we use the JOB_DONE_REGEX variable (if present) to infer the status

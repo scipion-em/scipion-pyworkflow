@@ -1,3 +1,4 @@
+V3.11.7: Fix MPI path resolution with Python's shutil.which() for Ubuntu 24.04+ compatibility.
 V3.11.6: deploy test.
 V3.11.5: deploy test.
 V3.11.4: deploy test.

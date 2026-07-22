@@ -22,7 +22,6 @@
 # *
 # **************************************************************************
 import logging
-
 logger = logging.getLogger(__name__)
 
 import contextlib
@@ -409,17 +408,17 @@ HYPER_ITALIC = 'italic'
 HYPER_LINK1 = 'link1'
 HYPER_SCIPION_OPEN = 'sci-open'
 HYPER_LINK2 = 'link2'
+HYPER_FIXED = 'fixed'
 HYPER_ALL = 'all'
 
 # Associated regular expressions
 PATTERN_BOLD = r"(^|[\s])[*](?P<bold>[^\s*][^*]*[^\s*]|[^\s*])[*]"
-# PATTERN_BOLD = r"[\s]+[*]([^\s][^*]+[^\s])[*][\s]+"
 PATTERN_ITALIC = r"(^|[\s])[_](?P<italic>[^\s_][^_]*[^\s_]|[^\s_])[_]"
-# PATTERN_ITALIC = r"[\s]+[_]([^\s][^_]+[^\s])[_][\s]+"
+PATTERN_FIXED = r"'''(?P<fixed>.*?)'''"
 PATTERN_LINK1 = r'(?P<link1>http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+#]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)'
 PATTERN_LINK2 = r"[\[]{2}(?P<link2>[^\s][^\]]+[^\s])[\]][\[](?P<link2_label>[^\s][^\]]+[^\s])[\]]{2}"
 # __PATTERN_LINK2 should be first since it could contain __PATTERN_LINK1
-PATTERN_ALL = '|'.join([PATTERN_BOLD, PATTERN_ITALIC, PATTERN_LINK2, PATTERN_LINK1])
+PATTERN_ALL = '|'.join([PATTERN_BOLD, PATTERN_ITALIC, PATTERN_LINK2, PATTERN_LINK1, PATTERN_FIXED])
 
 # Compiled regex
 # Not need now, each pattern compiled separately
@@ -446,6 +445,8 @@ def parseHyperText(text, matchCallback):
         m = match.group().strip()
         if m.startswith('*'):
             tag = HYPER_BOLD
+        elif m.startswith("'''"):
+            tag = HYPER_FIXED
         elif m.startswith('_'):
             tag = HYPER_ITALIC
         elif m.startswith('http'):
@@ -455,8 +456,8 @@ def parseHyperText(text, matchCallback):
         else:
             raise Exception("Bad prefix for HyperText match")
         return matchCallback(match, tag)
-
-    return HYPER_ALL_RE.sub(_match, text)
+    result = HYPER_ALL_RE.sub(_match, text)
+    return result
 
 
 #    for hyperMode, hyperRegex in HYPER_REGEX.iteritems():
@@ -502,7 +503,6 @@ def parseBibTex(bibtexStr):
     return bibtexparser.loads(bibtexStr,
                               parser=bibtexparser.bparser.BibTexParser(common_strings=True)
                               ).entries_dict
-
 
 
 def isPower2(num):

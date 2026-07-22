@@ -29,9 +29,11 @@ This module handles process execution
 """
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 import sys
+import shutil
 from subprocess import check_call
 import psutil
 
@@ -41,13 +43,12 @@ from pyworkflow.constants import PLUGIN_MODULE_VAR, PARALLEL_COMMAND_VAR, RUN_JO
 
 
 # The job should be launched from the working directory!
-def runJob(log, programname, params,           
-           numberOfMpi=1, numberOfThreads=1, 
+def runJob(log, programname, params,
+           numberOfMpi=1, numberOfThreads=1,
            hostConfig=None, env=None, cwd=None, gpuList=None, executable=None, context=dict()):
-
     command = buildRunCommand(programname, params, numberOfMpi, hostConfig,
-                              env, gpuList=gpuList,context=context)
-    
+                              env, gpuList=gpuList, context=context)
+
     if log is None:
         log = logger
 
@@ -55,7 +56,7 @@ def runJob(log, programname, params,
     log.info(greenStr(command))
 
     return runCommand(command, env=env, cwd=cwd, executable=executable)
-        
+
 
 def runCommand(command, env=None, cwd=None, executable=None):
     """ Execute command with given environment env and directory cwd """
@@ -73,7 +74,7 @@ def runCommand(command, env=None, cwd=None, executable=None):
                env=env, cwd=cwd, executable=executable)
     # It would be nice to avoid shell=True and calling buildRunCommand()...
 
-    
+
 def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
                     env=None, gpuList=None, context=dict()):
     """ Return a string with the command line to run
@@ -101,12 +102,35 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
 
         if programname.startswith('xmipp') and not programname.startswith('xmipp_mpi'):
             programname = programname.replace('xmipp', 'xmipp_mpi')
-            
-        mpiFlags = '' if env is None else env.get('SCIPION_MPI_FLAGS', '') 
+
+        mpiFlags = '' if env is None else env.get('SCIPION_MPI_FLAGS', '')
+
+        # Resolve the absolute path of the program natively in Python instead
+        # of relying on a shell subshell (`which <program>`). The old subshell
+        # approach was fragile:
+        #   - It depends on the external `which` binary, which is no longer
+        #     installed by default on Ubuntu 24.04 / Debian 12 (deprecated in
+        #     favour of the `command -v` shell builtin). When missing, the
+        #     backtick expands to an empty string and mpirun ends up trying to
+        #     execute the first argument, failing with exit status 127.
+        #   - It resolves the program against whatever PATH happens to be
+        #     active at shell-eval time rather than the PATH Scipion already
+        #     built for this plugin environment, so a system binary (and its
+        #     mismatched MPI/GLIBC libraries) can be picked up by accident.
+        # Resolving here uses the plugin's own PATH (carried in ``env``) and
+        # yields a deterministic, absolute path.
+        searchPath = env.get('PATH') if env is not None else None
+        resolvedProgram = shutil.which(programname, path=searchPath)
+        if resolvedProgram is None:
+            logger.warning("Could not resolve an absolute path for '%s' in the "
+                           "plugin PATH. Falling back to the bare program name; "
+                           "it will be resolved by mpirun at run time."
+                           % programname)
+            resolvedProgram = programname
 
         context.update({
             'JOB_NODES': numberOfMpi,
-            'COMMAND': "%s `which %s` %s" % (mpiFlags, programname, params),
+            'COMMAND': "%s %s %s" % (mpiFlags, resolvedProgram, params),
         })
         logger.debug("Context variables for mpi command are: %s" % context)
 
@@ -122,7 +146,6 @@ def buildRunCommand(programname, params, numberOfMpi, hostConfig=None,
             else:
                 logger.info("%s not found in the environment. Using default mpi command found in %s. %s: %s"
                             % (custom_command_var, Config.SCIPION_HOSTS, PARALLEL_COMMAND_VAR, mpiCommand))
-
 
         mpiCmd = mpiCommand % context
 

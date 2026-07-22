@@ -37,7 +37,8 @@ import tkinter.messagebox as tkMessageBox
 
 import pyworkflow as pw
 from pyworkflow import ASCII_COLOR_2_TKINTER
-from pyworkflow.utils import (HYPER_BOLD, HYPER_ITALIC, HYPER_LINK1, HYPER_LINK2,
+from pyworkflow.utils import (HYPER_BOLD, HYPER_ITALIC, HYPER_LINK1,
+                              HYPER_LINK2, HYPER_FIXED,
                               parseHyperText, renderLine, renderTextFile,
                               which, envVarOn, expandPattern)
 from pyworkflow.utils.properties import Message, Color, Icon
@@ -347,8 +348,9 @@ class TaggedText(Text):
     def configureTags(self):
         self.tag_config('normal', justify=tk.LEFT, font=gui.fontNormal)
         self.tag_config(HYPER_BOLD, justify=tk.LEFT, font=gui.fontBold)
+        self.tag_config(HYPER_FIXED, justify=tk.LEFT, font=gui.fontFixed)
         self.tag_config(HYPER_ITALIC, justify=tk.LEFT, font=gui.fontItalic)
-        if self.colors:            
+        if self.colors:
             self.colors = configureColorTags(self)
             # Color can be unavailable, so disable use of colors
         
@@ -365,7 +367,7 @@ class TaggedText(Text):
         self.insert(tk.END, self.line[self.lastIndex:match.start()])
         g1 = match.group(tag)
 
-        if tag == HYPER_BOLD or tag == HYPER_ITALIC:
+        if tag == HYPER_BOLD or tag == HYPER_ITALIC or tag == HYPER_FIXED:
             self.insert(tk.END, ' ' + g1, tag)
         elif tag == HYPER_LINK1:
             self.insert(tk.END, g1, self.hm.add(lambda: self.openLink(g1)))
