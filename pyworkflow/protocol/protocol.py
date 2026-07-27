@@ -25,13 +25,15 @@
 This modules contains classes required for the workflow
 execution and tracking like: Step and Protocol
 """
-import os
+import importlib
 import json
+import os
+import re
 import sys
 import threading
 import time
 from datetime import datetime
-import importlib
+from functools import lru_cache
 from pathlib import Path
 
 import pyworkflow as pw
@@ -51,6 +53,144 @@ import  logging
 # Get the root logger
 logger = logging.getLogger(__name__)
 
+PROTOCOL_STEPS_LOADER_ENV = (
+    "SCIPION_PROTOCOL_STEPS_LOADER"
+)
+
+PROTOCOL_STEPS_NOTIFIER_ENV = (
+    "SCIPION_PROTOCOL_STEPS_NOTIFIER"
+)
+
+
+@lru_cache(maxsize=None)
+def _loadProtocolStepsCallback(
+        callbackPath,
+):
+    """
+    Resolve an external protocol-step callback.
+
+    Expected syntax:
+
+        package.module:function
+    """
+    callbackPath = str(callbackPath  or "").strip()
+
+    if not callbackPath:
+        return None
+
+    moduleName, separator, functionName = (callbackPath.partition(":"))
+
+    if (not separator or not moduleName or not functionName):
+        raise ValueError(
+            "Invalid protocol steps callback: "
+            "%s. Expected module:function."
+            % callbackPath
+        )
+
+    module = importlib.import_module(moduleName)
+
+    callback = getattr(module, functionName,)
+
+    if not callable(callback):
+        raise TypeError(
+            "Protocol steps callback is not "
+            "callable: %s"
+            % callbackPath
+        )
+
+    return callback
+
+
+def _getProtocolStepsCallback(
+        environmentVariable,
+):
+    """
+    Load the callback configured in an environment variable.
+
+    No callback means that native SQLite StepSet behavior
+    must be preserved.
+    """
+    return _loadProtocolStepsCallback(os.environ.get(environmentVariable,  "",))
+
+def _getProtocolStepEvent(step, default="step-updated",):
+    """
+    Resolve the PostgreSQL event name from the current
+    Scipion step status.
+    """
+    statusValue = str(step.getStatus()  or "").strip().lower()
+
+    eventByStatus = {str(STATUS_RUNNING).strip().lower(): "step-started",
+                     str(STATUS_FINISHED).strip().lower(): "step-finished",
+                     str(STATUS_FAILED).strip().lower(): "step-failed",
+                     str(STATUS_INTERACTIVE).strip().lower(): "step-interactive",
+                     str(STATUS_ABORTED).strip().lower(): "step-aborted",
+                    }
+
+    return eventByStatus.get(statusValue, default,)
+
+
+def _removeLegacyStepsStore(
+        stepsFile,
+):
+    """
+    Remove a previous steps.sqlite and its sidecar files.
+
+    This is called only after the PostgreSQL snapshot has
+    been written successfully.
+    """
+    for suffix in (
+            "",
+            "-journal",
+            "-wal",
+            "-shm",
+    ):
+        candidatePath = stepsFile + suffix
+
+        if os.path.isfile(candidatePath):
+            os.remove(candidatePath)
+
+def _stepMatchesWhere(step, where,):
+    """
+    Match the limited SQL-like filters used by Protocol.
+    Supported forms:
+
+        1
+        status='running'
+        id='123'
+    """
+    normalizedWhere = str(where  or "1").strip()
+
+    if normalizedWhere in ("", "1",):
+        return True
+
+    statusMatch = re.fullmatch(
+        r"""status\s*=\s*['"]([^'"]+)['"]""",
+        normalizedWhere,
+        flags=re.IGNORECASE,
+    )
+
+    if statusMatch:
+        return str(step.getStatus() or "").strip().lower()  == statusMatch.group(1).strip().lower()
+
+    idMatch = re.fullmatch(
+        r"""id\s*=\s*['"]([^'"]+)['"]""",
+        normalizedWhere,
+        flags=re.IGNORECASE,
+    )
+
+    if idMatch:
+        try:
+            stepObjId = step.getObjId()
+        except Exception:
+            stepObjId = getattr(step, "_objId", None,)
+
+        return str(stepObjId) == idMatch.group(1)
+
+    raise ValueError(
+        "Unsupported protocol step filter "
+        "for external storage: %s"
+        % normalizedWhere
+    )
 
 class Step(Object):
     """ Basic execution unit.
@@ -1121,10 +1261,40 @@ class Protocol(Step):
         self._closeOutputSet()
         self._pid.set(0)
 
-    def _updateSteps(self, updater, where="1"):
-        """Set the status of all steps
-        :parameter updater callback/lambda receiving a step and editing it inside
-        :parameter where condition to filter the set with."""
+    def _updateSteps(
+            self,
+            updater,
+            where="1",
+    ):
+        """
+        Update matching protocol steps.
+
+        PostgreSQL runtime mode updates the in-memory Steps
+        and publishes each change. Native Scipion keeps using
+        the StepSet SQL filter.
+        """
+        notifier = _getProtocolStepsCallback(PROTOCOL_STEPS_NOTIFIER_ENV)
+
+        if notifier is not None:
+            currentSteps = list(self._steps  or [])
+
+            if not currentSteps:
+                raise RuntimeError(
+                    "Cannot update PostgreSQL protocol "
+                    "steps because the current protocol "
+                    "has no in-memory step definitions."
+                )
+
+            for step in currentSteps:
+                if not _stepMatchesWhere(step, where,):
+                    continue
+
+                updater(step)
+
+                notifier(self, _getProtocolStepEvent(step), currentSteps,  step,)
+
+            return
+
         stepsSet = StepSet(filename=self.getStepsFile())
         for step in stepsSet.iterItems(where=where):
             updater(step)
@@ -1252,11 +1422,37 @@ class Protocol(Step):
         self._leaveDir()
 
     def continueFromInteractive(self):
-        """ TODO: REMOVE this function.
-        Check if there is an interactive step and set
-        as finished, this is used now mainly in picking,
-        but we should remove this since is weird for users.
         """
+        Mark the first interactive step as finished.
+
+        PostgreSQL runtime mode updates the live Step and
+        publishes it directly. Native Scipion keeps using
+        steps.sqlite.
+        """
+        notifier = _getProtocolStepsCallback(PROTOCOL_STEPS_NOTIFIER_ENV)
+
+        if notifier is not None:
+            currentSteps = list(self._steps or [])
+
+            if not currentSteps:
+                raise RuntimeError(
+                    "Cannot continue PostgreSQL "
+                    "interactive protocol because "
+                    "there are no in-memory steps."
+                )
+
+            for step in currentSteps:
+                if step.getStatus() != STATUS_INTERACTIVE:
+                    continue
+
+                step.setStatus(STATUS_FINISHED)
+
+                notifier(self,  "step-finished", currentSteps, step,)
+
+                return
+
+            return
+
         if os.path.exists(self.getStepsFile()):
             stepsSet = StepSet(filename=self.getStepsFile())
             for step in stepsSet:
@@ -1265,18 +1461,29 @@ class Protocol(Step):
                     stepsSet.update(step)
                     break
             stepsSet.write()
-            stepsSet.close()  # Close the connection
+            stepsSet.close()
 
     def loadSteps(self):
-        """ Load the Steps stored in the steps.sqlite file.
         """
+        Load the previous execution steps.
+
+        PostgreSQL runtime mode delegates to the external
+        loader. Native Scipion keeps using steps.sqlite.
+        """
+        loader = _getProtocolStepsCallback(PROTOCOL_STEPS_LOADER_ENV)
+
+        if loader is not None:
+            return list(loader(self, list(self._steps or []),) or [])
         prevSteps = []
 
         if os.path.exists(self.getStepsFile()):
-            stepsSet = StepSet(filename=self.getStepsFile())
+            stepsSet = StepSet(filename=(self.getStepsFile()))
+
             for step in stepsSet:
                 prevSteps.append(step.clone())
-            stepsSet.close()  # Close the connection
+
+            stepsSet.close()
+
         return prevSteps
 
     def _insertPreviousSteps(self):
@@ -1330,9 +1537,29 @@ class Protocol(Step):
         return doneSteps
 
     def _storeSteps(self):
-        """ Store the new steps list that can be retrieved
-        in further execution of this protocol.
         """
+        Store the current protocol step definitions.
+
+        PostgreSQL runtime mode publishes the live Step
+        objects directly. Native Scipion keeps using StepSet.
+        """
+        notifier = _getProtocolStepsCallback(PROTOCOL_STEPS_NOTIFIER_ENV)
+
+        if notifier is not None:
+            for step in self._steps:
+                self.setInteractive(self.isInteractive() or step.isInteractive())
+
+            notifier(self, "steps-stored", list(self._steps), None,)
+
+            # PostgreSQL now contains the authoritative snapshot.
+            self._stepsSet = None
+
+            # Remove a stale legacy DB only after PostgreSQL was
+            # written successfully.
+            _removeLegacyStepsStore(self.getStepsFile())
+
+            return
+
         stepsFn = self.getStepsFile()
 
         self._stepsSet = StepSet(filename=stepsFn)
@@ -1345,10 +1572,24 @@ class Protocol(Step):
             self._stepsSet.append(step)
 
         self._stepsSet.write()
-        self._notifyStepsChanged("steps-stored")
 
-    def __updateStep(self, step):
-        """ Store a given step and write changes. """
+    def __updateStep(
+            self,
+            step,
+    ):
+        """
+        Persist one live step state transition.
+
+        PostgreSQL runtime mode publishes the Step directly.
+        Native Scipion updates the StepSet SQLite store.
+        """
+        notifier = _getProtocolStepsCallback(PROTOCOL_STEPS_NOTIFIER_ENV)
+        if notifier is not None:
+            notifier(self, _getProtocolStepEvent(step),
+                list(self._steps), step,)
+
+            return
+
         self._stepsSet.update(step)
         self._stepsSet.write()
         self._notifyStepsChanged("step-updated", step=step)
