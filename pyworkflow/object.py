@@ -149,8 +149,22 @@ class Object(object):
     def getAttributes(self):
         """Return the list of attributes that are
         subclasses of Object"""
-        for name in vars(self):
-            value = getattr(self, name)
+        # Iterate over a SNAPSHOT of the attribute names (list(...)) rather than the
+        # live __dict__ view. This is a generator, so it stays open across the
+        # caller's work while the SAME object can be structurally mutated elsewhere
+        # in this process: e.g. a streaming scheduler running getProtocolsToUpdate()
+        # refreshes the runs graph (Project._updateProtocol -> Protocol.copy ->
+        # Object._copy), which setattr's newly-appeared attributes onto a producer's
+        # in-memory set while this scan walks it -- typically when the producer's
+        # run.db is transiently mid-(re)write during streaming startup. Iterating the
+        # live vars(self) then raised "RuntimeError: dictionary changed size during
+        # iteration". Snapshotting the names makes the scan robust to concurrent/lazy
+        # attribute additions or removals without changing what is yielded (a name
+        # added after the snapshot is simply picked up on the next call).
+        # getattr(..., None) tolerates a name removed after the snapshot: it is
+        # skipped, exactly as a non-Object value would be.
+        for name in list(vars(self)):
+            value = getattr(self, name, None)
             if isinstance(value, Object):
                 yield name, value
                 
