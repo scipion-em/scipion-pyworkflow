@@ -20,23 +20,24 @@ class WHTemplate(Template):
         data = data[data.index("["):]
         return data
 
-def make_request(url, asJson=True):
+def make_request(url, asJson=True, retries=2, timeout=5):
     """ Makes a request to the url and returns the json as a dictionary"""
-
-    try:
-        req = Request(url)
-        req.add_header("accept", "application/json")
-
-        with urlopen(req, timeout=1) as response:
-            if asJson:
-                data = json.load(response)
-            else:
-                html_response = response.read()
-                encoding = response.headers.get_content_charset('utf-8')
-                data = html_response.decode(encoding)
-            return data
-    except Exception as e:
-        logger.error(f"Couldn't get data from workflow hub at {url}: {str(e)}")
+    for attempt in range(retries):
+        try:
+            req = Request(url)
+            req.add_header("accept", "application/json")
+    
+            with urlopen(req, timeout=1) as response:
+                if asJson:
+                    data = json.load(response)
+                else:
+                    html_response = response.read()
+                    encoding = response.headers.get_content_charset('utf-8')
+                    data = html_response.decode(encoding)
+                return data
+        except Exception as e:
+            logger.error(f"Attempt {Attempt}. Couldn't get data from workflow hub at {url}: {str(e)}")
+    return None
 
 def get_workflow_file_url(workflow_id, version):
     root_url = "https://workflowhub.eu/workflows/%s/git/%s/" % (workflow_id, version)
