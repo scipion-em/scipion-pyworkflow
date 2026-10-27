@@ -356,7 +356,8 @@ def update(dataset, workingCopy=None, url=None, verbose=False):
 
     # Save the new MANIFEST file in the folder of the downloaded dataset
     if filesUpdated > 0:
-        open(join(datasetFolder, 'MANIFEST'), 'w').writelines(md5sRemote)
+        with open(join(datasetFolder, 'MANIFEST'), 'w') as f:
+            f.writelines('%s %s\n' % (fname, md5) for fname, md5 in md5sRemote.items())
 
     if taintedMANIFEST:
         logger.info("Some files could not be updated. Regenerating local MANIFEST ...")
