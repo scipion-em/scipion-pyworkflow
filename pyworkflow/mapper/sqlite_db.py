@@ -114,7 +114,31 @@ class SqliteDb:
             return self.cursor.fetchall()
         else:
             return self._iterResults()
-        
+
+    def _iterOnNewCursor(self, cmd):
+        """Lazily iterate the rows of ``cmd`` on a DEDICATED cursor that is
+        CLOSED when iteration ends -- whether it is fully drained, abandoned via
+        an early ``break``/``return``, or garbage-collected.
+
+        This is critical under ``journal_mode=DELETE``: a lazy SELECT left
+        mid-scan on the shared ``self.cursor`` keeps a SHARED read lock on the
+        file until that cursor runs its next statement or the connection closes,
+        which blocks any other connection to the same file from committing (it
+        can never upgrade to EXCLUSIVE). Using a private cursor and closing it in
+        ``finally`` finalizes the statement and releases SHARED promptly.
+        ``GeneratorExit`` (raised into this generator when the consumer
+        breaks/GCs) triggers the ``finally``.
+        """
+        cur = self.connection.cursor()
+        try:
+            cur.execute(cmd)
+            row = cur.fetchone()
+            while row is not None:
+                yield row
+                row = cur.fetchone()
+        finally:
+            cur.close()
+
     def getTables(self, tablePattern=None):
         """ Return the table names existing in the Database.
         If  tablePattern is not None, only tables matching 

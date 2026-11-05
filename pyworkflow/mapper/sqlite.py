@@ -1443,8 +1443,15 @@ class SqliteFlatDb(SqliteDb):
             skipPart = "%s," % skipRows if skipRows else ""
             cmd += " LIMIT %s %s" % (skipPart, limit)
 
+        if iterate:
+            # Iterate on a private cursor closed in finally, so an early break
+            # (e.g. getFirstItem/selectFirst) releases the SHARED read lock
+            # instead of leaving the shared self.cursor mid-scan and blocking
+            # another connection's commit under journal_mode=DELETE.
+            return self._iterOnNewCursor(cmd)
+
         self.executeCommand(cmd)
-        return self._results(iterate)
+        return self._results(iterate=False)
 
     def _whereToWhereStr(self, where):
         """ Parse the where string to replace the column name with
