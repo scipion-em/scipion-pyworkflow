@@ -89,8 +89,10 @@ class ProjectWindow(ProjectBaseWindow):
                             shortCut="Ctrl+t", icon=Icon.ACTION_VISUALIZE)
         projMenu.addSubMenu('Select all protocols', 'select all',
                             shortCut="Ctrl+a", icon=Icon.SELECT_ALL)
-        projMenu.addSubMenu('Locate a protocol', 'locate protocol',
-                            shortCut="Ctrl+l")
+        projMenu.addSubMenu('Manage labels', 'manage labels',
+                            shortCut="Ctrl+L", icon=Icon.TAGS)
+        projMenu.addSubMenu('Locate a protocol', 'locate a protocol',
+                            shortCut="Ctrl+Shift+L", icon=Icon.FIND)
         projMenu.addSubMenu('', '')  # add separator
         projMenu.addSubMenu('Import workflow', 'load_workflow',
                             icon=Icon.DOWNLOAD)
@@ -271,6 +273,9 @@ class ProjectWindow(ProjectBaseWindow):
 
     def onSelectAllProtocols(self):
         self.getViewWidget()._selectAllProtocols(None)
+
+    def onManageLabels(self):
+        self.manageLabels()
 
     def onLocateAProtocol(self):
         self.getViewWidget()._locateProtocol(None)

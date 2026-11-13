@@ -63,6 +63,7 @@ class RunsTreeProvider(ProjectRunsTreeProvider):
                 (ACTION_BROWSE, single and status and expanded),
                 (ACTION_RENAME, single and status and expanded),
                 (ACTION_LABELS, True),
+                (ACTION_LOCATE, True),
 
                 (ACTION_DUPLICATE, status and expanded),
                 (ACTION_COPY, status and expanded),

@@ -92,7 +92,7 @@ class ProtocolsView(tk.Frame):
         ACTION_RESULTS,
         ACTION_EXPORT,
         ACTION_COLLAPSE, ACTION_EXPAND,
-        ACTION_LABELS, ACTION_SEARCH,
+        ACTION_LABELS, ACTION_LOCATE, ACTION_SEARCH,
         ACTION_SELECT_FROM, ACTION_SELECT_TO,
         ACTION_STEPS, ACTION_DB
     ]
@@ -121,7 +121,8 @@ class ProtocolsView(tk.Frame):
         self.root.bind("<Control-a>", self._selectAllProtocols)
         self.root.bind("<Control-t>", self._toggleColorScheme)
         self.root.bind("<Control-D>", self._toggleDebug)
-        self.root.bind("<Control-l>", self._locateProtocol)
+        self.root.bind("<Control-l>", self._selectLabels)
+        self.root.bind("<Control-L>", self._locateProtocol)
         # Bind to root "focus in"
         self.root.bind("<FocusIn>", self._onWindowFocusIn)
 
@@ -755,8 +756,14 @@ class ProtocolsView(tk.Frame):
         # Shortcuts for actions
         for action in self._actionList:
 
-            # prevent "late binding closure" by passing action as a default value for the lambda param.
-            callback = lambda e, my_action=action: self._runActionClicked(my_action, event=e)
+            # prevent "late binding closure" by passing action as a default value for the param.
+            # Return "break" so the shortcut is consumed on the canvas and does not also
+            # reach the root-window bindings (e.g. a plain 'l' binding also matches Ctrl+L
+            # on Tk, which would otherwise trigger both the canvas shortcut and the root
+            # binding and open the same dialog twice).
+            def callback(e, my_action=action):
+                self._runActionClicked(my_action, event=e)
+                return "break"
 
             # Shortcuts:
             shortCut = ActionShortCuts.get(action, None)
@@ -1804,7 +1811,7 @@ class ProtocolsView(tk.Frame):
 
                 return [], RESULT_RUN_SINGLE
 
-    def _selectLabels(self):
+    def _selectLabels(self, e=None):
 
         dlg = self.window.manageLabels()
 
@@ -2019,6 +2026,8 @@ class ProtocolsView(tk.Frame):
             self._findProtocol(event)
         elif action == ACTION_LABELS:
             self._selectLabels()
+        elif action == ACTION_LOCATE:
+            self._locateProtocol()
         else:
             prot = self.getSelectedProtocol()
             if prot:
